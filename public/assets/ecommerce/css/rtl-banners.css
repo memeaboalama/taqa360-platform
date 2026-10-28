@@ -1,0 +1,95 @@
+/* RTL/LTR Support for Banners and Sliders - OVERRIDE */
+
+/* Force Slider Content Position - RTL */
+html[dir="rtl"] .ecommerce-layout .slider-ecommerce .slider_content,
+[dir="rtl"] .ecommerce-layout .slider-ecommerce .slider_content,
+body[dir="rtl"] .ecommerce-layout .slider-ecommerce .slider_content {
+    right: 0 !important;
+    left: auto !important;
+    padding-right: 50px !important;
+    padding-left: 0 !important;
+    text-align: right !important;
+}
+
+/* Force Slider Content Position - LTR */
+html[dir="ltr"] .ecommerce-layout .slider-ecommerce .slider_content,
+[dir="ltr"] .ecommerce-layout .slider-ecommerce .slider_content,
+body[dir="ltr"] .ecommerce-layout .slider-ecommerce .slider_content {
+    left: 0 !important;
+    right: auto !important;
+    padding-left: 50px !important;
+    padding-right: 0 !important;
+    text-align: left !important;
+}
+
+/* Default if no dir attribute */
+.ecommerce-layout .slider-ecommerce .slider_content {
+    left: 0 !important;
+    padding-left: 50px !important;
+}
+
+/* Product Banners - RTL Support */
+[dir="rtl"] .collection-banner.p-left,
+html[dir="rtl"] .collection-banner.p-left {
+    padding-right: 30px !important;
+    padding-left: 0 !important;
+}
+
+[dir="rtl"] .collection-banner.p-left .contain-banner,
+html[dir="rtl"] .collection-banner.p-left .contain-banner {
+    right: 30px !important;
+    left: auto !important;
+    text-align: right !important;
+}
+
+[dir="ltr"] .collection-banner.p-left,
+html[dir="ltr"] .collection-banner.p-left {
+    padding-left: 30px !important;
+    padding-right: 0 !important;
+}
+
+[dir="ltr"] .collection-banner.p-left .contain-banner,
+html[dir="ltr"] .collection-banner.p-left .contain-banner {
+    left: 30px !important;
+    right: auto !important;
+    text-align: left !important;
+}
+
+/* Sidebar Banner - RTL Support */
+[dir="rtl"] .side-banner .side-banner-text,
+html[dir="rtl"] .side-banner .side-banner-text {
+    right: 30px !important;
+    left: auto !important;
+    text-align: right !important;
+}
+
+[dir="ltr"] .side-banner .side-banner-text,
+html[dir="ltr"] .side-banner .side-banner-text {
+    left: 30px !important;
+    right: auto !important;
+    text-align: left !important;
+}
+
+/* Button Alignment */
+[dir="rtl"] .slider_btn,
+html[dir="rtl"] .slider_btn {
+    margin-right: 0 !important;
+    margin-left: auto !important;
+}
+
+[dir="ltr"] .slider_btn,
+html[dir="ltr"] .slider_btn {
+    margin-left: 0 !important;
+    margin-right: auto !important;
+}
+
+/* Collection Banner RTL */
+[dir="rtl"] .collection-banner .contain-banner,
+html[dir="rtl"] .collection-banner .contain-banner {
+    text-align: right !important;
+}
+
+[dir="ltr"] .collection-banner .contain-banner,
+html[dir="ltr"] .collection-banner .contain-banner {
+    text-align: left !important;
+}

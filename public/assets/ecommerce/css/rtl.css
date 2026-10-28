@@ -1,0 +1,80 @@
+/* RTL Support for Ecommerce Sidebar */
+body.rtl .sidebar.ecommerce-sidebar {
+    text-align: right;
+}
+
+body.rtl .sidebar.ecommerce-sidebar .media-body {
+    margin-right: 15px;
+    margin-left: 0;
+}
+
+body.rtl .sidebar.ecommerce-sidebar .theme-card h5.title-border {
+    text-align: right;
+}
+
+body.rtl .sidebar.ecommerce-sidebar .collection-filter-block.cat-block ul li a {
+    text-align: right;
+    padding: 8px 27px 8px 0;
+}
+
+body.rtl .sidebar.ecommerce-sidebar .collection-filter-block.cat-block ul li a i {
+    margin-right: 0;
+    margin-left: 8px;
+}
+
+body.rtl .sidebar.ecommerce-sidebar .rating {
+    text-align: right;
+}
+
+body.rtl .sidebar.ecommerce-sidebar .side-banner-text {
+    text-align: right;
+}
+
+body.rtl .sidebar.ecommerce-sidebar .product-service .media-body {
+    text-align: right;
+}
+
+body.rtl .sidebar.ecommerce-sidebar .testimonial_sec p {
+    text-align: right;
+}
+
+body.rtl .sidebar.ecommerce-sidebar .testimonial_sec h3,
+body.rtl .sidebar.ecommerce-sidebar .testimonial_sec h5 {
+    text-align: right;
+}
+
+body.rtl .sidebar.ecommerce-sidebar .title h4,
+body.rtl .sidebar.ecommerce-sidebar .title h2 {
+    text-align: right;
+}
+
+/* RTL Support for main content */
+body.rtl .main-content {
+    text-align: right;
+}
+
+body.rtl .product-box .product-detail,
+body.rtl .product-box .product-info {
+    text-align: right;
+}
+
+body.rtl .product-box .rating {
+    justify-content: flex-end;
+}
+
+/* Brand / Our Clients slider fixes */
+/* NOTE: Do NOT override .owl-stage-outer display or .owl-item margin
+   as Owl Carousel relies on position:relative + overflow:hidden internally */
+
+.brand_slide_ecommerce .item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100px;
+}
+
+.ecommerce-layout .brand_slide_ecommerce img {
+    opacity: 1;
+    display: block;
+    margin: 0 auto;
+}

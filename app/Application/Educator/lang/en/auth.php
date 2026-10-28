@@ -1,0 +1,72 @@
+<?php
+
+return [
+    'register_title' => 'Register',
+    'login_title' => 'Login',
+    'verify_title' => 'Verify Email',
+    'forgot_password_title' => 'Forgot Password',
+    'reset_password_title' => 'Reset Password',
+    'change_password_title' => 'Change Password',
+
+    'first_name' => 'First Name',
+    'last_name' => 'Last Name',
+    'email' => 'Email Address',
+    'password' => 'Password',
+    'password_confirmation' => 'Confirm Password',
+    'current_password' => 'Current Password',
+    'new_password' => 'New Password',
+    'new_password_confirmation' => 'Confirm New Password',
+    'agree_to' => 'I agree to the',
+    'terms_and_conditions' => 'Terms and Conditions',
+    'remember_me' => 'Remember me',
+
+    'register' => 'Create Account',
+    'login' => 'Login',
+    'logout' => 'Logout',
+    'welcome_back_msg' => 'Welcome back, :name!',
+    'redirecting_msg' => 'Redirecting you to your dashboard...',
+    'loading_dashboard_msg' => 'Loading your dashboard...',
+    'logging_out_msg' => 'Logging you out...',
+    'verify' => 'Verify',
+    'send_reset_link' => 'Send Password Reset Link',
+    'reset_password' => 'Reset Password',
+    'save_changes' => 'Save Changes',
+    'join_us' => 'Join Us',
+
+    'creating_account' => 'Creating account...',
+    'logging_in' => 'Logging in...',
+    'verifying' => 'Verifying...',
+    'sending' => 'Sending...',
+    'saving' => 'Saving...',
+
+    'have_account' => 'Already have an account?',
+    'dont_have_account' => 'Don\'t have an account?',
+    'forgot_your_password' => 'Forgot your password?',
+
+    'code_sent' => 'We\'ve sent a 6-digit verification code to',
+    'reset_link_sent' => 'We have emailed your password reset link.',
+    'did_not_receive_code' => 'Didn\'t receive the code?',
+    'resend_code' => 'Resend Code',
+
+    'welcome' => 'Welcome',
+    'dashboard_intro' => 'You are now in your dashboard.',
+    'go_to_dashboard' => 'Go to Dashboard',
+    'otp' => 'Verification Code',
+    'debug_mode_otp_is' => 'For development purposes, the OTP is:',
+    'alerts' => [
+        'session_expired' => 'Your session has expired. Please start over.',
+        'register_error' => 'An unexpected error occurred. Please try again.',
+        'otp_resent_success' => 'The verification code has been sent again successfully.',
+        'otp_resent_error' => 'An error occurred while trying to resend the code.',
+        'password_changed_success' => 'Your password has been changed successfully.',
+    ],
+
+    'validation' => [
+        'agree_terms' => 'You must agree to the Terms and Conditions.',
+        'otp_invalid' => 'The verification code you entered is incorrect or has expired.',
+        'otp_required' => 'Please enter the 6-digit code.',
+        'credentials_do_not_match' => 'These credentials do not match our records.',
+        'current_password_incorrect' => 'The current password provided is incorrect.',
+        'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
+    ],
+];

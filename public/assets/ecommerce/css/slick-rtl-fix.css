@@ -1,0 +1,33 @@
+
+[dir="rtl"] .slick-slide {
+  float: right;
+}
+
+[dir="rtl"] .slick-track {
+  left: auto;
+  right: 0;
+}
+
+[dir="rtl"] .slick-prev {
+  left: auto;
+  right: -25px;
+}
+
+[dir="rtl"] .slick-prev:before {
+  content: "→";
+}
+
+
+[dir="rtl"] .slick-next {
+  right: auto;
+  left: -25px;
+}
+
+[dir="rtl"] .slick-next:before {
+  content: "←";
+}
+
+[dir="rtl"] .slick-dots {
+    direction: ltr;
+    text-align: center;
+}

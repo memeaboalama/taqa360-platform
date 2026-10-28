@@ -1,0 +1,18 @@
+<?php
+
+namespace Domain\{{ domain }}\{{ namespace }};
+
+use Illuminate\Database\Eloquent\Model;
+use App\Support\Repositories\Main\EloquentMainRepository;
+
+class {{ class }} extends EloquentMainRepository
+{
+    /*
+    * replace Model class param with your Repository Model
+    */
+
+    public function __construct(Model $model)
+    {
+        parent::__construct($model);
+    }
+}

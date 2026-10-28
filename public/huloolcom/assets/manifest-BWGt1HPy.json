@@ -1,0 +1,22 @@
+
+{
+  "short_name": "طاقة",
+  "name": "منصة طاقة | لوحة التحكم",
+  "description": "لوحة تحكم لإدارة المشاريع، المتخصصين، المستخدمين، والعمليات المالية في منصة طاقة.",
+  "icons": [
+    {
+      "src": "/assets/logo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/assets/logo.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#306FAA",
+  "background_color": "#111827"
+}

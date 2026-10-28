@@ -1,0 +1,115 @@
+version: '3'
+
+networks:
+    example:
+        driver: bridge
+
+services:
+    nginx:
+        container_name: nginx
+        image: nginx:latest
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "80:80"
+            - "443:443"
+        links:
+            - app
+        depends_on:
+            - app
+            - mysql
+        volumes:
+            - ./:/var/www
+            - ./docker-compose/nginx:/etc/nginx/conf.d/
+#            - /etc/letsencrypt/live/eats.cloud/fullchain.pem:/etc/nginx/live/eats.cloud/fullchain.pem
+#            - /etc/letsencrypt/live/eats.cloud/privkey.pem:/etc/nginx/live/eats.cloud/privkey.pem
+        networks:
+            - example
+
+    mysql:
+        container_name: mysql
+        image: mysql:8.0
+        restart: on-failure
+        ports:
+            - 3306:3306
+        volumes:
+            - ./docker-compose/mysql/data:/var/lib/mysql
+        environment:
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_USER: ${DB_USERNAME}
+            SERVICE_TAGS: dev
+            SERVICE_NAME: mysql
+        healthcheck:
+            test: [ "CMD", "mysql", "ping","-u ${DB_USERNAME}", "-p ${DB_PASSWORD}" ]
+            retries: 3
+            timeout: 5s
+        networks:
+            - example
+
+    phpmyadmin:
+        image: phpmyadmin
+        container_name: phpmyadmin
+        restart: always
+        ports:
+            - 3401:80
+        environment:
+            PMA_ARBITRARY: 1
+            PMA_HOST: 'mysql'
+            MYSQL_USER: ${DB_USERNAME}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            UPLOAD_LIMIT: 300M
+        depends_on:
+            - mysql
+        networks:
+            - example
+    redis:
+        image: redis:alpine
+        container_name: redis
+        ports:
+            - 6379:6379
+        command: redis-server --requirepass eats@sredis
+        volumes:
+            - './docker-compose/redis/data:/data'
+        healthcheck:
+            test: [ "CMD", "redis-cli", "ping" ]
+            retries: 3
+            timeout: 5s
+        networks:
+            - example
+
+    redis-commander:
+        image: rediscommander/redis-commander:latest
+        restart: always
+        environment:
+            REDIS_HOSTS: redis
+            REDIS_HOST: redis
+            REDIS_PORT: redis:6379
+            REDIS_PASSWORD: eats@sredis
+            HTTP_USER: root
+            HTTP_PASSWORD: root
+        ports:
+            - 8081:8081
+        networks:
+            - example
+    app:
+        container_name: eats
+        image: eats
+        build:
+            args:
+                user: abdelrahman
+                uid: 1000
+            context: ./
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        working_dir: /var/www/
+        volumes:
+            - ./:/var/www
+            - ./docker-compose/php/ini/local.ini:/usr/local/etc/php/conf.d/local.ini
+        networks:
+            - example
+        depends_on:
+            - mysql
+            - redis

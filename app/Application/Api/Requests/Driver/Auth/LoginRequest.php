@@ -1,0 +1,43 @@
+<?php
+
+namespace App\Application\Api\Requests\Driver\Auth;
+
+use App\Support\Rules\LatitudeRule;
+use App\Support\Rules\LongitudeRule;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class LoginRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, Rule|array|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'email'    =>  ['required','email'],
+            'password'    =>  ['required','string'],
+            'name'    =>  ['nullable','string'],
+            'location' => ['nullable'],
+            'location.latitude' => ['nullable', new LatitudeRule()],
+            'location.longitude' => ['nullable', new LongitudeRule()],
+            'device_token'    =>  ['nullable'],
+            'platform'    =>  ['nullable','in:web,ios,android'],
+        ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+
+    }
+}

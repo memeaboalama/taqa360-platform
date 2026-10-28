@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Application\{{ appName }}\Providers;
+
+use Illuminate\Support\ServiceProvider;
+use Route;
+
+class {{ className }} extends ServiceProvider
+{
+    /**
+     * Register services.
+     */
+    public function register(): void
+    {
+
+    }
+
+    /**
+     * Bootstrap services.
+     */
+    public function boot(): void
+    {
+        // routes
+        Route::prefix('{{ name_space }}')->namespace('Application\{{ appName }}\Controllers')->group(function () {
+            require app_path('Application/{{ appName }}/routes/web.php');
+        });
+        // views
+        $this->loadViewsFrom(app_path('Application/{{ appName }}/resources/views'), '{{ name_space }}');
+        // lang
+        $this->loadTranslationsFrom(app_path('Application/{{ appName }}/lang'), '{{ name_space }}');
+
+    }
+}

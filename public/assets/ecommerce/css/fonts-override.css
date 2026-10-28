@@ -1,0 +1,190 @@
+/* public/assets/css/custom-fonts.css */
+/* تطبيق الخط على كل العناصر بدون استثناء */
+
+*,
+*:before,
+*:after {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+                 sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+                 "Segoe UI Symbol", "Noto Color Emoji" !important;
+}
+
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+h1, h2, h3, h4, h5, h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+ruby,
+section,
+summary,
+time,
+mark,
+audio,
+video {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+                 sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+                 "Segoe UI Symbol", "Noto Color Emoji" !important;
+}
+
+/* فئات Bootstrap شائعة */
+.container,
+.container-fluid,
+.row,
+.col,
+.col-1, .col-2, .col-3, .col-4, .col-5, .col-6,
+.col-7, .col-8, .col-9, .col-10, .col-11, .col-12,
+.btn,
+.form-control,
+.form-select,
+.input-group,
+.nav,
+.navbar,
+.navbar-brand,
+.navbar-nav,
+.nav-link,
+.card,
+.card-body,
+.card-header,
+.card-footer,
+.modal,
+.modal-header,
+.modal-body,
+.modal-footer,
+.alert,
+.badge,
+.breadcrumb,
+.pagination,
+.tooltip,
+.popover,
+.carousel,
+.dropdown,
+.dropdown-menu,
+.dropdown-item,
+.tab-content,
+.tab-pane,
+.list-group,
+.list-group-item,
+.progress,
+.table,
+.d-flex,
+.justify-content-*,
+.align-items-* {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+                 sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+                 "Segoe UI Symbol", "Noto Color Emoji" !important;
+}
+
+/* فئات القالب الخاصة بك */
+.ecommerce-layout,
+.main-body,
+.header,
+.footer,
+.tap-top,
+.top-cls,
+.top_5,
+.loader-wrapper,
+.loader,
+.global-message {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+                 sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+                 "Segoe UI Symbol", "Noto Color Emoji" !important;
+}
+
+/* العناصر النصية بشكل خاص */
+body {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+                 sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+                 "Segoe UI Symbol", "Noto Color Emoji" !important;
+}
+
+p, span, h1, h2, h3, h4, h5, h6, a, strong, em, i, b {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+                 sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+                 "Segoe UI Symbol", "Noto Color Emoji" !important;
+}
+
+/* عناصر النماذج */
+input, textarea, select, option, button, label {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+                 sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+                 "Segoe UI Symbol", "Noto Color Emoji" !important;
+}
+
+/* إلغاء أي خطوط من Google Fonts أو غيرها */
+body, * {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+                 sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+                 "Segoe UI Symbol", "Noto Color Emoji" !important;
+}

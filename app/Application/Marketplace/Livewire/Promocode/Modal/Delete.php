@@ -1,0 +1,37 @@
+<?php
+
+namespace Application\Marketplace\Livewire\Promocode\Modal;
+
+use App\Domain\AppBase\Actions\Promocode\DestroyPromocodeAction;
+use Illuminate\Support\Facades\DB;
+use Jantinnerezo\LivewireAlert\LivewireAlert;
+use Livewire\Component;
+
+class Delete extends Component
+{
+    use LivewireAlert;
+
+    public int|null $element_id = null;
+    protected $listeners = ['deleteMerchantPromocode'];
+
+    public function deleteMerchantPromocode($id): void
+    {
+        $this->element_id = $id;
+        $this->emit('openModal', '#deleteMerchantPromocode');
+    }
+
+    public function destroy(DestroyPromocodeAction $destroyPromocodeAction): void
+    {
+        DB::beginTransaction();
+        $destroyPromocodeAction->handle($this->element_id);
+        $this->emit('closeModal', '#deleteMerchantPromocode');
+        $this->emit('refreshDatatable');
+        $this->alert('success', __('admin::home.Coupon code Deactivated Successfully'));
+        DB::commit();
+    }
+
+    public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application
+    {
+        return view('marketplace::livewire.promocode.modal.delete');
+    }
+}

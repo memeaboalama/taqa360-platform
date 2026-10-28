@@ -1,0 +1,43 @@
+<?php
+
+namespace App\Application\Api\Requests\ElmApp\Merchant;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class FetchMerchantsRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
+    public function authorize()
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
+    public function rules(): array
+    {
+        return [
+            'category'        =>  ['sometimes', 'nullable','exists:market_place_categories,id'],
+            'keyword'         =>  ['sometimes', 'nullable','string'],
+            'menu'            =>  ['sometimes', 'nullable','array'],
+            'menu.*'          =>  ['required_with:menu', 'exists:merchant_services,id'],
+            'main_category'   =>  ['sometimes', 'nullable','array'],
+            'main_category.*' =>  ['required_with:main_category', 'exists:main_categories,id'],
+            'sorting'         =>  ['sometimes', 'nullable','array'],
+            'sorting.*'       =>  ['required_with:sorting', 'in:rating,price,delivery'],
+            'status'          =>  ['sometimes','nullable','in:active,inactive'],
+            'region_id'       =>  ['sometimes','nullable','exists:regions,id'],
+            'city_id'         =>  ['sometimes','nullable','exists:cities,id'],
+            'is_open'         =>  ['sometimes','string','in:1,0'],
+            'paginated'       =>  ['sometimes','string','in:true,false'],
+            'per_page'        =>  ['sometimes','integer','max:20'],
+        ];
+    }
+}
