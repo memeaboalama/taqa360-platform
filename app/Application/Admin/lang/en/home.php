@@ -120,6 +120,7 @@ return [
     "Branch Select" => "Branch Selected",
     "Branch Data" => "Branch Data",
     "No branches available" => "No branches are registered for this merchant.",
+    "No services available" => "No services are available for this city and package.",
     "Branch Map" => "Branch Map",
     "CR Copy" => "CR Copy",
     "CREATED AT" => "CREATED AT",

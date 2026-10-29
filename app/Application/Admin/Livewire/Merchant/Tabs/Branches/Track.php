@@ -134,12 +134,22 @@ class Track extends Component
     }
     public function updateStatusRow($indx): void
     {
+        $indx = (int) $indx;
+        if (!isset($this->package_type_services[$indx])) {
+            return;
+        }
 
-        // if ($this->package_type_services[(int)$indx]['status'] == "active") {
-        //     $this->package_type_services[(int)$indx]['status'] = "inactive";
-        // } else {
-        //     $this->package_type_services[(int)$indx]['status'] = "active";
-        // }
+        $newStatus = ($this->package_type_services[$indx]['status'] ?? 'inactive') === 'active'
+            ? 'inactive'
+            : 'active';
+        $this->package_type_services[$indx]['status'] = $newStatus;
+
+        $typeServiceId = $this->package_type_services[$indx]['type_service_id'] ?? null;
+        if ($typeServiceId == 1) {
+            $this->status1 = $newStatus;
+        } elseif ($typeServiceId == 2) {
+            $this->status2 = $newStatus;
+        }
     }
     public function updateStatusRowValue($indx, $x): void
     {

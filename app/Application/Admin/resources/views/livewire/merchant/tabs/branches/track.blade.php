@@ -1,188 +1,128 @@
 <div>
-<div class="col-xl-12">
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card custom-card border-box-1">
+                <div class="card-header">
+                    <div class="card-title">
+                        @lang('admin::home.Branch Data')
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if($listBranches->isEmpty())
+                        <div class="alert alert-warning mb-3" role="alert">
+                            @lang('admin::home.No branches available')
+                        </div>
+                    @endif
 
-                <div class="card custom-card border-box-1">
-                    <div class="card-header">
-                        <div class="card-title">
-                            @lang('admin::home.Branch Data')
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="branch-menu" class="form-label fw-semibold">@lang('admin::home.Branch Select')</label>
+                            <select id="branch-menu" class="form-control"
+                                    wire:model.defer="branch_id"
+                                    wire:change="changeBranch()"
+                                    name="branch_id">
+                                <option value="">@lang('marketplace::home.Select')</option>
+                                @foreach($listBranches as $branch)
+                                    <option value="{{ $branch->id }}">{{ $branch->title }}</option>
+                                @endforeach
+                            </select>
+                            @error('branch_id') <span class="d-inline-block text-danger">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="branch-city" class="form-label fw-semibold">@lang('marketplace::home.City') <span class="text-danger">*</span></label>
+                            <select class="form-control" wire:model="city_id" id="branch-city">
+                                <option value="">@lang('marketplace::home.Select')</option>
+                                @foreach($cities as $city)
+                                    <option value="{{ $city->id }}">{{ $city->title }}</option>
+                                @endforeach
+                            </select>
+                            @error('city_id') <span class="d-inline-block text-danger">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="package_id" class="form-label fw-semibold">@lang('marketplace::home.Select Package')</label>
+                            <select class="form-control"
+                                    wire:model="package_id"
+                                    id="package_id">
+                                <option value="">@lang('marketplace::home.Select')</option>
+                                @foreach($packages as $package)
+                                    <option value="{{ $package->id }}">{{ $package->title."    (".$package->commission.")" }}</option>
+                                @endforeach
+                            </select>
+                            @error('package_id') <span class="d-inline-block text-danger">{{ $message }}</span> @enderror
                         </div>
                     </div>
-                        @if($listBranches->isEmpty())
-                            <div class="alert alert-warning mx-3 mt-3" role="alert">
-                                @lang('admin::home.No branches available')
-                            </div>
-                        @endif
-<div class="row gy-3 mt-2">
-<div class="col-xl-12">
-                                                        <label for="branch-menu"
-                                                               class="form-label text-black ">@lang('admin::home.Branch Select')</label>
 
-                                                        <select class="form-control"
-                                                                wire:model.defer="branch_id"
-                                                                wire:change="changeBranch()"
-                                                                name="branch_id">
-                                                            <option value="">@lang('marketplace::home.Select')</option>
-                                                            @foreach($listBranches as $branch)
-                                                                <option
-                                                                    value="{{ $branch->id }}">{{ $branch->title }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                    @error('branch_id') <span
-                                                        class="d-inline-block text-danger">{{ $message }}</span> @enderror
-
-<div class="row col-xl-12">
-                                            <div class="col-xl-4" hidden>
-                                                <label for="branch-country"
-                                                       class="form-label text-black ">@lang('marketplace::home.Country') <span class="text-danger">*</span></label>
-
-                                                <div wire:ignore>
-                                                    <select class="form-control selectCountryBrn"
-                                                            data-trigger
-                                                            name="country_id"
-                                                            id="branch-country-add">
-                                                        <option value="">@lang('marketplace::home.Select')</option>
-                                                        @foreach($counties as $country)
-                                                            <option
-                                                                value="{{ $country  }}">{{ $country->title }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                                @error('country_id') <span
-                                                    class="d-inline-block text-danger">{{ $message }}</span> @enderror
-                                            </div>
-
-                                            <div class="col-xl-4" hidden>
-                                                <div>
-                                                    <label for="branch-city" class="form-label text-black">@lang('company::home.Region') <span class="text-danger">*</span></label>
-                                                    <select class="form-control selectCityBrn"
-                                                            wire:model="region_id"
-                                                            id="branch-city">
-                                                        <option value="">@lang('company::home.select')</option>
-                                                        @foreach($regions as $region)
-                                                            <option value="{{ $region->id }}">{{ $region->title }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                                @error('region_id') <span
-                                                    class="d-inline-block text-danger">{{ $message }}</span> @enderror
-                                            </div>
-
-                                            <div class="col-xl-4">
-                                                <div>
-                                                    <label for="branch-city" class="form-label text-black">@lang('marketplace::home.City') <span class="text-danger">*</span></label>
-                                                    <select class="form-control selectCityBrn"
-                                                            wire:model="city_id"
-                                                            id="branch-city">
-                                                        <option value="">@lang('marketplace::home.Select')</option>
-                                                        @foreach($cities as $city)
-                                                            <option value="{{ $city->id }}">{{ $city->title }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                                @error('city_id') <span
-                                                    class="d-inline-block text-danger">{{ $message }}</span> @enderror
-                                            </div>
-                                            
-                                            <div class="col-xl-4">
-                                                <div>
-                                                    <label for="package_id"
-                                                           class="form-label text-black">@lang('marketplace::home.Select Package')</label>
-                                                    <select class="form-control"
-                                                            wire:model.lazy="package_id"
-                                                            wire:model="package_id"
-                                                            wire:change="updatedPackageId()"
-                                                            id="package_id">
-                                                        <option value="">@lang('marketplace::home.Select')</option>
-                                                        @foreach($packages as $package)
-                                                            <option
-                                                            value="{{ $package->id }}">{{ $package->title."    (".$package->commission.")" }}
-                                                            
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                                @error('package_id') <span
-                                                    class="d-inline-block text-danger">{{ $message }}</span> @enderror
-                                            </div>
-
+                    <div class="table-responsive mt-4">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>@lang('admin::home.servicer type')</th>
+                                <th>@lang('admin::home.commission percentage')</th>
+                                <th>@lang('admin::home.discount percentage')</th>
+                                <th class="text-center">@lang('admin::home.status')</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @forelse($package_type_services as $index => $package_type_service)
+                                @php($serviceName = $package_type_service['type_service']['name'] ?? '')
+                                <tr>
+                                    <td>
+                                        <input wire:model.defer="package_type_services.{{ $index }}.type_service_id" type="hidden" />
+                                        <input value="{{ $serviceName ? __('admin::home.'.$serviceName) : '-' }}" class="form-control" disabled />
+                                    </td>
+                                    <td>
+                                        <input wire:model.defer="package_type_services.{{ $index }}.commission" disabled class="form-control text-center" />
+                                    </td>
+                                    <td>
+                                        <input wire:model.defer="package_type_services.{{ $index }}.discount_rate" class="form-control text-center" />
+                                    </td>
+                                    <td>
+                                        <div class="custom-toggle-switch d-flex align-items-center justify-content-center">
+                                            <input id="active{{ $index }}" type="checkbox" {{ ($package_type_service['status'] ?? '') == 'active' ? 'checked' : '' }} />
+                                            <label for="active{{ $index }}" class="label-success mb-0" wire:click="updateStatusRow('{{ $index }}')"></label>
                                         </div>
-                                        </div>
-                                        </div>
-                                        <div class="row gy-3 mt-2">
-                                            <div class="col-md-12">
-                                            <div class="form-group">
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">
+                                        @lang('admin::home.No services available')
+                                    </td>
+                                </tr>
+                            @endforelse
+                            </tbody>
+                        </table>
+                    </div>
 
-<table class="table">
-    <thead>
-    <th>@lang('admin::home.servicer type') </th>
-    <th>@lang('admin::home.commission percentage')</th>
-    <th>@lang('admin::home.discount percentage')</th>
-    <th>@lang('admin::home.status')</th>
-
-    </thead>
-
-    <tbody>
-    @foreach($package_type_services as $index =>$package_type_service)
-        <tr>
-            <input wire:model.defer="package_type_services.{{$index}}.type_service_id" class="form-control"  type="hidden" />
-            <td>
-            <input value="@lang('admin::home.'.($package_type_services[$index]['type_service']['name']))"  class="form-control" disabled />
-                            </td>
-
-                            <td>
-                            <input wire:model.defer="package_type_services.{{$index}}.commission" disabled class="form-control"  />
-</td>
-                            <td>
-                            <input wire:model.defer="package_type_services.{{$index}}.discount_rate"  class="form-control"  />
-           </td>
-                            <td>
-           
-            <div class="custom-toggle-switch d-flex align-items-center mb-4 mt-3">
-            <input id="{{'active'.$index}}" 
-                       type="checkbox" {{ $package_type_services[$index]['status'] == "active"  ? 'checked' : '' }} />
-                <label for="{{'active'.$index}}" class="label-success"
-                 wire:click="updateStatusRow('{{ $index }}')"  wire:ignore.self></label>
-            </div>
-                    </td>
-            
-
-        </tr>
-
-    @endforeach
-
-
-    </tbody>
-</table>
-</div>
-                                                </div>
-                                                </div>
-                                                <div class="row gy-3 mt-3">
-                <div class="col-xl-12  text-end mt-4">
-                <button wire:click='updateBranchData' class="btn btn-success" @disabled($listBranches->isEmpty())>
-                                <span class="indicator-label" wire:loading.class="d-none">
-                                    @lang('marketplace::home.Save')
-                                </span>
-                <span class="d-none" wire:loading.class.remove="d-none">
-                                    @lang('marketplace::home.Wait') <span
-                        class="spinner-border spinner-border-sm align-middle ms-2"></span>
-                                </span>
-            </button>
+                    <div class="d-flex justify-content-end mt-4">
+                        <button wire:click="updateBranchData" class="btn btn-success" @disabled($listBranches->isEmpty())>
+                            <span class="indicator-label" wire:loading.class="d-none">
+                                @lang('marketplace::home.Save')
+                            </span>
+                            <span class="d-none" wire:loading.class.remove="d-none">
+                                @lang('marketplace::home.Wait') <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                            </span>
+                        </button>
+                    </div>
                 </div>
             </div>
-</div>
+        </div>
 
-</div>
-<div class="col-xl-12">
-                <div class="card custom-card border-box-1">
-                    <div class="card-header">
-                        <div class="card-title">
-                            @lang('admin::home.Branch Map')
-                        </div>
+        <div class="col-12">
+            <div class="card custom-card border-box-1 overflow-hidden">
+                <div class="card-header">
+                    <div class="card-title">
+                        @lang('admin::home.Branch Map')
                     </div>
-    <div class="box-body" >
-        <div id="map" style="height: 600px;"></div>
+                </div>
+                <div class="card-body p-0" wire:ignore>
+                    <div id="map" style="height: 600px; width: 100%;"></div>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 </div>
     @push('js')
     <script>
@@ -246,7 +186,7 @@
                     var marker = new google.maps.Marker({
                         position: new google.maps.LatLng(pos),
                         map: map,
-                        title: 'موقعك الحالي',
+                        title: 'ظ…ظˆظ‚ط¹ظƒ ط§ظ„ط­ط§ظ„ظٹ',
                         draggable: true
                     });
                     markers.push(marker);
@@ -340,7 +280,7 @@
 
             // Create the search box and link it to the UI element.
             var input = document.getElementById('pac-input-create');
-            $("#pac-input-create").val("أبحث هنا ");
+            $("#pac-input-create").val("ط£ط¨ط­ط« ظ‡ظ†ط§ ");
             var searchBox = new google.maps.places.SearchBox(input);
 
 
@@ -427,6 +367,10 @@
 
             /* ----------------------------- Initialize Map ----------------------------- */
             function initMap() {
+                if (map) {
+                    google.maps.event.trigger(map, "resize");
+                    return;
+                }
                 map = new google.maps.Map(document.getElementById("map"), {
                     center: {
                         lat: 24.774265,
@@ -514,9 +458,15 @@
                 console.log(event.latLng.lat());
                 console.log(event.latLng.lng());
             }
+
+            /* Resize map when the branches tab becomes visible */
+            document.addEventListener('shown.bs.tab', function (event) {
+                if (event.target && event.target.id === 'branches-tab' && map) {
+                    google.maps.event.trigger(map, "resize");
+                }
+            });
         </script>
         <!-- <script src="https://maps.googleapis.com/maps/api/js?key={{config('services.google_maps.api_key')}}&callback=initMap"></script> -->
         <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCIJH6jbULC8MVaAX2LyxIQEBwWPjjeIF0&callback=initMap"></script>
     @endpush
-</div>
 

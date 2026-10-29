@@ -49,4 +49,14 @@ edu-solutions-platform.zip
 sql_management.shrr
 .rr.yaml
 public/assets/react-app/
-*.logtaqa360-platform-upload/
+*.log
+
+# Local backup files
+/taqa360-platform-upload/
+/temp_check_branches.php
+
+# Vendor assets - do not upload
+/public/assets/vendor/
+
+# Sensitive environment file without a leading dot
+/env

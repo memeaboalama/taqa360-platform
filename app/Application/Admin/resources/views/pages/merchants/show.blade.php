@@ -32,9 +32,9 @@
                                 <ul class="nav nav-tabs mb-0 tab-style-6 justify-content-start" id="myTab"
                                     role="tablist">
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link " id="info-tab" data-bs-toggle="tab"
+                                        <button class="nav-link active" id="info-tab" data-bs-toggle="tab"
                                                 data-bs-target="#info-tab-pane" type="button" role="tab"
-                                                aria-controls="info-tab-pane" aria-selected="false"><i
+                                                aria-controls="info-tab-pane" aria-selected="true"><i
                                                 class="ri-bill-line me-1 align-middle d-inline-block"></i>{{ __('admin::home.merchantInfo') }}
                                         </button>
                                     </li>
@@ -56,9 +56,9 @@
                                     </li>
 
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" id="menu-tab" data-bs-toggle="tab"
+                                        <button class="nav-link" id="menu-tab" data-bs-toggle="tab"
                                                 data-bs-target="#menu-tab-pane" type="button" role="tab"
-                                                aria-controls="menu-tab-pane" aria-selected="true"><i
+                                                aria-controls="menu-tab-pane" aria-selected="false"><i
                                                 class="ri-file-3-fill me-1 align-middle d-inline-block"></i>{{ __('admin::home.menu') }}
                                         </button>
                                     </li>
@@ -108,7 +108,7 @@
                         <div class="p-3">
                             <div class="tab-content" id="myTabContent">
 
-                                <div class="tab-pane fade " id="info-tab-pane" role="tabpanel"
+                                <div class="tab-pane fade show active" id="info-tab-pane" role="tabpanel"
                                      aria-labelledby="info-tab" wire:ignore.self>
                                     <livewire:admin::merchant.tabs.info.info :merchant_id="$id"/>
                                 </div>
@@ -123,7 +123,7 @@
                                     <livewire:admin::merchant.tabs.info.files :merchant_id="$id"/>
                                 </div>
 
-                                <div class="tab-pane fade show active" id="menu-tab-pane" role="tabpanel"
+                                <div class="tab-pane fade" id="menu-tab-pane" role="tabpanel"
                                      aria-labelledby="menu-tab" wire:ignore.self>
                                     <div class="row">
                                         <div class="col-xl-12">

@@ -109,6 +109,7 @@ return [
     "Branch Select" => "الفرع المختار",
     "Branch Data" => "بيانات الفرع ",
     "No branches available" => "لا توجد فروع مسجلة لهذا المتجر.",
+    "No services available" => "لا توجد خدمات متاحة لهذه المدينة والباقة.",
     "Branch Map" => "خريطة الفروع ",
     "CR Copy" => "نسخ السجل التجاري ",
     "CREATED AT" => "تم انشاءه في ",

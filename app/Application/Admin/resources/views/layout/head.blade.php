@@ -54,8 +54,7 @@
         rel="stylesheet">
 
     <!-- Crop Image Css -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.6/cropper.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" />
+    <link rel="stylesheet" href="{{ asset('assets/vendor/libs/cropperjs/cropper.min.css') }}" />
     @livewireStyles
 
     @stack('css')
