@@ -70,6 +70,7 @@ class AdContentSeeder extends Seeder
     private function seedBannerContent($products)
     {
         $bannerPlacements = [
+            'home_hero_slider' => 3,
             'home_featured_grid' => 4,
         ];
 
@@ -81,8 +82,10 @@ class AdContentSeeder extends Seeder
             }
 
             $selectedProducts = $products->random(min($count, $products->count()));
+            $defaultSliderImg = 'assets/ecommerce/images/slider/4.webp';
 
             foreach ($selectedProducts as $index => $product) {
+                $img = $key === 'home_hero_slider' ? $defaultSliderImg : 'assets/images/ecommerce/Product/1.jpg';
                 AdBanner::firstOrCreate(
                     [
                         'placement_id' => $placement->id,
@@ -93,8 +96,8 @@ class AdContentSeeder extends Seeder
                         'subtitle' => ['en' => 'Shop Now', 'ar' => 'تسوق الآن'],
                         'content' => [
                             'images' => [
-                                'desktop' => 'assets/images/ecommerce/Product/1.jpg',
-                                'mobile' => 'assets/images/ecommerce/Product/1.jpg',
+                                'desktop' => $img,
+                                'mobile' => $img,
                             ],
                             'alt_text' => ['en' => $product->title, 'ar' => $product->title],
                         ],

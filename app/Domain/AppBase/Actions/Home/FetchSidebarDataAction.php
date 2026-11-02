@@ -31,14 +31,14 @@ class FetchSidebarDataAction
                 ->toArray();
 
             if (!empty($productIds)) {
-                return $this->itemRepository->builder(['*'], [], [], 'desc')
+                return $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                     ->whereIn('id', $productIds)
                     ->get();
             }
         }
 
-        return Cache::remember("sidebar_new_products_fallback_" . app()->getLocale(), 1800, function() use ($limit) {
-            return $this->itemRepository->builder(['*'], [], ['status' => ActiveEnum::ACTIVE->value], 'desc')
+        return Cache::remember("storefront_sidebar_new_products_v2_" . app()->getLocale() . '_' . $limit, 1800, function() use ($limit) {
+            return $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->take($limit)
                 ->get();
         });
@@ -61,14 +61,14 @@ class FetchSidebarDataAction
                 ->toArray();
 
             if (!empty($productIds)) {
-                return $this->itemRepository->builder(['*'], [], [], 'desc')
+                return $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                     ->whereIn('id', $productIds)
                     ->get();
             }
         }
 
-        return Cache::remember("sidebar_recently_viewed_fallback_" . app()->getLocale(), 1800, function() use ($limit) {
-            return $this->itemRepository->builder(['*'], [], ['status' => ActiveEnum::ACTIVE->value])
+        return Cache::remember("storefront_sidebar_recently_viewed_v2_" . app()->getLocale() . '_' . $limit, 1800, function() use ($limit) {
+            return $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->inRandomOrder()
                 ->take($limit)
                 ->get();
@@ -77,8 +77,8 @@ class FetchSidebarDataAction
 
     public function getSuggestedProducts(int $limit = 6)
     {
-        return Cache::remember('sidebar_suggested_products_' . app()->getLocale(), 1800, function() use ($limit) {
-            return $this->itemRepository->builder(['*'], [], ['status' => ActiveEnum::ACTIVE->value])
+        return Cache::remember('storefront_sidebar_suggested_products_v2_' . app()->getLocale() . '_' . $limit, 1800, function() use ($limit) {
+            return $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->inRandomOrder()
                 ->take($limit)
                 ->get();

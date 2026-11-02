@@ -33,7 +33,7 @@ class ProductController extends Controller
     public function fetch(FetchProductRequest $request, FetchItemsAction $fetchItemsAction): JsonResponse
     {
         try {
-            $data = $fetchItemsAction->handle($request->validated());
+            $data = $fetchItemsAction->handle($request->validated(), storefrontOnly: true);
 
             if (isset($data["code"]) && $data["code"] == 400) {
                 return $this->errorResponse(400, $data["message"]);
@@ -83,7 +83,7 @@ class ProductController extends Controller
     public function showItemsByCategory(int $category_id, Request $request, FetchItemsAction $fetchItemsAction): JsonResponse
     {
         try {
-            $items = $fetchItemsAction->getByCategory($category_id, $request->all());
+            $items = $fetchItemsAction->getByCategory($category_id, $request->all(), storefrontOnly: true);
 
             if (!$items) {
                 return $this->errorResponse(400, 'Data not found');
@@ -118,8 +118,13 @@ class ProductController extends Controller
 
     private function getProductWithDetails($itemId)
     {
-        return Cache::remember("product_details_{$itemId}", 3600, function () use ($itemId) {
-            $product = $this->itemRepository->find(['*'], ['id' => $itemId, 'status' => 'active']);
+        return Cache::remember("storefront_product_details_{$itemId}_v2", 3600, function () use ($itemId) {
+            $product = Item::query()
+                ->with(['merchant', 'mainCategory', 'subCategory', 'childCategory', 'files'])
+                ->where('id', $itemId)
+                ->where('status', 'active')
+                ->availableForStorefront()
+                ->first();
 
             if ($product && method_exists($product, 'images')) {
                 $product->images;
@@ -131,8 +136,14 @@ class ProductController extends Controller
 
     private function getRelatedProducts($product)
     {
-        return Cache::remember("related_products_{$product->id}", 1800, function () use ($product) {
-            return $this->itemRepository->builder(['*'], [], ['main_category_id' => $product->main_category_id])->limit(5)->get();
+        return Cache::remember("storefront_related_products_{$product->id}_v2", 1800, function () use ($product) {
+            return Item::query()
+                ->where('status', 'active')
+                ->availableForStorefront()
+                ->where('main_category_id', $product->main_category_id)
+                ->where('id', '!=', $product->id)
+                ->limit(5)
+                ->get();
         });
     }
 

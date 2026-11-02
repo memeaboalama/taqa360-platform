@@ -397,7 +397,7 @@
     $isCodOrder = in_array($paymentMethodKey, ['cod','cash','cash_on_delivery','cashondelivery'], true);
     $payStatus = $resolvedPaymentStatus ?: (($payment && (float) ($payment->amount ?? 0) > 0) ? 'paid' : ($order?->payment_status ?: null));
     if ($isCodOrder && !in_array($payStatus, ['paid', 'pending', 'failed', 'initiated', 'partially_paid', 'partial'], true)) {
-        $payStatus = 'paid';
+        $payStatus = 'pending';
     }
     $payLabel = match($payStatus) {
                                 'paid' => __('admin::home.Payment Status paid'),

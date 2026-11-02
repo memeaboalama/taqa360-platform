@@ -54,7 +54,12 @@
 
 
 <div class="parent">
+    <div role="status" style="max-width:640px;margin:0 auto 16px;padding:12px 16px;border:1px solid #f0d99a;border-radius:8px;background:#fff8e1;color:#624b00;font:14px/1.7 sans-serif;">
+        @lang('ecommerce::ecommerce.wallet_payment_help')
+        <a href="{{ route('account.wallet.deposit') }}" style="display:inline-block;margin-inline-start:8px;">@lang('ecommerce::ecommerce.back_to_wallet')</a>
+    </div>
     <div class="mysr-order-form"></div>
+    <div id="wallet-payment-error" role="alert" style="display:none;max-width:640px;margin:16px auto;padding:12px 16px;border:1px solid #f1aeb5;border-radius:8px;background:#f8d7da;color:#842029;font:14px/1.7 sans-serif;"></div>
 </div>
 
 
@@ -68,7 +73,18 @@
 
 </script>
 <script>
+    function showWalletPaymentError(message) {
+        var errorElement = document.getElementById('wallet-payment-error');
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+    }
+
     function initMoyasar() {
+        if (typeof Moyasar === 'undefined') {
+            showWalletPaymentError(@json(__('ecommerce::ecommerce.wallet_payment_unavailable')));
+            return;
+        }
+
         Moyasar.init({
             // Required
             // Specify where to render the form
@@ -107,6 +123,7 @@
                             resolve({});
                         }
                         , error: function (jqXHR, textStatus, errorThrown) {
+                            showWalletPaymentError(@json(__('ecommerce::ecommerce.wallet_payment_save_failed')));
                             reject();
                         }
                     });
@@ -133,7 +150,11 @@
         });
     }
 
-    initMoyasar();
+    try {
+        initMoyasar();
+    } catch (error) {
+        showWalletPaymentError(@json(__('ecommerce::ecommerce.wallet_payment_unavailable')));
+    }
 
 </script>
 

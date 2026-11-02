@@ -862,10 +862,10 @@
                         @include('ecommerce::pages.account.wallet._deposit', ['hide_header' => true])
                     @elseif($section === 'wallet_withdraw')
                         @include('ecommerce::pages.account.wallet._withdraw', ['hide_header' => true])
-                    @else
+                    @elseif($section === 'addresses')
                         @forelse($addresses as $address)
                             <article class="address-card">
-                                <strong>{{ $address->name ?? __('ecommerce::ecommerce.address') }}</strong>
+                                <strong>{{ $address->title ?? __('ecommerce::ecommerce.address') }}</strong>
                                 <p>{{ $address->address ?? $address->street ?? '-' }}</p>
                             </article>
                         @empty

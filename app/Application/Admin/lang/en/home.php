@@ -157,6 +157,8 @@ return [
     "Employee Name" => "Employee Name",
     "Employees" => "Employees",
     "Files" => "Files",
+    "Images" => "Images",
+    "No images uploaded yet" => "No images uploaded yet",
     "Update" => "Update",
     "Delete Employee" => "Delete Employee",
     "Employee Created Successfully" => "Employee Created Successfully",

@@ -555,6 +555,7 @@
                 <!-- Our Service end -->
 
                 <!-- Testimonial Start -->
+                @if(collect($testimonials ?? [])->isNotEmpty())
                 <div class="theme-card ">
                     <h5 class="title-border">Testiminial</h5>
                     <div class="testimonial home_2_testimonial">
@@ -562,60 +563,33 @@
                             <div class="row">
                                 <div class="col-md-12 col-lg-12">
                                     <div class="testimonial_slide owl-carousel owl-theme">
-                                        <div class="testimonial_sec">
-                                            <div>
-                                                <img src="assets/images/testimonial/1.png" alt="testimonialimage" >
-                                                <p>
-                                                    <span class="quote_left">
-                                                        <i class="fa fa-quote-left" aria-hidden="true"></i>
-                                                    </span>
-                                                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna
-                                                    <span class="quote_right">
-                                                        <i class="fa fa-quote-right" aria-hidden="true"></i>
-                                                    </span>
-                                                </p>
-                                                <h3>Ethen Mark</h3>
-                                                <h5>Director</h5>
+                                        @foreach($testimonials as $testimonial)
+                                            <div class="testimonial_sec">
+                                                <div>
+                                                    @if(!empty($testimonial['image']))
+                                                        <img src="{{ asset($testimonial['image']) }}" alt="{{ $testimonial['name'] }}">
+                                                    @endif
+                                                    <p>
+                                                        <span class="quote_left">
+                                                            <i class="fa fa-quote-left" aria-hidden="true"></i>
+                                                        </span>
+                                                        {{ $testimonial['content'] }}
+                                                        <span class="quote_right">
+                                                            <i class="fa fa-quote-right" aria-hidden="true"></i>
+                                                        </span>
+                                                    </p>
+                                                    <h3>{{ $testimonial['name'] }}</h3>
+                                                    <h5>{{ $testimonial['position'] }}</h5>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="testimonial_sec">
-                                            <div>
-                                                <img src="assets/images/testimonial/2.png" alt="testimonialimage" >
-                                                <p>
-                                                    <span class="quote_left">
-                                                        <i class="fa fa-quote-left" aria-hidden="true"></i>
-                                                    </span>
-                                                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna
-                                                    <span class="quote_right">
-                                                        <i class="fa fa-quote-right" aria-hidden="true"></i>
-                                                    </span>
-                                                </p>
-                                                <h3>Suzen Desoza</h3>
-                                                <h5>Director</h5>
-                                            </div>
-                                        </div>
-                                        <div class="testimonial_sec">
-                                            <div>
-                                                <img src="assets/images/testimonial/3.png" alt="testimonialimage" >
-                                                <p>
-                                                    <span class="quote_left">
-                                                        <i class="fa fa-quote-left" aria-hidden="true"></i>
-                                                    </span>
-                                                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna.
-                                                    <span class="quote_right">
-                                                        <i class="fa fa-quote-right" aria-hidden="true"></i>
-                                                    </span>
-                                                </p>
-                                                <h3>John Deo</h3>
-                                                <h5>Director</h5>
-                                            </div>
-                                        </div>
+                                        @endforeach
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+                @endif
                 <!-- Testimonial End -->
 
             </div>

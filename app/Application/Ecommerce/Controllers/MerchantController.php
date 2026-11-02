@@ -21,11 +21,13 @@ class MerchantController extends Controller
     {
         $query = Merchant::query()
             ->where('status', 'active')
-            ->whereHas('items', fn($q) => $q->where('status', 'active'));
+            ->whereHas('branches', fn ($q) => $q->where('status', 1))
+            ->whereHas('items', fn($q) => $q->where('status', 'active')->availableForStorefront());
 
         if ($request->has('category') && $request->category != 'all') {
              $query->whereHas('items', function ($q) use ($request) {
                 $q->where('status', 'active')
+                    ->availableForStorefront()
                     ->where('main_category_id', $request->category);
             });
         }
@@ -59,8 +61,8 @@ class MerchantController extends Controller
 
 
 
-        $categories = \Domain\MarketPlace\Models\Catalog\Category::whereHas('items.merchant', function($q) {
-            $q->where('status', 'active');
+        $categories = \Domain\MarketPlace\Models\Catalog\Category::whereHas('items', function ($q) {
+            $q->where('status', 'active')->availableForStorefront();
         })->get();
 
 
@@ -75,11 +77,13 @@ class MerchantController extends Controller
     {
         $query = Merchant::query()
             ->where('status', 'active')
-            ->whereHas('items', fn($q) => $q->where('status', 'active'));
+            ->whereHas('branches', fn ($q) => $q->where('status', 1))
+            ->whereHas('items', fn($q) => $q->where('status', 'active')->availableForStorefront());
 
         if ($request->has('category') && $request->category != 'all') {
             $query->whereHas('items', function ($q) use ($request) {
                 $q->where('status', 'active')
+                    ->availableForStorefront()
                     ->where('main_category_id', $request->category);
             });
         }
@@ -99,8 +103,8 @@ class MerchantController extends Controller
         };
 
         $merchants = $query->paginate($request->get('per_page', 12))->withQueryString();
-        $categories = \Domain\MarketPlace\Models\Catalog\Category::whereHas('items.merchant', function ($q) {
-            $q->where('status', 'active');
+        $categories = \Domain\MarketPlace\Models\Catalog\Category::whereHas('items', function ($q) {
+            $q->where('status', 'active')->availableForStorefront();
         })->get();
 
         return view('ecommerce::pages.merchant.merchants', compact('merchants', 'categories'));
@@ -118,7 +122,11 @@ class MerchantController extends Controller
 
     private function handleRequest(Merchant $merchant, Request $request, $isFilterRequest = false)
     {
-        if ($merchant->status !== 'active' || !$merchant->items()->where('status', 'active')->exists()) {
+        if (
+            $merchant->status !== 'active' ||
+            !$merchant->branches()->where('status', 1)->exists() ||
+            !$merchant->items()->where('status', 'active')->availableForStorefront()->exists()
+        ) {
             abort(404);
         }
 

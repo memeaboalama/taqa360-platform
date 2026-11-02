@@ -6,6 +6,7 @@ use App\Support\Enum\ChannelTypesEnum;
 use App\Support\Enum\PaymentMethod;
 use App\Support\Rules\IsValidPhone;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class PlaceWebOrderRequest extends FormRequest
@@ -46,9 +47,16 @@ class PlaceWebOrderRequest extends FormRequest
         if ($this->address_id === 'new') {
             $rules['new_address_title'] = ['required', 'string', 'max:100'];
             $rules['new_address_country_id'] = ['required', 'exists:countries,id'];
-            $rules['new_address_city_id'] = ['required', 'exists:cities,id'];
+            $rules['new_address_city_id'] = [
+                'required',
+                Rule::exists('cities', 'id')
+                    ->where('country_id', $this->input('new_address_country_id'))
+                    ->where('status', 'active'),
+            ];
             $rules['new_address_district_id'] = ['nullable'];
             $rules['new_address_address'] = ['required', 'string', 'max:500'];
+            $rules['new_address_latitude'] = ['required', 'numeric', 'between:-90,90'];
+            $rules['new_address_longitude'] = ['required', 'numeric', 'between:-180,180'];
         }
 
         return $rules;

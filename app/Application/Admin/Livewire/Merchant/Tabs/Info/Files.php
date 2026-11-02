@@ -8,7 +8,7 @@ use Livewire\Component;
 
 class Files extends Component
 {
-    public $merchant, $diskName = 'fileDisk';
+    public $merchant, $diskName = 'fileDisk', $mode = 'files';
     public $owner_id,
         $owner_id_original_name,
         $company_logo,
@@ -44,8 +44,9 @@ class Files extends Component
         $vat_certificated_obj,
         $signed_contract_copy_obj;
 
-    public function mount($merchant_id, FetchSingleMerchantAction $fetchSingleMerchantAction)
+    public function mount($merchant_id, FetchSingleMerchantAction $fetchSingleMerchantAction, $mode = 'files')
     {
+        $this->mode = in_array($mode, ['files', 'images'], true) ? $mode : 'files';
         $this->merchant = $fetchSingleMerchantAction->handle($merchant_id);
         $this->fillData($this->merchant);
     }

@@ -39,12 +39,20 @@
         }
         .hero-slide.active { display: flex; }
 
+        html[dir="ltr"] .hero-slide {
+            direction: ltr;
+        }
+
         /* ---- Right side: text content ---- */
         .hero-content {
             flex: 0 0 auto;
             width: 32%;
             text-align: right;
             z-index: 2;
+        }
+
+        html[dir="ltr"] .hero-content {
+            text-align: left;
         }
 
         .hero h1 {
@@ -1046,8 +1054,37 @@
     <div id="home" class="container home-page">
         @php
             $heroSlides = collect($mainSlider ?? [])
-                ->filter(fn ($slide) => $slide->desktop_image_url || $slide->tablet_image_url || $slide->mobile_image_url)
+                ->map(function ($slide) {
+                    if (is_array($slide)) {
+                        $slide = (object) $slide;
+                    }
+                    $defaultImg = asset('assets/ecommerce/images/slider/4.webp');
+                    $img = $slide->desktop_image_url
+                        ?? $slide->tablet_image_url
+                        ?? $slide->mobile_image_url
+                        ?? ($slide->image_desktop ?? null)
+                        ?? ($slide->image ?? null)
+                        ?? null;
+
+                    if ($img && !filter_var($img, FILTER_VALIDATE_URL) && !str_starts_with($img, '/') && file_exists(public_path($img))) {
+                        $img = asset($img);
+                    }
+
+                    $slide->resolved_image = $img ?: $defaultImg;
+                    return $slide;
+                })
                 ->values();
+
+            if ($heroSlides->isEmpty()) {
+                $heroSlides = collect([
+                    (object) [
+                        'localized_title' => __('ecommerce::ecommerce.home_hero_title', [], $currentLocale),
+                        'localized_subtitle' => __('ecommerce::ecommerce.home_hero_subtitle', [], $currentLocale),
+                        'click_url' => '#products',
+                        'resolved_image' => asset('assets/ecommerce/images/slider/4.webp'),
+                    ],
+                ]);
+            }
         @endphp
 
         @if($heroSlides->isNotEmpty())
@@ -1090,10 +1127,10 @@
                                     <button class="hero-gallery-card {{ $galleryIndex === $idx ? 'is-current' : '' }}"
                                             type="button"
                                             data-index="{{ $galleryIndex }}"
-                                            aria-label="{{ $gallerySlide->localized_title ?: __('ecommerce::ecommerce.home_hero_title', [], $currentLocale) }}">
+                                            aria-label="{{ (is_object($gallerySlide) && !empty($gallerySlide->localized_title)) ? $gallerySlide->localized_title : __('ecommerce::ecommerce.home_hero_title', [], $currentLocale) }}">
                                         <img
-                                            src="{{ $gallerySlide->desktop_image_url ?: $gallerySlide->tablet_image_url ?: $gallerySlide->mobile_image_url ?: asset('assets/ecommerce/images/slider/4.webp') }}"
-                                            alt="{{ $gallerySlide->getAltText($currentLocale) ?: $gallerySlide->localized_title }}"
+                                            src="{{ $gallerySlide->resolved_image ?? asset('assets/ecommerce/images/slider/4.webp') }}"
+                                            alt="{{ (is_object($gallerySlide) && method_exists($gallerySlide, 'getAltText')) ? $gallerySlide->getAltText($currentLocale) : ($gallerySlide->localized_title ?? '') }}"
                                             loading="{{ $galleryIndex === $idx ? 'eager' : 'lazy' }}">
                                     </button>
                                 @endforeach

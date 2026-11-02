@@ -59,6 +59,13 @@ class ItemRepository extends EloquentMainRepository
         return $this->builder()->where('merchant_id', $merchant_id);
     }
 
+    public function storefrontQuery(array $conditions = []): Builder
+    {
+        return $this->modal->newQuery()
+            ->availableForStorefront()
+            ->where($conditions);
+    }
+
     public function getAllItemsAsBuilder(array $cols, array $with): Builder
     {
         return $this->builder($cols, $with, [], 'desc');
@@ -93,7 +100,8 @@ public function countMenuItems(int $merchant_id): int
     {
         return $this->modal->with($with)
                           ->where('merchant_id', $merchant_id)
-                          ->where('status', 'active');
+                          ->where('status', 'active')
+                          ->availableForStorefront();
     }
 
     public function filterMerchantItems(array $filters = [], int $merchant_id, array $with = []): Builder

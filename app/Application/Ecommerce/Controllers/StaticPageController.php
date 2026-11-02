@@ -93,9 +93,14 @@ class StaticPageController extends Controller
 
         $addresses = $user->addresses;
         $cities = City::where('status', 'active')->get();
+        $citiesByCountry = $cities->groupBy('country_id')->map(function ($countryCities) {
+            return $countryCities->map(function (City $city) {
+                return ['id' => $city->id, 'title' => $city->title];
+            })->values();
+        });
         $countries = Country::where('status', 'active')->get();
 
-        return view('ecommerce::pages.checkout.checkout', compact('user', 'cart', 'addresses', 'cities', 'countries'));
+        return view('ecommerce::pages.checkout.checkout', compact('user', 'cart', 'addresses', 'cities', 'citiesByCountry', 'countries'));
     }
 
     public function wishlistPage()
@@ -109,6 +114,7 @@ class StaticPageController extends Controller
             $query->with(['files']);
         }])
             ->where('user_id', $user->id)
+            ->whereHas('item', fn ($query) => $query->where('status', 'active')->availableForStorefront())
             ->latest()
             ->paginate(12);
 
@@ -126,6 +132,7 @@ class StaticPageController extends Controller
         ])
             ->where('id', $item_id)
             ->where('status', 'active')
+            ->availableForStorefront()
             ->first();
 
         if (!$product) {
@@ -134,6 +141,7 @@ class StaticPageController extends Controller
 
         $relatedProducts = Item::with(['merchant'])
             ->where('status', 'active')
+            ->availableForStorefront()
             ->where('main_category_id', $product->main_category_id)
             ->where('id', '!=', $product->id)
             ->limit(4)

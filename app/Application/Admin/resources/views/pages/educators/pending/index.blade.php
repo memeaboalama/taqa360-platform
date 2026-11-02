@@ -23,7 +23,7 @@
                     </div>
                 </div>
 
-                <livewire:admin::educator.modal.create/>
+                <livewire:admin::educator.modal.create :is-pending="true"/>
                 <livewire:admin::educator.modal.delete/>
                 <livewire:admin::educator.modal.approve/>
             </div>

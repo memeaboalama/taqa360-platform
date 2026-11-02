@@ -27,12 +27,12 @@ class CreateEducationalRequestAction
                 'title'             => $data['title'],
                 'requester_id'      => $data['user_id'],
                 'description'       => $data['description'],
-                'academic_major_id' => $data['academic_major_id'] ?? null,
-                'education_level'   => $data['education_level'] ?? "Bachelor",
                 'type'              => $data['type'] ?? EducationalRequestType::GENERAL->value,
                 'budget'            => $data['budget'] ?? null,
                 'urgency_level'     => $data['urgency_level'] ?? 'normal',
-                'additional_notes'  => $data['additional_notes'] ?? null
+                'additional_notes'  => $data['additional_notes'] ?? null,
+                'project_site_type' => $data['project_site_type'] ?? null,
+                'solar_system_type' => $data['solar_system_type'] ?? null,
             ]);
 
             if (!empty($data['attachments']) && is_array($data['attachments'])) {

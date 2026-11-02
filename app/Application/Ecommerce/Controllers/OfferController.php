@@ -61,6 +61,7 @@ class OfferController extends Controller
             ->where('is_active', true)
             ->whereHas('items', function ($q) {
                 $q->where('status', 'active')
+                  ->availableForStorefront()
                   ->where('is_on_sale', true)
                   ->whereNotNull('sale_price')
                   ->where(function ($qq) {
@@ -70,6 +71,7 @@ class OfferController extends Controller
             })
             ->withCount(['items as sale_items_count' => function ($q) {
                 $q->where('status', 'active')
+                  ->availableForStorefront()
                   ->where('is_on_sale', true)
                   ->whereNotNull('sale_price')
                   ->where(function ($qq) {
@@ -161,6 +163,7 @@ class OfferController extends Controller
     {
         $query = Item::query()
             ->where('status', 'active')
+            ->availableForStorefront()
             ->onSale()                              // uses the scope we added to Item
             ->with(['merchant', 'mainCategory']);
 

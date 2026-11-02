@@ -235,38 +235,40 @@
                         addBtn.disabled = true;
                         addBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + @json(__('ecommerce::ecommerce.product.adding'));
                     }
-                    try {
-                        var res = await fetch(mainForm.action, {
-                            method: 'POST',
-                            body: new FormData(mainForm),
-                            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-                        });
-                        if (res.status === 401) {
-                            window.location.href = '{{ route('auth.login') }}';
+                    if (typeof window.submitCartForm !== 'function') {
+                        if (addBtn) {
+                            addBtn.disabled = false;
+                            addBtn.innerHTML = origHtml;
+                        }
+                        window.alert(@json(__('ecommerce::ecommerce.try_again_error')));
+                        return;
+                    }
+
+                    window.submitCartForm(mainForm).then(function(data) {
+                        if (data && data.cancelled) {
+                            if (addBtn) {
+                                addBtn.disabled = false;
+                                addBtn.innerHTML = origHtml;
+                            }
                             return;
                         }
-                        var data = await res.json();
-                        if (data.success) {
-                            if (addBtn) {
-                                addBtn.innerHTML = '✓ ' + @json(__('ecommerce::ecommerce.added_successfully'));
-                                setTimeout(function() {
-                                    addBtn.disabled = false;
-                                    addBtn.innerHTML = origHtml;
-                                }, 2500);
-                            }
-                        } else {
-                            var conflictMsg = data.message || @json(__('ecommerce::ecommerce.cart.add_error'));
-                            if (window.showStaticConflictModal && typeof window.showStaticConflictModal === 'function') {
-                                window.showStaticConflictModal(conflictMsg).catch(function () {});
-                            } else {
-                                alert(conflictMsg);
-                            }
-                            if (addBtn) { addBtn.disabled = false; addBtn.innerHTML = origHtml; }
+                        if (!data || data.success !== true) {
+                            throw new Error((data && data.message) || @json(__('ecommerce::ecommerce.cart.add_error')));
                         }
-                    } catch(err) {
-                        if (addBtn) { addBtn.disabled = false; addBtn.innerHTML = origHtml; }
-                        mainForm.submit();
-                    }
+                        if (addBtn) {
+                            addBtn.innerHTML = '✓ ' + @json(__('ecommerce::ecommerce.added_successfully'));
+                            setTimeout(function() {
+                                addBtn.disabled = false;
+                                addBtn.innerHTML = origHtml;
+                            }, 2500);
+                        }
+                    }).catch(function(error) {
+                        if (addBtn) {
+                            addBtn.disabled = false;
+                            addBtn.innerHTML = origHtml;
+                        }
+                        window.alert(error.message || @json(__('ecommerce::ecommerce.try_again_error')));
+                    });
                 });
             }
 
@@ -288,6 +290,9 @@
                         }
                         var data = await res.json();
                         if (data.success && btn) {
+                            if (typeof window.refreshCartWidget === 'function') {
+                                await window.refreshCartWidget();
+                            }
                             btn.textContent = '✓';
                             setTimeout(function() { btn.textContent = origText; }, 2000);
                         } else if (btn) {

@@ -11,6 +11,7 @@ class Create extends Component
 {
     use LivewireAlert;
 
+    public bool $isPending = false;
     public $name, $email, $phone, $password, $password_confirmation, $status = 'active';
 
     protected function rules(): array
@@ -33,8 +34,8 @@ class Create extends Component
     {
         $data = $this->validate();
         DB::beginTransaction();
-        $storeEducatorAction->handle($data);
-        $this->emit('refreshDatatable');
+        $storeEducatorAction->handle($data, $this->isPending);
+        $this->emit('refreshEducatorTables');
         $this->emit('closeModal', '#createEducator');
         $this->alert('success', __('admin::home.data_saved_successfully'));
         $this->reset('name', 'email', 'phone', 'password', 'password_confirmation', 'status');

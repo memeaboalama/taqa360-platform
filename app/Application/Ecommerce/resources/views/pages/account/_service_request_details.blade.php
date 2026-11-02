@@ -231,16 +231,16 @@
                         <div class="value">{{ number_format($serviceRequest->agreed_amount, 2) }} SAR</div>
                     </div>
                 @endif
-                @if($serviceRequest->education_level)
+                @if(!is_null($serviceRequest->project_site_type))
                     <div class="info-item">
-                        <div class="label">@lang('ecommerce::ecommerce.education_level')</div>
-                        <div class="value">{{ $educationLevels[$serviceRequest->education_level] ?? $serviceRequest->education_level }}</div>
+                        <div class="label">@lang('ecommerce::ecommerce.sr_project_site_type')</div>
+                        <div class="value">{{ $serviceRequest->project_site_type }}</div>
                     </div>
                 @endif
-                @if($serviceRequest->academicMajor)
+                @if(!is_null($serviceRequest->solar_system_type))
                     <div class="info-item">
-                        <div class="label">@lang('ecommerce::ecommerce.academic_major')</div>
-                        <div class="value">{{ $serviceRequest->academicMajor->name }}</div>
+                        <div class="label">@lang('ecommerce::ecommerce.sr_solar_system_type')</div>
+                        <div class="value">{{ $serviceRequest->solar_system_type }}</div>
                     </div>
                 @endif
                 @if($serviceRequest->urgency_level)

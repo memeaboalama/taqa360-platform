@@ -96,6 +96,9 @@ class Moyasar implements PaymentInterface
     public function savePayment(array $postFields, Model $model)
     {
 
+        $postFields['payable_id'] = $model->id;
+        $postFields['payable_type'] = get_class($model);
+
         return $model->payment()->updateOrCreate(['payment_id' => $postFields["payment_id"]], $postFields);
 
     }

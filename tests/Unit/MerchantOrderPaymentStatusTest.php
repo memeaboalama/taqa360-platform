@@ -28,7 +28,7 @@ class MerchantOrderPaymentStatusTest extends TestCase
         $this->assertSame('paid', MerchantOrder::resolvePaymentStatus($paidPayment));
         $this->assertSame('unpaid', MerchantOrder::resolvePaymentStatus($unpaidPayment));
         $this->assertSame('paid', MerchantOrder::resolvePaymentStatus($amountOnlyPayment));
-        $this->assertSame('paid', MerchantOrder::resolvePaymentStatus(null, 'unpaid', 'COD'));
-        $this->assertSame('paid', MerchantOrder::resolvePaymentStatus(null, 'unpaid', 'cash_on_delivery'));
+        $this->assertSame('pending', MerchantOrder::resolvePaymentStatus(null, 'unpaid', 'COD'));
+        $this->assertSame('pending', MerchantOrder::resolvePaymentStatus(null, 'unpaid', 'cash_on_delivery'));
     }
 }

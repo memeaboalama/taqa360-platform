@@ -28,7 +28,7 @@
     .upload-progress-bar { background-color: hsl(var(--primary-hsl)); height: 4px; border-radius: 9999px; }
 
     .btn-primary { padding: 0.6rem 2rem; background-color: hsl(var(--primary-hsl)); color: hsl(var(--primary-foreground-hsl)); border-radius: 0.5rem; font-weight: 600; border: 1px solid transparent; transition: background-color 0.2s, border-color 0.2s; }
-    .btn-primary:hover { background-color: #ffffff; border-color: hsl(var(--primary-hsl)); }
+    .btn-primary:hover, .btn-primary:active, .btn-primary:focus { background-color: #ffffff; border-color: hsl(var(--primary-hsl)); color: hsl(var(--primary-hsl)); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .btn-secondary { padding: 0.6rem 2rem; border: 1px solid #d1d5db; border-radius: 0.5rem; color: #374151; font-weight: 600; transition: background-color 0.2s; }

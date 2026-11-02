@@ -15,7 +15,11 @@ class All extends DataTableComponent
     use TableConfiguration;
     public $filters = [];
     protected EducatorRepository $educatorRepository;
-    public $listeners = ['refreshEducators', 'refreshDatatable' => '$refresh'];
+    public $listeners = [
+        'refreshEducators',
+        'refreshDatatable' => '$refresh',
+        'refreshEducatorTables' => '$refresh',
+    ];
 
     public function __construct()
     {

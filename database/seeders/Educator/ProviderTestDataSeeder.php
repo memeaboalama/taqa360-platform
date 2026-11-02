@@ -4,143 +4,195 @@ namespace Database\Seeders\Educator;
 
 use App\Application\Educator\Enums\EducatorStatus;
 use Domain\Educator\Models\Educator;
+use Domain\Educator\Models\EducatorAcademicMajor;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use LogicException;
+use RuntimeException;
 
-/**
- * ProviderTestDataSeeder
- * ---------------------
- * Local-only sample data so the provider page
- * (/admin/educators/show/{id}) can be reviewed in the browser.
- *
- * Guarantees:
- *   - Additive only: it never truncates, deletes or updates existing rows.
- *   - Idempotent: matched on the provider email, so re-running adds nothing.
- *   - Reuses the existing models/tables (educators, educator_profiles,
- *     educator_academic_majors, educator_achievements). No new schema.
- *
- * The qualification list deliberately includes degree = 'high_school', which
- * used to crash the "qualifications and achievements" tab, plus a spread of
- * graduation years so approving down to the LAST row can be verified.
- *
- * Run with:
- *   php artisan db:seed --class=Database\Seeders\Educator\ProviderTestDataSeeder
- */
 class ProviderTestDataSeeder extends Seeder
 {
-    private const EMAIL = 'provider.test@local.test';
+    private const TEST_DOCUMENT_PATH = 'local-test/educators/demo-document.svg';
 
     public function run(): void
     {
-        $educator = Educator::where('email', self::EMAIL)->first();
-
-        if ($educator) {
-            $this->command->info("Provider already exists (#{$educator->id}) — nothing added.");
-            $this->report($educator);
-            return;
+        if (!app()->environment('local')) {
+            throw new LogicException('Provider test data can only be seeded in the local environment.');
         }
 
-        DB::transaction(function () use (&$educator) {
-            $educator = Educator::create([
-                'uuid'                => (string) Str::uuid(),
-                'name'                => 'مزود تجريبي محلي',
-                'email'               => self::EMAIL,
-                'phone'               => '500000001',
-                'password'            => bcrypt('123456'),
-                'role'                => 'provider',
-                'discipline'          => 'Educational technology',
-                'school_name'         => 'Local Preview Academy',
-                'dialcode'            => '966',
-                'country_name'        => 'Saudi Arabia',
-                'country_code'        => 'sa',
-                'rating'              => 4.50,
-                'availability_status' => 'active',
-                'status'              => EducatorStatus::ACTIVE->value,
-                // The educators table filters on is_accepted = 1.
-                'is_accepted'         => true,
-                'accepted_terms'      => true,
-                'phone_verified_at'   => now(),
-                'email_verified_at'   => now(),
-            ]);
+        $this->createDemoDocument();
 
-            DB::table('educator_profiles')->insert([
-                'uuid'              => (string) Str::uuid(),
-                'educator_id'       => $educator->id,
-                'gender'            => 'male',
-                'education_level'   => 'bachelor',
-                'experience_years'  => 8,
-                'specialization'    => ' curricula development and educational supplies',
-                'employment_status' => 'employed',
-                'completion_step'   => 6,
-                'is_complete'       => 1,
-                'created_at'        => now(),
-                'updated_at'        => now(),
-            ]);
+        $providers = [
+            [
+                'name' => 'مزود تجريبي - أحمد',
+                'email' => 'provider.test@local.test',
+                'phone' => '500000001',
+                'status' => EducatorStatus::ACTIVE->value,
+                'gender' => 'male',
+                'identity_id' => 'DEMO-EDU-001',
+                'specialization' => 'تطوير المناهج وتقنيات التعليم',
+                'experience_years' => 8,
+            ],
+            [
+                'name' => 'مزودة تجريبية - سارة',
+                'email' => 'provider.test.2@local.test',
+                'phone' => '500000002',
+                'status' => EducatorStatus::PENDING->value,
+                'gender' => 'female',
+                'identity_id' => 'DEMO-EDU-002',
+                'specialization' => 'التدريب والتطوير المهني',
+                'experience_years' => 5,
+            ],
+            [
+                'name' => 'مزود تجريبي - خالد',
+                'email' => 'provider.test.3@local.test',
+                'phone' => '500000003',
+                'status' => EducatorStatus::REJECTED->value,
+                'gender' => 'male',
+                'identity_id' => 'DEMO-EDU-003',
+                'specialization' => 'التعليم الإلكتروني',
+                'experience_years' => 3,
+            ],
+        ];
 
-            // Four qualifications. The 2021 row is the one that used to take the
-            // whole tab down, and it also sorts last among the qualifications.
-            $qualifications = [
-                ['name' => 'High School Certificate', 'institution' => 'Local Secondary School', 'year' => 2021, 'degree' => 'high_school'],
-                ['name' => 'Bachelor of Education',    'institution' => 'Local State University',   'year' => 2022, 'degree' => 'bachelor'],
-                ['name' => 'Master of Curriculum',      'institution' => 'Local Grad Institute',     'year' => 2023, 'degree' => 'master'],
-                ['name' => 'Teaching Certificate',      'institution' => 'Local Training Centre',    'year' => 2024, 'degree' => 'diploma'],
-            ];
+        foreach ($providers as $index => $provider) {
+            $existing = Educator::where('email', $provider['email'])->first();
 
-            foreach ($qualifications as $q) {
-                DB::table('educator_academic_majors')->insert([
-                    'uuid'                   => (string) Str::uuid(),
-                    'educator_id'            => $educator->id,
-                    'academic_major_id'      => null,
-                    'custom_name'            => $q['name'],
-                    'is_custom'              => 1,
-                    'graduation_institution' => $q['institution'],
-                    'graduation_year'        => $q['year'],
-                    'degree'                 => $q['degree'],
-                    // Start unapproved so accept/reject can both be exercised.
-                    'approval_document'      => 0,
-                    'created_at'             => now(),
-                    'updated_at'             => now(),
+            if ($existing) {
+                $existing->update([
+                    'is_accepted' => $provider['status'] !== EducatorStatus::PENDING->value,
                 ]);
+                $this->command->line("Provider already exists (#{$existing->id}): {$existing->email}");
+                continue;
             }
 
-            $achievements = [
-                ['title' => 'Best Teacher Award',      'organization' => 'Local Education Council', 'year' => '2024-05-01', 'desc' => 'Awarded for outstanding classroom work.'],
-                ['title' => 'Curriculum Design Award', 'organization' => 'Local Learning Guild',   'year' => '2023-03-15', 'desc' => 'Recognised for the new curriculum plan.'],
-                // No start_date on purpose: this one sorts to the very bottom of
-                // the timeline, which is exactly where the old bug showed up.
-                ['title' => 'Community Workshop',      'organization' => 'Local Community',        'year' => null,          'desc' => 'Workshop with no start date, renders last.'],
-            ];
+            $educator = DB::transaction(fn () => $this->createProvider($provider, $index + 1));
+            $this->command->info("Created local test provider #{$educator->id}: {$educator->email}");
+        }
 
-            foreach ($achievements as $a) {
-                DB::table('educator_achievements')->insert([
-                    'uuid'              => (string) Str::uuid(),
-                    'educator_id'       => $educator->id,
-                    'title'             => $a['title'],
-                    'type'              => 'award',
-                    'description'       => $a['desc'],
-                    'organization'      => $a['organization'],
-                    'start_date'        => $a['year'],
-                    'issue_date'        => $a['year'],
-                    'approval_document' => 0,
-                    'created_at'        => now(),
-                    'updated_at'        => now(),
-                ]);
-            }
-        });
-
-        $educator = Educator::where('email', self::EMAIL)->firstOrFail();
-        $this->report($educator);
+        $this->command->info('Local test providers are ready in the Admin > Providers list.');
     }
 
-    private function report(Educator $educator): void
+    private function createProvider(array $provider, int $sequence): Educator
     {
-        $majors = DB::table('educator_academic_majors')->where('educator_id', $educator->id)->count();
-        $achs   = DB::table('educator_achievements')->where('educator_id', $educator->id)->count();
+        $educator = Educator::create([
+            'name' => $provider['name'],
+            'email' => $provider['email'],
+            'phone' => $provider['phone'],
+            'password' => bcrypt('local-test-password'),
+            'role' => 'provider',
+            'discipline' => $provider['specialization'],
+            'school_name' => 'أكاديمية الاختبار المحلية',
+            'dialcode' => '966',
+            'country_name' => 'Saudi Arabia',
+            'country_code' => 'sa',
+            'rating' => 4.50,
+            'availability_status' => 'active',
+            'status' => $provider['status'],
+            'is_accepted' => $provider['status'] !== EducatorStatus::PENDING->value,
+            'accepted_terms' => true,
+            'phone_verified_at' => now(),
+            'email_verified_at' => now(),
+        ]);
 
-        $this->command->info("Provider ready: #{$educator->id} — {$educator->name} ({$educator->email})");
-        $this->command->line("  qualifications: $majors (one of them degree = high_school)");
-        $this->command->line("  achievements  : $achs (the last one has no start_date)");
-        $this->command->line('  page          : ' . url("admin/educators/show/{$educator->id}"));
+        DB::table('educator_profiles')->insert([
+            'uuid' => (string) Str::uuid(),
+            'educator_id' => $educator->id,
+            'identity_id' => $provider['identity_id'],
+            'identity_type' => 'national_id',
+            'identity_status' => 'pending',
+            'gender' => $provider['gender'],
+            'birth_date' => sprintf('%04d-01-15', 1988 + $sequence),
+            'education_level' => 'bachelor',
+            'experience_years' => $provider['experience_years'],
+            'specialization' => $provider['specialization'],
+            'employment_status' => 'employed',
+            'completion_step' => 6,
+            'is_complete' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $qualifications = [
+            ['name' => 'شهادة الثانوية العامة', 'institution' => 'مدرسة تجريبية', 'year' => '2010-01-01', 'degree' => 'high_school'],
+            ['name' => 'بكالوريوس التربية', 'institution' => 'جامعة تجريبية', 'year' => '2014-01-01', 'degree' => 'bachelor'],
+            ['name' => 'ماجستير التعليم', 'institution' => 'جامعة تجريبية', 'year' => '2018-01-01', 'degree' => 'master'],
+        ];
+
+        foreach ($qualifications as $qualification) {
+            $major = EducatorAcademicMajor::create([
+                'educator_id' => $educator->id,
+                'custom_name' => $qualification['name'],
+                'is_custom' => true,
+                'graduation_institution' => $qualification['institution'],
+                'graduation_year' => $qualification['year'],
+                'degree' => $qualification['degree'],
+                'approval_document' => false,
+            ]);
+
+            $this->createFileRecord($major, 'certificate', "شهادة {$qualification['name']}.svg");
+        }
+
+        foreach ([
+            ['title' => 'جائزة التميز التعليمي', 'organization' => 'جهة تعليمية تجريبية', 'date' => '2024-05-01'],
+            ['title' => 'ورشة تدريبية تجريبية', 'organization' => 'مركز تدريب تجريبي', 'date' => '2022-03-15'],
+        ] as $achievement) {
+            DB::table('educator_achievements')->insert([
+                'uuid' => (string) Str::uuid(),
+                'educator_id' => $educator->id,
+                'title' => $achievement['title'],
+                'type' => 'award',
+                'description' => 'سجل تجريبي محلي لاختبار شاشة المزود.',
+                'organization' => $achievement['organization'],
+                'start_date' => $achievement['date'],
+                'issue_date' => $achievement['date'],
+                'approval_document' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        foreach (['identity_front', 'identity_back', 'profile_image'] as $collection) {
+            $this->createFileRecord($educator, $collection, "ملف تجريبي {$collection}.svg");
+        }
+
+        return $educator;
+    }
+
+    private function createFileRecord(Educator|EducatorAcademicMajor $owner, string $collection, string $name): void
+    {
+        DB::table('educator_files')->insert([
+            'uuid' => (string) Str::uuid(),
+            'fileable_type' => $owner::class,
+            'fileable_id' => $owner->id,
+            'file_name' => basename(self::TEST_DOCUMENT_PATH),
+            'original_name' => $name,
+            'mime_type' => 'image/svg+xml',
+            'collection_name' => $collection,
+            'type' => 'image',
+            'storage' => 'public',
+            'path' => self::TEST_DOCUMENT_PATH,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function createDemoDocument(): void
+    {
+        $svg = <<<'SVG'
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400">
+  <rect width="640" height="400" fill="#f3f6fa"/>
+  <rect x="20" y="20" width="600" height="360" rx="18" fill="#fff" stroke="#306faa" stroke-width="4"/>
+  <text x="320" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="38" font-weight="700" fill="#306faa">LOCAL TEST FILE</text>
+  <text x="320" y="225" text-anchor="middle" font-family="Arial, sans-serif" font-size="25" fill="#444">NOT A REAL DOCUMENT</text>
+  <text x="320" y="285" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#666">For local testing only</text>
+</svg>
+SVG;
+
+        if (!Storage::disk('public')->put(self::TEST_DOCUMENT_PATH, $svg)) {
+            throw new RuntimeException('Could not create the local provider test document.');
+        }
     }
 }

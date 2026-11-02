@@ -66,8 +66,8 @@ Route::group(
 
             Route::get('wallet/payment/iframe/{lang}/{token}', [WalletDepositController::class, 'paymentIframe'])
                 ->name('wallet.payment.iframe');
-            Route::get('wallet/payment/check', [WalletDepositController::class, 'payment_check'])->name('wallet.payment.check');
-            Route::get('wallet/payment/status/{status}/{Id}', [WalletDepositController::class, 'payment_status'])->name('wallet.payment.status');
+            Route::match(['get', 'post'], 'wallet/payment/check', [WalletDepositController::class, 'payment_check'])->name('wallet.payment.check');
+            Route::match(['get', 'post'], 'wallet/payment/status/{status}/{Id}', [WalletDepositController::class, 'payment_status'])->name('wallet.payment.status');
 
 
             /****

@@ -117,9 +117,9 @@
                         <span class="side-menu__label">{{ __('admin::home.operatingCompanies') }}</span>
                     </a>
                 </li>
-                @endAdminHasRole
+                @endAdminHasRole --}}
 
-                @AdminHasRole(['show_drivers'])
+                @AdminHasRole(['admin', 'show_drivers', 'track_drivers', 'driver_manager'])
                     <li class="slide has-sub {{ isActiveSection([url('admin/drivers')]) }}">
                         <a href="javascript:void(0);" class="side-menu__item {{ isActiveSection([url('admin/drivers')]) ? 'active' : '' }}">
                             <i class="bx bxs-truck side-menu__icon"></i>
@@ -128,33 +128,33 @@
                             <i class="fe fe-chevron-right side-menu__angle"></i>
                         </a>
                         <ul class="slide-menu child1">
-                            @AdminHasRole(['show_drivers'])
+                            @AdminHasRole(['admin', 'show_drivers'])
                                 <li class="slide">
                                     <a href="{{ url('admin/drivers') }}" class="side-menu__item {{ isActive(url('admin/drivers')) }}">{{ __('admin::home.Drivers') }}
                                     </a>
                                 </li>
                             @endAdminHasRole
-                            @AdminHasRole(['show_drivers'])
+                            @AdminHasRole(['admin', 'show_drivers'])
                                 <li class="slide">
                                     <a href="{{ url('admin/drivers/pending') }}"
                                         class="side-menu__item {{ isActive(url('admin/drivers/pending')) }}">{{ __('admin::home.pending') }} </a>
                                 </li>
                             @endAdminHasRole
-                            @AdminHasRole(['track_drivers'])
+                            @AdminHasRole(['admin', 'track_drivers', 'driver_manager'])
                                 <li class="slide">
                                     <a href="{{ url('admin/drivers/tracking') }}" class="side-menu__item {{ isActive(url('admin/drivers/tracking')) }}">
                                         <span class="side-menu__label">{{ __('admin::home.Tracking Drivers') }}</span>
                                     </a>
                                 </li>
                             @endAdminHasRole
-                            @AdminHasRole(['track_drivers'])
+                            @AdminHasRole(['admin', 'track_drivers', 'driver_manager'])
                                 <li class="slide">
                                     <a href="{{ url('admin/drivers/history') }}" class="side-menu__item {{ isActive(url('admin/drivers/history')) }}">
                                         <span class="side-menu__label">{{ __('admin::home.Actions Drivers') }}</span>
                                     </a>
                                 </li>
                             @endAdminHasRole
-                            @AdminHasRole(['track_drivers'])
+                            @AdminHasRole(['admin', 'track_drivers', 'driver_manager'])
                                 <li class="slide">
                                     <a href="{{ url('admin/drivers/register') }}" class="side-menu__item {{ isActive(url('admin/drivers/register')) }}">
                                         <span class="side-menu__label">{{ __('admin::home.Register Drivers') }}</span>

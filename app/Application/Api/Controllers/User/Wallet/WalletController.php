@@ -74,8 +74,11 @@ class WalletController extends Controller
         return  $this->responseData(["walletTransaction" => WalletTransactionsResource::collection($walletTransaction)]);
     }
 
-    private function payWithMada($walletDeposit)
-    {
-        return route('marketplace:wallet.payment.iframe', ['lang' => app()->getLocale(), 'token' => $walletDeposit->id]);
-    }
+private function payWithMada($walletDeposit)
+{
+    // Use the ecommerce route instead of marketplace route to avoid double prefix issue
+    // The route is now account.wallet.payment.iframe which is under LaravelLocalization group
+    // Locale is automatically added by the middleware, so we don't pass 'lang' parameter
+    return route('account.wallet.payment.iframe', ['token' => $walletDeposit->id]);
+}
 }

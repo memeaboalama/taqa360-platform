@@ -30,7 +30,11 @@ class Document extends Component
             ->whereIn('collection_name', ['identity_front', 'identity_back', 'passport_image'])->get();
 
         $this->otherFiles = $this->educator->files()
-            ->whereNotIn('collection_name', ['identity_front', 'identity_back', 'passport_image', 'profile_image'])->get();
+            ->where(function ($query) {
+                $query->whereNotIn('collection_name', ['identity_front', 'identity_back', 'passport_image', 'profile_image'])
+                    ->orWhereNull('collection_name');
+            })
+            ->get();
     }
 
     public function setIdentityStatus(string $status)

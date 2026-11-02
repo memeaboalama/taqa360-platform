@@ -2,7 +2,7 @@
     <div class="card-body p-4">
         <h5 class="fw-bold mb-4">@lang('admin::educators.tabs.academics')</h5>
 
-        @if($timelineItems)
+        @if($timelineItems->isNotEmpty())
             <div class="position-relative ps-4" style="border-right: 2px solid var(--bs-border-color);">
                 @foreach($timelineItems as $item)
                     <div class="d-flex align-items-start mb-5" wire:key="{{ $item['type'] }}-{{ $item['id'] }}">

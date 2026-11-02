@@ -225,13 +225,41 @@ class AdBanner extends Model
 
     private function imageUrlForDevice(string $device): ?string
     {
-        $path = $this->content['images'][$device] ?? null;
+        $path = $this->content['images'][$device]
+            ?? $this->content['images']['desktop']
+            ?? $this->content['image']
+            ?? $this->content['image_desktop']
+            ?? $this->image_desktop
+            ?? $this->image
+            ?? null;
 
-        if (!$path || !Storage::disk('fileDisk')->exists($path)) {
+        if (!$path) {
             return null;
         }
 
-        return Storage::disk('fileDisk')->url($path);
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return $path;
+        }
+
+        if (file_exists(public_path($path))) {
+            return asset($path);
+        }
+
+        $cleanPath = preg_replace('#^/?storage/#', '', $path);
+
+        if (Storage::disk('fileDisk')->exists($cleanPath)) {
+            return Storage::disk('fileDisk')->url($cleanPath);
+        }
+
+        if (Storage::disk('fileDisk')->exists($path)) {
+            return Storage::disk('fileDisk')->url($path);
+        }
+
+        if (Storage::disk('public')->exists($path)) {
+            return Storage::disk('public')->url($path);
+        }
+
+        return null;
     }
 
     public function getLocalizedTitleAttribute(): string

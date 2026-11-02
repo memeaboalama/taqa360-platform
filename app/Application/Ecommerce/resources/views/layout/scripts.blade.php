@@ -515,12 +515,8 @@ function initComponents(container = document) {
 }
 
 function initCart(container = document) {
-    container.querySelectorAll('.add-to-cart-form').forEach(form => {
-        form.onsubmit = (e) => {
-            e.preventDefault();
-            addToCart(form);
-        };
-    });
+    // Unpoly up-submit handles form submission natively
+    // No onsubmit handler needed - prevents conflict with Unpoly
 }
 
 function initImages(container = document) {

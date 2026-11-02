@@ -14,9 +14,8 @@ class FetchProductsAction
 
     public function getFeaturedProducts(int $limit = 8)
     {
-        return Cache::remember('featured_products_' . app()->getLocale(), 1800, function() use ($limit) {
-            return $this->itemRepository->builder(['*'], [], ['status' => ActiveEnum::ACTIVE->value], 'desc')
-                // ->where('is_featured', true)
+        return Cache::remember('storefront_featured_products_v2_' . app()->getLocale() . '_' . $limit, 1800, function() use ($limit) {
+            return $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->take($limit)
                 ->get();
         });
@@ -24,8 +23,8 @@ class FetchProductsAction
 
     public function getNewProducts(int $limit = 6)
     {
-        return Cache::remember('new_products_' . app()->getLocale(), 1800, function() use ($limit) {
-            return $this->itemRepository->builder(['*'], [], ['status' => ActiveEnum::ACTIVE->value], 'desc')
+        return Cache::remember('storefront_new_products_v2_' . app()->getLocale() . '_' . $limit, 1800, function() use ($limit) {
+            return $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->latest('created_at')
                 ->take($limit)
                 ->get();
@@ -34,9 +33,8 @@ class FetchProductsAction
 
     public function getBestSellers(int $limit = 6)
     {
-        return Cache::remember('best_sellers_' . app()->getLocale(), 1800, function() use ($limit) {
-            return $this->itemRepository->builder(['*'], [], ['status' => ActiveEnum::ACTIVE->value], 'desc')
-                // ->orderBy('views_count', 'desc')
+        return Cache::remember('storefront_best_sellers_v2_' . app()->getLocale() . '_' . $limit, 1800, function() use ($limit) {
+            return $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->take($limit)
                 ->get();
         });
@@ -44,9 +42,8 @@ class FetchProductsAction
 
     public function getExclusiveProducts(int $limit = 6)
     {
-        return Cache::remember('exclusive_products_' . app()->getLocale(), 1800, function() use ($limit) {
-            return $this->itemRepository->builder(['*'], [], ['status' => ActiveEnum::ACTIVE->value], 'desc')
-                // ->where('is_exclusive', true)
+        return Cache::remember('storefront_exclusive_products_v2_' . app()->getLocale() . '_' . $limit, 1800, function() use ($limit) {
+            return $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->take($limit)
                 ->get();
         });

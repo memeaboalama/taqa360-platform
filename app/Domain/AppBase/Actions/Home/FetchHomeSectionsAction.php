@@ -16,7 +16,7 @@ class FetchHomeSectionsAction
 
     public function handle(): \Illuminate\Support\Collection
     {
-        return Cache::remember('ecommerce_home_product_sections_' . app()->getLocale(), 1800, function() {
+        return Cache::remember('ecommerce_home_product_sections_storefront_v2_' . app()->getLocale(), 1800, function() {
             $page = AdPage::where('key', 'ecommerce_home')->first();
 
             if (!$page) {

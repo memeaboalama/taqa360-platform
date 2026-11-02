@@ -56,6 +56,14 @@
                                     </li>
 
                                     <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="images-tab" data-bs-toggle="tab"
+                                                data-bs-target="#images-tab-pane" type="button" role="tab"
+                                                aria-controls="images-tab-pane" aria-selected="false"><i
+                                                class="ri-image-3-fill me-1 align-middle d-inline-block"></i>{{ __('admin::home.Images') }}
+                                        </button>
+                                    </li>
+
+                                    <li class="nav-item" role="presentation">
                                         <button class="nav-link" id="menu-tab" data-bs-toggle="tab"
                                                 data-bs-target="#menu-tab-pane" type="button" role="tab"
                                                 aria-controls="menu-tab-pane" aria-selected="false"><i
@@ -121,6 +129,11 @@
                                 <div class="tab-pane fade" id="files-tab-pane" role="tabpanel"
                                      aria-labelledby="files-tab" wire:ignore.self>
                                     <livewire:admin::merchant.tabs.info.files :merchant_id="$id"/>
+                                </div>
+
+                                <div class="tab-pane fade" id="images-tab-pane" role="tabpanel"
+                                     aria-labelledby="images-tab" wire:ignore.self>
+                                    <livewire:admin::merchant.tabs.info.files :merchant_id="$id" mode="images"/>
                                 </div>
 
                                 <div class="tab-pane fade" id="menu-tab-pane" role="tabpanel"

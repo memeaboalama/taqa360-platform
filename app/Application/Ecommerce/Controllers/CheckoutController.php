@@ -28,8 +28,16 @@ use App\Domain\MarketPlace\Models\MerchantOrder;
 
 class CheckoutController extends Controller
 {
-    private function withUnpolyNotification($redirect, $message, $type = 'success')
+    private function withUnpolyNotification($redirect, $message, $type = 'success', ?string $errorField = null)
     {
+        if (!request()->hasHeader('X-Up-Target')) {
+            if ($type === 'error' && $errorField) {
+                return $redirect->withInput()->withErrors([$errorField => $message]);
+            }
+
+            return $redirect->withInput()->with($type === 'error' ? 'error' : 'success', $message);
+        }
+
         $payload = json_encode(['message' => $message, 'type' => $type == 'error' ? 'danger' : $type]);
         $headerVal = base64_encode($payload);
 
@@ -94,9 +102,14 @@ class CheckoutController extends Controller
 
         $addresses = $user->addresses;
         $cities = City::where('status', 'active')->get();
+        $citiesByCountry = $cities->groupBy('country_id')->map(function ($countryCities) {
+            return $countryCities->map(function (City $city) {
+                return ['id' => $city->id, 'title' => $city->title];
+            })->values();
+        });
         $countries = \App\Domain\AppBase\Models\Location\Country::where('status', 'active')->get();
 
-        return view('ecommerce::pages.checkout.checkout', compact('user', 'cart', 'addresses', 'cities', 'countries'));
+        return view('ecommerce::pages.checkout.checkout', compact('user', 'cart', 'addresses', 'cities', 'citiesByCountry', 'countries'));
     }
 
     public function applyCoupon(ApplyPromocodeRequest $request)
@@ -184,7 +197,7 @@ class CheckoutController extends Controller
                 Log::info("Pre-check wallet balance", ['user_id' => $user->id, 'balance' => $user->balance, 'required' => $total]);
 
                 if ($user->balance < $total) {
-                     return $this->withUnpolyNotification(redirect()->back(), __('ecommerce::ecommerce.insufficient_balance'), 'error');
+                     return $this->withUnpolyNotification(redirect()->back(), __('ecommerce::ecommerce.insufficient_balance'), 'error', 'payment_method');
                 }
             }
 
@@ -235,7 +248,8 @@ class CheckoutController extends Controller
 
             if (isset($paymentResponse['error']) && $paymentResponse['error']) {
                 DB::rollBack();
-                return $this->withUnpolyNotification(redirect()->back(), $paymentResponse['message'], 'error');
+                $errorField = $data['payment_method'] === 'wallet' ? 'payment_method' : null;
+                return $this->withUnpolyNotification(redirect()->back(), $paymentResponse['message'], 'error', $errorField);
             }
 
             DB::commit();
@@ -288,6 +302,14 @@ class CheckoutController extends Controller
     {
         try {
             if (isset($data['wallet']) && $data['wallet'] == 1) {
+                // Check wallet balance BEFORE attempting withdrawal
+                $user = auth()->user();
+                $cartTotal = $cart->total_after_vat;
+                
+                if ($user->balance < $cartTotal) {
+                    return ['error' => true, 'message' => __('ecommerce::ecommerce.insufficient_balance')];
+                }
+                
                 // API Logic sync
                 $payment = $this->walletOrderAction->withdraw($order["data"], "Wallet Order Pay");
                 if ($payment && !$payment["status"]) {

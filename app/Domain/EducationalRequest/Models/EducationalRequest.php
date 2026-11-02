@@ -21,8 +21,6 @@ class EducationalRequest extends Model
         'title',
         'description',
         'requester_id',
-        'academic_major_id',
-        'education_level',
         'type',
         'status',
         'execution_status',

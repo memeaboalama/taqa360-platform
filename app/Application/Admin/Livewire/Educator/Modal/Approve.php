@@ -28,7 +28,7 @@ class Approve extends Component
     {
         DB::beginTransaction();
         $approveEducatorAction->handle($this->educator_id);
-        $this->emit('refreshDatatable');
+        $this->emit('refreshEducatorTables');
         $this->emit('closeModal', '#approveEducator');
         $this->alert('success', __('admin::home.data_updated_successfully'));
         DB::commit();

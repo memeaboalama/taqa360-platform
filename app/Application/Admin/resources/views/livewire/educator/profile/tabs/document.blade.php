@@ -16,7 +16,7 @@
                     <span class="badge {{ $profile->identity_status->color() }}">{{ $profile->identity_status->trans() }}</span>
                 </div>
 
-                @if($identityFiles)
+                @if($identityFiles->isNotEmpty())
                 <div class="row g-3">
                     @foreach($identityFiles as $file)
                     <div class="col-md-6">
@@ -56,7 +56,7 @@
                     <tbody>
                         @foreach($otherFiles as $file)
                         <tr>
-                            <td><span class="badge bg-secondary-subtle text-secondary-emphasis">{{ $this->getCollectionLabel($file->collection_name ?: $file->type) }}</span></td>
+                            <td><span class="badge bg-secondary-subtle text-secondary-emphasis">{{ $this->getCollectionLabel($file->collection_name ?: $file->type ?: '') }}</span></td>
                             <td>{{ $file->original_name }}</td>
                             <td class="text-muted small">{{ $file->created_at->format('Y-m-d') }}</td>
                             <td class="text-end"><a href="{{ $file->url }}" target="_blank" class="btn btn-sm btn-outline-primary">@lang('admin::educators.view_upload')</a></td>

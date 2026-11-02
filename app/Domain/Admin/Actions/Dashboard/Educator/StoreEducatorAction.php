@@ -14,12 +14,12 @@ class StoreEducatorAction
         $this->educatorRepository = $educatorRepository;
     }
 
-    public function handle(array $data = []): ?\Illuminate\Database\Eloquent\Model
+    public function handle(array $data = [], bool $isPending = false): ?\Illuminate\Database\Eloquent\Model
     {
         $data['password'] = Hash::make($data['password']);
         $data['uuid'] = (string) \Illuminate\Support\Str::uuid();
         $data['accepted_terms'] = true;
-        $data['is_accepted'] = true;
+        $data['is_accepted'] = !$isPending;
         $data['availability_status'] = $data['status'] === 'active' ? 'active' : 'inactive';
         return $this->educatorRepository->store($data);
     }

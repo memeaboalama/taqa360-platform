@@ -216,7 +216,7 @@ class MerchantOrder extends Model
     {
         $normalizedMethod = strtolower(trim((string) ($paymentMethod ?? '')));
         if (in_array($normalizedMethod, ['cod', 'cash', 'cash_on_delivery', 'cashondelivery'], true)) {
-            return 'paid';
+            return 'pending';
         }
 
         if (!$payment) {
@@ -248,7 +248,8 @@ class MerchantOrder extends Model
     protected function paymentLabel(): Attribute
     {
         return new Attribute(
-            get: fn() => match($this->payment_status) {
+            get: fn() => match(true) {
+                $this->payment_method && in_array(strtolower(trim($this->payment_method)), ['cod', 'cash', 'cash_on_delivery', 'cashondelivery'], true) => __('ecommerce::ecommerce.cod_payment_selected'),
                 'paid' => __('ecommerce::ecommerce.paid'),
                 'unpaid' => __('ecommerce::ecommerce.unpaid'),
                 'pending' => __('ecommerce::ecommerce.payment_pending'),

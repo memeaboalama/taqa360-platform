@@ -145,6 +145,8 @@ return [
     "Employee Name" => "اسم الموظف ",
     "Employees" => "الموظفين ",
     "Files" => "الملفات",
+    "Images" => "الصور",
+    "No images uploaded yet" => "لا توجد صور مرفقة بعد",
     "Update" => "تعديل",
     "Delete Employee" => "حذف الموظف",
     "Employee Created Successfully" => "تم إنشاء الموظف بنجاح",

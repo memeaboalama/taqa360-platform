@@ -4,6 +4,7 @@ namespace App\Domain\AppBase\Actions\Home;
 
 use App\Domain\AppBase\Models\AdMerchantContent;
 use App\Domain\AppBase\Models\AdPage;
+use App\Domain\AppBase\Models\CustomerTestimonial;
 use App\Domain\AppBase\Repositories\AdPlacementRepository;
 use App\Domain\AppBase\Repositories\AdBannerRepository;
 use App\Domain\AppBase\Repositories\AdMerchantContentRepository;
@@ -30,10 +31,15 @@ class FetchHomeDataAction
     public function handle(): array
     {
         if (app()->isLocal()) {
+            Cache::forget('home_page_data_ar');
+            Cache::forget('home_page_data_en');
             Cache::forget('home_page_data_' . app()->getLocale());
+            Cache::forget('home_page_data_storefront_v2_ar');
+            Cache::forget('home_page_data_storefront_v2_en');
+            Cache::forget('home_page_data_storefront_v2_' . app()->getLocale());
         }
 
-        return Cache::remember('home_page_data_' . app()->getLocale(), 1800, function() {
+        return Cache::remember('home_page_data_storefront_v2_' . app()->getLocale(), 1800, function() {
             $page = AdPage::where('key', 'home')->first();
 
             if (!$page) {
@@ -215,13 +221,14 @@ class FetchHomeDataAction
             })
             ->whereHas('merchant', function ($query) {
                 $query->where('status', 'active')
-                    ->whereHas('items', fn($itemQuery) => $itemQuery->where('status', ActiveEnum::ACTIVE->value));
+                    ->whereHas('branches', fn ($branchQuery) => $branchQuery->where('status', 1))
+                    ->whereHas('items', fn($itemQuery) => $itemQuery->where('status', ActiveEnum::ACTIVE->value)->availableForStorefront());
             })
             ->with(['merchant' => function($q) {
                 $q->withCount([
                     'branches',
                     'orders',
-                    'items' => fn($itemQuery) => $itemQuery->where('status', ActiveEnum::ACTIVE->value),
+                    'items' => fn($itemQuery) => $itemQuery->where('status', ActiveEnum::ACTIVE->value)->availableForStorefront(),
                     'orders as reviews_count' => function ($query) {
                         $query->where('rate', '!=', 0);
                     },
@@ -229,7 +236,7 @@ class FetchHomeDataAction
                 $q->with(['branches:id,merchant_id,cover_image']);
                 $q->with(['productCategories' => function($q) {
                     $q->select('categories.id', 'categories.title')
-                        ->whereHas('items', fn($itemQuery) => $itemQuery->where('status', ActiveEnum::ACTIVE->value))
+                        ->whereHas('items', fn($itemQuery) => $itemQuery->where('status', ActiveEnum::ACTIVE->value)->availableForStorefront())
                         ->limit(3);
                 }]);
             }])
@@ -281,41 +288,41 @@ class FetchHomeDataAction
     private function fillWithFallbacks($data): array
     {
         if (!isset($data['featuredProducts']) || $data['featuredProducts']->isEmpty()) {
-            $data['featuredProducts'] = $this->itemRepository->builder(['*'], [], ['status' => ActiveEnum::ACTIVE->value], 'desc')
+            $data['featuredProducts'] = $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->latest()->take(8)->get();
         }
 
         if (!isset($data['newProducts']) || $data['newProducts']->isEmpty()) {
-            $data['newProducts'] = $this->itemRepository->builder(['*'], [], ['status' => ActiveEnum::ACTIVE->value], 'desc')
+            $data['newProducts'] = $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->latest()->take(6)->get();
         }
 
         if (!isset($data['bestSellers']) || $data['bestSellers']->isEmpty()) {
-            $data['bestSellers'] = $this->itemRepository->builder(['*'], [], ['status' => ActiveEnum::ACTIVE->value], 'desc')
+            $data['bestSellers'] = $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->inRandomOrder()->take(6)->get();
         }
 
         if (!isset($data['exclusiveProducts']) || $data['exclusiveProducts']->isEmpty()) {
-            $data['exclusiveProducts'] = $this->itemRepository->builder(['*'], [], ['status' => ActiveEnum::ACTIVE->value], 'desc')
+            $data['exclusiveProducts'] = $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->inRandomOrder()->take(6)->get();
         }
 
         if (!isset($data['newProductsSidebar']) || $data['newProductsSidebar']->isEmpty()) {
-            $data['newProductsSidebar'] = $this->itemRepository->builder(['*'], [], ['status' => ActiveEnum::ACTIVE->value], 'desc')
+            $data['newProductsSidebar'] = $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->latest()->take(9)->get();
         }
 
         if (!isset($data['recentlyViewed']) || $data['recentlyViewed']->isEmpty()) {
-            $data['recentlyViewed'] = $this->itemRepository->builder(['*'], [], ['status' => ActiveEnum::ACTIVE->value])
+            $data['recentlyViewed'] = $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->inRandomOrder()->take(9)->get();
         }
 
         if (!isset($data['sectionNewArrivals']) || $data['sectionNewArrivals']->isEmpty()) {
-            $data['sectionNewArrivals'] = $this->itemRepository->builder(['*'], [], ['status' => ActiveEnum::ACTIVE->value], 'desc')
+            $data['sectionNewArrivals'] = $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->latest()->take(6)->get();
         }
 
-        $data['suggestedProducts'] = $this->itemRepository->builder(['*'], [], ['status' => ActiveEnum::ACTIVE->value])
+        $data['suggestedProducts'] = $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
             ->inRandomOrder()->take(6)->get();
 
         $data['categories'] = $data['categories'] ?? collect();
@@ -330,6 +337,10 @@ class FetchHomeDataAction
         $data['clientBrands'] = $data['clientBrands'] ?? collect();
         $data['merchantSlider'] = $data['merchantSlider'] ?? collect();
         $data['testimonials'] = $data['testimonials'] ?? [];
+
+        if (!isset($data['mainSlider']) || (is_countable($data['mainSlider']) && count($data['mainSlider']) === 0) || (method_exists($data['mainSlider'], 'isEmpty') && $data['mainSlider']->isEmpty())) {
+            $data['mainSlider'] = $this->getDefaultHeroSlider();
+        }
 
         if ($data['productBanners']->isEmpty()) {
             $data['productBanners'] = $this->getDefaultBanners('grid', 2);
@@ -355,26 +366,83 @@ class FetchHomeDataAction
 
     private function getTestimonials(): array
     {
-        return [
+        return CustomerTestimonial::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get()
+            ->map(fn (CustomerTestimonial $testimonial): array => [
+                'name' => $testimonial->name,
+                'position' => $testimonial->position ?? '',
+                'image' => $testimonial->image,
+                'content' => $testimonial->content,
+            ])
+            ->all();
+    }
+
+    private function getDefaultHeroSlider(): \Illuminate\Support\Collection
+    {
+        $locale = app()->getLocale();
+        $isAr = in_array($locale, ['ar', 'he']);
+
+        $slides = [
             [
-                'name' => 'Ethen Mark',
-                'position' => 'Director',
-                'image' => 'assets/images/testimonial/1.png',
-                'content' => 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna'
+                'title' => [
+                    'ar' => 'كل ما تحتاجه - لمستقبل طاقة أفضل',
+                    'en' => 'Everything you need for a better energy future',
+                ],
+                'subtitle' => [
+                    'ar' => 'اكتشف منظومة الألواح الشمسية ومعدات الطاقة بتقنية عالية الجودة بأفضل الأسعار والضمان',
+                    'en' => 'Discover high-quality solar panel systems and energy equipment with the best warranty',
+                ],
+                'desktop_image_url' => asset('assets/ecommerce/images/slider/4.webp'),
+                'tablet_image_url' => asset('assets/ecommerce/images/slider/4.webp'),
+                'mobile_image_url' => asset('assets/ecommerce/images/slider/4.webp'),
+                'click_url' => '#products',
             ],
             [
-                'name' => 'Suzen Desoza',
-                'position' => 'Director',
-                'image' => 'assets/images/testimonial/2.png',
-                'content' => 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna'
+                'title' => [
+                    'ar' => 'حلول الطاقة المتجددة والمستدامة',
+                    'en' => 'Renewable & Sustainable Energy Solutions',
+                ],
+                'subtitle' => [
+                    'ar' => 'أنظمة شمسية متطورة وكفاءة عالية وتوفير مستمر للطاقة لمنزلك ومنشأتك',
+                    'en' => 'Advanced solar systems with high efficiency and continuous savings for your home & facility',
+                ],
+                'desktop_image_url' => asset('assets/ecommerce/images/slider/4.webp'),
+                'tablet_image_url' => asset('assets/ecommerce/images/slider/4.webp'),
+                'mobile_image_url' => asset('assets/ecommerce/images/slider/4.webp'),
+                'click_url' => '#products',
             ],
             [
-                'name' => 'John Deo',
-                'position' => 'Director',
-                'image' => 'assets/images/testimonial/3.png',
-                'content' => 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna.'
-            ]
+                'title' => [
+                    'ar' => 'خدمات واستشارات هندسية متخصصة',
+                    'en' => 'Specialized Engineering Services',
+                ],
+                'subtitle' => [
+                    'ar' => 'فريق معتمد يقدم لك خدمات التصميم والتوريد والتركيب والصيانة بأعلى المعايير',
+                    'en' => 'Certified team offering design, supply, installation and maintenance with top standards',
+                ],
+                'desktop_image_url' => asset('assets/ecommerce/images/slider/4.webp'),
+                'tablet_image_url' => asset('assets/ecommerce/images/slider/4.webp'),
+                'mobile_image_url' => asset('assets/ecommerce/images/slider/4.webp'),
+                'click_url' => '#products',
+            ],
         ];
+
+        return collect($slides)->map(function ($item) use ($locale, $isAr) {
+            $localizedTitle = $item['title'][$locale] ?? ($isAr ? $item['title']['ar'] : $item['title']['en']);
+            $localizedSubtitle = $item['subtitle'][$locale] ?? ($isAr ? $item['subtitle']['ar'] : $item['subtitle']['en']);
+
+            return (object) [
+                'localized_title' => $localizedTitle,
+                'localized_subtitle' => $localizedSubtitle,
+                'desktop_image_url' => $item['desktop_image_url'],
+                'tablet_image_url' => $item['tablet_image_url'],
+                'mobile_image_url' => $item['mobile_image_url'],
+                'click_url' => $item['click_url'],
+            ];
+        });
     }
 
     private function getEmptyData(): array
@@ -389,7 +457,7 @@ class FetchHomeDataAction
             'suggestedProducts' => collect(),
             'categories' => collect(),
             'services' => collect(),
-            'mainSlider' => collect(),
+            'mainSlider' => $this->getDefaultHeroSlider(),
             'mainSliderSettings' => [],
             'mainSliderBackground' => null,
             'largeBanner' => collect(),

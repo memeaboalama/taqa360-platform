@@ -21,6 +21,7 @@ class WishlistController extends Controller
                 $query->with(['files']); 
             }])
             ->where('user_id', $user->id)
+            ->whereHas('item', fn ($query) => $query->where('status', 'active')->availableForStorefront())
             ->latest()
             ->paginate(12);
 

@@ -59,6 +59,15 @@ class WalletController extends Controller
             'amount' => 'required|numeric|min:1',
         ]);
 
+        $publishableKey = trim((string) config('services.moyasar.key'));
+        $secretKey = trim((string) config('services.moyasar.secret'));
+        if (
+            !Str::startsWith($publishableKey, ['pk_test_', 'pk_live_']) ||
+            !Str::startsWith($secretKey, ['sk_test_', 'sk_live_'])
+        ) {
+            return back()->withInput()->with('error', __('ecommerce::ecommerce.wallet_payment_not_configured'));
+        }
+
         $user = auth()->user();
         $data = $request->only('amount');
 
@@ -79,6 +88,14 @@ class WalletController extends Controller
             Log::error($e);
             return back()->with('error', __('ecommerce::ecommerce.something_went_wrong'));
         }
+    }
+
+    public function paymentIframe($token)
+    {
+        return redirect()->route('marketplace:wallet.payment.iframe', [
+            'lang' => app()->getLocale(),
+            'token' => $token,
+        ]);
     }
 
     public function applyCoupon(Request $request)

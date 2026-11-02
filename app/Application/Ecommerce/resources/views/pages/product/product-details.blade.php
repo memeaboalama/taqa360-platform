@@ -344,8 +344,8 @@
 
                                 <div class="product-buttons d-flex gap-2">
                                     @if(auth()->check())
-                                    <form class="add-to-cart-form" method="POST" action="{{ route('cart.add') }}"
-                                        up-submit up-target=".cart-header" up-scroll="false">
+<form class="add-to-cart-form" method="POST" action="{{ route('cart.add') }}"
+    up-submit up-target=".cart-header-container" up-scroll="false">
                                         @csrf
                                         <input type="hidden" name="item_id" value="{{ $product->id }}">
                                         <input type="hidden" name="qty" value="1" id="cart-quantity">

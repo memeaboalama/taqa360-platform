@@ -160,6 +160,7 @@ Route::group(
                 Route::post('/apply-coupon', 'applyCoupon')->name('coupon.apply');
                 Route::get('/withdraw', 'withdraw')->name('withdraw');
                 Route::post('/withdraw', 'processWithdraw')->name('withdraw.process');
+                Route::get('/payment/iframe/{token}', 'paymentIframe')->name('payment.iframe');
             });
     }
 );
@@ -179,6 +180,4 @@ Route::group(
     Route::post('reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 
 });
-
-
 

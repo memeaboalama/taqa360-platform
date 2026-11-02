@@ -95,6 +95,23 @@ class Documents extends Component
             ]);
         }
 
+        $this->documents = $this->educator->files()
+            ->where('type', 'general_document')
+            ->get()
+            ->map(function ($file) {
+                return [
+                    'id' => $file->id,
+                    'type' => $file->collection_name,
+                    'file_name' => $file->file_name,
+                    'original_name' => $file->original_name,
+                    'mime_type' => $file->mime_type,
+                    'url' => $file->url,
+                ];
+            })
+            ->toArray();
+
+        $this->uploads = [];
+
         $this->emitUp('stepCompleted', 8);
         $this->alert('success', __('educator::builder.messages.document_saved'));
     }

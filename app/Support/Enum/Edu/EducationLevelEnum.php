@@ -1,13 +1,13 @@
 <?php
 
 namespace App\Support\Enum\Edu;
+
 enum EducationLevelEnum: string
 {
-    case HIGH_SCHOOL = 'high_school';
-    case DIPLOMA = 'diploma';
+    case ASSOCIATE = 'associate';
     case BACHELOR = 'bachelor';
-    case MASTER = 'master';
-    case PHD = 'phd';
+    case PROFESSIONAL = 'professional';
+    case GRADUATE = 'graduate';
 
     public static function values(): array
     {
@@ -17,11 +17,10 @@ enum EducationLevelEnum: string
     public function trans(): string
     {
         return match ($this) {
-            self::HIGH_SCHOOL =>__('educator::builder.enums.high_school'),
-            self::DIPLOMA => __('educator::builder.enums.diploma'),
-            self::BACHELOR => __('educator::builder.enums.bachelor'),
-            self::MASTER => __('educator::builder.enums.master'),
-            self::PHD => __('educator::builder.enums.phd')
+            self::ASSOCIATE =>__('educator::builder.enums.associate'),
+            self::BACHELOR =>__('educator::builder.enums.bachelor'),
+            self::PROFESSIONAL =>__('educator::builder.enums.professional'),
+            self::GRADUATE =>__('educator::builder.enums.graduate')
         };
     }
 }

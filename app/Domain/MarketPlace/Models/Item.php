@@ -21,6 +21,7 @@ use Domain\MarketPlace\Models\Catalog\ChildCategory;
 use Domain\MarketPlace\Models\Catalog\Subcategory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
@@ -111,6 +112,14 @@ class Item extends Model
     public function isInStock(): bool
     {
         return $this->stock === null || (int) $this->stock > 0;
+    }
+
+    public function scopeAvailableForStorefront(Builder $query): Builder
+    {
+        return $query->whereHas('merchant', function (Builder $merchantQuery) {
+            $merchantQuery->where('status', 'active')
+                ->whereHas('branches', fn (Builder $branchQuery) => $branchQuery->where('status', 1));
+        });
     }
 
     /**

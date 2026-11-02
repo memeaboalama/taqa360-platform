@@ -232,7 +232,7 @@
                             <div class="payment-options">
                                 <label class="payment-option">
                                     <input type="radio" name="payment_method" value="wallet"
-                                        {{ old('payment_method') == 'wallet' ? 'checked' : '' }}>
+                                        {{ old('payment_method', 'wallet') == 'wallet' ? 'checked' : '' }}>
                                     <div class="payment-content">
                                         <div class="pay-info">
                                             <span class="pay-name">@lang('ecommerce::ecommerce.pay_wallet')</span>

@@ -87,6 +87,7 @@ class AdPlacement extends Model
         return $this->hasMany(AdProductContent::class, 'placement_id')
             ->active()
             ->withinSchedule()
+            ->whereHas('product', fn ($query) => $query->where('status', 'active')->availableForStorefront())
             ->prioritized();
     }
 

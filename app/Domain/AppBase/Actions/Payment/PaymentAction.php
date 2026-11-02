@@ -170,23 +170,35 @@ class PaymentAction
     }
     public function checkDeposit(array $data)
     {
+        Log::channel('daily')->info("=== checkDeposit started ===");
+        Log::channel('daily')->info("Input data: " . json_encode($data));
+
         $fetch_payment = Payment::paymentStatus($data);
-        if (!$fetch_payment) return false;
+        Log::channel('daily')->info("Payment status from API: " . ($fetch_payment ? $fetch_payment["status"] : "false"));
+        if (!$fetch_payment) {
+            Log::channel('daily')->info("No payment status from API, returning false");
+            return false;
+        }
 
         $payment = $this->paymentRepository->find(cols: ['id', 'payment_id', 'status', 'amount', 'user_id', 'payable_type', 'payable_id', 'channel'], conditions: ['payment_id' => $fetch_payment["id"]]);
 
-        if (!$payment) return false;
+        Log::channel('daily')->info("Payment found by payment_id: " . ($payment ? "yes (id: " . $payment->id . ")" : "no"));
 
-        $walletDeposit = $this->walletTransactionRepository->find(['*'], ['id' => $payment?->payable_id]);
-        if ($payment->status == "paid") {
-            $walletDeposit->update(["confirmed" => 1, "status" => "confirmed"]);
-        } else {
-            $walletDeposit->update(["confirmed" => 0, "status" => "failed"]);
+        if (!$payment) {
+            Log::channel('daily')->info("Payment not found in repository");
+            return false;
         }
 
-        if ($payment->status == "initiated" || $payment->status == "paid" || $payment->status == "failed")
-            $this->paymentRepository->update(id: $payment->id, data: ["status" => $fetch_payment["status"]]);
+        $walletDeposit = $this->walletTransactionRepository->find(['*'], ['id' => $payment?->payable_id]);
+        Log::channel('daily')->info("Wallet deposit found: " . ($walletDeposit ? "yes (id: " . $walletDeposit->id . ")" : "no"));
+        if (!$walletDeposit) {
+            return false;
+        }
 
+        $this->paymentRepository->update(id: $payment->id, data: ["status" => $fetch_payment["status"]]);
+        $payment->status = $fetch_payment["status"];
+
+        Log::channel('daily')->info("checkDeposit returning payment");
         return $payment;
     }
 }

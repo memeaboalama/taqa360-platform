@@ -25,7 +25,7 @@ class Delete extends Component
         DB::beginTransaction();
         $destroyEducatorAction->handle($this->element_id);
         $this->emit('closeModal', '#deleteEducator');
-        $this->emit('refreshDatatable');
+        $this->emit('refreshEducatorTables');
         $this->alert('success', __('admin::home.data_deleted_successfully'));
         DB::commit();
     }

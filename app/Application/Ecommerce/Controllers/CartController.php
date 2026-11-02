@@ -8,6 +8,7 @@ use App\Domain\Ecommerce\Actions\Cart\SaveItemCartAction;
 use App\Domain\Ecommerce\Actions\Cart\UpdateQtyAction;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class CartController extends Controller
@@ -277,6 +278,8 @@ return [
 
     public function switchToStore(Request $request, SaveItemCartAction $saveItemCartAction, DeleteItemCartAction $deleteItemCartAction, FetchCartAction $cartAction)
     {
+        $switchErrorMessage = null;
+
         try {
             $validated = $request->validate([
                 'item_id' => ['required', 'exists:items,id'],
@@ -300,9 +303,41 @@ return [
                 return back()->with('error', $message);
             }
 
-            $deleteItemCartAction->clearV2();
+            $userId = auth()->id() ?? auth()->guard('web')->id() ?? auth()->guard('user-api')->id();
+            if (!$userId) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => __('ecommerce::ecommerce.login_to_continue')], 401);
+                }
 
-            $saveItemCartAction->addItem($validated);
+                return redirect()->route('auth.login');
+            }
+
+            DB::transaction(function () use ($validated, $userId, $deleteItemCartAction, $saveItemCartAction, &$switchErrorMessage) {
+                $deleteItemCartAction->clearV2($userId);
+
+                $result = $saveItemCartAction->addItem($validated);
+                if (is_array($result) && isset($result['code'])) {
+                    $switchErrorMessage = $result['message'] ?? __('ecommerce::ecommerce.cart.add_error');
+                    throw new \RuntimeException('Unable to add the selected product after clearing the cart.');
+                }
+
+                if (!$result) {
+                    $switchErrorMessage = __('ecommerce::ecommerce.cart.add_error');
+                    throw new \RuntimeException('The selected product was not added after clearing the cart.');
+                }
+
+                $cart = \App\Domain\User\Models\User::findOrFail($userId)->webCart;
+                $items = $cart?->cartItems;
+                if (
+                    !$cart ||
+                    $items->count() !== 1 ||
+                    (int) $items->first()->item_id !== (int) $validated['item_id'] ||
+                    (int) $items->first()->qty !== (int) $validated['qty']
+                ) {
+                    $switchErrorMessage = __('ecommerce::ecommerce.cart.add_error');
+                    throw new \RuntimeException('The cart contents did not match the selected product after switching stores.');
+                }
+            });
 
             if ($request->ajax() || $request->wantsJson()) {
                 $cart = $cartAction->handle();
@@ -312,6 +347,7 @@ return [
                     'cart_count' => $cart?->cartItems?->sum('qty') ?? 0,
                     'cart_total' => number_format((float) ($cart?->total ?? 0), 2),
                     'cart_empty' => !$cart || $cart->cartItems->isEmpty(),
+                    'redirect_url' => $request->boolean('redirect_to_checkout') ? route('checkout') : null,
                 ]);
             }
 
@@ -326,9 +362,12 @@ return [
         } catch (\Exception $e) {
             Log::error('Switch store failed: ' . $e->getMessage());
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => __('ecommerce::ecommerce.cart.add_error')], 500);
+                return response()->json([
+                    'success' => false,
+                    'message' => $switchErrorMessage ?? __('ecommerce::ecommerce.cart.add_error'),
+                ], 500);
             }
-            return back()->with('error', __('ecommerce::ecommerce.cart.add_error'));
+            return back()->with('error', $switchErrorMessage ?? __('ecommerce::ecommerce.cart.add_error'));
         }
     }
 

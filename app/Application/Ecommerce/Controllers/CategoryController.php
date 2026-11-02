@@ -75,11 +75,11 @@ class CategoryController extends Controller
         if ($activeMainId) {
             $subCategories = Subcategory::where('category_id', $activeMainId)
                 ->where('is_active', true)
-                ->withCount('items')
+                ->withCount(['items' => fn ($query) => $query->where('status', 'active')->availableForStorefront()])
                 ->get();
         } else {
             $subCategories = Subcategory::where('is_active', true)
-                ->withCount('items')
+                ->withCount(['items' => fn ($query) => $query->where('status', 'active')->availableForStorefront()])
                 ->orderBy('items_count', 'desc')
                 ->take(24)
                 ->get();
@@ -90,7 +90,7 @@ class CategoryController extends Controller
         if ($activeSubId) {
             $childCategories = ChildCategory::where('subcategory_id', $activeSubId)
                 ->where('is_active', true)
-                ->withCount('items')
+                ->withCount(['items' => fn ($query) => $query->where('status', 'active')->availableForStorefront()])
                 ->get();
 
         } elseif ($activeMainId) {
@@ -98,7 +98,7 @@ class CategoryController extends Controller
                     $q->where('category_id', $activeMainId);
                 })
                 ->where('is_active', true)
-                ->withCount('items')
+                ->withCount(['items' => fn ($query) => $query->where('status', 'active')->availableForStorefront()])
                 ->limit(60)
                 ->get();
 
@@ -106,11 +106,12 @@ class CategoryController extends Controller
             $selectedChild = null;
             if ($activeChildId) {
                 $selectedChild = ChildCategory::where('id', $activeChildId)
-                    ->withCount('items')
+                    ->withCount(['items' => fn ($query) => $query->where('status', 'active')->availableForStorefront()])
                     ->first();
             }
 
-            $query = ChildCategory::where('is_active', true)->withCount('items');
+            $query = ChildCategory::where('is_active', true)
+                ->withCount(['items' => fn ($query) => $query->where('status', 'active')->availableForStorefront()]);
 
             if ($activeChildId) {
                 $query->where('id', '!=', $activeChildId);
@@ -134,7 +135,7 @@ class CategoryController extends Controller
 
     private function getFilteredProducts(Request $request, $filters)
     {
-        $query = Item::where('status', 'active')->with(['merchant']);
+        $query = Item::where('status', 'active')->availableForStorefront()->with(['merchant']);
 
         if ($filters['activeMainId']) $query->where('main_category_id', $filters['activeMainId']);
         if ($filters['activeSubId']) $query->where('sub_category_id', $filters['activeSubId']);

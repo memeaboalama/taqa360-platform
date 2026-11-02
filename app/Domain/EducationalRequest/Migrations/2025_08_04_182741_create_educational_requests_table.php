@@ -14,8 +14,6 @@ return new class extends Migration
             $table->string('title');
             $table->text('description')->nullable();
             $table->foreignId('requester_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('academic_major_id')->nullable()->constrained('academic_majors')->nullOnDelete();
-            $table->string('education_level');
             $table->string('type')->default('general');
             $table->string('status')->default('pending');
             $table->string('execution_status')->default('pending');
@@ -25,6 +23,9 @@ return new class extends Migration
             $table->text('final_agreement')->nullable();
             $table->string('urgency_level')->default('normal');
             $table->text('additional_notes')->nullable();
+
+            $table->string('project_site_type')->nullable();
+            $table->string('solar_system_type')->nullable();
 
             $table->timestamp('accepted_at')->nullable();
             $table->timestamp('rejected_at')->nullable();
@@ -38,7 +39,6 @@ return new class extends Migration
 
             $table->index(['requester_id', 'status']);
             $table->index(['status', 'execution_status']);
-            $table->index(['title', 'education_level']);
             $table->index('created_at');
             $table->fullText(['title', 'description']);
         });

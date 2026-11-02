@@ -255,9 +255,8 @@
                     </div>
 
                     <div class="payment-options">
-                        <!-- Reordered: Coupon First -->
                         <label class="payment-option">
-                            <input type="radio" name="payment_method" value="coupon" checked onchange="toggleForm('coupon')">
+                            <input type="radio" name="payment_method" value="coupon" checked>
                             <div class="payment-content">
                                 <div class="pay-info">
                                     <span class="pay-name">@lang('ecommerce::ecommerce.promo_code')</span>
@@ -267,16 +266,17 @@
                             </div>
                         </label>
 
-                        <!-- <label class="payment-option">
-                        <input type="radio" name="payment_method" value="online" onchange="toggleForm('online')">
-                        <div class="payment-content">
-                            <div class="pay-info">
-                                <span class="pay-name">@lang('ecommerce::ecommerce.online_payment')</span>
-                                <small class="pay-desc">Mada, Visa, MasterCard</small>
+                        <label class="payment-option">
+                            <input type="radio" name="payment_method" value="online">
+                            <div class="payment-content">
+                                <div class="pay-info">
+                                    <span class="pay-name">@lang('ecommerce::ecommerce.online_payment')</span>
+                                    <small class="pay-desc">Mada, Visa, MasterCard</small>
+                                </div>
+                                <i class="ti-credit-card pay-icon"></i>
                             </div>
-                            <i class="ti-credit-card pay-icon"></i>
-                        </div>
-                    </label> -->
+                        </label>
+</div>
                     </div>
 
                     <div class="section-divider border-top pt-4 mt-0 opacity-25"></div>
@@ -307,11 +307,10 @@
                                 </div>
                             </div>
                             <button type="submit" class="btn-submit">
-                                @lang('ecommerce::ecommerce.continue') <i class="ti-arrow-left arrow-start ms-1"></i>
+                                @lang('ecommerce::ecommerce.continue') <i class="ti-arrow-left ms-1"></i>
                             </button>
                         </form>
                     </div>
-                </div>
             </div>
 
             <!-- Sidebar: Balance -->
@@ -333,12 +332,47 @@
         </div>
     </div>
 
-    <script>
+<script>
         function toggleForm(type) {
-            document.getElementById('online-form').style.display = type === 'online' ? 'block' : 'none';
-            document.getElementById('coupon-form').style.display = type === 'coupon' ? 'block' : 'none';
+            // Coupon form
+            var couponForm = document.getElementById('coupon-form');
+            var couponInput = couponForm.querySelector('input[name="walletCoupon"]');
+            var couponFormElement = couponForm.querySelector('form');
+            
+            // Online form
+            var onlineForm = document.getElementById('online-form');
+            var onlineFormElement = onlineForm.querySelector('form');
+            
+            if (type === 'coupon') {
+                couponForm.style.display = 'block';
+                onlineForm.style.display = 'none';
+                // Add required attribute to coupon input, remove from online amount
+                couponInput.setAttribute('required', 'required');
+                onlineFormElement.querySelector('input[name="amount"]').removeAttribute('required');
+            } else {
+                couponForm.style.display = 'none';
+                onlineForm.style.display = 'block';
+                // Remove required from coupon input, add to online amount
+                couponInput.removeAttribute('required');
+                onlineFormElement.querySelector('input[name="amount"]').setAttribute('required', 'required');
+            }
         }
-    </script>
+        
+        // Initialize form on page load - check which radio is checked
+        document.addEventListener('DOMContentLoaded', function() {
+            var couponRadios = document.querySelectorAll('input[name="payment_method"]');
+            couponRadios.forEach(function(radio) {
+                radio.addEventListener('change', function() {
+                    toggleForm(this.value);
+                });
+            });
+            // Initialize with the initially checked radio
+            var initialRadio = document.querySelector('input[name="payment_method"]:checked');
+            if (initialRadio) {
+                toggleForm(initialRadio.value);
+            }
+        });
+</script>
 
     @if(request()->hasHeader('X-Up-Target'))
 </div>

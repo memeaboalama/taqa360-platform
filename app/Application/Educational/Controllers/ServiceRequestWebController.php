@@ -4,7 +4,6 @@ namespace App\Application\Educational\Controllers;
 
 use App\Domain\EducationalRequest\Actions\CreateEducationalRequestAction;
 use App\Http\Controllers\Controller;
-use Domain\AppBase\Models\Edu\AcademicMajor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -15,8 +14,6 @@ class ServiceRequestWebController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
-            'academic_major_id' => ['nullable'],
-            'education_level' => ['nullable', 'string', 'max:100'],
             'type' => ['nullable', 'string'],
             'budget' => ['nullable', 'numeric', 'min:0'],
             'urgency_level' => ['nullable', 'in:normal,urgent,very_urgent'],
@@ -38,17 +35,6 @@ class ServiceRequestWebController extends Controller
                 'user_id' => auth()->id() ?? 1,
             ]);
 
-            if (!empty($data['academic_major_id'])) {
-                $major = AcademicMajor::where('id', $data['academic_major_id'])
-                    ->orWhere('uuid', $data['academic_major_id'])
-                    ->first();
-                if ($major) {
-                    $data['academic_major_id'] = $major->id;
-                } else {
-                    $data['academic_major_id'] = null;
-                }
-            }
-
             if (!empty($data['type'])) {
                 $typeStr = strtolower($data['type']);
                 $validTypes = \App\Application\Educational\Enums\EducationalRequestType::values();
@@ -64,6 +50,16 @@ class ServiceRequestWebController extends Controller
                 }
             } else {
                 $data['type'] = \App\Application\Educational\Enums\EducationalRequestType::GENERAL->value;
+            }
+
+            // Handle project site type
+            if (!empty($data['project_site_type'])) {
+                $data['project_site_type'] = strtolower($data['project_site_type']);
+            }
+
+            // Handle solar system type
+            if (!empty($data['solar_system_type'])) {
+                $data['solar_system_type'] = strtolower($data['solar_system_type']);
             }
 
             $educationalRequest = $createAction->handle($data);
