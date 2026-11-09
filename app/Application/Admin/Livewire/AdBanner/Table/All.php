@@ -68,10 +68,10 @@ class All extends DataTableComponent
             Column::make(__('admin::lang.CTR'), 'id')
                 ->format(fn($value, $row) => $row->ctr . '%'),
 
-            Column::make(__('admin::home.Status'), 'status')
+            Column::make(__('admin::lang.Status'), 'status')
                 ->format(fn($value) => view('admin::livewire.ad-banner.table.status', ['status' => $value])),
 
-            Column::make(__('admin::home.Actions'))
+            Column::make(__('admin::lang.Actions'))
                 ->label(fn($row) => view('admin::livewire.ad-banner.table.action', ['row' => $row])),
         ];
     }

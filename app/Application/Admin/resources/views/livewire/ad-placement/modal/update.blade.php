@@ -42,7 +42,7 @@
                     <div class="row g-2 mb-2">
                         <div class="col-6">
                             <label class="form-label small mb-1">{{ __('admin::lang.Type') }} <span class="text-danger">*</span></label>
-                            <select class="form-select form-select-sm" wire:model.live="type">
+                            <select class="form-select form-select-sm" wire:model="type">
                                 @foreach(\App\Support\Enum\PlacementTypeEnum::cases() as $typeEnum)
                                     <option value="{{ $typeEnum->value }}">{{ $typeEnum->label() }}</option>
                                 @endforeach

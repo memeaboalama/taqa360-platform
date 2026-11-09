@@ -37,11 +37,19 @@
                             @error('phone') <span class="d-block text-danger">{{ $message }}</span>@enderror
                         </div>
                     </div>
-                    {{--            <div class="row gy-3 mt-3">--}}
-                    {{--                <div class="col-xl-12  text-end mt-4">--}}
-                    {{--                    <button class="btn btn-lg btn-primary">Update</button>--}}
-                    {{--                </div>--}}
-                    {{--            </div>--}}
+                    <div class="row gy-3 mt-3">
+                        <div class="col-xl-12 text-end">
+                            <button type="submit" class="btn btn-lg btn-primary"
+                                    wire:loading.attr="disabled" wire:target="updateBasicInfo">
+                                <span wire:loading.class="d-none" wire:target="updateBasicInfo">
+                                    @lang('admin::home.Save')
+                                </span>
+                                <span class="d-none" wire:loading.class.remove="d-none" wire:target="updateBasicInfo">
+                                    @lang('admin::home.Wait')
+                                </span>
+                            </button>
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="col-md-3">

@@ -4,8 +4,10 @@ namespace Application\Admin\Livewire\AdBanner\Modal;
 
 use App\Domain\AppBase\Actions\AdBanner\UpdateBannerAction;
 use App\Domain\AppBase\Repositories\AdBannerRepository;
+use App\Domain\MarketPlace\Repositories\Merchant\MerchantRepository;
 use App\Support\Enum\BannerStatusEnum;
 use App\Support\Enum\ClickActionTypeEnum;
+use Domain\MarketPlace\Models\Merchant;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -73,7 +75,7 @@ class Update extends Component
         $this->status = $banner->status->value;
         $this->priority = $banner->priority;
 
-        $this->dispatch('open-modal', 'updateBannerModal');
+        $this->emit('openModal', '#updateBannerModal');
     }
 
     protected function rules()
@@ -127,7 +129,7 @@ class Update extends Component
 
         $action->handle($this->bannerId, $data);
 
-        $this->dispatch('close-modal', 'updateBannerModal');
+        $this->emit('closeModal', '#updateBannerModal');
         $this->dispatch('banner-updated');
         $this->dispatch('success', __('admin::home.Updated Successfully'));
     }
@@ -192,7 +194,11 @@ class Update extends Component
     
     private function searchMerchants()
     {
-        return [];
+        $merchantRepository = new MerchantRepository(new Merchant());
+
+        return $merchantRepository
+            ->search(['id', 'company_name'], $this->searchQuery)
+            ->take(5);
     }
 
     public function render()

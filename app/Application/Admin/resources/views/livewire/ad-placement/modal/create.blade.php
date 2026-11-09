@@ -42,7 +42,7 @@
                     <div class="row g-2 mb-2">
                         <div class="col-6">
                             <label class="form-label small mb-1">{{ __('admin::lang.Type') }} <span class="text-danger">*</span></label>
-                            <select class="form-select form-select-sm" wire:model.live="type">
+                            <select class="form-select form-select-sm" wire:model="type">
                                 @foreach(\App\Support\Enum\PlacementTypeEnum::cases() as $typeEnum)
                                     <option value="{{ $typeEnum->value }}">{{ $typeEnum->label() }}</option>
                                 @endforeach
@@ -140,7 +140,7 @@
                                 <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
                                     <div class="form-check form-switch mb-0">
                                         <input class="form-check-input" type="checkbox"
-                                               wire:model.live="tabConfig.{{ $key }}.enabled"
+                                               wire:model="tabConfig.{{ $key }}.enabled"
                                                id="tab-{{ $key }}">
                                         <label class="form-check-label fw-semibold" for="tab-{{ $key }}">
                                             {{ $config['title_en'] }} / {{ $config['title_ar'] }}

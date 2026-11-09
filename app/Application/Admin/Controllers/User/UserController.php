@@ -15,6 +15,8 @@ class UserController extends Controller
     public function show(int $id, UserRepository $userRepository): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application
     {
         $user = $userRepository->findByCols(['id' => $id]);
+        abort_if(!$user, 404);
+
         return view('admin::pages.users.show', get_defined_vars());
     }
 

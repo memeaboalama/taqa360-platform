@@ -3,8 +3,7 @@
     <!-- Start::main-sidebar-header -->
     <div class="main-sidebar-header" style="border: none">
         <a href="#" class="header-logo">
-            <img src="{{ asset('assets/ecommerce/images/logo.png') }}" alt="TAQA" class="desktop-logo" width="112"
-                style="display: block; width: 112px; max-width: calc(100% - 24px); height: auto; max-height: 88px; object-fit: contain; margin: 6px auto 2px">
+            <img src="{{ asset('assets/ecommerce/images/logo.png') }}" alt="TAQA" class="desktop-logo" width="112">
             <img src="{{ asset('assets/ecommerce/images/logo.png') }}" alt="TAQA" class="toggle-logo" width="64">
             <img src="{{ asset('assets/ecommerce/images/logo-white.png') }}" alt="TAQA" class="desktop-dark" width="112">
             <img src="{{ asset('assets/ecommerce/images/logo-white.png') }}" alt="TAQA" class="toggle-dark" width="64">

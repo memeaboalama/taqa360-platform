@@ -54,7 +54,7 @@ class History extends DataTableComponent
                 ->format(fn($value) => view('admin::livewire.ad-banner.table.status', ['status' => $value]))
                 ->html(),
 
-            Column::make(__('admin::lang.Last Updated'), 'updated_at')
+            Column::make(__('admin::lang.last_updated'), 'updated_at')
                 ->format(fn($value) => $value->diffForHumans()),
 
             Column::make(__('admin::lang.Actions'), 'id')

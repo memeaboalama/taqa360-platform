@@ -67,9 +67,9 @@
                         <p class="text-muted">{{ __('admin::lang.Click "Add Placement" to create your first placement') }}</p>
                     </div>
                 @else
-                    <div class="accordion settings-accordion" id="placementsAccordion">
+                    <div class="row row-sm settings-accordion" id="placementsAccordion">
                         @foreach($placements as $index => $placement)
-                            <div class="accordion-item border mb-3 rounded">
+                            <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12 mb-4 accordion-item border rounded h-100" wire:key="placement-card-{{ $placement->id }}">
                                 <h2 class="accordion-header" id="heading{{ $placement->id }}">
                                     <button class="accordion-button {{ $expandedPlacementId === $placement->id ? '' : 'collapsed' }}"
                                             type="button"
@@ -181,6 +181,7 @@
                                             </button>
                                         </div>
                                     </div>
+                                </div>
                                 </div>
                             </div>
                         @endforeach

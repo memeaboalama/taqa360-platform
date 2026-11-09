@@ -28,8 +28,9 @@ class Filter extends Component
         $this->statuses = collect(ActiveEnum::cases());
     }
 
-    public function refreshCustomerFilter(User $customer): void
+    public function refreshCustomerFilter(int $customerId): void
     {
+        $customer = User::findOrFail($customerId);
         $this->statuses = collect(ActiveEnum::cases());
         $this->customer_id = $customer->id;
         $this->customer_name = $customer->name ?? null;

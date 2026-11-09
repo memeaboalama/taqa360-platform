@@ -8,12 +8,13 @@ use App\Support\Enum\PlacementTypeEnum;
 use App\Support\Enum\StatusEnum;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
 class Update extends Component
 {
-    use WithFileUploads;
+    use LivewireAlert, WithFileUploads;
 
     public $placementId;
     public $name_en;
@@ -47,6 +48,7 @@ class Update extends Component
 
     public function openUpdateModal(int $placementId, AdPlacementRepository $repo)
     {
+        $this->resetValidation();
         $placement = $repo->findByCols(['id' => $placementId]);
 
         if (!$placement) {
@@ -54,8 +56,8 @@ class Update extends Component
         }
 
         $this->placementId = $placement->id;
-        $this->name_en = $placement->name['en'] ?? '';
-        $this->name_ar = $placement->name['ar'] ?? '';
+        $this->name_en = $placement->getTranslation('name', 'en');
+        $this->name_ar = $placement->getTranslation('name', 'ar');
         $this->key = $placement->key;
         $this->location = $placement->location;
         $this->type = $placement->type->value;
@@ -63,7 +65,7 @@ class Update extends Component
         $this->sort_order = $placement->sort_order;
 
         $settings = $placement->settings;
-        $this->max_items = $settings['slider_config']['max_items'] ?? $settings['grid_config']['max_items'] ?? $settings['carousel_config']['max_items'] ?? $settings['widget_config']['max_items'] ?? 5;
+        $this->max_items = $settings['slider_config']['max_items'] ?? $settings['grid_config']['max_items'] ?? $settings['carousel_config']['max_items'] ?? $settings['widget_config']['max_items'] ?? $settings['max_items'] ?? 5;
         $this->autoplay = $settings['slider_config']['autoplay'] ?? $settings['carousel_config']['autoplay'] ?? true;
         $this->autoplay_speed = $settings['slider_config']['autoplay_speed'] ?? $settings['carousel_config']['autoplay_speed'] ?? 5000;
         $this->loop = $settings['slider_config']['loop'] ?? $settings['carousel_config']['loop'] ?? true;
@@ -106,6 +108,7 @@ class Update extends Component
             'name_ar' => 'required|string|max:255',
             'key' => 'nullable|string|max:100',
             'location' => 'required|string|max:50',
+            'type' => 'required|in:' . implode(',', PlacementTypeEnum::values()),
             'status' => 'required|in:' . implode(',', StatusEnum::values()),
             'sort_order' => 'required|integer|min:0',
             'tabConfig' => 'array',
@@ -133,10 +136,7 @@ class Update extends Component
 
         $placement = $repo->findByCols(['id' => $this->placementId]);
         if (!$placement) {
-            $this->dispatch('show-toast', [
-                'type' => 'error',
-                'message' => __('admin::lang.Placement not found'),
-            ]);
+            $this->alert('error', __('admin::lang.Placement not found'));
             return;
         }
 
@@ -147,10 +147,7 @@ class Update extends Component
         if ($this->backgroundImage) {
             $uploadedBackgroundPath = $this->backgroundImage->store('ad-placements/backgrounds', 'fileDisk');
             if (!$uploadedBackgroundPath) {
-                $this->dispatch('show-toast', [
-                    'type' => 'error',
-                    'message' => __('admin::lang.Error uploading image'),
-                ]);
+                $this->alert('error', __('admin::lang.Error uploading image'));
                 return;
             }
 
@@ -166,6 +163,7 @@ class Update extends Component
             ],
             'key' => $this->key,
             'location' => $this->location,
+            'type' => PlacementTypeEnum::from($this->type),
             'settings' => $settings,
             'status' => StatusEnum::from($this->status),
             'sort_order' => $this->sort_order,
@@ -176,10 +174,7 @@ class Update extends Component
                 Storage::disk('fileDisk')->delete($uploadedBackgroundPath);
             }
 
-            $this->dispatch('show-toast', [
-                'type' => 'error',
-                'message' => __('admin::lang.Error updating placement'),
-            ]);
+            $this->alert('error', __('admin::lang.Error updating placement'));
             return;
         }
 
@@ -194,7 +189,7 @@ class Update extends Component
         }
 
         $this->emit('placement-updated');
-        $this->emit('show-toast', ['type' => 'success', 'message' => __('admin::home.Updated Successfully')]);
+        $this->alert('success', __('admin::home.Updated Successfully'));
         $this->close();
     }
 
@@ -217,6 +212,10 @@ class Update extends Component
                 'click_enabled' => true,
                 'allowed_types' => ['url', 'product', 'category', 'merchant', 'none'],
             ];
+        }
+
+        if (in_array($type, [PlacementTypeEnum::PRODUCT_TABS, PlacementTypeEnum::PRODUCT_SLIDER, PlacementTypeEnum::PRODUCT_SIDEBAR])) {
+            $settings['max_items'] = $this->max_items;
         }
 
         if ($type === PlacementTypeEnum::SLIDER || $type === PlacementTypeEnum::CAROUSEL || $type === PlacementTypeEnum::PRODUCT_SLIDER) {

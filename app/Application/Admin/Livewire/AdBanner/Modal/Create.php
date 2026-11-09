@@ -4,14 +4,17 @@ namespace Application\Admin\Livewire\AdBanner\Modal;
 
 use App\Domain\AppBase\Actions\AdBanner\StoreBannerAction;
 use App\Domain\AppBase\Repositories\AdPlacementRepository;
+use App\Domain\MarketPlace\Repositories\Merchant\MerchantRepository;
 use App\Support\Enum\BannerStatusEnum;
 use App\Support\Enum\ClickActionTypeEnum;
+use Domain\MarketPlace\Models\Merchant;
+use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
 class Create extends Component
 {
-    use WithFileUploads;
+    use LivewireAlert, WithFileUploads;
 
     public $placementId;
     public $placement;
@@ -45,7 +48,7 @@ class Create extends Component
         $this->placementId = $placementId;
         $this->placement = $repo->findByCols(['id' => $placementId]);
         $this->reset(['name', 'title_en', 'title_ar', 'subtitle_en', 'subtitle_ar']);
-        $this->dispatch('open-modal', 'createBannerModal');
+        $this->emit('openModal', '#createBannerModal');
     }
 
     protected function rules()
@@ -96,9 +99,9 @@ class Create extends Component
 
         $action->handle($data);
 
-        $this->dispatch('close-modal', 'createBannerModal');
-        $this->dispatch('banner-created');
-        $this->dispatch('success', __('admin::home.Added Successfully'));
+        $this->emit('closeModal', '#createBannerModal');
+        $this->emit('banner-created');
+        $this->alert('success', __('admin::home.Added Successfully'));
     }
 
     public function updatedSearchQuery()
@@ -161,8 +164,11 @@ class Create extends Component
     
     private function searchMerchants()
     {
-        // Placeholder - implement based on your merchant repository
-        return [];
+        $merchantRepository = new MerchantRepository(new Merchant());
+
+        return $merchantRepository
+            ->search(['id', 'company_name'], $this->searchQuery)
+            ->take(5);
     }
 
     public function render()

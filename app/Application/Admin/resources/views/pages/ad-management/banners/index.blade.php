@@ -16,7 +16,7 @@
                     </ol>
                 </div>
                 <div class="d-flex">
-                    <button class="btn ripple btn-primary" wire:click="$dispatch('openCreateModal', { placementId: {{ $placement->id }} })">
+                    <button class="btn ripple btn-primary" onclick="Livewire.emit('openCreateModal', {{ $placement->id }})">
                         <i class="fe fe-plus me-2"></i>{{ __('admin::home.Add New') }}
                     </button>
                 </div>
@@ -33,11 +33,11 @@
                                 </div>
                                 <div class="col-md-3">
                                     <p class="mb-1 text-muted">{{ __('admin::lang.Location') }}</p>
-                                    <h6 class="mb-0">{{ ucfirst($placement->location) }}</h6>
+                                    <h6 class="mb-0">{{ __('admin::lang.' . \Illuminate\Support\Str::title(str_replace('_', ' ', $placement->location))) }}</h6>
                                 </div>
                                 <div class="col-md-3">
-                                    <p class="mb-1 text-muted">{{ __('admin::home.Status') }}</p>
-                                    <h6 class="mb-0"><span class="badge badge-{{ $placement->status === \App\Support\Enum\StatusEnum::ACTIVE ? 'success' : 'secondary' }}">{{ $placement->status->value }}</span></h6>
+                                    <p class="mb-1 text-muted">{{ __('admin::lang.Status') }}</p>
+                                    <h6 class="mb-0"><span class="badge badge-{{ $placement->status === \App\Support\Enum\StatusEnum::ACTIVE ? 'success' : 'secondary' }}">{{ $placement->status->label() }}</span></h6>
                                 </div>
                                 <div class="col-md-3">
                                     <p class="mb-1 text-muted">{{ __('admin::lang.Total Banners') }}</p>
@@ -61,7 +61,7 @@
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" data-bs-toggle="tab" href="#history-banners" role="tab" aria-selected="false">
-                                        <i class="fe fe-clock me-1"></i> {{ __('admin::lang.History') }}
+                                        <i class="fe fe-clock me-1"></i> {{ __('admin::lang.history') }}
                                     </a>
                                 </li>
                             </ul>

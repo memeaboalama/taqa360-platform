@@ -11,6 +11,7 @@ class Show extends Component
     public $orderUser;
     public $orderServices;
     public $address;
+    public $orderItems;
     public mixed $user_id;
     public int $order_id;
 

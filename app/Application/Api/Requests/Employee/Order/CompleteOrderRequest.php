@@ -23,10 +23,14 @@ class CompleteOrderRequest extends FormRequest
      *
      * @return array<string, Rule|array|string>
      */
-    public function rules(): array
+public function rules(): array
     {
         $order = MerchantOrder::find(request()->order);
-        if($order->service_type_id=='2' )
+        if(!$order) {
+            return ['order' => ['required', Rule::exists('merchant_orders', 'id')]];
+        }
+        $serviceTypeId = $order->service_type_id;
+        if($serviceTypeId=='2')
         {
         return [
             'order' => ['required',
@@ -36,7 +40,7 @@ class CompleteOrderRequest extends FormRequest
         ];
     }
         else
-        {
+    {
         return [
             'order' => ['required',
                 Rule::exists('merchant_orders', 'id')

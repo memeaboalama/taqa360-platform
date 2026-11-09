@@ -3,7 +3,7 @@
         <div class="modal-content">
             <div class="modal-header bg-warning-transparent">
                 <h6 class="modal-title fw-bold text-warning">
-                    <i class="fe fe-edit me-2"></i>{{ __('admin::lang.Edit Banner') }}
+                    <i class="fe fe-edit me-2"></i>{{ __('admin::lang.Update Banner') }}
                 </h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -12,7 +12,7 @@
                 <div class="modal-body p-3" style="max-height: 65vh; overflow-y: auto;">
                     <div class="mb-2">
                         <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Internal Name') }} <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-sm" wire:model="name" placeholder="For internal reference">
+                        <input type="text" class="form-control form-control-sm" wire:model="name" placeholder="{{ __('admin::lang.Internal Name') }}">
                         @error('name') <small class="text-danger">{{ $message }}</small> @enderror
                     </div>
 
@@ -40,7 +40,7 @@
                             <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Desktop Image') }}</label>
                             @if($image_desktop)
                                 <div class="mb-1">
-                                    <a href="{{ Storage::url($image_desktop) }}" target="_blank" class="small text-primary">View Current</a>
+                                    <a href="{{ Storage::url($image_desktop) }}" target="_blank" class="small text-primary">{{ __('admin::lang.View Current') }}</a>
                                 </div>
                             @endif
                             <input type="file" class="form-control form-control-sm" wire:model="new_image_desktop">
@@ -50,7 +50,7 @@
                             <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Mobile Image') }}</label>
                             @if($image_mobile)
                                 <div class="mb-1">
-                                    <a href="{{ Storage::url($image_mobile) }}" target="_blank" class="small text-primary">View Current</a>
+                                    <a href="{{ Storage::url($image_mobile) }}" target="_blank" class="small text-primary">{{ __('admin::lang.View Current') }}</a>
                                 </div>
                             @endif
                             <input type="file" class="form-control form-control-sm" wire:model="new_image_mobile">
@@ -61,7 +61,7 @@
                     <div class="row g-2 mb-2">
                         <div class="col-12">
                             <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Action Type') }}</label>
-                            <select class="form-select form-select-sm" wire:model.live="click_action_type">
+                            <select class="form-select form-select-sm" wire:model="click_action_type">
                                 @foreach(\App\Support\Enum\ClickActionTypeEnum::cases() as $type)
                                     <option value="{{ $type->value }}">{{ $type->label() }}</option>
                                 @endforeach
@@ -70,11 +70,11 @@
 
                         @if($click_action_type !== 'none' && $click_action_type !== 'url')
                         <div class="col-12">
-                            <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Search') }} {{ ucfirst($click_action_type) }}</label>
+                            <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Search', ['type' => __('admin::lang.' . ucfirst($click_action_type))]) }}</label>
                             <input type="text"
                                    class="form-control form-control-sm"
-                                   wire:model.live.debounce.300ms="searchQuery"
-                                   placeholder="Type to search...">
+                                   wire:model="searchQuery"
+                                   placeholder="{{ __('admin::lang.Type to search...') }}">
 
                             @if(!empty($searchResults) && count($searchResults) > 0)
                                 <div class="search-results-dropdown mt-1 border rounded shadow-sm" style="max-height: 150px; overflow-y: auto;">
@@ -82,7 +82,7 @@
                                         <div class="search-result-item p-2 border-bottom"
                                              wire:click="selectSearchResult({{ $result->id }})"
                                              style="cursor: pointer;">
-                                            <small>{{ $result->title ?? $result->name }}</small>
+                                            <small>{{ $result->company_name ?? $result->title ?? $result->name }}</small>
                                         </div>
                                     @endforeach
                                 </div>

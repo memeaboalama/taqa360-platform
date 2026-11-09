@@ -32,7 +32,7 @@
         </ul>
 
         <div class="d-flex gap-2">
-            <div class="btn-group" role="group">
+            <div class="btn-group banner-space-view-toggle" role="group">
                 <button type="button" class="btn btn-outline-primary {{ $viewMode === 'grid' ? 'active' : '' }}" wire:click="toggleViewMode('grid')">
                     <i class="fe fe-grid"></i>
                 </button>
@@ -206,6 +206,10 @@
 <style>
     .hover-scale { transition: transform 0.2s; }
     .hover-scale:hover { transform: translateY(-5px); }
+    :dir(rtl) .banner-space-view-toggle > .btn:last-child {
+        border-start-start-radius: 0;
+        border-end-start-radius: 0;
+    }
 </style>
 
 <script>

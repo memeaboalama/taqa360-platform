@@ -37,7 +37,7 @@
                             <select class="form-control" id="status-filter" wire:model.defer="status">
                                 <option selected value="">-- {{ __('admin::home.Select') }} --</option>
                                 @foreach($statuses as $value)
-                                    <option value="{{ $value  }}">{{ $value->trans() }}</option>
+                                    <option value="{{ $value->value }}">{{ $value->trans() }}</option>
                                 @endforeach
                             </select>
                         </div>

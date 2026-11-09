@@ -85,7 +85,7 @@ class All extends DataTableComponent
             Column::make(__('admin::home.userName'), 'user_id')
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
-                    echo $row->user->name;
+                    echo $row->user?->name ?? '-';
                 })
                 ->eagerLoadRelations()
                 ->searchable(),

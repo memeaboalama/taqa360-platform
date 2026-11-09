@@ -56,7 +56,7 @@ class Users extends Component
                 return $result->id === $customer->id;
             });
             if ($customer) {
-                $this->emit('refreshCustomerFilter', $customer);
+                $this->emit('refreshCustomerFilter', $customer->id);
             }
         }
     }

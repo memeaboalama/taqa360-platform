@@ -5,10 +5,15 @@ namespace Application\Admin\Livewire\AdPlacement;
 use App\Domain\AppBase\Models\AdPage;
 use App\Domain\AppBase\Models\AdPlacement;
 use Livewire\Component;
-use Livewire\Attributes\On;
 
 class SettingsPanel extends Component
 {
+    protected $listeners = [
+        'placement-created' => 'refresh',
+        'placement-updated' => 'refresh',
+        'placement-deleted' => 'refresh',
+    ];
+
     public $selectedPageId;
     public $pages;
     public $placements;
@@ -51,9 +56,6 @@ class SettingsPanel extends Component
             ->get();
     }
 
-    #[On('placement-created')]
-    #[On('placement-updated')]
-    #[On('placement-deleted')]
     public function refresh()
     {
         $this->loadPlacements();

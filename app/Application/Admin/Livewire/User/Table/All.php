@@ -46,11 +46,9 @@ class All extends DataTableComponent
 
     public function updateStatus(UpdateBasicInfoAction $updateBasicInfoAction ,$status, $id): void
     {
-        DB::beginTransaction();
-        $updateBasicInfoAction->handle($id, ['status' => $status]);
+        DB::transaction(fn () => $updateBasicInfoAction->handle($id, ['status' => $status]));
         $this->alert('success', "Customer Updated Successfully");
         $this->emit('refreshDatatable');
-        DB::commit();
     }
 
     public function configure(): void

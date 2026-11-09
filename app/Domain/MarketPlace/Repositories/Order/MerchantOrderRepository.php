@@ -36,10 +36,14 @@ class MerchantOrderRepository extends EloquentMainRepository
     public function filterOrders(array $filters = [], array $with = [], array $cols = [], array $conditions = []): \Illuminate\Database\Eloquent\Builder
     {
         $query = $this->modal
+            ->newQuery()
             ->with($with)
-            ->select($cols)
-            ->where($conditions)
-            ->newQuery();
+            ->where($conditions);
+
+        if ($cols !== []) {
+            $query->select($cols);
+        }
+
         return $this->applyFiltersV2($query, $filters);
     }
 
@@ -261,7 +265,12 @@ class MerchantOrderRepository extends EloquentMainRepository
     public function getUserOrderById(int $user_id): \Illuminate\Database\Eloquent\Builder
     {
         return $this
-            ->builder(['id', 'total_service', 'user_id', 'status', 'merchant_id', 'created_at'], ['services', 'merchant', 'user'], [], 'desc')
+            ->builder(
+                ['id', 'total_after_vat', 'user_id', 'status', 'merchant_id', 'merchant_branch_id', 'created_at'],
+                ['services', 'merchant', 'user', 'branch'],
+                [],
+                'desc'
+            )
             ->where('user_id', $user_id);
     }
 

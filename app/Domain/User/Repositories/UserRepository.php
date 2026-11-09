@@ -181,8 +181,8 @@ class UserRepository extends EloquentMainRepository
     public function filter($filters = [], array $with = []): \Illuminate\Database\Eloquent\Builder
     {
         $query = $this->modal
-            ->with($with)
-            ->newQuery();
+            ->newQuery()
+            ->with($with);
 
         if (isset($filters['status']))
             $query->where('status', $filters['status']);

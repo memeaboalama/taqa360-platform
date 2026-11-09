@@ -53,7 +53,7 @@ class Users extends Component
         $this->highlightIndex = $this->results->search(function($result) use($customer) {
             return $result->id === $customer->id;
         });
-            $this->emit('refreshCustomerFilter', $customer);
+        $this->emit('refreshCustomerFilter', $customer->id);
         }
     }
 

@@ -3,14 +3,17 @@
 namespace Application\Admin\Livewire\AdPlacement\Modal;
 
 use App\Domain\AppBase\Actions\AdPlacement\StorePlacementAction;
-use App\Domain\AppBase\Models\AdPage;
-use App\Domain\AppBase\Repositories\AdPageRepository;
+use App\Domain\AppBase\Models\AdPlacement;
+use App\Domain\AppBase\Repositories\AdPlacementRepository;
 use App\Support\Enum\PlacementTypeEnum;
 use App\Support\Enum\StatusEnum;
+use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 
 class Create extends Component
 {
+    use LivewireAlert;
+
     public $pageId;
     public $name_en;
     public $name_ar;
@@ -40,6 +43,7 @@ class Create extends Component
 
     public function openCreateModal(int $pageId)
     {
+        $this->resetValidation();
         $this->pageId = $pageId;
         $this->reset(['name_en', 'name_ar', 'key', 'location', 'type', 'status', 'sort_order', 'tabConfig']);
 
@@ -85,6 +89,11 @@ class Create extends Component
         }
     }
 
+    public function updatedType()
+    {
+        $this->showOffcanvas = true;
+    }
+
     public function store()
     {
         $this->validate();
@@ -124,21 +133,15 @@ class Create extends Component
                 'settings' => $this->buildSettings($groups),
             ];
 
-            $action = new StorePlacementAction(new AdPageRepository(new AdPage()));
+            $action = new StorePlacementAction(new AdPlacementRepository(new AdPlacement()));
             $placement = $action->handle($data);
 
-            $this->dispatch('placement-created');
-            $this->dispatch('show-toast', [
-                'type' => 'success',
-                'message' => __('admin::lang.Placement created successfully')
-            ]);
+            $this->emit('placement-created');
+            $this->alert('success', __('admin::lang.Placement created successfully'));
 
             $this->close();
         } catch (\Exception $e) {
-            $this->dispatch('show-toast', [
-                'type' => 'error',
-                'message' => __('admin::lang.Error creating placement') . ': ' . $e->getMessage()
-            ]);
+            $this->alert('error', __('admin::lang.Error creating placement') . ': ' . $e->getMessage());
         }
     }
 

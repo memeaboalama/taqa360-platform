@@ -128,8 +128,9 @@ class Filter extends Component
             $this->handle();
             $this->removeFilter();
             $this->emit('refreshOrders', $this->filters);
-        } catch (\Exception $ex) {
-            // Log::error($ex->getMessage());
+        } catch (\Throwable $ex) {
+            Log::error('Failed to refresh merchant orders.', ['exception' => $ex]);
+            $this->alert('error', __('admin::home.something_went_wrong'));
         }
     }
     public function removeFilter(): void
@@ -205,8 +206,9 @@ class Filter extends Component
         $this->emit('refreshOrders', $this->filters);
     }
 
-    public function refreshCustomerFilter(User $customer): void
+    public function refreshCustomerFilter(int $customerId): void
     {
+        $customer = User::findOrFail($customerId);
         $this->customer_id = $customer->id;
         $this->customer_name = $customer->name ?? null;
         $this->customer_phone = $customer->phone ?? null;

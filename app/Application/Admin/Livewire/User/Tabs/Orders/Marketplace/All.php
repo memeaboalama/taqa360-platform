@@ -2,7 +2,6 @@
 
 namespace Application\Admin\Livewire\User\Tabs\Orders\Marketplace;
 
-use App\Application\Marketplace\Enums\MerchantOrderStatuses;
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use App\Domain\MarketPlace\Repositories\Order\MerchantOrderRepository;
 use Carbon\Carbon;
@@ -48,7 +47,7 @@ class All extends DataTableComponent
             Column::make('User Name', 'user_id')
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
-                    echo $row->user->name;
+                    echo $row->user?->name ?? '-';
                 })
                 ->searchable(),
 
@@ -62,7 +61,7 @@ class All extends DataTableComponent
             Column::make(__('admin::home.Branch Name'), 'merchant_branch_id')
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
-                    echo $row->branch->title;
+                    echo $row->branch?->title ?? '-';
                 })
                 ->searchable(),
 
