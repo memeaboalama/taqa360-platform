@@ -59,6 +59,12 @@ return [
             'completed' => 'مكتمل',
             'cancelled' => 'ملغي',
         ],
+        'payment_status' => [
+            'paid' => 'مدفوع',
+            'unpaid' => 'غير مدفوع',
+            'partially_paid' => 'مدفوع جزئياً',
+            'partial' => 'مدفوع جزئياً',
+        ],
         'type' => [
             'general' => 'عامة',
             'task' => 'واجب / مهمة',

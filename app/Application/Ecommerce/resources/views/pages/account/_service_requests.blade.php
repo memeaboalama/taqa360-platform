@@ -73,6 +73,7 @@
     .bg-cancelled, .bg-rejected { background-color: #ffebee !important; color: #c62828 !important; }
     .bg-assigned, .bg-in-progress { background-color: #e3f2fd !important; color: #1565c0 !important; }
     .bg-draft { background-color: #f3e5f5 !important; color: #7b1fa2 !important; }
+    .bg-not-started { background-color: #f1f3f5 !important; color: #6c757d !important; }
 
     /* Service type badge */
     .service-type-badge {
@@ -163,6 +164,10 @@
             'in-progress' => 'bg-in-progress',
             'completed' => 'bg-completed',
             'cancelled' => 'bg-cancelled',
+            'paid' => 'bg-approved',
+            'unpaid' => 'bg-pending',
+            'partially_paid', 'partial' => 'bg-assigned',
+            '' => 'bg-not-started',
             default => 'bg-pending',
         };
     }
@@ -173,10 +178,37 @@
 
         <div class="content-header mb-4 d-flex justify-content-between align-items-center">
             <h2 class="fw-bold mb-0" style="font-size: 24px; color: #1a202c;">@lang('ecommerce::ecommerce.service_requests')</h2>
-            <div class="text-muted small">
-                @lang('ecommerce::ecommerce.total_requests'): <strong>{{ $serviceRequests->total() }}</strong>
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-muted small">
+                    @lang('ecommerce::ecommerce.total_requests'): <strong>{{ $serviceRequests->total() }}</strong>
+                </div>
+                <button type="button" class="btn btn-solid" data-bs-toggle="modal" data-bs-target="#serviceRequestModal">
+                    @lang('ecommerce::ecommerce.submit_service_request')
+                </button>
             </div>
         </div>
+
+        <form method="GET" action="{{ route('account.service_requests') }}" class="row g-2 align-items-end mb-4">
+            <div class="col-md-6">
+                <label for="service-request-search" class="form-label">@lang('ecommerce::ecommerce.search_request')</label>
+                <input id="service-request-search" type="search" name="search" class="form-control"
+                       value="{{ request('search') }}" placeholder="@lang('ecommerce::ecommerce.search_request_placeholder')">
+            </div>
+            <div class="col-md-4">
+                <label for="service-request-status" class="form-label">@lang('ecommerce::ecommerce.request_status')</label>
+                <select id="service-request-status" name="status" class="form-select">
+                    <option value="">@lang('ecommerce::ecommerce.all_statuses')</option>
+                    @foreach(\App\Application\Educational\Enums\EducationalRequestStatus::cases() as $status)
+                        <option value="{{ $status->value }}" {{ request('status') === $status->value ? 'selected' : '' }}>
+                            {{ $status->trans() }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">@lang('ecommerce::ecommerce.filter')</button>
+            </div>
+        </form>
 
         @if($serviceRequests && $serviceRequests->count() > 0)
             <div class="precise-table-card">
@@ -184,13 +216,15 @@
                     <table class="precise-table">
                         <thead>
                             <tr>
-                                <th width="10%">@lang('ecommerce::ecommerce.request_number')</th>
-                                <th width="25%">@lang('ecommerce::ecommerce.request_title')</th>
-                                <th width="13%">@lang('ecommerce::ecommerce.date')</th>
-                                <th width="14%">@lang('ecommerce::ecommerce.service_type')</th>
-                                <th width="14%">@lang('ecommerce::ecommerce.status')</th>
-                                <th width="11%">@lang('ecommerce::ecommerce.amount')</th>
-                                <th width="13%" class="text-end">@lang('ecommerce::ecommerce.details')</th>
+                                <th width="8%">@lang('ecommerce::ecommerce.request_number')</th>
+                                <th width="19%">@lang('ecommerce::ecommerce.request_title')</th>
+                                <th width="10%">@lang('ecommerce::ecommerce.date')</th>
+                                <th width="11%">@lang('ecommerce::ecommerce.service_type')</th>
+                                <th width="11%">@lang('ecommerce::ecommerce.request_status')</th>
+                                <th width="11%">@lang('ecommerce::ecommerce.execution_status')</th>
+                                <th width="10%">@lang('ecommerce::ecommerce.payment_status')</th>
+                                <th width="10%">@lang('ecommerce::ecommerce.amount')</th>
+                                <th width="10%" class="text-end">@lang('ecommerce::ecommerce.details')</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -214,16 +248,29 @@
                                         <i class="ti-settings"></i> {{ $serviceRequest->type instanceof \UnitEnum ? $serviceRequest->type->trans() : $serviceRequest->type }}
                                     </span>
                                 </td>
-                                <td data-label="@lang('ecommerce::ecommerce.status')">
+                                <td data-label="@lang('ecommerce::ecommerce.request_status')">
                                     <span class="status-badge {{ serviceRequestStatusColor($serviceRequest->status) }}">
                                         {{ $serviceRequest->status instanceof \UnitEnum ? $serviceRequest->status->trans() : $serviceRequest->status }}
+                                    </span>
+                                </td>
+                                <td data-label="@lang('ecommerce::ecommerce.execution_status')">
+                                    @php($executionStatus = $serviceRequest->execution_status)
+                                    <span class="status-badge {{ serviceRequestStatusColor($executionStatus) }}">
+                                        {{ $executionStatus instanceof \UnitEnum ? $executionStatus->trans() : ($executionStatus ? __('lang.educational_request.status.' . str_replace('-', '_', $executionStatus)) : __('ecommerce::ecommerce.not_started')) }}
+                                    </span>
+                                </td>
+                                <td data-label="@lang('ecommerce::ecommerce.payment_status')">
+                                    @php($paymentStatus = $serviceRequest->payment_status)
+                                    @php($paymentStatusValue = $paymentStatus instanceof \UnitEnum ? $paymentStatus->value : (string) $paymentStatus)
+                                    <span class="status-badge {{ serviceRequestStatusColor($paymentStatusValue) }}">
+                                        {{ $paymentStatusValue !== '' ? __('lang.educational_request.payment_status.' . $paymentStatusValue) : __('ecommerce::ecommerce.not_started') }}
                                     </span>
                                 </td>
                                 <td data-label="@lang('ecommerce::ecommerce.amount')">
                                     <span class="total-price">{{ number_format($serviceRequest->budget ?? 0, 2) }} <small class="fw-normal text-muted">SAR</small></span>
                                 </td>
                                 <td data-label="" class="text-end">
-                                    <a href="{{ route('account.service_request', $serviceRequest->id) }}" class="btn-view" up-target=".dashboard-content">
+                                    <a href="{{ route('account.service_request', $serviceRequest->id) }}" class="btn-view">
                                         @lang('ecommerce::ecommerce.view_details') <i class="ti-arrow-left arrow-start ms-1" style="font-size: 10px;"></i>
                                     </a>
                                 </td>
@@ -253,10 +300,11 @@
         @else
             <div class="text-center py-5 precise-table-card">
                 <i class="ti-settings text-muted mb-3" style="font-size: 50px;"></i>
-                <h4 class="text-muted">@lang('ecommerce::ecommerce.no_service_requests_yet')</h4>
-                <button type="button" class="btn btn-solid mt-3" data-bs-toggle="modal" data-bs-target="#serviceRequestModal">
-                    @lang('ecommerce::ecommerce.submit_service_request')
-                </button>
+                <h4 class="text-muted">
+                    {{ request()->filled('search') || request()->filled('status')
+                        ? __('ecommerce::ecommerce.no_matching_service_requests')
+                        : __('ecommerce::ecommerce.no_service_requests_yet') }}
+                </h4>
             </div>
         @endif
     </div>

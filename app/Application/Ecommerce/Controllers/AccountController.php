@@ -4,6 +4,7 @@ namespace App\Application\Ecommerce\Controllers;
 
 use App\Application\Marketplace\Enums\MerchantOrderHistoryStatuses;
 use App\Application\Marketplace\Enums\MerchantOrderStatuses;
+use App\Application\Educational\Enums\EducationalRequestStatus;
 use Domain\EducationalRequest\Models\EducationalRequest;
 use App\Domain\User\Models\UserAddress;
 use App\Domain\MarketPlace\Models\MerchantOrder;
@@ -31,12 +32,7 @@ class AccountController extends Controller
         if ($section === 'orders') {
             $data['orders'] = $user->orders()->latest()->paginate(10)->appends($request->query());
         } elseif ($section === 'service_requests') {
-            $data['serviceRequests'] = EducationalRequest::where('requester_id', $user->id)
-                ->with('academicMajor')
-                ->withCount('attachments')
-                ->latest()
-                ->paginate(10)
-                ->appends($request->query());
+            $data['serviceRequests'] = $this->getServiceRequests($user, $request);
         } elseif ($section === 'addresses') {
             $data['addresses'] = $user->addresses;
         } else {
@@ -130,14 +126,10 @@ class AccountController extends Controller
         return back()->with('success', __('ecommerce::ecommerce.order_cancelled_successfully'));
     }
 
-    public function serviceRequests()
+    public function serviceRequests(Request $request)
     {
         $user = Auth::user();
-        $serviceRequests = EducationalRequest::where('requester_id', $user->id)
-            ->with('academicMajor')
-            ->withCount('attachments')
-            ->latest()
-            ->paginate(10);
+        $serviceRequests = $this->getServiceRequests($user, $request);
 
         if (request()->header('X-Up-Target') == '.dashboard-content') {
             return view('ecommerce::pages.account._service_requests', compact('serviceRequests'));
@@ -145,11 +137,40 @@ class AccountController extends Controller
         return view('ecommerce::pages.account.dashboard', ['page' => 'service_requests', 'user' => $user, 'serviceRequests' => $serviceRequests]);
     }
 
+    private function getServiceRequests($user, Request $request)
+    {
+        $query = EducationalRequest::where('requester_id', $user->id)
+            ->with('academicMajor')
+            ->withCount('attachments')
+            ->when($search = trim((string) $request->query('search', '')), function ($query) use ($search) {
+                $requestNumber = ltrim($search, '#');
+                $query->where(function ($query) use ($search, $requestNumber) {
+                    $query->where('title', 'like', '%' . $search . '%');
+                    if (ctype_digit($requestNumber)) {
+                        $query->orWhere('id', (int) $requestNumber);
+                    }
+                });
+            });
+
+        $status = $request->query('status');
+        if (in_array($status, EducationalRequestStatus::values(), true)) {
+            $query->where('status', $status);
+        }
+
+        return $query->latest()->paginate(10)->appends($request->query());
+    }
+
     public function serviceRequest($id)
     {
         $user = Auth::user();
         $serviceRequest = EducationalRequest::where('requester_id', $user->id)
-            ->with(['academicMajor', 'files'])
+            ->with([
+                'academicMajor',
+                'attachments',
+                'project.activityLog' => fn ($query) => $query->orderByDesc('timestamp'),
+                'project.tasks.activityLog' => fn ($query) => $query->orderByDesc('timestamp'),
+                'project.tasks.acceptedAssignments.educator',
+            ])
             ->findOrFail($id);
 
         if (request()->header('X-Up-Target') == '.dashboard-content') {

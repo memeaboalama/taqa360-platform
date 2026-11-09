@@ -135,6 +135,18 @@
     }
     .attachment-link:hover { border-color: #1565c0; background: #e3f2fd; }
 
+    .timeline-list {
+        display: grid;
+        gap: 12px;
+    }
+
+    .timeline-item {
+        border-inline-start: 3px solid #d8e6f2;
+        padding: 10px 14px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
     .btn-back {
         padding: 8px 18px;
         border-radius: 8px;
@@ -164,6 +176,7 @@
     $statusValue = $srStatus?->value ?? (string) $serviceRequest->status;
     $statusClass = match ($statusValue) {
         'draft' => 'bg-draft',
+        'pending' => 'bg-pending',
         'approved' => 'bg-approved',
         'assigned' => 'bg-assigned',
         'rejected' => 'bg-rejected',
@@ -171,6 +184,41 @@
         'completed' => 'bg-completed',
         'cancelled' => 'bg-cancelled',
         default => 'bg-pending',
+    };
+    $statusColor = static fn ($value) => match ($value) {
+        'draft' => 'bg-draft',
+        'pending', 'unpaid' => 'bg-pending',
+        'approved', 'completed', 'paid' => 'bg-approved',
+        'assigned', 'in-progress', 'in_progress', 'partially_paid', 'partial' => 'bg-assigned',
+        'rejected', 'cancelled', 'canceled' => 'bg-rejected',
+        default => 'bg-pending',
+    };
+    $statusLabel = static function ($value) {
+        $normalized = str_replace('-', '_', (string) $value);
+        if ($normalized === 'canceled') {
+            $normalized = 'cancelled';
+        }
+
+        return __('lang.educational_request.status.' . $normalized);
+    };
+    $executionStatus = $serviceRequest->execution_status;
+    $executionStatusValue = $executionStatus instanceof \UnitEnum
+        ? $executionStatus->value
+        : (string) $executionStatus;
+    $paymentStatus = $serviceRequest->payment_status;
+    $paymentStatusValue = $paymentStatus instanceof \UnitEnum
+        ? $paymentStatus->value
+        : (string) $paymentStatus;
+    $agreedAmount = $serviceRequest->agreed_amount;
+    $paidAmount = match ($paymentStatusValue) {
+        'paid' => $agreedAmount,
+        'unpaid' => 0,
+        default => null,
+    };
+    $remainingAmount = match ($paymentStatusValue) {
+        'paid' => 0,
+        'unpaid' => $agreedAmount,
+        default => null,
     };
 
     $educationLevels = [
@@ -188,6 +236,91 @@
         'urgent' => __('ecommerce::ecommerce.urgency_urgent'),
         'very_urgent' => __('ecommerce::ecommerce.urgency_very_urgent'),
     ];
+
+    $timelineEvents = collect();
+    $timelineEvents->push([
+        'at' => $serviceRequest->created_at,
+        'title' => __('ecommerce::ecommerce.request_submitted'),
+    ]);
+
+    if ($serviceRequest->reviewed_at) {
+        $timelineEvents->push([
+            'at' => $serviceRequest->reviewed_at,
+            'title' => __('ecommerce::ecommerce.request_reviewed', [
+                'status' => $srStatus?->trans() ?? $serviceRequest->status,
+            ]),
+        ]);
+    }
+
+    foreach ([
+        'accepted_at' => 'request_accepted',
+        'rejected_at' => 'request_rejected',
+        'completed_at' => 'request_completed',
+    ] as $timestampField => $translationKey) {
+        if ($serviceRequest->{$timestampField}) {
+            $timelineEvents->push([
+                'at' => $serviceRequest->{$timestampField},
+                'title' => __('ecommerce::ecommerce.' . $translationKey),
+            ]);
+        }
+    }
+
+    $activityTitles = [
+        'project.updated' => 'activity_project_updated',
+        'project.status_changed' => 'activity_project_status_changed',
+        'project.published' => 'activity_project_published',
+        'project.unpublished' => 'activity_project_unpublished',
+        'task.created' => 'activity_task_created',
+        'task.updated' => 'activity_task_updated',
+        'task.status_changed' => 'activity_task_status_changed',
+        'task.educator_assigned' => 'activity_provider_assigned',
+        'task.assignment_rejected' => 'activity_assignment_rejected',
+        'task.assignment_cancelled' => 'activity_assignment_cancelled',
+    ];
+
+    $project = $serviceRequest->project;
+    if ($project) {
+        if ($project->created_at) {
+            $timelineEvents->push([
+                'at' => $project->created_at,
+                'title' => __('ecommerce::ecommerce.project_created'),
+            ]);
+        }
+
+        foreach ($project->activityLog as $log) {
+            if (isset($activityTitles[$log->message_key]) && $log->timestamp) {
+                $timelineEvents->push([
+                    'at' => $log->timestamp,
+                    'title' => __('ecommerce::ecommerce.' . $activityTitles[$log->message_key]),
+                    'actor' => $log->actor,
+                ]);
+            }
+        }
+
+        foreach ($project->tasks as $task) {
+            foreach ($task->activityLog as $log) {
+                if (isset($activityTitles[$log->message_key]) && $log->timestamp) {
+                    $timelineEvents->push([
+                        'at' => $log->timestamp,
+                        'title' => __('ecommerce::ecommerce.' . $activityTitles[$log->message_key]),
+                        'actor' => $log->actor_name,
+                    ]);
+                }
+            }
+
+            foreach ($task->acceptedAssignments as $assignment) {
+                if ($assignment->accepted_at) {
+                    $timelineEvents->push([
+                        'at' => $assignment->accepted_at,
+                        'title' => __('ecommerce::ecommerce.assignment_accepted'),
+                        'actor' => $assignment->educator?->name,
+                    ]);
+                }
+            }
+        }
+    }
+
+    $timelineEvents = $timelineEvents->filter(fn ($event) => $event['at'])->sortByDesc('at');
 @endphp
 
 <div class="account-content-area w-100">
@@ -195,7 +328,7 @@
 
         <div class="content-header mb-4 d-flex justify-content-between align-items-center">
             <h2 class="fw-bold mb-0" style="font-size: 24px; color: #1a202c;">@lang('ecommerce::ecommerce.service_request_details')</h2>
-            <a href="{{ route('account.service_requests') }}" class="btn-back" up-target=".dashboard-content">
+            <a href="{{ route('account.service_requests') }}" class="btn-back">
                 <i class="ti-arrow-left arrow-start me-1"></i> @lang('ecommerce::ecommerce.back_to_service_requests')
             </a>
         </div>
@@ -210,19 +343,33 @@
                         </span>
                     </div>
                     <h4 style="font-size:19px; font-weight:700; color:#1a202c; margin:0;">{{ $serviceRequest->title }}</h4>
+                    <small class="text-muted d-block mt-2">{{ \Carbon\Carbon::parse($serviceRequest->created_at)->format('d M Y - h:i A') }}</small>
                 </div>
-                <span class="status-badge {{ $statusClass }}">
-                    {{ $srStatus?->trans() ?? $serviceRequest->status }}
-                </span>
             </div>
 
             <div class="info-grid">
                 <div class="info-item">
-                    <div class="label">@lang('ecommerce::ecommerce.date')</div>
-                    <div class="value">{{ \Carbon\Carbon::parse($serviceRequest->created_at)->format('d M Y - h:i A') }}</div>
+                    <div class="label">@lang('ecommerce::ecommerce.request_status')</div>
+                    <div class="value"><span class="status-badge {{ $statusClass }}">{{ $srStatus?->trans() ?? $serviceRequest->status }}</span></div>
                 </div>
                 <div class="info-item">
-                    <div class="label">@lang('ecommerce::ecommerce.budget')</div>
+                    <div class="label">@lang('ecommerce::ecommerce.execution_status')</div>
+                    <div class="value">
+                        <span class="status-badge {{ $statusColor($executionStatusValue) }}">
+                            {{ $executionStatus instanceof \UnitEnum ? $executionStatus->trans() : __('lang.educational_request.status.' . str_replace('-', '_', $executionStatusValue)) }}
+                        </span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="label">@lang('ecommerce::ecommerce.payment_status')</div>
+                    <div class="value">
+                        <span class="status-badge {{ $statusColor($paymentStatusValue) }}">
+                            {{ $paymentStatusValue !== '' ? __('lang.educational_request.payment_status.' . $paymentStatusValue) : __('ecommerce::ecommerce.not_started') }}
+                        </span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="label">@lang('ecommerce::ecommerce.expected_budget')</div>
                     <div class="value">{{ number_format($serviceRequest->budget ?? 0, 2) }} SAR</div>
                 </div>
                 @if(!is_null($serviceRequest->agreed_amount))
@@ -231,6 +378,14 @@
                         <div class="value">{{ number_format($serviceRequest->agreed_amount, 2) }} SAR</div>
                     </div>
                 @endif
+                <div class="info-item">
+                    <div class="label">@lang('ecommerce::ecommerce.amount_paid')</div>
+                    <div class="value">{{ is_null($paidAmount) ? __('ecommerce::ecommerce.amount_not_recorded') : number_format($paidAmount, 2) . ' SAR' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">@lang('ecommerce::ecommerce.remaining_amount')</div>
+                    <div class="value">{{ is_null($remainingAmount) ? __('ecommerce::ecommerce.amount_not_recorded') : number_format($remainingAmount, 2) . ' SAR' }}</div>
+                </div>
                 @if(!is_null($serviceRequest->project_site_type))
                     <div class="info-item">
                         <div class="label">@lang('ecommerce::ecommerce.sr_project_site_type')</div>
@@ -280,6 +435,69 @@
             @if($statusValue === 'rejected' && $serviceRequest->rejection_reason)
                 <div class="rejection-box">
                     <strong>@lang('ecommerce::ecommerce.rejection_reason'):</strong> {{ $serviceRequest->rejection_reason }}
+                </div>
+            @endif
+
+            @if($project)
+                <div class="mb-4">
+                    <div class="section-title"><i class="ti-briefcase"></i> @lang('ecommerce::ecommerce.linked_project')</div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="label">@lang('ecommerce::ecommerce.project_title')</div>
+                            <div class="value">{{ $project->title }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">@lang('ecommerce::ecommerce.project_status')</div>
+                            <div class="value">{{ $statusLabel($project->status instanceof \UnitEnum ? $project->status->value : $project->status) }}</div>
+                        </div>
+                        @if($project->deadline)
+                            <div class="info-item">
+                                <div class="label">@lang('ecommerce::ecommerce.deadline')</div>
+                                <div class="value">{{ $project->deadline->format('Y-m-d') }}</div>
+                            </div>
+                        @endif
+                    </div>
+
+                    @if($project->tasks->isNotEmpty())
+                        <h5 class="section-title mt-3">@lang('ecommerce::ecommerce.project_tasks')</h5>
+                        @foreach($project->tasks as $task)
+                            <div class="info-item mb-2">
+                                <div class="d-flex justify-content-between align-items-start gap-3">
+                                    <div>
+                                        <div class="value">{{ $task->title }}</div>
+                                        @foreach($task->acceptedAssignments as $assignment)
+                                            @if($assignment->educator)
+                                                <small class="text-muted d-block mt-1">
+                                                    @lang('ecommerce::ecommerce.service_provider'): {{ $assignment->educator->name }}
+                                                </small>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                    @php($taskStatusValue = $task->status instanceof \UnitEnum ? $task->status->value : (string) $task->status)
+                                    <span class="status-badge {{ $statusColor($taskStatusValue) }}">
+                                        {{ $statusLabel($taskStatusValue) }}
+                                    </span>
+                                </div>
+                            </div>
+                        @endforeach
+                    @endif
+                </div>
+            @endif
+
+            @if($timelineEvents->isNotEmpty())
+                <div class="mb-4">
+                    <div class="section-title"><i class="ti-time"></i> @lang('ecommerce::ecommerce.request_timeline')</div>
+                    <div class="timeline-list">
+                        @foreach($timelineEvents as $event)
+                            <div class="timeline-item">
+                                <strong>{{ $event['title'] }}</strong>
+                                <small class="text-muted d-block">{{ \Carbon\Carbon::parse($event['at'])->format('d M Y - h:i A') }}</small>
+                                @if(!empty($event['actor']))
+                                    <small class="text-muted d-block">{{ $event['actor'] }}</small>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             @endif
         </div>

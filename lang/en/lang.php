@@ -56,6 +56,12 @@ return [
             'completed' => 'Completed',
             'cancelled' => 'Cancelled',
         ],
+        'payment_status' => [
+            'paid' => 'Paid',
+            'unpaid' => 'Unpaid',
+            'partially_paid' => 'Partially paid',
+            'partial' => 'Partially paid',
+        ],
         'type' => [
             'general' => 'General',
             'task' => 'Task / Assignment',

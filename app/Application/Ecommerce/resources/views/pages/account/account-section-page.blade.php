@@ -827,35 +827,7 @@
                             </aside>
                         </div>
                     @elseif($section === 'service_requests')
-                        @forelse($serviceRequests as $requestItem)
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>@lang('ecommerce::ecommerce.academic_major_label')</th>
-                                        <th>@lang('ecommerce::ecommerce.attachments')</th>
-                                        <th>@lang('ecommerce::ecommerce.date')</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="num">{{ $requestItem->id }}</td>
-                                        <td>{{ optional($requestItem->academicMajor)->name ?? '-' }}</td>
-                                        <td class="num">{{ $requestItem->attachments_count ?? 0 }}</td>
-                                        <td class="num">{{ optional($requestItem->created_at)->format('Y-m-d') }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        @empty
-                            <div class="empty">@lang('ecommerce::ecommerce.no_service_requests_message')</div>
-                        @endforelse
-                        @if($serviceRequests->hasPages())
-                            <div class="pagination_sec">
-                                <div class="content_detail__pagination cdp">
-                                    {!! $serviceRequests->links('vendor.pagination.custom') !!}
-                                </div>
-                            </div>
-                        @endif
+                        @include('ecommerce::pages.account._service_requests')
                     @elseif($section === 'wallet')
                         @include('ecommerce::pages.account.wallet._index', ['hide_header' => true])
                     @elseif($section === 'wallet_deposit')
