@@ -41,7 +41,7 @@ class FileController extends Controller
         $educator = $request->user();
 
         $file = $request->file('file');
-        $taskFile = $this->storeFile($file, 'task_attachments', 'educator', $educator->id, 'task', $task->id);
+        $taskFile = $this->storeFile($file, 'task_attachments', get_class($educator), $educator->id, 'task', $task->id);
 
         $task->files()->save($taskFile);
 
@@ -53,7 +53,7 @@ class FileController extends Controller
         $sub = SubTask::where('id', $subTaskId)->where('task_id', $taskId)->firstOrFail();
         $educator = $request->user();
         $file = $request->file('file');
-        $taskFile = $this->storeFile($file, 'subtask_attachments', 'educator', $educator->id, 'subtask', $sub->id);
+        $taskFile = $this->storeFile($file, 'subtask_attachments', get_class($educator), $educator->id, 'subtask', $sub->id);
         $sub->files()->save($taskFile);
         return response()->json(['status' => true, 'message' => 'Uploaded', 'data' => $taskFile]);
     }
@@ -63,7 +63,7 @@ class FileController extends Controller
         $task = Task::findOrFail($taskId);
         $educator = $request->user();
         $file = $request->file('file');
-        $taskFile = $this->storeFile($file, 'deliverables', 'educator', $educator->id, 'task', $task->id);
+        $taskFile = $this->storeFile($file, 'deliverables', get_class($educator), $educator->id, 'task', $task->id);
         $task->files()->save($taskFile);
         return response()->json(['status' => true, 'message' => 'Deliverable uploaded', 'data' => $taskFile]);
     }

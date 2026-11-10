@@ -53,6 +53,7 @@ Route::group(['prefix' => 'v1/admin', 'middleware' => 'auth:admin-api'],function
         // never included them.
         Route::prefix('{project}/deliverables')->controller(AttachmentController::class)->group(function () {
             Route::get('/', 'deliverables');
+            Route::patch('/{deliverableId}/approval', 'setDeliverableApproval');
         });
 
     });

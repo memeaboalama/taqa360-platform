@@ -12,6 +12,11 @@
         padding: 30px;
     }
 
+    .service-requests-container .content-header {
+        padding-bottom: 14px;
+        border-bottom: 1px solid #eef2f5;
+    }
+
     .details-header {
         display: flex;
         justify-content: space-between;
@@ -237,13 +242,30 @@
         'very_urgent' => __('ecommerce::ecommerce.urgency_very_urgent'),
     ];
 
+    $projectSiteTypes = [
+        'residential' => __('ecommerce::ecommerce.site_type_residential'),
+        'commercial' => __('ecommerce::ecommerce.site_type_commercial'),
+        'agricultural' => __('ecommerce::ecommerce.site_type_agricultural'),
+        'industrial' => __('ecommerce::ecommerce.site_type_industrial'),
+        'medical' => __('ecommerce::ecommerce.site_type_medical'),
+        'educational' => __('ecommerce::ecommerce.site_type_educational'),
+        'other' => __('ecommerce::ecommerce.site_type_other'),
+    ];
+
+    $solarSystemTypes = [
+        'off-grid' => __('ecommerce::ecommerce.solar_system_off_grid'),
+        'on-grid' => __('ecommerce::ecommerce.solar_system_on_grid'),
+        'hybrid' => __('ecommerce::ecommerce.solar_system_hybrid'),
+        'not_sure' => __('ecommerce::ecommerce.solar_system_not_sure'),
+    ];
+
     $timelineEvents = collect();
     $timelineEvents->push([
         'at' => $serviceRequest->created_at,
         'title' => __('ecommerce::ecommerce.request_submitted'),
     ]);
 
-    if ($serviceRequest->reviewed_at) {
+    if ($serviceRequest->reviewed_at && $serviceRequest->activityLog->where('activity_type', 'request')->isEmpty()) {
         $timelineEvents->push([
             'at' => $serviceRequest->reviewed_at,
             'title' => __('ecommerce::ecommerce.request_reviewed', [
@@ -263,6 +285,30 @@
                 'title' => __('ecommerce::ecommerce.' . $translationKey),
             ]);
         }
+    }
+
+    foreach ($serviceRequest->activityLog ?? [] as $activity) {
+        if (!$activity->created_at) {
+            continue;
+        }
+
+        $activityStatus = $activity->activity_type === 'payment'
+            ? __('lang.educational_request.payment_status.' . $activity->to_status)
+            : $statusLabel($activity->to_status);
+        $activityField = match ($activity->activity_type) {
+            'payment' => __('ecommerce::ecommerce.payment_status'),
+            'fulfillment' => __('ecommerce::ecommerce.execution_status'),
+            default => __('ecommerce::ecommerce.request_status'),
+        };
+
+        $timelineEvents->push([
+            'at' => $activity->created_at,
+            'title' => __('ecommerce::ecommerce.activity_status_updated', [
+                'field' => $activityField,
+                'status' => $activityStatus,
+            ]),
+            'actor' => $activity->actor_name,
+        ]);
     }
 
     $activityTitles = [
@@ -327,7 +373,7 @@
     <div class="service-requests-container">
 
         <div class="content-header mb-4 d-flex justify-content-between align-items-center">
-            <h2 class="fw-bold mb-0" style="font-size: 24px; color: #1a202c;">@lang('ecommerce::ecommerce.service_request_details')</h2>
+            <h2 class="fw-bold mb-0" style="font-size: 24px; color: #245c8e;">@lang('ecommerce::ecommerce.service_request_details')</h2>
             <a href="{{ route('account.service_requests') }}" class="btn-back">
                 <i class="ti-arrow-left arrow-start me-1"></i> @lang('ecommerce::ecommerce.back_to_service_requests')
             </a>
@@ -389,13 +435,13 @@
                 @if(!is_null($serviceRequest->project_site_type))
                     <div class="info-item">
                         <div class="label">@lang('ecommerce::ecommerce.sr_project_site_type')</div>
-                        <div class="value">{{ $serviceRequest->project_site_type }}</div>
+                        <div class="value">{{ $projectSiteTypes[$serviceRequest->project_site_type] ?? $serviceRequest->project_site_type }}</div>
                     </div>
                 @endif
                 @if(!is_null($serviceRequest->solar_system_type))
                     <div class="info-item">
                         <div class="label">@lang('ecommerce::ecommerce.sr_solar_system_type')</div>
-                        <div class="value">{{ $serviceRequest->solar_system_type }}</div>
+                        <div class="value">{{ $solarSystemTypes[$serviceRequest->solar_system_type] ?? $serviceRequest->solar_system_type }}</div>
                     </div>
                 @endif
                 @if($serviceRequest->urgency_level)
@@ -478,6 +524,22 @@
                                         {{ $statusLabel($taskStatusValue) }}
                                     </span>
                                 </div>
+                                @php($deliverables = $task->attachments->where('collection_name', 'task_deliverables')->whereNotNull('approved_at'))
+                                @if($deliverables->isNotEmpty())
+                                    <div class="mt-3">
+                                        <strong>@lang('ecommerce::ecommerce.delivery_outputs')</strong>
+                                        <div class="mt-2">
+                                            @foreach($deliverables as $file)
+                                                @if($file->url)
+                                                    <a href="{{ $file->url }}" target="_blank" rel="noopener noreferrer" class="attachment-link">
+                                                        <i class="ti-download"></i>
+                                                        {{ $file->original_name ?? $file->file_name }}
+                                                    </a>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         @endforeach
                     @endif

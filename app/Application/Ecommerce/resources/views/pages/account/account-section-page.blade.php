@@ -589,35 +589,37 @@
                 <aside class="account-tabs">
                     <a class="account-tab {{ in_array($section, ['profile', 'edit_profile'], true) ? 'active' : '' }}" href="{{ route('account.index') }}"><i class="ti-user"></i><span>@lang('ecommerce::ecommerce.personal_info')</span></a>
                     <a class="account-tab {{ in_array($section, ['orders', 'order_details'], true) ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'orders']) }}"><i class="ti-package"></i><span>@lang('ecommerce::ecommerce.orders')</span></a>
-                    <a class="account-tab {{ $section === 'service_requests' ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'service_requests']) }}"><i class="ti-settings"></i><span>@lang('ecommerce::ecommerce.service_requests')</span></a>
+                    <a class="account-tab {{ in_array($section, ['service_requests', 'service_request_details'], true) ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'service_requests']) }}"><i class="ti-settings"></i><span>@lang('ecommerce::ecommerce.service_requests')</span></a>
                     <a class="account-tab {{ $section === 'addresses' ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'addresses']) }}"><i class="ti-location-pin"></i><span>@lang('ecommerce::ecommerce.addresses')</span></a>
                     <a class="account-tab {{ in_array($section, ['wallet', 'wallet_deposit', 'wallet_withdraw'], true) ? 'active' : '' }}" href="{{ route('account.wallet.index') }}"><i class="ti-wallet"></i><span>@lang('ecommerce::ecommerce.my_wallet')</span></a>
                 </aside>
                 <section class="account-content">
-                    <div class="content-heading {{ $section === 'orders' ? 'orders-heading' : '' }}">
-                        <h2>
-                            @if($section === 'edit_profile')
-                                @lang('ecommerce::ecommerce.personal_info')
-                            @elseif($section === 'orders')
-                                @lang('ecommerce::ecommerce.orders')
-                            @elseif($section === 'order_details')
-                                @lang('ecommerce::ecommerce.order_details')
-                            @elseif($section === 'service_requests')
-                                @lang('ecommerce::ecommerce.service_requests')
-                            @elseif($section === 'wallet')
-                                @lang('ecommerce::ecommerce.my_wallet')
-                            @elseif($section === 'wallet_deposit')
-                                @lang('ecommerce::ecommerce.deposit_funds')
-                            @elseif($section === 'wallet_withdraw')
-                                @lang('ecommerce::ecommerce.withdraw_funds')
-                            @else
-                                @lang('ecommerce::ecommerce.addresses')
+                    @if(!in_array($section, ['service_requests', 'service_request_details'], true))
+                        <div class="content-heading {{ $section === 'orders' ? 'orders-heading' : '' }}">
+                            <h2>
+                                @if($section === 'edit_profile')
+                                    @lang('ecommerce::ecommerce.personal_info')
+                                @elseif($section === 'orders')
+                                    @lang('ecommerce::ecommerce.orders')
+                                @elseif($section === 'order_details')
+                                    @lang('ecommerce::ecommerce.order_details')
+                                @elseif($section === 'service_request_details')
+                                    @lang('ecommerce::ecommerce.service_request_details')
+                                @elseif($section === 'wallet')
+                                    @lang('ecommerce::ecommerce.my_wallet')
+                                @elseif($section === 'wallet_deposit')
+                                    @lang('ecommerce::ecommerce.deposit_funds')
+                                @elseif($section === 'wallet_withdraw')
+                                    @lang('ecommerce::ecommerce.withdraw_funds')
+                                @else
+                                    @lang('ecommerce::ecommerce.addresses')
+                                @endif
+                            </h2>
+                            @if($section === 'orders')
+                                <span class="order-count">{{ $orders->total() }} @lang('ecommerce::ecommerce.orders')</span>
                             @endif
-                        </h2>
-                        @if($section === 'orders')
-                            <span class="order-count">{{ $orders->total() }} @lang('ecommerce::ecommerce.orders')</span>
-                        @endif
-                    </div>
+                        </div>
+                    @endif
 
                     @if($section === 'edit_profile')
                         <form action="{{ route('account.update-profile') }}" method="POST">
@@ -828,6 +830,8 @@
                         </div>
                     @elseif($section === 'service_requests')
                         @include('ecommerce::pages.account._service_requests')
+                    @elseif($section === 'service_request_details')
+                        @include('ecommerce::pages.account._service_request_details')
                     @elseif($section === 'wallet')
                         @include('ecommerce::pages.account.wallet._index', ['hide_header' => true])
                     @elseif($section === 'wallet_deposit')

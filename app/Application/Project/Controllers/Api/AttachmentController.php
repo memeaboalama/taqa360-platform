@@ -13,6 +13,8 @@ use App\Domain\Project\Actions\Project\UpdateAttachmentAction;
 use App\Domain\Project\Resources\Project\AttachmentResource;
 use Domain\Project\Models\Project;
 use Domain\Project\Models\ProjectFile;
+use Domain\Project\Models\Task;
+use Domain\Project\Models\TaskFile;
 use Domain\Project\Actions\Project\LogProjectActivityAction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -36,7 +38,7 @@ class AttachmentController extends Controller
      *
      * These are stored against the TASK (table task_files) while the project's
      * own attachments live in project_files, so $project->attachments above never
-     * returned them and the admin had no way to see what was delivered.
+     * returned them. Admin approval controls whether customers can access them.
      */
     public function deliverables(Request $request, Project $project): JsonResponse
     {
@@ -69,6 +71,29 @@ class AttachmentController extends Controller
                 'tasks' => $tasks->count(),
                 'files' => $total,
             ],
+        ]);
+    }
+
+    public function setDeliverableApproval(Request $request, Project $project, string $deliverableId): JsonResponse
+    {
+        $validated = $request->validate([
+            'approved' => ['required', 'boolean'],
+        ]);
+
+        $deliverable = TaskFile::query()
+            ->where('uuid', $deliverableId)
+            ->where('collection_name', 'task_deliverables')
+            ->whereHasMorph('fileable', [Task::class], fn ($query) => $query->where('project_id', $project->id))
+            ->firstOrFail();
+
+        $approved = (bool) $validated['approved'];
+        $deliverable->forceFill([
+            'approved_at' => $approved ? now() : null,
+            'approved_by' => $approved ? auth('admin-api')->id() : null,
+        ])->save();
+
+        return $this->responseData(data: [
+            'deliverable' => new \App\Domain\Educator\Resource\Task\TaskFileResource($deliverable->load('uploader')),
         ]);
     }
 

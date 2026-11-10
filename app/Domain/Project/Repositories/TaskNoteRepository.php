@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\Project\Migrations;
+namespace App\Domain\Project\Repositories;
 
 use Domain\Project\Models\TaskNote;
 use App\Support\Repositories\Main\EloquentMainRepository;

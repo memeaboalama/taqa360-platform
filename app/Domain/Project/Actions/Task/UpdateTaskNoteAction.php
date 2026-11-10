@@ -2,7 +2,7 @@
 
 namespace App\Domain\Project\Actions\Task;
 
-use App\Domain\Project\Migrations\TaskNoteRepository;
+use App\Domain\Project\Repositories\TaskNoteRepository;
 use Carbon\Carbon;
 use Domain\Project\Models\TaskNote;
 

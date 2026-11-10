@@ -28,11 +28,14 @@ class TaskFile extends Model
         'uploader_type',
         'uploader_id',
         'uploaded_at',
+        'approved_at',
+        'approved_by',
     ];
 
     protected $casts = [
         'size' => 'float',
         'uploaded_at' => 'datetime:Y-m-d H:i:s',
+        'approved_at' => 'datetime:Y-m-d H:i:s',
     ];
 
     public function fileable(): MorphTo
@@ -42,6 +45,12 @@ class TaskFile extends Model
 
     public function uploader()
     {
+        $this->setAttribute('uploader_type', match ($this->getAttribute('uploader_type')) {
+            'educator' => \Domain\Educator\Models\Educator::class,
+            'admin' => \Domain\Admin\Models\Admin::class,
+            default => $this->getAttribute('uploader_type'),
+        });
+
         return $this->morphTo();
     }
 

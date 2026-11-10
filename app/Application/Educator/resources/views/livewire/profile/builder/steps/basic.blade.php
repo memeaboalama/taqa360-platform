@@ -1,4 +1,93 @@
 <div>
+    @if($isAdminEdit)
+        <form wire:submit.prevent="save">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="name" class="form-label">@lang('admin::educators.name')</label>
+                    <input wire:model.defer="name" id="name" type="text" class="form-control @error('name') is-invalid @enderror">
+                    @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-6">
+                    <label for="email" class="form-label">@lang('admin::educators.email')</label>
+                    <input wire:model.defer="email" id="email" type="email" class="form-control @error('email') is-invalid @enderror">
+                    @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-6">
+                    <label for="phone" class="form-label">@lang('admin::educators.phone')</label>
+                    <input wire:model.defer="phone" id="phone" type="tel" class="form-control @error('phone') is-invalid @enderror">
+                    @error('phone') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">@lang('educator::builder.basic_info.nationality')</label>
+                    <select wire:model="nationality_id" class="form-select @error('nationality_id') is-invalid @enderror">
+                        <option value="">@lang('educator::builder.basic_info.select_nationality')</option>
+                        @foreach($nationalities as $nationality)
+                            <option value="{{ $nationality->id }}">{{ $nationality->title }}</option>
+                        @endforeach
+                    </select>
+                    @error('nationality_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">@lang('educator::builder.basic_info.gender')</label>
+                    <select wire:model="gender" class="form-select @error('gender') is-invalid @enderror">
+                        <option value="male">@lang('educator::builder.basic_info.male')</option>
+                        <option value="female">@lang('educator::builder.basic_info.female')</option>
+                    </select>
+                    @error('gender') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">@lang('educator::builder.basic_info.country')</label>
+                    <select wire:model="country_id" class="form-select @error('country_id') is-invalid @enderror">
+                        <option value="">@lang('educator::builder.basic_info.country_placeholder')</option>
+                        @foreach($countries as $country)
+                            <option value="{{ $country->id }}">{{ $country->title }}</option>
+                        @endforeach
+                    </select>
+                    @error('country_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">@lang('educator::builder.basic_info.city')</label>
+                    <select wire:model="city_id" class="form-select @error('city_id') is-invalid @enderror">
+                        <option value="">@lang('educator::builder.basic_info.city_placeholder')</option>
+                        @foreach($cities as $city)
+                            <option value="{{ $city->id }}">{{ $city->title }}</option>
+                        @endforeach
+                    </select>
+                    @error('city_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-6">
+                    <label for="experienceYears" class="form-label">@lang('educator::builder.basic_info.experience_years')</label>
+                    <input wire:model.defer="experience_years" id="experienceYears" type="number" class="form-control @error('experience_years') is-invalid @enderror">
+                    @error('experience_years') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-6">
+                    <label for="specialization" class="form-label">@lang('educator::builder.basic_info.specialization')</label>
+                    <input wire:model.defer="specialization" id="specialization" type="text" class="form-control @error('specialization') is-invalid @enderror">
+                    @error('specialization') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">@lang('educator::builder.basic_info.identity_type')</label>
+                    <select wire:model="identity_type" class="form-select @error('identity_type') is-invalid @enderror">
+                        <option value="national_id">@lang('educator::builder.basic_info.national_id')</option>
+                        <option value="passport">@lang('educator::builder.basic_info.passport')</option>
+                    </select>
+                    @error('identity_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-6">
+                    <label for="identityId" class="form-label">@lang('educator::builder.basic_info.identity_id')</label>
+                    <input wire:model.defer="identity_id" id="identityId" type="text" class="form-control @error('identity_id') is-invalid @enderror">
+                    @error('identity_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <a href="{{ url('admin/educators/show/' . $educator->id) }}" class="btn btn-light">@lang('admin::home.Back')</a>
+                <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="save">
+                    <span wire:loading.remove wire:target="save">@lang('admin::home.Save')</span>
+                    <span wire:loading wire:target="save"><span class="spinner-border spinner-border-sm"></span></span>
+                </button>
+            </div>
+        </form>
+    @else
     <div class="mb-8">
         <div class="flex items-center gap-4 mb-4">
             <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -118,13 +207,16 @@
         </div>
     </div>
     <div class="flex justify-between pt-6 border-t mt-8">
-        <button type="button" disabled class="btn-secondary disabled:opacity-50">@lang('educator::builder.previous')</button>
+        @unless($isAdminEdit)
+            <button type="button" disabled class="btn-secondary disabled:opacity-50">@lang('educator::builder.previous')</button>
+        @endunless
         <button wire:click="save" wire:loading.attr="disabled" wire:target="save" type="button" class="btn-primary inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
             <svg wire:loading wire:target="save" x-cloak class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span>@lang('educator::builder.next')</span>
+            <span>@if($isAdminEdit) @lang('admin::home.Save') @else @lang('educator::builder.next') @endif</span>
         </button>
     </div>
+    @endif
 </div>

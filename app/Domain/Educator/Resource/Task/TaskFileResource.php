@@ -22,6 +22,7 @@ class TaskFileResource extends JsonResource
                 'type' => class_basename($this->uploader?->getMorphClass()),
             ],
             'uploadedAt' => $this->uploaded_at?->format('Y-m-d H:i:s') ?? null,
+            'approvedAt' => $this->approved_at?->format('Y-m-d H:i:s') ?? null,
         ];
     }
 }

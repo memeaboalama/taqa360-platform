@@ -10,6 +10,7 @@ use App\Domain\User\Models\UserAddress;
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\Controller;
 use App\Domain\AppBase\Models\Location\Country;
 use App\Domain\AppBase\Models\Location\City;
@@ -131,10 +132,11 @@ class AccountController extends Controller
         $user = Auth::user();
         $serviceRequests = $this->getServiceRequests($user, $request);
 
-        if (request()->header('X-Up-Target') == '.dashboard-content') {
-            return view('ecommerce::pages.account._service_requests', compact('serviceRequests'));
-        }
-        return view('ecommerce::pages.account.dashboard', ['page' => 'service_requests', 'user' => $user, 'serviceRequests' => $serviceRequests]);
+        return view('ecommerce::pages.account.account-section-page', [
+            'section' => 'service_requests',
+            'user' => $user,
+            'serviceRequests' => $serviceRequests,
+        ]);
     }
 
     private function getServiceRequests($user, Request $request)
@@ -167,16 +169,42 @@ class AccountController extends Controller
             ->with([
                 'academicMajor',
                 'attachments',
-                'project.activityLog' => fn ($query) => $query->orderByDesc('timestamp'),
-                'project.tasks.activityLog' => fn ($query) => $query->orderByDesc('timestamp'),
+                'project.tasks.attachments',
                 'project.tasks.acceptedAssignments.educator',
             ])
             ->findOrFail($id);
 
-        if (request()->header('X-Up-Target') == '.dashboard-content') {
-            return view('ecommerce::pages.account._service_request_details', compact('serviceRequest'));
+        if (Schema::hasTable('request_activity_logs')) {
+            $serviceRequest->load('activityLog');
+        } else {
+            $serviceRequest->setRelation('activityLog', collect());
         }
-        return view('ecommerce::pages.account.dashboard', ['page' => 'service_request_details', 'user' => $user, 'serviceRequest' => $serviceRequest]);
+
+        if ($serviceRequest->project) {
+            $project = $serviceRequest->project;
+
+            if (Schema::hasTable('project_activity_logs')) {
+                $project->load([
+                    'activityLog' => fn ($query) => $query->orderByDesc('timestamp'),
+                ]);
+            } else {
+                $project->setRelation('activityLog', collect());
+            }
+
+            if (Schema::hasTable('task_activity_logs')) {
+                $project->tasks->load([
+                    'activityLog' => fn ($query) => $query->orderByDesc('timestamp'),
+                ]);
+            } else {
+                $project->tasks->each(fn ($task) => $task->setRelation('activityLog', collect()));
+            }
+        }
+
+        return view('ecommerce::pages.account.account-section-page', [
+            'section' => 'service_request_details',
+            'user' => $user,
+            'serviceRequest' => $serviceRequest,
+        ]);
     }
 
     public function addresses()

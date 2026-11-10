@@ -147,6 +147,7 @@ Route::group(
         Route::prefix('educators')->as('educators.')->group(function () {
             Route::get('/', [EducatorController::class, 'index']);
             Route::get('show/{id}', [EducatorController::class, 'show'])->name('show');
+            Route::get('edit/{id}', [EducatorController::class, 'edit'])->name('edit');
             Route::get('showEducator/{id}', [DriverRegisterController::class, 'showDriver'])->name('showDriver');
             Route::get('/pending', [EducatorController::class, 'getPending']);
         });

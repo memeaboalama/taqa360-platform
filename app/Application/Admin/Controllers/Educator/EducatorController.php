@@ -3,6 +3,7 @@
 namespace Application\Admin\Controllers\Educator;
 
 use Domain\Educator\Repositories\EducatorRepository;
+use Domain\Educator\Models\Educator;
 use App\Http\Controllers\Controller;
 
 class EducatorController extends Controller
@@ -23,6 +24,13 @@ class EducatorController extends Controller
         $stats = $this->educatorRepository->getEducatorTotalOrderReport($id);
         $educator = $this->educatorRepository->findById($id);
         return view('admin::pages.educators.show', get_defined_vars());
+    }
+
+    public function edit(int $id): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application
+    {
+        $educator = Educator::findOrFail($id);
+
+        return view('admin::pages.educators.edit', compact('educator'));
     }
 
     public function trackDrivers()

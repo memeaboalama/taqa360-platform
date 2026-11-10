@@ -8,6 +8,35 @@
         padding-bottom: 40px;
     }
 
+    .service-requests-container .content-header {
+        padding-bottom: 14px;
+        border-bottom: 1px solid #eef2f5;
+    }
+
+    .service-requests-container .content-header h2 {
+        color: #245c8e;
+    }
+
+    .service-requests-container .content-header .btn {
+        padding: 10px 18px;
+        border: 1px solid #245c8e;
+        border-radius: 6px;
+        background-color: #245c8e;
+        color: #fff;
+        font-weight: 600;
+        line-height: 1.4;
+        box-shadow: 0 2px 6px rgba(36, 92, 142, 0.2);
+        transition: background-color 0.2s, box-shadow 0.2s;
+    }
+
+    .service-requests-container .content-header .btn:hover,
+    .service-requests-container .content-header .btn:focus-visible {
+        background-color: #1d4b74;
+        border-color: #1d4b74;
+        color: #fff;
+        box-shadow: 0 3px 8px rgba(36, 92, 142, 0.28);
+    }
+
     .precise-table-card {
         background: #fff;
         border: 1px solid #eef2f5;
@@ -58,6 +87,8 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        flex-shrink: 0;
+        white-space: nowrap;
     }
     .status-badge::before {
         content: '';
@@ -95,6 +126,7 @@
     .request-title { font-weight: 600; color: #2d3748; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle; }
     .total-price { font-weight: 800; color: #2d3748; font-size: 15px; }
     .date-text { color: #718096; font-weight: 500; }
+    .date-time { white-space: nowrap; }
 
     .btn-view {
         padding: 8px 18px;
@@ -106,7 +138,10 @@
         transition: all 0.2s;
         background: #fff;
         text-decoration: none;
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        flex-shrink: 0;
+        white-space: nowrap;
     }
     .btn-view:hover {
         border-color: #306FAA;
@@ -177,7 +212,7 @@
     <div class="service-requests-container">
 
         <div class="content-header mb-4 d-flex justify-content-between align-items-center">
-            <h2 class="fw-bold mb-0" style="font-size: 24px; color: #1a202c;">@lang('ecommerce::ecommerce.service_requests')</h2>
+            <h2 class="fw-bold mb-0" style="font-size: 24px;">@lang('ecommerce::ecommerce.service_requests')</h2>
             <div class="d-flex align-items-center gap-3">
                 <div class="text-muted small">
                     @lang('ecommerce::ecommerce.total_requests'): <strong>{{ $serviceRequests->total() }}</strong>
@@ -240,8 +275,10 @@
                                     </div>
                                 </td>
                                 <td data-label="@lang('ecommerce::ecommerce.date')">
-                                    <span class="date-text">{{ \Carbon\Carbon::parse($serviceRequest->created_at)->format('d M Y') }}</span>
-                                    <small class="d-block text-muted" style="font-size: 11px; margin-top: 3px;">{{ \Carbon\Carbon::parse($serviceRequest->created_at)->format('h:i A') }}</small>
+                                    <span class="date-time">
+                                        <span class="date-text">{{ \Carbon\Carbon::parse($serviceRequest->created_at)->format('d M Y') }}</span>
+                                        <small class="text-muted" style="font-size: 11px; margin-inline-start: 4px;">{{ \Carbon\Carbon::parse($serviceRequest->created_at)->format('h:i A') }}</small>
+                                    </span>
                                 </td>
                                 <td data-label="@lang('ecommerce::ecommerce.service_type')">
                                     <span class="service-type-badge" title="@lang('ecommerce::ecommerce.service_request_tooltip')">
@@ -271,7 +308,7 @@
                                 </td>
                                 <td data-label="" class="text-end">
                                     <a href="{{ route('account.service_request', $serviceRequest->id) }}" class="btn-view">
-                                        @lang('ecommerce::ecommerce.view_details') <i class="ti-arrow-left arrow-start ms-1" style="font-size: 10px;"></i>
+                                        @lang('ecommerce::ecommerce.view_details') <i class="ti-arrow-right arrow-end ms-1" style="font-size: 10px;"></i>
                                     </a>
                                 </td>
                             </tr>

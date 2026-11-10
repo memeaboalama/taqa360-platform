@@ -9,6 +9,7 @@ use App\Support\Services\ImagesServices\ImageService;
 use Domain\Educator\Actions\Profile\UpdateBasicInfoAction;
 use Domain\Educator\Models\Educator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
@@ -18,6 +19,7 @@ class Basic extends Component
     use WithFileUploads, LivewireAlert;
 
     public Educator $educator;
+    public bool $isAdminEdit = false;
     public $name, $email, $phone;
     public $nationality_id, $gender, $country_id, $city_id;
     public $identity_type, $identity_id, $experience_years, $specialization;
@@ -146,6 +148,38 @@ class Basic extends Component
 
     public function save(UpdateBasicInfoAction $updateBasicInfoAction)
     {
+        if ($this->isAdminEdit) {
+            $fields = [
+                'name', 'email', 'phone', 'nationality_id', 'gender',
+                'country_id', 'city_id', 'identity_type', 'identity_id',
+                'experience_years', 'specialization',
+            ];
+            $rules = array_intersect_key($this->rules(), array_flip($fields));
+            $validatedData = $this->validate($rules);
+
+            try {
+                DB::transaction(function () use ($validatedData) {
+                    $this->educator->update(array_intersect_key($validatedData, array_flip(['name', 'email', 'phone'])));
+                    $profileData = array_intersect_key($validatedData, array_flip([
+                        'nationality_id', 'gender', 'country_id', 'city_id',
+                        'identity_type', 'identity_id', 'experience_years', 'specialization',
+                    ]));
+                    $this->educator->profile()->updateOrCreate(
+                        ['educator_id' => $this->educator->id],
+                        $profileData
+                    );
+                });
+
+                $this->educator->refresh()->load('profile');
+                $this->alert('success', __('admin::home.data_updated_successfully'));
+            } catch (\Exception $e) {
+                Log::error("Error in admin educator edit: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+                $this->alert('error', __('educator::builder.messages.generic_error'));
+            }
+
+            return;
+        }
+
         $validatedData = $this->validate();
         try {
             $updatedEducator = $updateBasicInfoAction->handle($this->educator, $validatedData, $this->identityImageFront, $this->identityImageBack);
