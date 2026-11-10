@@ -56,7 +56,7 @@ public/assets/react-app/
 /temp_check_branches.php
 
 # Vendor assets - do not upload
-/public/assets/vendor/
+# /public/assets/vendor/
 
 # Sensitive environment file without a leading dot
 /env
