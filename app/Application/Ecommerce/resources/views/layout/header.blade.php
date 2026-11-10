@@ -344,7 +344,7 @@
                         @if(isset($headerData['logo']) && !empty($headerData['logo']))
                         <img src="{{ \Illuminate\Support\Facades\Storage::url($headerData['logo']) }}" alt="{{ $headerData['site_name'] ?? 'logo' }}" width="20%">
                         @else
-                        <img src="{{ asset('assets/ecommerce/images/logo.png') }}" alt="logo" width="20%">
+                        <img src="{{ asset($platformBrand['logo']) }}" alt="{{ __('ecommerce::ecommerce.site_name') }}" width="20%">
                         @endif
                     </a>
                 </div>

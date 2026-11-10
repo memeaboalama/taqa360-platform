@@ -51,7 +51,7 @@
 
     <div class="mb-3">
         <img class="center"
-            src="{{ asset('assets/ecommerce/images/logo.png') }}" width="100" alt="Logo">
+            src="{{ asset($platformBrand['logo']) }}" width="100" alt="Logo">
     </div>
 
 

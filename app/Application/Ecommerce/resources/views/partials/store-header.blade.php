@@ -11,7 +11,7 @@
     <div class="topbar">
         <div class="container topbar-inner">
             <a class="brand" href="{{ route('ecommerce.static') }}"><img class="brand-logo"
-                    src="{{ asset('assets/ecommerce/images/logo.png') }}" alt="{{ __('ecommerce::ecommerce.site_name') }}"></a>
+                    src="{{ asset($platformBrand['logo']) }}" alt="{{ __('ecommerce::ecommerce.site_name') }}"></a>
             <form class="search" id="store-search" method="get" action="{{ $storeSearchAction }}"><button type="submit"
                     aria-label="{{ __('ecommerce::ecommerce.search') }}">⌕</button><input name="q" type="search"
                     placeholder="{{ $storeSearchPlaceholder }}" aria-label="{{ __('ecommerce::ecommerce.search') }}"></form>

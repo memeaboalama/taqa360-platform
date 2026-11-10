@@ -1,6 +1,16 @@
 
 # Eats Backend project
 
+## Brand configuration
+
+The same platform codebase supports both storefront brands. Set `APP_BRAND` in
+each deployment's environment to `taqa360` or `huloolcom`; keep each brand's
+database, file storage, and frontend `VITE_BRAND` setting aligned with that
+value. `APP_BRAND` controls platform identity and selects the corresponding
+logo, favicon, colors, and storefront theme. Existing brand-specific database
+settings remain separate. Leave `APP_NAME` empty to use the matching brand
+name automatically, or set it explicitly to override the application name.
+
 ## New Commands
 
 

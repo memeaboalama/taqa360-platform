@@ -20,7 +20,7 @@
     <link id="style" href="{{ asset('assets/vendor/libs/bootstrap/css/bootstrap.rtl.min.css') }}" rel="stylesheet">
     @endif
 
-    <link rel="icon" href="{{ asset('assets/ecommerce/images/favicon.png') }}" type="image/png">
+    <link rel="icon" href="{{ asset($platformBrand['favicon']) }}" type="image/png">
 
     <!-- Style Css -->
     <link href="{{ asset('assets/vendor/css/styles.min.css') }}" rel="stylesheet">
@@ -175,4 +175,5 @@
             display: block !important;
         }
     </style>
+@include('components.brand-theme')
 </head>

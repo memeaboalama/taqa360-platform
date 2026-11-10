@@ -9,7 +9,7 @@
     <ul>
         <li class="mobile-nav-close">
             <a class="mobile-nav-brand" href="{{ route('ecommerce.static') }}">
-                <img src="{{ asset('assets/ecommerce/images/logo.png') }}" alt="{{ __('ecommerce::ecommerce.site_name') }}">
+                <img src="{{ asset($platformBrand['logo']) }}" alt="{{ __('ecommerce::ecommerce.site_name') }}">
             </a>
             <button type="button" aria-label="@lang('ecommerce::ecommerce.close')" data-mobile-menu-close>&times;</button>
         </li>

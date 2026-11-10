@@ -10,7 +10,7 @@
         return $value ?: $fallback;
     };
     $storeFooter = $footerData ?? [];
-    $storeFooterLogo = $storeFooter['logo'] ?? asset('assets/ecommerce/images/logo-white.png');
+    $storeFooterLogo = $storeFooter['logo'] ?? asset($platformBrand['logo_white']);
 @endphp
 <footer>
     <div class="container footer-grid">

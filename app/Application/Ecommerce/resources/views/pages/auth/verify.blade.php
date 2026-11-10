@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@lang('ecommerce::ecommerce.auth.verify_email') - {{ __('ecommerce::ecommerce.site_name') }}</title>
-    <link rel="icon" href="{{ asset('assets/ecommerce/images/favicon.png') }}">
+    <link rel="icon" href="{{ asset($platformBrand['favicon']) }}">
     <link rel="stylesheet" href="{{ asset('assets/ecommerce/css/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/ecommerce/css/themify.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">

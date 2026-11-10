@@ -40,7 +40,7 @@
                         <button type="button" wire:click="closeForm" wire:loading.attr="disabled" wire:target="saveService" class="border border-gray-300 px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                             @lang('educator::builder.cancel')
                         </button>
-                        <button wire:click="saveService" wire:loading.attr="disabled" wire:target="saveService" class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed" style="background-color: #306FAA; color: #ffffff;">
+                        <button wire:click="saveService" wire:loading.attr="disabled" wire:target="saveService" class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed" style="background-color: {{ $platformBrand['primary_color'] }}; color: #ffffff;">
                             <svg wire:loading wire:target="saveService" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -88,7 +88,7 @@
     <div class="space-y-6">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h3 class="text-xl font-semibold" style="color: #333333;">@lang('educator::home.services.manage_services')</h3>
-            <button wire:click="showAddForm" class="px-4 py-2 rounded-lg transition-colors" style="background-color: #306FAA; color: #ffffff;">
+            <button wire:click="showAddForm" class="px-4 py-2 rounded-lg transition-colors" style="background-color: {{ $platformBrand['primary_color'] }}; color: #ffffff;">
                 @lang('educator::home.services.add_new_service')
             </button>
         </div>
@@ -104,7 +104,7 @@
                         </span>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <button wire:click="edit({{ $service->id }})" wire:loading.attr="disabled" wire:target="edit" class="inline-flex items-center gap-1 px-3 py-1 rounded text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed" style="background-color: #306FAA; color: #ffffff;">
+                        <button wire:click="edit({{ $service->id }})" wire:loading.attr="disabled" wire:target="edit" class="inline-flex items-center gap-1 px-3 py-1 rounded text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed" style="background-color: {{ $platformBrand['primary_color'] }}; color: #ffffff;">
                             <span wire:loading.remove wire:target="edit">@lang('educator::home.services.edit')</span>
                             <svg wire:loading wire:target="edit" class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

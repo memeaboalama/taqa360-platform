@@ -82,9 +82,7 @@ function setupUnpoly() {
 
                 const bootstrapLink = document.getElementById('bootstrap-css');
                 if (bootstrapLink) {
-                    const rtlHref = '/assets/vendor/libs/bootstrap/css/bootstrap.rtl.min.css';
-                    const ltrHref = '/assets/ecommerce/css/bootstrap.css';
-                    bootstrapLink.setAttribute('href', newVariant === 'rtl' ? rtlHref : ltrHref);
+                    bootstrapLink.setAttribute('href', '/assets/ecommerce/css/bootstrap.css');
                     console.log(`✅ Bootstrap CSS swapped to: ${newVariant}`);
                 }
             }

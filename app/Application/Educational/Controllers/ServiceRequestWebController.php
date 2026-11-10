@@ -11,18 +11,26 @@ class ServiceRequestWebController extends Controller
 {
     public function store(Request $request, CreateEducationalRequestAction $createAction)
     {
-        $validated = $request->validate([
+        $brandFields = config('app.brand') === 'huloolcom'
+            ? [
+                'academic_major_id' => ['nullable', 'exists:academic_majors,id'],
+                'education_level' => ['nullable', 'string', 'max:100'],
+            ]
+            : [
+                'project_site_type' => ['nullable', 'in:residential,commercial,agricultural,industrial,medical,educational,other'],
+                'solar_system_type' => ['nullable', 'in:off-grid,on-grid,hybrid,not_sure'],
+            ];
+
+        $validated = $request->validate(array_merge([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'type' => ['nullable', 'string'],
             'budget' => ['nullable', 'numeric', 'min:0'],
-            'project_site_type' => ['nullable', 'in:residential,commercial,agricultural,industrial,medical,educational,other'],
-            'solar_system_type' => ['nullable', 'in:off-grid,on-grid,hybrid,not_sure'],
             'urgency_level' => ['nullable', 'in:normal,urgent,very_urgent'],
             'additional_notes' => ['nullable', 'string'],
             'attachments' => ['nullable', 'array'],
             'attachments.*' => ['file', 'max:10240'],
-        ], [
+        ], $brandFields), [
             'title.required' => 'عنوان الطلب مطلوب',
             'title.max' => 'عنوان الطلب يجب ألا يتجاوز 255 حرفاً',
             'description.required' => 'وصف الطلب مطلوب',
@@ -54,14 +62,14 @@ class ServiceRequestWebController extends Controller
                 $data['type'] = \App\Application\Educational\Enums\EducationalRequestType::GENERAL->value;
             }
 
-            // Handle project site type
-            if (!empty($data['project_site_type'])) {
-                $data['project_site_type'] = strtolower($data['project_site_type']);
-            }
+            if (config('app.brand') === 'taqa360') {
+                if (!empty($data['project_site_type'])) {
+                    $data['project_site_type'] = strtolower($data['project_site_type']);
+                }
 
-            // Handle solar system type
-            if (!empty($data['solar_system_type'])) {
-                $data['solar_system_type'] = strtolower($data['solar_system_type']);
+                if (!empty($data['solar_system_type'])) {
+                    $data['solar_system_type'] = strtolower($data['solar_system_type']);
+                }
             }
 
             $educationalRequest = $createAction->handle($data);

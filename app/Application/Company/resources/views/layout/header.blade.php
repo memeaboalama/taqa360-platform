@@ -10,13 +10,13 @@
             <div class="header-element">
                 <div class="horizontal-logo">
                     <a href="index.html" class="header-logo">
-                        <img src="{{ asset('assets/ecommerce/images/logo.png') }}" alt="TAQA"
+                        <img src="{{ asset($platformBrand['logo']) }}" alt="{{ $platformBrand['name'][app()->getLocale()] ?? $platformBrand['name']['en'] }}"
                              class="desktop-logo">
-                        <img src="{{ asset('assets/ecommerce/images/logo.png') }}" alt="TAQA"
+                        <img src="{{ asset($platformBrand['logo']) }}" alt="{{ $platformBrand['name'][app()->getLocale()] ?? $platformBrand['name']['en'] }}"
                              class="toggle-logo">
-                        <img src="{{ asset('assets/ecommerce/images/logo-white.png') }}" alt="TAQA"
+                        <img src="{{ asset($platformBrand['logo_white']) }}" alt="{{ $platformBrand['name'][app()->getLocale()] ?? $platformBrand['name']['en'] }}"
                              class="desktop-dark">
-                        <img src="{{ asset('assets/ecommerce/images/logo-white.png') }}" alt="TAQA"
+                        <img src="{{ asset($platformBrand['logo_white']) }}" alt="{{ $platformBrand['name'][app()->getLocale()] ?? $platformBrand['name']['en'] }}"
                              class="toggle-dark">
                     </a>
                 </div>

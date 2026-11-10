@@ -3,10 +3,10 @@
     <!-- Start::main-sidebar-header -->
     <div class="main-sidebar-header" style="border: none">
         <a href="#" class="header-logo">
-            <img src="{{ asset('assets/ecommerce/images/logo.png') }}" alt="TAQA" class="desktop-logo" width="112">
-            <img src="{{ asset('assets/ecommerce/images/logo.png') }}" alt="TAQA" class="toggle-logo" width="64">
-            <img src="{{ asset('assets/ecommerce/images/logo-white.png') }}" alt="TAQA" class="desktop-dark" width="112">
-            <img src="{{ asset('assets/ecommerce/images/logo-white.png') }}" alt="TAQA" class="toggle-dark" width="64">
+            <img src="{{ asset($platformBrand['logo']) }}" alt="{{ $platformBrand['name'][app()->getLocale()] ?? $platformBrand['name']['en'] }}" class="desktop-logo" width="112">
+            <img src="{{ asset($platformBrand['logo']) }}" alt="{{ $platformBrand['name'][app()->getLocale()] ?? $platformBrand['name']['en'] }}" class="toggle-logo" width="64">
+            <img src="{{ asset($platformBrand['logo_white']) }}" alt="{{ $platformBrand['name'][app()->getLocale()] ?? $platformBrand['name']['en'] }}" class="desktop-dark" width="112">
+            <img src="{{ asset($platformBrand['logo_white']) }}" alt="{{ $platformBrand['name'][app()->getLocale()] ?? $platformBrand['name']['en'] }}" class="toggle-dark" width="64">
         </a>
     </div>
     <!-- End::main-sidebar-header -->

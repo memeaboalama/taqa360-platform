@@ -4,6 +4,7 @@ namespace App\Domain\MarketPlace\Models;
 
 use App\Application\Marketplace\Enums\MerchantOrderStatuses;
 use App\Application\Marketplace\Enums\MerchantOrderMarks;
+use App\Application\Marketplace\Enums\MerchantOrderHistoryStatuses;
 use App\Domain\AppBase\Models\CashBack;
 use App\Domain\AppBase\Models\GeneralSetting;
 use App\Domain\AppBase\Models\Promocode;
@@ -197,6 +198,29 @@ class MerchantOrder extends Model
     public function orders_history(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(MerchantOrderHistory::class, 'order_id', 'id');
+    }
+
+    public function isAcceptedByDriver(int $driverId): bool
+    {
+        $relevantActions = [
+            MerchantOrderHistoryStatuses::DRIVER_ACCEPT->value,
+            MerchantOrderHistoryStatuses::MARKED_READY->value,
+            MerchantOrderHistoryStatuses::DRIVER_ASSIGNED_MANUALLY->value,
+        ];
+
+        $latestAction = $this->relationLoaded('orders_history')
+            ? $this->orders_history
+                ->whereIn('action', $relevantActions)
+                ->sortByDesc('id')
+                ->first()
+            : $this->orders_history()
+                ->whereIn('action', $relevantActions)
+                ->orderByDesc('id')
+                ->first();
+
+        return $latestAction?->action === MerchantOrderHistoryStatuses::DRIVER_ACCEPT->value
+            && (int) $latestAction->changeable_id === $driverId
+            && $latestAction->changeable_type === 'Driver';
     }
 
     public function elmOrder(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -487,7 +511,7 @@ class MerchantOrder extends Model
                 get: fn() => 0 . " km"
             );
         }
-        $distance = $this->branch->getDistanceTo([$lat, $lng])->first()?->distance;
+        $distance = $this->branch?->getDistanceTo([$lat, $lng])->first()?->distance;
         return new Attribute(
             get: fn() => ($distance) ? round($distance / 1000000, 2) . " km" : 0 . " km"
         );
@@ -508,7 +532,7 @@ class MerchantOrder extends Model
                 get: fn() => 0 . " km"
             );
         }
-        $distance = $this->branch->getDistanceTo([$lat, $lng])->first()?->distance;
+        $distance = $this->branch?->getDistanceTo([$lat, $lng])->first()?->distance;
         return new Attribute(
             get: fn() => ($distance) ? round($distance / 1000000, 2) . " km" : 0 . " km"
         );

@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'site_name' => 'TAQA',
+    'site_name' => config('brand.brands.' . config('app.brand') . '.name.en'),
     'remaining_stock' => 'Only :count left in stock for this product',
     'product_out_of_stock' => 'Product is out of stock',
     'product_not_available' => 'Product is not available',
@@ -1060,6 +1060,8 @@ return [
     'sr_title_placeholder' => 'Enter a clear and concise title for your request',
     'sr_project_site_type' => 'Project Site Type',
     'sr_solar_system_type' => 'Solar System Type',
+    'education_level' => 'Education Level',
+    'academic_major' => 'Academic Major',
     'site_type_residential' => 'Residential',
     'site_type_commercial' => 'Commercial',
     'site_type_agricultural' => 'Agricultural / Farm',

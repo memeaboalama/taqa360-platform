@@ -7,6 +7,7 @@
 
     <title>@yield('title')</title>
 
+    <link rel="icon" href="{{ asset($platformBrand['favicon']) }}" type="image/png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -22,11 +23,12 @@
 
     <style>
         :root {
-            --primary-color: #306FAA;
-            --primary-hover: #245C8E;
+            --primary-color: {{ $platformBrand['primary_color'] }};
+            --primary-hover: {{ $platformBrand['primary_hover_color'] }};
             --light-bg-color: #F2F2F3;
             --dark-text-color: #333333;
-            --primary-rgb: 48, 111, 170;
+            --primary-rgb: {{ $platformBrand['primary_rgb'] }};
+            --accent-color: {{ $platformBrand['accent_color'] }};
         }
 
         body {
@@ -120,6 +122,18 @@
 
         .hover\\:text-blue-500:hover, a:hover {
             color: var(--primary-hover);
+        }
+
+        .brand-accent-hover:hover {
+            color: var(--accent-color) !important;
+        }
+
+        .brand-primary-button {
+            background-color: var(--primary-color);
+        }
+
+        .brand-primary-button:hover {
+            background-color: var(--primary-hover);
         }
 
         /* Utility classes from original code - for compatibility */

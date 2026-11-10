@@ -26,7 +26,12 @@ class TaskChangeStatusAction
             throw new \DomainException('This task status transition is not allowed.');
         }
 
-        $this->taskRepository->update($task->id, ['status' => $nextStatus->value]);
+        $updates = ['status' => $nextStatus->value];
+        if ($nextStatus === ProjectStatus::COMPLETED) {
+            $updates['completed_at'] = $task->completed_at ?? now();
+        }
+
+        $this->taskRepository->update($task->id, $updates);
         // event(new TaskUpdated($task));
         return $task->fresh();
     }

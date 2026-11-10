@@ -285,7 +285,7 @@
     <div class="container-bdf">
         <div class="div-one">
             <div class="logo">
-                <img src="{{asset('assets/vendor/images/logo-551edfe5.png')}}" alt="logo">
+                <img src="{{ asset($platformBrand['logo']) }}" alt="logo">
 
             </div>
             <div class="content">
@@ -404,4 +404,3 @@
 </div>
 </body>
 </html>
-

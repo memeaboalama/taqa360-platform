@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 @if(LaravelLocalization::getCurrentLocale() == 'en')
 <html lang="en" dir="ltr" data-nav-layout="vertical" data-theme-mode="light" data-header-styles="light"
-    data-menu-styles="light" style="--primary-rgb: {{ config('app.primary_rgp','48, 111, 170') }};" data-toggled="close" style="--primary-rgb: {{ config('app.primary_rgp','48, 111, 170') }};">
+    data-menu-styles="light" style="--primary-rgb: {{ $platformBrand['primary_rgb'] }};" data-toggled="close">
 @elseif(LaravelLocalization::getCurrentLocale() == 'ar')
 <html lang="ar" dir="rtl" data-nav-layout="vertical" data-theme-mode="light" data-header-styles="light"
-    data-menu-styles="light" style="--primary-rgb: {{ config('app.primary_rgp','48, 111, 170') }};" data-toggled="close" style="--primary-rgb: {{ config('app.primary_rgp','48, 111, 170') }};">
+    data-menu-styles="light" style="--primary-rgb: {{ $platformBrand['primary_rgb'] }};" data-toggled="close">
 @endif
 
 

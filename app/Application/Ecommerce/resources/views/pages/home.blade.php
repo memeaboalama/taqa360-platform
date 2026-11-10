@@ -422,7 +422,7 @@
                                     }
                                     // Fallback if null
                                     if (!$logoImg) {
-                                    $logoImg = asset('assets/ecommerce/images/logo.png');
+                                    $logoImg = asset($platformBrand['logo']);
                                     }
 
                                     $branchesCount = $merchant->branches_count ?? 0;

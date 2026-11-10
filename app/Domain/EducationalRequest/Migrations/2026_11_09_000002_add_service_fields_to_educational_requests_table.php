@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (config('app.brand') !== 'taqa360') {
+            return;
+        }
+
         if (! Schema::hasTable('educational_requests')) {
             return;
         }
@@ -27,6 +31,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (config('app.brand') !== 'taqa360') {
+            return;
+        }
+
         if (! Schema::hasTable('educational_requests')) {
             return;
         }

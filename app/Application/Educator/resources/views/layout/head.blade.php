@@ -19,7 +19,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Crop Image Css -->
-    <link rel="icon" href="{{ asset('assets/ecommerce/images/favicon.png') }}" type="image/png">
+    <link rel="icon" href="{{ asset($platformBrand['favicon']) }}" type="image/png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -29,16 +29,9 @@
     @stack('css')
     <style>
         :root {
-            --primary-color: #306FAA;
-            --primary-hover: #245C8E;
-
-            --primary-rgb: {
-                    {
-                    config('app.primary_rgp', '48, 111, 170')
-                }
-            }
-
-            ;
+            --primary-color: {{ $platformBrand['primary_color'] }};
+            --primary-hover: {{ $platformBrand['primary_hover_color'] }};
+            --primary-rgb: {{ $platformBrand['primary_rgb'] }};
         }
 
         body {
@@ -76,7 +69,7 @@
 
         .btn-primary {
             width: 100%;
-            background-color: #306FAA;
+            background-color: var(--primary-color);
             color: white;
             padding: 0.75rem 1rem;
             border-radius: 0.5rem;
@@ -88,7 +81,7 @@
         }
 
         .btn-primary:hover {
-            background-color: #245C8E;
+            background-color: var(--primary-hover);
         }
 
         .register-container {
@@ -189,11 +182,23 @@
         }
 
         .text-blue-600 {
-            color: #245C8E;
+            color: {{ $platformBrand['primary_hover_color'] }};
         }
 
         .hover\\:text-blue-500:hover {
-            color: #306FAA;
+            color: {{ $platformBrand['primary_color'] }};
+        }
+
+        .brand-accent-hover:hover {
+            color: {{ $platformBrand['accent_color'] }} !important;
+        }
+
+        .brand-primary-button {
+            background-color: {{ $platformBrand['primary_color'] }};
+        }
+
+        .brand-primary-button:hover {
+            background-color: {{ $platformBrand['primary_hover_color'] }};
         }
 
         .font-medium {
@@ -284,4 +289,5 @@
             color: #111827;
         }
     </style>
+@include('components.brand-theme')
 </head>

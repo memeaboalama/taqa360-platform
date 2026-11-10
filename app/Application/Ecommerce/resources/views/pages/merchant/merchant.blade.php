@@ -5,7 +5,7 @@
     $image = static fn($value) => $value ?: asset('assets/images/pro/1.jpg');
     $localizedName = is_array($merchant->company_name ?? null) ? ($merchant->company_name[app()->getLocale()] ?? $merchant->company_name['en'] ?? reset($merchant->company_name)) : ($merchant->company_name ?? $merchant->name);
     $localizedDesc = is_array($merchant->description ?? null) ? ($merchant->description[app()->getLocale()] ?? $merchant->description['en'] ?? reset($merchant->description)) : ($merchant->description ?? '');
-    $merchantLogo = $merchant->logo ?: asset('assets/ecommerce/images/logo.png');
+    $merchantLogo = $merchant->logo ?: asset($platformBrand['logo']);
     $merchantRating = (float) ($merchant->rate ?? $merchant->rating ?? 0);
     $totalProducts = $products instanceof \Illuminate\Pagination\LengthAwarePaginator ? $products->total() : $products->count();
     // Split the store's own uploads the way visitors expect to see them.

@@ -602,7 +602,7 @@ return [
     'Enter your Email Address' => 'Enter your Email Address',
     'Enter your Password' => 'Enter your Password',
     'Manage Orders' => 'Manage Orders',
-    'With eats Control Panel.' => 'With TAQA Control Panel.',
+    'With eats Control Panel.' => 'With :brand Control Panel.',
     'Please Wait' => 'Please Wait',
     'Admin Forget Password' => 'Admin Forget Password',
     'Enter your email address in order to get an OTP' => 'Enter your email address in order to get an OTP',

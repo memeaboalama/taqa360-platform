@@ -51,7 +51,7 @@
                     <div class="relative" x-data="{ open: false }">
                         <button type="button" @click="open = !open" class="flex items-center gap-2 focus:outline-none">
                             <span class="avatar avatar-md w-10 h-10 rounded-full overflow-hidden border border-gray-200 bg-white inline-flex items-center justify-center">
-                                <img src="{{ asset('assets/ecommerce/images/logo.png') }}" class="w-full h-full object-cover" alt="avatar">
+                                <img src="{{ asset($platformBrand['logo']) }}" class="w-full h-full object-cover" alt="avatar">
                             </span>
                             <span class="hidden sm:inline text-sm font-semibold text-gray-800">{{ $educator->name }}</span>
                         </button>

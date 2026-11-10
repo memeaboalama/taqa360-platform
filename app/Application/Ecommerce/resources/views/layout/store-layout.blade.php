@@ -9,15 +9,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', __('ecommerce::ecommerce.home')) - {{ __('ecommerce::ecommerce.site_name') }}</title>
-    <link rel="icon" type="image/png" href="{{ asset('assets/ecommerce/images/favicon.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset($platformBrand['favicon']) }}">
     <link rel="stylesheet" href="{{ asset('assets/ecommerce/css/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/ecommerce/css/themify.css') }}">
-    @if(app()->getLocale() === 'ar')
-        <link rel="stylesheet" href="{{ asset('assets/vendor/libs/bootstrap/css/bootstrap.rtl.min.css') }}"
-            id="bootstrap-css">
-    @else
-        <link rel="stylesheet" href="{{ asset('assets/ecommerce/css/bootstrap.css') }}" id="bootstrap-css">
-    @endif
+    <link rel="stylesheet" href="{{ asset('assets/ecommerce/css/bootstrap.css') }}" id="bootstrap-css">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,8 +22,8 @@
             --ink: #20252d;
             --muted: #777d86;
             --line: #e9ebef;
-            --yellow: #306FAA;
-            --yellow-deep: #245C8E;
+            --yellow: {{ $platformBrand['primary_color'] }};
+            --yellow-deep: {{ $platformBrand['primary_hover_color'] }};
             --soft: #f7f8f9;
             --shadow: 0 5px 18px rgba(29, 37, 48, .055)
         }

@@ -86,13 +86,10 @@ function hideLoader() {
                 return;
             }
 
-            const rtlHref = '/assets/vendor/libs/bootstrap/css/bootstrap.rtl.min.css';
-            const ltrHref = '/assets/ecommerce/css/bootstrap.css';
-            const targetHref = variant === 'rtl' ? rtlHref : ltrHref;
+            const targetHref = '/assets/ecommerce/css/bootstrap.css';
 
             const currentHref = bootstrapLink.getAttribute('href');
-            if ((variant === 'rtl' && currentHref.includes('rtl')) ||
-                (variant === 'ltr' && !currentHref.includes('rtl'))) {
+            if (currentHref === targetHref) {
                 console.log('✅ Bootstrap already correct');
                 return;
             }

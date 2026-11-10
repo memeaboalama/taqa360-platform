@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 
@@ -85,6 +86,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $brandKey = config('app.brand');
+        $brand = config("brand.brands.{$brandKey}");
+        if (!is_array($brand)) {
+            throw new \InvalidArgumentException('APP_BRAND must be either taqa360 or huloolcom.');
+        }
+
+        config(['app.primary_rgp' => $brand['primary_rgb']]);
+        View::share('platformBrand', $brand);
+
          // Schema::defaultStringLength(1000);
 
         if ($this->app->isLocal()) {
@@ -142,4 +152,3 @@ class AppServiceProvider extends ServiceProvider
         \Livewire\Livewire::component('admin::adplacement.modal.delete', \Application\Admin\Livewire\AdPlacement\Modal\Delete::class);
     }
 }
-

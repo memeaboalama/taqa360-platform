@@ -47,7 +47,7 @@
                                                         </p>
                                                         <div style="text-align: center; padding-top: 30px;">
                                                             <a href="{{ $registrationUrl }}"
-                                                               style="display: inline-block; padding: 12px 32px; background-color: #306FAA; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold;">
+                                                               style="display: inline-block; padding: 12px 32px; background-color: {{ $platformBrand['primary_color'] }}; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold;">
                                                                 Complete Registration
                                                             </a>
                                                         </div>

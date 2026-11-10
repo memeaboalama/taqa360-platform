@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'site_name' => 'طاقة',
+    'site_name' => config('brand.brands.' . config('app.brand') . '.name.ar'),
     'remaining_stock' => 'الكمية المتوفرة من هذا المنتج :count فقط',
     'product_out_of_stock' => 'المنتج غير متوفر (نفدت الكمية)',
     'product_not_available' => 'المنتج غير متاح',
@@ -1026,6 +1026,8 @@ return [
     'sr_title_placeholder' => 'أدخل عنواناً واضحاً ومختصراً للطلب',
     'sr_project_site_type' => 'نوع موقع المشروع',
     'sr_solar_system_type' => 'نوع نظام الطاقة الشمسية',
+    'education_level' => 'المستوى التعليمي',
+    'academic_major' => 'التخصص',
     'site_type_residential' => 'سكني',
     'site_type_commercial' => 'تجاري',
     'site_type_agricultural' => 'زراعي / مزرعة',

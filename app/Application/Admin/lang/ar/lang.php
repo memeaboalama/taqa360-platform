@@ -591,7 +591,7 @@ return [
     'Enter your Email Address' => 'أدخل بريدك الإلكتروني',
     'Enter your Password' => 'أدخل كلمة المرور',
     'Manage Orders' => 'إدارة الطلبات',
-    'With eats Control Panel.' => 'من خلال لوحة تحكم طاقة.',
+    'With eats Control Panel.' => 'من خلال لوحة تحكم :brand.',
     'Please Wait' => 'يرجى الانتظار',
     'Admin Forget Password' => 'نسيت كلمة مرور الأدمن',
     'Enter your email address in order to get an OTP' => 'أدخل عنوان بريدك الإلكتروني للحصول على رمز التحقق (OTP)',

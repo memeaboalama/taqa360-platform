@@ -18,24 +18,51 @@ class OpportunityController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $projects = Project::published()->latest()->whereHas('tasks', function ($query) {
+        $filters = $request->validate([
+            'search' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'min_budget' => ['sometimes', 'nullable', 'numeric', 'min:0'],
+            'max_budget' => [
+                'sometimes',
+                'nullable',
+                'numeric',
+                'min:0',
+                function ($attribute, $value, $fail) use ($request) {
+                    $minimum = $request->input('min_budget');
+                    if ($value !== null && $minimum !== null && (float) $value < (float) $minimum) {
+                        $fail('The max budget must be greater than or equal to the min budget.');
+                    }
+                },
+            ],
+            'date_filter' => ['sometimes', 'nullable', 'in:all,last_7_days'],
+            'sort_by' => ['sometimes', 'nullable', 'in:created_at,oldest,budget_asc,budget_desc'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        $projects = Project::published()->whereHas('tasks', function ($query) {
                 $query->where('is_public', true)
                     ->where('bidding_status', 'OPEN');
             })
-            ->when($request->has('search'), function ($query) use ($request) {
-                $query->where(function ($q) use ($request) {
-                    $q->where('title', 'like', '%' . $request->search . '%')
-                        ->orWhere('description', 'like', '%' . $request->search . '%');
+            ->when(!empty($filters['search']), function ($query) use ($filters) {
+                $query->where(function ($q) use ($filters) {
+                    $q->where('title', 'like', '%' . $filters['search'] . '%')
+                        ->orWhere('description', 'like', '%' . $filters['search'] . '%');
                 });
             })
+            ->when(isset($filters['min_budget']), fn ($query) => $query->where('budget', '>=', $filters['min_budget']))
+            ->when(isset($filters['max_budget']), fn ($query) => $query->where('budget', '<=', $filters['max_budget']))
+            ->when(($filters['date_filter'] ?? 'all') === 'last_7_days', fn ($query) => $query->where('created_at', '>=', now()->subDays(7)))
             ->when($request->has('tags'), function ($query) use ($request) {
                 $query->whereJsonContains('tags', $request->tags);
             })
+            ->when(($filters['sort_by'] ?? 'created_at') === 'oldest', fn ($query) => $query->oldest())
+            ->when(($filters['sort_by'] ?? 'created_at') === 'budget_asc', fn ($query) => $query->orderByRaw('CASE WHEN budget IS NULL THEN 1 ELSE 0 END')->orderBy('budget')->latest('created_at'))
+            ->when(($filters['sort_by'] ?? 'created_at') === 'budget_desc', fn ($query) => $query->orderByRaw('CASE WHEN budget IS NULL THEN 1 ELSE 0 END')->orderByDesc('budget')->latest('created_at'))
+            ->when(($filters['sort_by'] ?? 'created_at') === 'created_at', fn ($query) => $query->latest())
             ->with(['tasks' => function ($query) {
                 $query->where('is_public', true)
                     ->where('bidding_status', 'OPEN');
             }])
-            ->paginate($request->get('per_page', 15));
+            ->paginate($filters['per_page'] ?? 15);
 
         return $this->responseData([
             'projects' => ProjectOpportunityListResource::collection($projects)

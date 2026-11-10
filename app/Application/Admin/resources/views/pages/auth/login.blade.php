@@ -8,14 +8,14 @@
         .admin-login-form-column .btn-primary:hover,
         .admin-login-form-column .btn-primary:focus,
         .admin-login-form-column .btn-primary:active {
-            background-color: #306FAA !important;
-            border-color: #306FAA !important;
+            background-color: {{ $platformBrand['primary_color'] }} !important;
+            border-color: {{ $platformBrand['primary_color'] }} !important;
             color: #fff !important;
         }
 
         .admin-login-form-column #button-addon2,
         .admin-login-form-column #button-addon2 i {
-            color: #306FAA !important;
+            color: {{ $platformBrand['primary_color'] }} !important;
         }
 
         @media (min-width: 1200px) {
@@ -60,10 +60,10 @@
 <!DOCTYPE html>
 @if(LaravelLocalization::getCurrentLocale() == 'ar')
     <html lang="ar" dir="rtl" data-nav-layout="vertical" data-theme-mode="light" data-header-styles="light"
-        data-menu-styles="light" style="--primary-rgb: {{ config('app.primary_rgp', '48, 111, 170') }};" data-toggled="close">
+    data-menu-styles="light" style="--primary-rgb: {{ $platformBrand['primary_rgb'] }};" data-toggled="close">
     @elseif(LaravelLocalization::getCurrentLocale() == 'en')
         <html lang="en" dir="ltr" data-nav-layout="vertical" data-theme-mode="light" data-header-styles="light"
-            data-menu-styles="light" style="--primary-rgb: {{ config('app.primary_rgp', '48, 111, 170') }};" data-toggled="close">
+        data-menu-styles="light" style="--primary-rgb: {{ $platformBrand['primary_rgb'] }};" data-toggled="close">
         @endif
 
 @include('admin::layout.head')
@@ -112,14 +112,14 @@
                 </div>
             </div>
         </div>
-        <div class="col-xxl-6 col-xl-6 col-lg-6 d-xl-block d-none px-0 bg-primary admin-login-cover" style="background-color: #306FAA !important;">
-            <img src="{{ asset('assets/ecommerce/images/logo-white.png') }}" alt="logo"
+        <div class="col-xxl-6 col-xl-6 col-lg-6 d-xl-block d-none px-0 bg-primary admin-login-cover" style="background-color: {{ $platformBrand['primary_color'] }} !important;">
+            <img src="{{ asset($platformBrand['logo_white']) }}" alt="logo"
                 class="desktop-logo mt-4 gy-3 m-4" style="height:auto !important;" width="170">
             <div class="row justify-content-center align-items-center">
                 <div class="col-xxl-12 col-xl-12 col-lg-12 mt-4 gy-3 text-white">
                     <div class="p-5">
                         <h2>@lang('admin::lang.Manage Orders')</h2>
-                        <h2>@lang('admin::lang.With eats Control Panel.')</h2>
+                        <h2>{{ __('admin::lang.With eats Control Panel.', ['brand' => $platformBrand['name'][app()->getLocale()] ?? $platformBrand['name']['en']]) }}</h2>
                     </div>
                 </div>
                 <div class="col-xxl-12 col-xl-12 col-lg-12 d-xl-block px-0">

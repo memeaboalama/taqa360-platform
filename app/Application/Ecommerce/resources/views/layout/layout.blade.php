@@ -12,7 +12,7 @@
     <meta name="app-locale" content="{{ app()->getLocale() }}">
     <meta name="app-dir" content="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
     <!-- Favicon -->
-    <link rel="icon" href="{{ asset('assets/ecommerce/images/favicon.png') }}" type="image/x-icon">
+    <link rel="icon" href="{{ asset($platformBrand['favicon']) }}" type="image/x-icon">
 
     <title>@hasSection('title') @yield('title') - @endif{{ $headerData['site_name'] ?? __('ecommerce::ecommerce.site_name') }}</title>
 
@@ -23,7 +23,7 @@
         <link rel="apple-touch-icon"
             href="{{ \Illuminate\Support\Facades\Storage::disk('fileDisk')->url($headerData['favicon']) }}?v={{ time() }}" />
     @else
-        <link rel="icon" href="{{ asset('assets/images/ecommerce/Favicon.png') }}" />
+        <link rel="icon" href="{{ asset($platformBrand['favicon']) }}" />
     @endif
 
     <!-- Font Family-->
@@ -42,12 +42,7 @@
     <link rel="stylesheet" href="{{ asset('assets/ecommerce/css/flaticon.css') }}">
 
     <!-- Bootstrap CSS -->
-    @if(app()->getLocale() === 'ar')
-        <link rel="stylesheet" href="{{ asset('assets/vendor/libs/bootstrap/css/bootstrap.rtl.min.css') }}"
-            id="bootstrap-css">
-    @else
-        <link rel="stylesheet" href="{{ asset('assets/ecommerce/css/bootstrap.css') }}" id="bootstrap-css">
-    @endif
+    <link rel="stylesheet" href="{{ asset('assets/ecommerce/css/bootstrap.css') }}" id="bootstrap-css">
 
     @include('ecommerce::partials.direction-utils')
 
@@ -68,8 +63,17 @@
     <link rel="stylesheet" href="{{ asset('assets/ecommerce/css/magnific-popup.css') }}">
 
     <!-- Style css-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('assets/ecommerce/css/color5.css') }}" media="screen"
+    <link rel="stylesheet" type="text/css" href="{{ asset($platformBrand['stylesheet']) }}" media="screen"
         id="color">
+
+    <style>
+        :root {
+            --platform-primary-color: {{ $platformBrand['primary_color'] }};
+            --platform-primary-hover-color: {{ $platformBrand['primary_hover_color'] }};
+            --platform-primary-light-color: {{ $platformBrand['primary_light_color'] }};
+            --platform-accent-color: {{ $platformBrand['accent_color'] }};
+        }
+    </style>
 
     <!-- RTL/LTR Banners Support -->
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/ecommerce/css/rtl-banners.css') }}" up-asset>

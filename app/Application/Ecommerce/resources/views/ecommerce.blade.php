@@ -541,7 +541,7 @@
             bottom: 0;
             width: 300px;
             height: 220px;
-            background: url('{{ asset('assets/ecommerce/images/logo.png') }}') no-repeat center / contain;
+            background: url('{{ asset($platformBrand['logo']) }}') no-repeat center / contain;
             content: "";
             opacity: .14;
             pointer-events: none

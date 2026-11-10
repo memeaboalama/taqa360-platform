@@ -56,7 +56,7 @@
             </div>
         </div>
         <div class="col-xxl-4 col-xl-4 col-lg-4 d-xl-block d-none px-0 bg-primary">
-            <a href="{{ url('driver/login') }}"> <img src="{{ asset('assets/ecommerce/images/logo-white.png') }}" alt="logo"
+            <a href="{{ url('driver/login') }}"> <img src="{{ asset($platformBrand['logo_white']) }}" alt="logo"
                     class="desktop-logo mt-4 gy-3 m-4" style="height:auto !important;" width="120"></a>
             <div class="row justify-content-center align-items-center">
 

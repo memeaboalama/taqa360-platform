@@ -85,7 +85,7 @@
             </div>
         </div>
         <div class="col-xxl-6 col-xl-6 col-lg-6 d-xl-block d-none px-0 bg-primary">
-            <a href="{{ url('merchant/login') }}"> <img src="{{ asset('assets/ecommerce/images/logo-white.png') }}"
+            <a href="{{ url('merchant/login') }}"> <img src="{{ asset($platformBrand['logo_white']) }}"
                     alt="logo" class="desktop-logo mt-4 gy-3 m-4" style="height:auto !important;" width="170"></a>
             <div class="row justify-content-center align-items-center">
                 <div class="col-xxl-12 col-xl-12 col-lg-12 mt-4 gy-3 text-white">

@@ -108,7 +108,7 @@
                                             <td class="pad"
                                                 style="padding-top:30px;width:100%;padding-right:0px;padding-left:0px;">
                                                 <div align="center" class="alignment" style="line-height:10px"><img
-                                                        alt="I'm an image" src="{{ asset('assets/ecommerce/images/logo.png') }}"
+                                                        alt="I'm an image" src="{{ asset($platformBrand['logo']) }}"
                                                         style="display: block; height: auto; border: 0; width: 125px; max-width: 100%;"
                                                         title="I'm an image" width="125"/></div>
                                             </td>
@@ -295,7 +295,7 @@
                                                     style="padding-top:30px;width:100%;padding-right:0px;padding-left:0px;">
                                                     <div align="center" class="alignment" style="line-height:10px"><img
                                                             alt="I'm an image"
-                                                            src="{{ asset('assets/ecommerce/images/logo.png') }}"
+                                                            src="{{ asset($platformBrand['logo']) }}"
                                                             style="display: block; height: auto; border: 0; width: 125px; max-width: 100%;"
                                                             title="I'm an image" width="125"/></div>
                                                 </td>

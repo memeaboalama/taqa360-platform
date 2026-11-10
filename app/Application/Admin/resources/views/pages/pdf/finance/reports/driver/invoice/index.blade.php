@@ -295,7 +295,7 @@
     <div class="container-bdf">
         <div class="div-one">
             <div class="logo">
-                <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('assets/vendor/images/logo-551edfe5.png'))) }}" alt="logo">
+                <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path($platformBrand['logo']))) }}" alt="logo">
 
             </div>
             <div class="content">
@@ -401,4 +401,3 @@
 </div>
 </body>
 </html>
-

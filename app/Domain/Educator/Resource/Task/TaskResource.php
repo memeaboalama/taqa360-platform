@@ -10,40 +10,62 @@ class TaskResource extends JsonResource
 {
     public function toArray($request): array
     {
-        $completedSubTasks = $this->subTasks->where('completed', true)->count();
-        $totalSubTasks = $this->subTasks->count();
-        $progress = $totalSubTasks > 0 ? round(($completedSubTasks / $totalSubTasks) * 100) :
-                ($this->status === 'COMPLETED' ? 100 : 0);
+        $subTasks = $this->subTasks;
+        $completedSubTasks = $subTasks->where('completed', true)->count();
+        $totalSubTasks = $subTasks->count();
+        $statusValue = $this->status instanceof \UnitEnum ? $this->status->value : $this->status;
+        $progress = $totalSubTasks > 0
+            ? (int) round(($completedSubTasks / $totalSubTasks) * 100)
+            : (strtoupper((string) $statusValue) === 'COMPLETED' ? 100 : 0);
+        $deadline = null;
+        if ($this->deadline) {
+            $deadline = $this->deadline instanceof \DateTimeInterface
+                ? $this->deadline->format('Y-m-d')
+                : substr((string) $this->deadline, 0, 10);
+        }
 
         return [
-            'id' => $this->uuid,
+            'id' => (string) $this->uuid,
             'title' => $this->title,
-            'description' => $this->description ,
-            'status' => $this->status,
-            'budget' => $this->budget ? (float) $this->budget : null,
-            'deadline' => $this->deadline?->isValid() && $this->deadline->year > 0 ? $this->deadline->toDateString() : null,
+            'description' => $this->description,
+            'status' => $statusValue,
+            'budget' => $this->budget !== null ? (float) $this->budget : null,
+            'deadline' => $deadline,
             'createdAt' => $this->created_at?->format('Y-m-d H:i:s'),
+            'created_at' => $this->created_at?->toIso8601String(),
             'progress' => $progress,
             'subTasksCount' => $totalSubTasks,
             'completedSubTasksCount' => $completedSubTasks,
 
             'assignedEducator' => $this->whenLoaded('assignments', function () {
-                $educator = $this->assignments->where('assigned_to', auth()->id())->first();
-                return [
-                    'id' => $educator->uuid,
-                    'assigned_type' => $educator->assigned_type,
-                    'status' => $educator->status,
-                    'amount' => $educator->amount ? (float) $educator->amount : null,
-                    'assigned_at' => $educator->assigned_at?->toDate()
+                $educator = $this->assignments?->where('assigned_to', auth()->id())->first();
+                if (!$educator) {
+                    return null;
+                }
 
+                $assignedType = $educator->assigned_type instanceof \UnitEnum ? $educator->assigned_type->value : $educator->assigned_type;
+                $status = $educator->status instanceof \UnitEnum ? $educator->status->value : $educator->status;
+                $assignedAt = null;
+                if ($educator->assigned_at) {
+                    $assignedAt = $educator->assigned_at instanceof \DateTimeInterface
+                        ? $educator->assigned_at->format('Y-m-d')
+                        : substr((string) $educator->assigned_at, 0, 10);
+                }
+
+                return [
+                    'id' => (string) $educator->uuid,
+                    'assigned_type' => $assignedType,
+                    'status' => $status,
+                    'amount' => $educator->amount !== null ? (float) $educator->amount : null,
+                    'assigned_at' => $assignedAt,
                 ];
             }),
 
             'project' => $this->whenLoaded('project', function () {
-                return [
-                    'id' => $this->project->uuid,
+                return $this->project ? [
+                    'id' => (string) $this->project->uuid,
                     'title' => $this->project->title,
-                ];
+                ] : null;
             }),
         ];
     }

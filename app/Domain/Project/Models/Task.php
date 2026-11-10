@@ -28,6 +28,7 @@ class Task extends Model
         'bidding_status',
         'tags',
         'created_by',
+        'completed_at',
         'modified_at',
     ];
 
@@ -37,6 +38,7 @@ class Task extends Model
         'is_public' => 'boolean',
         'deadline' => 'date:Y-m-d',
         'tags' => 'array',
+        'completed_at' => 'datetime',
         'modified_at' => 'datetime:Y-m-d H:i:s',
         'created_at' => 'datetime:Y-m-d H:i:s',
         'updated_at' => 'datetime:Y-m-d H:i:s',

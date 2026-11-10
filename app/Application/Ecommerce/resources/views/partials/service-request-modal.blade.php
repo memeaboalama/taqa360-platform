@@ -1,12 +1,14 @@
 @php
-$academicMajors = \Domain\AppBase\Models\Edu\AcademicMajor::all();
+$academicMajors = config('app.brand') === 'huloolcom'
+    ? \Domain\AppBase\Models\Edu\AcademicMajor::all()
+    : collect();
 @endphp
 
 <!-- Service Request Modal -->
 <div class="modal fade" id="serviceRequestModal" tabindex="-1" aria-labelledby="serviceRequestModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content border-0 shadow-lg style-service-modal" style="border-radius: 16px; overflow: visible;">
-            <div class="modal-header text-white" style="background-color:#306FAA; padding: 18px 24px;">
+            <div class="modal-header text-white" style="background-color:{{ $platformBrand['primary_color'] }}; padding: 18px 24px;">
                 <h5 class="modal-title font-weight-bold d-flex align-items-center" id="serviceRequestModalLabel" style="font-size: 1.25rem;">
                     <i class="fa fa-file-text-o me-2" style="font-size: 1.3rem;"></i> @lang('ecommerce::ecommerce.sr_title')
                 </h5>
@@ -65,10 +67,10 @@ $academicMajors = \Domain\AppBase\Models\Edu\AcademicMajor::all();
                         white-space: nowrap;
                     }
                     .urgency-option input:checked + span {
-                        border-color: #306FAA;
-                        background: #eef4fa;
-                        color: #245C8E;
-                        box-shadow: 0 0 0 2px #306FAA inset;
+                        border-color: {{ $platformBrand['primary_color'] }};
+                        background: {{ $platformBrand['primary_light_color'] }};
+                        color: {{ $platformBrand['primary_hover_color'] }};
+                        box-shadow: 0 0 0 2px {{ $platformBrand['primary_color'] }} inset;
                     }
                     .urgency-option span i {
                         font-size: 0.95rem;
@@ -100,48 +102,76 @@ $academicMajors = \Domain\AppBase\Models\Edu\AcademicMajor::all();
                                 placeholder="@lang('ecommerce::ecommerce.sr_title_placeholder')" style="border-radius: 10px; font-size: 0.95rem;">
                         </div>
 
-                        <!-- Project Site Type -->
-                        <div class="col-12 col-md-6">
-                            <label for="sr_project_site_type" class="form-label font-weight-bold text-dark mb-1">
-                                @lang('ecommerce::ecommerce.sr_project_site_type')
-                            </label>
-                            <div class="custom-dd w-100" id="cd_project">
-                                <button type="button" class="form-select form-select-lg border-2 text-start" style="border-radius: 10px; font-size: 0.95rem;" onclick="toggleDD('cd_project')">
-                                    <span id="cd_project_label">اختر نوع الموقع</span>
-                                </button>
-                                <div class="custom-dd-menu" id="cd_project_menu" style="display:none;">
-                                    <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','','اختر نوع الموقع')">اختر نوع الموقع</a>
-                                    <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','residential','سكني')">سكني</a>
-                                    <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','commercial','تجاري')">تجاري</a>
-                                    <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','agricultural','زراعي/مزرعة')">زراعي/مزرعة</a>
-                                    <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','industrial','صناعي')">صناعي</a>
-                                    <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','medical','مرفق طبي')">مرفق طبي</a>
-                                    <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','educational','مرفق تعليمي')">مرفق تعليمي</a>
-                                    <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','other','أخرى')">أخرى</a>
-                                </div>
-                                <input type="hidden" name="project_site_type" id="sr_project_site_type" value="">
+                        @if(config('app.brand') === 'huloolcom')
+                            <div class="col-md-6">
+                                <label for="sr_education_level" class="form-label font-weight-bold text-dark mb-1">
+                                    @lang('ecommerce::ecommerce.education_level')
+                                </label>
+                                <select class="form-select form-select-lg border-2" id="sr_education_level" name="education_level" style="border-radius: 10px; font-size: 0.95rem;">
+                                    <option value="">@lang('ecommerce::ecommerce.sr_select_education_level')</option>
+                                    <option value="Elementary">@lang('ecommerce::ecommerce.level_elementary')</option>
+                                    <option value="Middle">@lang('ecommerce::ecommerce.level_middle')</option>
+                                    <option value="HighSchool">@lang('ecommerce::ecommerce.level_high_school')</option>
+                                    <option value="Diploma">@lang('lang.academic_degree.diploma')</option>
+                                    <option value="Bachelor" selected>@lang('lang.academic_degree.bachelor')</option>
+                                    <option value="Master">@lang('lang.academic_degree.master')</option>
+                                    <option value="Doctorate">@lang('lang.academic_degree.doctorate')</option>
+                                </select>
                             </div>
-                        </div>
-
-                        <!-- Solar System Type -->
-                        <div class="col-12 col-md-6">
-                            <label for="sr_solar_system_type" class="form-label font-weight-bold text-dark mb-1">
-                                @lang('ecommerce::ecommerce.sr_solar_system_type')
-                            </label>
-                            <div class="custom-dd w-100" id="cd_solar">
-                                <button type="button" class="form-select form-select-lg border-2 text-start" style="border-radius: 10px; font-size: 0.95rem;" onclick="toggleDD('cd_solar')">
-                                    <span id="cd_solar_label">اختر نوع النظام</span>
-                                </button>
-                                <div class="custom-dd-menu" id="cd_solar_menu" style="display:none;">
-                                    <a href="javascript:void(0)" onclick="pickDD('cd_solar','sr_solar_system_type','','اختر نوع النظام')">اختر نوع النظام</a>
-                                    <a href="javascript:void(0)" onclick="pickDD('cd_solar','sr_solar_system_type','off-grid','خارج الشبكة (Off-Grid)')">خارج الشبكة (Off-Grid)</a>
-                                    <a href="javascript:void(0)" onclick="pickDD('cd_solar','sr_solar_system_type','on-grid','متصل بالشبكة (On-Grid)')">متصل بالشبكة (On-Grid)</a>
-                                    <a href="javascript:void(0)" onclick="pickDD('cd_solar','sr_solar_system_type','hybrid','هجين (Hybrid)')">هجين (Hybrid)</a>
-                                    <a href="javascript:void(0)" onclick="pickDD('cd_solar','sr_solar_system_type','not_sure','غير متأكد – أحتاج استشارة فنية')">غير متأكد – أحتاج استشارة فنية</a>
-                                </div>
-                                <input type="hidden" name="solar_system_type" id="sr_solar_system_type" value="">
+                            <div class="col-md-6">
+                                <label for="sr_academic_major_id" class="form-label font-weight-bold text-dark mb-1">
+                                    @lang('ecommerce::ecommerce.academic_major')
+                                </label>
+                                <select class="form-select form-select-lg border-2" id="sr_academic_major_id" name="academic_major_id" style="border-radius: 10px; font-size: 0.95rem;">
+                                    <option value="">@lang('ecommerce::ecommerce.sr_select_major')</option>
+                                    @foreach($academicMajors as $major)
+                                        <option value="{{ $major->id }}">{{ $major->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
-                        </div>
+                        @else
+                            <!-- Project Site Type -->
+                            <div class="col-12 col-md-6">
+                                <label for="sr_project_site_type" class="form-label font-weight-bold text-dark mb-1">
+                                    @lang('ecommerce::ecommerce.sr_project_site_type')
+                                </label>
+                                <div class="custom-dd w-100" id="cd_project">
+                                    <button type="button" class="form-select form-select-lg border-2 text-start" style="border-radius: 10px; font-size: 0.95rem;" onclick="toggleDD('cd_project')">
+                                        <span id="cd_project_label">اختر نوع الموقع</span>
+                                    </button>
+                                    <div class="custom-dd-menu" id="cd_project_menu" style="display:none;">
+                                        <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','','اختر نوع الموقع')">اختر نوع الموقع</a>
+                                        <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','residential','سكني')">سكني</a>
+                                        <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','commercial','تجاري')">تجاري</a>
+                                        <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','agricultural','زراعي/مزرعة')">زراعي/مزرعة</a>
+                                        <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','industrial','صناعي')">صناعي</a>
+                                        <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','medical','مرفق طبي')">مرفق طبي</a>
+                                        <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','educational','مرفق تعليمي')">مرفق تعليمي</a>
+                                        <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','other','أخرى')">أخرى</a>
+                                    </div>
+                                    <input type="hidden" name="project_site_type" id="sr_project_site_type" value="">
+                                </div>
+                            </div>
+                            <!-- Solar System Type -->
+                            <div class="col-12 col-md-6">
+                                <label for="sr_solar_system_type" class="form-label font-weight-bold text-dark mb-1">
+                                    @lang('ecommerce::ecommerce.sr_solar_system_type')
+                                </label>
+                                <div class="custom-dd w-100" id="cd_solar">
+                                    <button type="button" class="form-select form-select-lg border-2 text-start" style="border-radius: 10px; font-size: 0.95rem;" onclick="toggleDD('cd_solar')">
+                                        <span id="cd_solar_label">اختر نوع النظام</span>
+                                    </button>
+                                    <div class="custom-dd-menu" id="cd_solar_menu" style="display:none;">
+                                        <a href="javascript:void(0)" onclick="pickDD('cd_solar','sr_solar_system_type','','اختر نوع النظام')">اختر نوع النظام</a>
+                                        <a href="javascript:void(0)" onclick="pickDD('cd_solar','sr_solar_system_type','off-grid','خارج الشبكة (Off-Grid)')">خارج الشبكة (Off-Grid)</a>
+                                        <a href="javascript:void(0)" onclick="pickDD('cd_solar','sr_solar_system_type','on-grid','متصل بالشبكة (On-Grid)')">متصل بالشبكة (On-Grid)</a>
+                                        <a href="javascript:void(0)" onclick="pickDD('cd_solar','sr_solar_system_type','hybrid','هجين (Hybrid)')">هجين (Hybrid)</a>
+                                        <a href="javascript:void(0)" onclick="pickDD('cd_solar','sr_solar_system_type','not_sure','غير متأكد – أحتاج استشارة فنية')">غير متأكد – أحتاج استشارة فنية</a>
+                                    </div>
+                                    <input type="hidden" name="solar_system_type" id="sr_solar_system_type" value="">
+                                </div>
+                            </div>
+                        @endif
 
                         <!-- Request Type -->
                         <div class="col-md-6">

@@ -432,17 +432,32 @@
                     <div class="label">@lang('ecommerce::ecommerce.remaining_amount')</div>
                     <div class="value">{{ is_null($remainingAmount) ? __('ecommerce::ecommerce.amount_not_recorded') : number_format($remainingAmount, 2) . ' SAR' }}</div>
                 </div>
-                @if(!is_null($serviceRequest->project_site_type))
-                    <div class="info-item">
-                        <div class="label">@lang('ecommerce::ecommerce.sr_project_site_type')</div>
-                        <div class="value">{{ $projectSiteTypes[$serviceRequest->project_site_type] ?? $serviceRequest->project_site_type }}</div>
-                    </div>
-                @endif
-                @if(!is_null($serviceRequest->solar_system_type))
-                    <div class="info-item">
-                        <div class="label">@lang('ecommerce::ecommerce.sr_solar_system_type')</div>
-                        <div class="value">{{ $solarSystemTypes[$serviceRequest->solar_system_type] ?? $serviceRequest->solar_system_type }}</div>
-                    </div>
+                @if(config('app.brand') === 'huloolcom')
+                    @if($serviceRequest->education_level)
+                        <div class="info-item">
+                            <div class="label">@lang('ecommerce::ecommerce.education_level')</div>
+                            <div class="value">{{ $educationLevels[$serviceRequest->education_level] ?? $serviceRequest->education_level }}</div>
+                        </div>
+                    @endif
+                    @if($serviceRequest->academicMajor)
+                        <div class="info-item">
+                            <div class="label">@lang('ecommerce::ecommerce.academic_major')</div>
+                            <div class="value">{{ $serviceRequest->academicMajor->name }}</div>
+                        </div>
+                    @endif
+                @else
+                    @if(!is_null($serviceRequest->project_site_type))
+                        <div class="info-item">
+                            <div class="label">@lang('ecommerce::ecommerce.sr_project_site_type')</div>
+                            <div class="value">{{ $projectSiteTypes[$serviceRequest->project_site_type] ?? $serviceRequest->project_site_type }}</div>
+                        </div>
+                    @endif
+                    @if(!is_null($serviceRequest->solar_system_type))
+                        <div class="info-item">
+                            <div class="label">@lang('ecommerce::ecommerce.sr_solar_system_type')</div>
+                            <div class="value">{{ $solarSystemTypes[$serviceRequest->solar_system_type] ?? $serviceRequest->solar_system_type }}</div>
+                        </div>
+                    @endif
                 @endif
                 @if($serviceRequest->urgency_level)
                     <div class="info-item">

@@ -110,6 +110,11 @@ class ProjectRepository extends EloquentMainRepository
     {
         return match ($tab) {
             ProjectTab::WITH_OFFERS->value => $query->whereHas('bids'),
+            ProjectTab::WITHOUT_OFFERS->value => $query->doesntHave('bids'),
+
+            ProjectTab::PENDING_REVIEW->value => $query->whereHas('bids.bidTasks', function ($bidTasks) {
+                $bidTasks->where('status', BidStatus::PENDING->value);
+            }),
 
             ProjectTab::PENDING->value => $query
                 ->where('status', ProjectStatus::PENDING->value)
@@ -147,6 +152,7 @@ class ProjectRepository extends EloquentMainRepository
             }),
 
             ProjectTab::COMPLETED->value => $query->where('status', ProjectStatus::COMPLETED->value),
+            ProjectTab::CANCELED->value => $query->where('status', ProjectStatus::CANCELED->value),
             default => $query,
         };
     }

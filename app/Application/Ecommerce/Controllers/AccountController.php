@@ -142,7 +142,6 @@ class AccountController extends Controller
     private function getServiceRequests($user, Request $request)
     {
         $query = EducationalRequest::where('requester_id', $user->id)
-            ->with('academicMajor')
             ->withCount('attachments')
             ->when($search = trim((string) $request->query('search', '')), function ($query) use ($search) {
                 $requestNumber = ltrim($search, '#');
@@ -153,6 +152,10 @@ class AccountController extends Controller
                     }
                 });
             });
+
+        if (config('app.brand') === 'huloolcom') {
+            $query->with('academicMajor');
+        }
 
         $status = $request->query('status');
         if (in_array($status, EducationalRequestStatus::values(), true)) {
@@ -165,13 +168,17 @@ class AccountController extends Controller
     public function serviceRequest($id)
     {
         $user = Auth::user();
-        $serviceRequest = EducationalRequest::where('requester_id', $user->id)
-            ->with([
-                'academicMajor',
+        $relations = [
                 'attachments',
                 'project.tasks.attachments',
                 'project.tasks.acceptedAssignments.educator',
-            ])
+            ];
+        if (config('app.brand') === 'huloolcom') {
+            array_unshift($relations, 'academicMajor');
+        }
+
+        $serviceRequest = EducationalRequest::where('requester_id', $user->id)
+            ->with($relations)
             ->findOrFail($id);
 
         if (Schema::hasTable('request_activity_logs')) {

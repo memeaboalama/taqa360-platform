@@ -1,7 +1,7 @@
 <footer>
     <div class="container footer-grid">
         <div class="footer-col footer-brand">
-            <img class="footer-logo" src="{{ asset('assets/ecommerce/images/logo.png') }}" alt="@lang('ecommerce::ecommerce.site_name')">
+            <img class="footer-logo" src="{{ asset($platformBrand['logo']) }}" alt="@lang('ecommerce::ecommerce.site_name')">
             <p>@lang('ecommerce::ecommerce.footer_description')</p>
         </div>
     </div>

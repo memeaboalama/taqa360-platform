@@ -18,7 +18,9 @@
             --background: #F2F2F3; /* #F2F2F3 */
             --foreground: #333333;   /* #333333 */
             --card: #FFFFFF;
-            --primary: #306FAA;    /* #306FAA */
+            --primary: {{ $platformBrand['primary_color'] }};
+            --primary-hover: {{ $platformBrand['primary_hover_color'] }};
+            --accent: {{ $platformBrand['accent_color'] }};
             --muted-foreground: #6b7280; /* gray-500 */
             --border: #e5e7eb; /* gray-200 */
             --radius: 0.5rem;
@@ -50,7 +52,7 @@
             color: #ffffff;
         }
         .btn-primary:hover {
-            background-color: #245C8E;
+            background-color: var(--primary-hover);
         }
         .btn-outline {
             background-color: transparent;
@@ -113,7 +115,7 @@
 
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
                           <div class="flex items-center gap-2">
-                            <svg class="h-5 w-5 text-[#EA993E] fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                            <svg class="h-5 w-5 fill-current" style="color: var(--accent);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
                             <span class="font-semibold">4.9</span>
                             <span class="text-muted-foreground">(156)</span>
                           </div>

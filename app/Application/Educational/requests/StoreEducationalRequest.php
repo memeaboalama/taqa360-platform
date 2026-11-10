@@ -14,20 +14,26 @@ class StoreEducationalRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        $brandFields = config('app.brand') === 'huloolcom'
+            ? [
+                'academic_major_id' => ['nullable', 'exists:academic_majors,uuid'],
+                'education_level' => ['nullable', 'string', 'max:100'],
+            ]
+            : [
+                'project_site_type' => ['nullable', 'in:residential,commercial,agricultural,industrial,medical,educational,other'],
+                'solar_system_type' => ['nullable', 'in:off-grid,on-grid,hybrid,not_sure'],
+            ];
+
+        return array_merge([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'min:50'],
-            'academic_major_id' => ['nullable', 'exists:academic_majors,uuid'],
-            'education_level' => ['nullable', 'string', 'max:100'],
             'type' => ['nullable', 'in:'.implode(',', EducationalRequestType::values())],
             'budget' => ['nullable', 'numeric', 'min:0'],
-            'project_site_type' => ['nullable', 'in:residential,commercial,agricultural,industrial,medical,educational,other'],
-            'solar_system_type' => ['nullable', 'in:off-grid,on-grid,hybrid,not_sure'],
             'expected_delivery_date' => ['nullable', 'date', 'after:today'],
             'additional_notes' => ['nullable', 'string'],
             'attachments' => ['nullable', 'array'],
             'attachments.*' => ['file', 'max:10240'],
-        ];
+        ], $brandFields);
     }
 
     public function messages(): array

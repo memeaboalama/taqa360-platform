@@ -10,8 +10,18 @@ class EducationalRequestResource extends JsonResource
     public function toArray($request)
     {
         $serviceType = $this->type instanceof \BackedEnum ? $this->type->value : $this->type;
+        $brandFields = config('app.brand') === 'huloolcom'
+            ? [
+                'subject' => $this->academicMajor?->name ?? '',
+                'academicMajor' => $this->academicMajor?->name,
+                'educationLevel' => $this->education_level,
+            ]
+            : [
+                'projectSiteType' => $this->project_site_type,
+                'solarSystemType' => $this->solar_system_type,
+            ];
 
-        return [
+        $resource = [
             'id' => $this->uuid,
             'code' => '#'. $this->id,
             'title' => $this->title,
@@ -31,11 +41,6 @@ class EducationalRequestResource extends JsonResource
             'status' => $this->status,
             'reviewedAt' => $this->reviewed_at?->toIso8601String(),
             'serviceType' => $serviceType,
-            'projectSiteType' => $this->project_site_type,
-            'solarSystemType' => $this->solar_system_type,
-            'subject' => $this->academicMajor?->name ?? '',
-            'academicMajor' => $this->academicMajor?->name,
-            'educationLevel' => $this->education_level,
             'paymentStatus' => $this->payment_status,
             'executionStatus' => $this->execution_status,
             'budget' => $this->project?->budget !== null
@@ -83,7 +88,6 @@ class EducationalRequestResource extends JsonResource
             'createdAt' => $this->created_at,
         ];
 
-
-
+        return array_merge($resource, $brandFields);
     }
 }

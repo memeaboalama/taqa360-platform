@@ -11,7 +11,7 @@
                                 @if(isset($footerData['logo']) && $footerData['logo'])
                                     <img src="{{ \Illuminate\Support\Facades\Storage::url($footerData['logo']) }}" class="foot_logo" alt="Footer Logo">
                                 @else
-                                    <img src="{{ asset('assets/ecommerce/images/logo.png') }}" class="foot_logo" alt="Default Logo">
+                                    <img src="{{ asset($platformBrand['logo']) }}" class="foot_logo" alt="{{ __('ecommerce::ecommerce.site_name') }}">
                                 @endif
                                 <style>
                                     [dir="rtl"] .foot_logo { transform: scaleX(1) !important; }

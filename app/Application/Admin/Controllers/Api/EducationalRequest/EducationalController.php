@@ -40,7 +40,12 @@ class EducationalController extends Controller
             'page' => ['sometimes', 'integer', 'min:1'],
         ]);
 
-        $requests = EducationalRequest::with(['requester', 'academicMajor', 'project'])
+        $relations = ['requester', 'project'];
+        if (config('app.brand') === 'huloolcom') {
+            $relations[] = 'academicMajor';
+        }
+
+        $requests = EducationalRequest::with($relations)
             ->when(!empty($filters['search']), function ($query) use ($filters) {
                 $search = trim($filters['search']);
                 $query->where(function ($query) use ($search) {
@@ -73,24 +78,37 @@ class EducationalController extends Controller
 
     public function show(EducationalRequest $educationalRequest)
     {
-        return $this->responseData(data:['educationalRequest' => new EducationalRequestResource($educationalRequest->load('requester','project','attachments','academicMajor','activityLog'))]);
+        return $this->responseData(data: [
+            'educationalRequest' => new EducationalRequestResource(
+                $educationalRequest->load($this->requestRelations(['requester', 'project', 'attachments', 'activityLog']))
+            ),
+        ]);
     }
 
     public function update(Request $request, EducationalRequest $educationalRequest)
     {
         try {
-            $request->validate([
+            $brandRules = config('app.brand') === 'huloolcom'
+                ? [
+                    'subject' => ['sometimes', 'nullable', 'string', 'max:100'],
+                    'educationLevel' => ['sometimes', 'nullable', 'string', 'max:100'],
+                    'education_level' => ['sometimes', 'nullable', 'string', 'max:100'],
+                ]
+                : [
+                    'projectSiteType' => ['sometimes', 'nullable', 'in:residential,commercial,agricultural,industrial,medical,educational,other'],
+                    'project_site_type' => ['sometimes', 'nullable', 'in:residential,commercial,agricultural,industrial,medical,educational,other'],
+                    'solarSystemType' => ['sometimes', 'nullable', 'in:off-grid,on-grid,hybrid,not_sure'],
+                    'solar_system_type' => ['sometimes', 'nullable', 'in:off-grid,on-grid,hybrid,not_sure'],
+                ];
+
+            $request->validate(array_merge([
                 'serviceType' => ['sometimes', 'nullable', 'in:'.implode(',', EducationalRequestType::values())],
                 'service_type' => ['sometimes', 'nullable', 'in:'.implode(',', EducationalRequestType::values())],
                 'type' => ['sometimes', 'nullable', 'in:'.implode(',', EducationalRequestType::values())],
-                'projectSiteType' => ['sometimes', 'nullable', 'in:residential,commercial,agricultural,industrial,medical,educational,other'],
-                'project_site_type' => ['sometimes', 'nullable', 'in:residential,commercial,agricultural,industrial,medical,educational,other'],
-                'solarSystemType' => ['sometimes', 'nullable', 'in:off-grid,on-grid,hybrid,not_sure'],
-                'solar_system_type' => ['sometimes', 'nullable', 'in:off-grid,on-grid,hybrid,not_sure'],
                 'budget' => ['sometimes', 'nullable', 'numeric', 'min:0'],
                 'expectedDeliveryDate' => ['sometimes', 'nullable', 'date'],
                 'expected_delivery_date' => ['sometimes', 'nullable', 'date'],
-            ]);
+            ], $brandRules));
 
             $mapped = [];
             if ($request->has('title'))                  $mapped['title'] = $request->input('title');
@@ -102,14 +120,24 @@ class EducationalController extends Controller
             }
             if ($request->has('finalAgreement'))         $mapped['final_agreement'] = $request->input('finalAgreement');
             if ($request->has('final_agreement'))        $mapped['final_agreement'] = $request->input('final_agreement');
-            if ($request->has('projectSiteType'))        $mapped['project_site_type'] = $request->input('projectSiteType');
-            if ($request->has('project_site_type'))      $mapped['project_site_type'] = $request->input('project_site_type');
-            if ($request->has('solarSystemType'))        $mapped['solar_system_type'] = $request->input('solarSystemType');
-            if ($request->has('solar_system_type'))      $mapped['solar_system_type'] = $request->input('solar_system_type');
             if ($request->has('additionalNotes'))        $mapped['additional_notes'] = $request->input('additionalNotes');
             if ($request->has('additional_notes'))       $mapped['additional_notes'] = $request->input('additional_notes');
 
-            if ($request->has('subject')) {
+            if (config('app.brand') === 'huloolcom') {
+                if ($request->has('educationLevel')) {
+                    $mapped['education_level'] = $request->input('educationLevel');
+                }
+                if ($request->has('education_level')) {
+                    $mapped['education_level'] = $request->input('education_level');
+                }
+            } else {
+                if ($request->has('projectSiteType'))   $mapped['project_site_type'] = $request->input('projectSiteType');
+                if ($request->has('project_site_type')) $mapped['project_site_type'] = $request->input('project_site_type');
+                if ($request->has('solarSystemType'))   $mapped['solar_system_type'] = $request->input('solarSystemType');
+                if ($request->has('solar_system_type')) $mapped['solar_system_type'] = $request->input('solar_system_type');
+            }
+
+            if (config('app.brand') === 'huloolcom' && $request->has('subject')) {
                 $subjectName = $request->input('subject');
                 if ($subjectName) {
                     $major = \Domain\AppBase\Models\Edu\AcademicMajor::where('name->ar', $subjectName)
@@ -125,19 +153,27 @@ class EducationalController extends Controller
 
             DB::transaction(function () use ($request, $educationalRequest, $mapped) {
                 $educationalRequest->loadMissing('project');
+                if (config('app.brand') === 'huloolcom') {
+                    $educationalRequest->loadMissing('academicMajor');
+                }
+
                 $project = $educationalRequest->project;
                 $before = [
                     'title' => $educationalRequest->title,
                     'description' => $educationalRequest->description,
                     'budget' => $educationalRequest->budget,
                     'service_type' => $educationalRequest->type instanceof \BackedEnum ? $educationalRequest->type->value : $educationalRequest->type,
-                    'project_site_type' => $educationalRequest->project_site_type,
-                    'solar_system_type' => $educationalRequest->solar_system_type,
                     'final_agreement' => $educationalRequest->final_agreement,
                     'additional_notes' => $educationalRequest->additional_notes,
-                    'subject' => $educationalRequest->academicMajor?->name,
                     'deadline' => $project?->deadline?->toDateString(),
                 ];
+                if (config('app.brand') === 'huloolcom') {
+                    $before['subject'] = $educationalRequest->academicMajor?->name;
+                    $before['education_level'] = $educationalRequest->education_level;
+                } else {
+                    $before['project_site_type'] = $educationalRequest->project_site_type;
+                    $before['solar_system_type'] = $educationalRequest->solar_system_type;
+                }
 
                 if (!empty($mapped)) {
                     $educationalRequest->update($mapped);
@@ -170,19 +206,26 @@ class EducationalController extends Controller
                     $project->update(['budget' => $mapped['budget']]);
                 }
 
-                $educationalRequest->load('academicMajor');
+                if (config('app.brand') === 'huloolcom') {
+                    $educationalRequest->load('academicMajor');
+                }
+
                 $after = [
                     'title' => $educationalRequest->title,
                     'description' => $educationalRequest->description,
                     'budget' => $educationalRequest->budget,
                     'service_type' => $educationalRequest->type instanceof \BackedEnum ? $educationalRequest->type->value : $educationalRequest->type,
-                    'project_site_type' => $educationalRequest->project_site_type,
-                    'solar_system_type' => $educationalRequest->solar_system_type,
                     'final_agreement' => $educationalRequest->final_agreement,
                     'additional_notes' => $educationalRequest->additional_notes,
-                    'subject' => $educationalRequest->academicMajor?->name,
                     'deadline' => $project?->fresh()?->deadline?->toDateString(),
                 ];
+                if (config('app.brand') === 'huloolcom') {
+                    $after['subject'] = $educationalRequest->academicMajor?->name;
+                    $after['education_level'] = $educationalRequest->education_level;
+                } else {
+                    $after['project_site_type'] = $educationalRequest->project_site_type;
+                    $after['solar_system_type'] = $educationalRequest->solar_system_type;
+                }
                 $changes = [];
                 foreach ($after as $field => $newValue) {
                     $oldValue = $before[$field];
@@ -207,13 +250,25 @@ class EducationalController extends Controller
             });
 
             return $this->responseData(
-                data: ['educationalRequest' => new EducationalRequestResource($educationalRequest->fresh()->load('requester', 'project', 'attachments', 'academicMajor', 'activityLog'))],
+                data: ['educationalRequest' => new EducationalRequestResource(
+                    $educationalRequest->fresh()->load($this->requestRelations(['requester', 'project', 'attachments', 'activityLog']))
+                )],
                 msg: 'تم تحديث الطلب بنجاح'
             );
         } catch (\Throwable $e) {
             Log::error('EducationalRequest update error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return $this->responseError(msg: 'حدث خطأ أثناء تحديث الطلب: ' . $e->getMessage(), code: 500);
         }
+
+    }
+
+    private function requestRelations(array $relations): array
+    {
+        if (config('app.brand') === 'huloolcom') {
+            $relations[] = 'academicMajor';
+        }
+
+        return $relations;
     }
 
     public function changeStatus(Request $request, EducationalRequest $educationalRequest)

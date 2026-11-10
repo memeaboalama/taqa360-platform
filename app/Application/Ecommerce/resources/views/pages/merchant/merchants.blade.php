@@ -6,7 +6,7 @@
             return $value[app()->getLocale()] ?? $value['en'] ?? reset($value) ?? $fallback;
         return $value ?: $fallback;
     };
-    $logo = static fn($merchant) => $merchant->logo ?: asset('assets/ecommerce/images/logo.png');
+    $logo = static fn($merchant) => $merchant->logo ?: asset($platformBrand['logo']);
 @endphp
 
 @section('title', __('ecommerce::ecommerce.merchants_list'))

@@ -9,6 +9,7 @@ use Domain\EducationalRequest\Models\EducationalRequest;
 use Domain\EducationalRequest\Repositories\EducationalRequestRepository;
 use Illuminate\Support\Str;
 use App\Support\Enum\FileTypesEnum;
+use Domain\AppBase\Models\Edu\AcademicMajor;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -23,6 +24,16 @@ class CreateEducationalRequestAction
     {
         DB::beginTransaction();
         try {
+            $brandFields = config('app.brand') === 'huloolcom'
+                ? [
+                    'academic_major_id' => $this->resolveAcademicMajorId($data['academic_major_id'] ?? null),
+                    'education_level' => $data['education_level'] ?? 'Bachelor',
+                ]
+                : [
+                    'project_site_type' => $data['project_site_type'] ?? null,
+                    'solar_system_type' => $data['solar_system_type'] ?? null,
+                ];
+
             $educationalRequest = $this->educationalRequestRepository->store([
                 'title'             => $data['title'],
                 'requester_id'      => $data['user_id'],
@@ -31,9 +42,7 @@ class CreateEducationalRequestAction
                 'budget'            => $data['budget'] ?? null,
                 'urgency_level'     => $data['urgency_level'] ?? 'normal',
                 'additional_notes'  => $data['additional_notes'] ?? null,
-                'project_site_type' => $data['project_site_type'] ?? null,
-                'solar_system_type' => $data['solar_system_type'] ?? null,
-            ]);
+            ] + $brandFields);
 
             if (!empty($data['attachments']) && is_array($data['attachments'])) {
                 $this->handleAttachments($educationalRequest, $data['attachments']);
@@ -48,6 +57,19 @@ class CreateEducationalRequestAction
         }
     }
 
+    private function resolveAcademicMajorId(mixed $majorReference): ?int
+    {
+        if ($majorReference === null || $majorReference === '') {
+            return null;
+        }
+
+        $major = AcademicMajor::query()
+            ->where('uuid', $majorReference)
+            ->orWhere('id', $majorReference)
+            ->first(['id']);
+
+        return $major?->id;
+    }
 
     protected function handleAttachments(EducationalRequest $educationalRequest, array $attachments): void
     {

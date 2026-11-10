@@ -2,7 +2,7 @@
     <div class="flex justify-between items-center">
         <h3 class="text-xl font-semibold" style="color: #333333;">@lang('educator::home.ratings_and_reviews')</h3>
         <div class="text-sm text-gray-600">
-            @lang('educator::home.average_rating'): <span class="font-semibold" style="color: #EA993E;">{{ number_format((float) $educator->rating, 1) }}/5</span>
+            @lang('educator::home.average_rating'): <span class="font-semibold" style="color: {{ $platformBrand['accent_color'] }};">{{ number_format((float) $educator->rating, 1) }}/5</span>
         </div>
     </div>
 
@@ -17,7 +17,7 @@
                         <div>
                             <h4 class="font-medium" style="color: #333333;">{{ $review['client'] }}</h4>
                             <div class="flex items-center gap-2">
-                                <span style="color: #EA993E;">{{ str_repeat('★', $review['rating']) }}<span class="text-gray-300">{{ str_repeat('★', 5 - $review['rating']) }}</span></span>
+                                <span style="color: {{ $platformBrand['accent_color'] }};">{{ str_repeat('★', $review['rating']) }}<span class="text-gray-300">{{ str_repeat('★', 5 - $review['rating']) }}</span></span>
                                 <span class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($review['date'])->diffForHumans() }}</span>
                             </div>
                         </div>
@@ -25,7 +25,7 @@
                 </div>
                 <p class="text-gray-600">{{ $review['comment'] }}</p>
                 <div class="mt-3 flex gap-4 rtl:gap-4">
-                    <button class="text-sm hover:underline" style="color: #306FAA;">@lang('educator::home.reply_to_review')</button>
+                    <button class="text-sm hover:underline" style="color: {{ $platformBrand['primary_color'] }};">@lang('educator::home.reply_to_review')</button>
                     <button class="text-sm text-gray-600 hover:underline">@lang('educator::home.report')</button>
                 </div>
             </div>

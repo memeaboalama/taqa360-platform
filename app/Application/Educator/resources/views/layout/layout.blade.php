@@ -12,7 +12,7 @@
 
     <!-- Icons Css (Remix Icon) -->
     <link href="{{ asset('assets/vendor/css/icons.css') }}" rel="stylesheet">
-    <link rel="icon" href="{{ asset('assets/ecommerce/images/favicon.png') }}" type="image/png">
+    <link rel="icon" href="{{ asset($platformBrand['favicon']) }}" type="image/png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -26,12 +26,12 @@
             /* #F2F2F3 */
             --foreground-hsl: 0 0% 20%;
             /* #333333 */
-            --primary-hsl: 210 56% 43%;
+            --primary-hsl: {{ $platformBrand['primary_hsl'] }};
             /* #306FAA */
             --primary-foreground-hsl: 0 0% 100%;
             --border-hsl: 220 13% 91%;
             --card-hsl: 0 0% 100%;
-            --primary-rgb: 48, 111, 170;
+            --primary-rgb: {{ $platformBrand['primary_rgb'] }};
         }
 
         body {

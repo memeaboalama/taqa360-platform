@@ -4,7 +4,7 @@
 <script src="{{ asset('assets/vendor/js/authentication-main.js') }}"></script>
 <style>
     html {
-        --primary-rgb: 48, 111, 170 !important;
+        --primary-rgb: {{ $platformBrand['primary_rgb'] }} !important;
     }
 </style>
 
@@ -12,10 +12,10 @@
 
 @if(LaravelLocalization::getCurrentLocale() == 'en')
 <html lang="en" dir="ltr" data-nav-layout="vertical" data-theme-mode="light" data-header-styles="light"
-    data-menu-styles="light" style="--primary-rgb: 48, 111, 170;" data-toggled="close">
+    data-menu-styles="light" style="--primary-rgb: {{ $platformBrand['primary_rgb'] }};" data-toggled="close">
 @elseif(LaravelLocalization::getCurrentLocale() == 'ar')
 <html lang="ar" dir="rtl" data-nav-layout="vertical" data-theme-mode="light" data-header-styles="light"
-    data-menu-styles="light" style="--primary-rgb: 48, 111, 170;" data-toggled="close">
+    data-menu-styles="light" style="--primary-rgb: {{ $platformBrand['primary_rgb'] }};" data-toggled="close">
 @endif
 @include('marketplace::layout.head')
 
@@ -67,7 +67,7 @@
             </div>
         </div>
         <div class="col-xxl-6 col-xl-6 col-lg-6 d-xl-block d-none px-0 bg-primary">
-            <a href="{{ url('merchant/login') }}"> <img src="{{ asset('assets/ecommerce/images/logo-white.png') }}"
+            <a href="{{ url('merchant/login') }}"> <img src="{{ asset($platformBrand['logo_white']) }}"
                     alt="logo" class="desktop-logo mt-4 gy-3 m-4" style="height:auto !important;" width="170"></a>
             <div class="row justify-content-center align-items-center">
                 <div class="col-xxl-12 col-xl-12 col-lg-12 mt-4 gy-3 text-white">

@@ -17,20 +17,29 @@ class EducationalRequestRepository extends EloquentMainRepository
 
     public function getUserRequests(int $userId, array $filters = []): LengthAwarePaginator
     {
-        return $this->model
-            ->where('user_id', $userId)
-            ->filter($filters)
-            ->with(['academicMajor', 'reviewer'])
-            ->paginate();
+        $query = $this->model
+            ->where('requester_id', $userId)
+            ->filter($filters);
+
+        if (config('app.brand') === 'huloolcom') {
+            $query->with('academicMajor');
+        }
+
+        return $query->with('reviewer')->paginate();
     }
 
     public function getPendingRequests(array $filters = []): LengthAwarePaginator
     {
-        return $this->model
+        $query = $this->model
             ->where('status', EducationalRequestStatus::PENDING)
             ->filter($filters)
-            ->with(['user', 'academicMajor'])
-            ->paginate();
+            ->with('requester');
+
+        if (config('app.brand') === 'huloolcom') {
+            $query->with('academicMajor');
+        }
+
+        return $query->paginate();
     }
 
 }

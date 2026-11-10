@@ -138,7 +138,7 @@
 
     .radio-input:checked + .radio-label {
         font-weight: 600;
-        color: #306FAA;
+        color: {{ $platformBrand['primary_color'] }};
     }
 
     [x-cloak] {
