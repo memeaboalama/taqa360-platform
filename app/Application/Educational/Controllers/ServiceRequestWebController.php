@@ -16,6 +16,8 @@ class ServiceRequestWebController extends Controller
             'description' => ['required', 'string'],
             'type' => ['nullable', 'string'],
             'budget' => ['nullable', 'numeric', 'min:0'],
+            'project_site_type' => ['nullable', 'in:residential,commercial,agricultural,industrial,medical,educational,other'],
+            'solar_system_type' => ['nullable', 'in:off-grid,on-grid,hybrid,not_sure'],
             'urgency_level' => ['nullable', 'in:normal,urgent,very_urgent'],
             'additional_notes' => ['nullable', 'string'],
             'attachments' => ['nullable', 'array'],

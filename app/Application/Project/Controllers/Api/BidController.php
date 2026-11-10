@@ -48,7 +48,8 @@ class BidController extends Controller
                     'attachments',
                     'links',
                     'educator.profile',
-                    'educator.skills'
+                    'educator.skills.approvedSkill',
+                    'educator.languages.language'
                 ])
                 ->firstOrFail();
 

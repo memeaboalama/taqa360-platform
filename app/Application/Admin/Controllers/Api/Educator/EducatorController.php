@@ -6,18 +6,22 @@ use App\Application\Educator\Requests\FetchEducatorRequest;
 use App\Domain\Educator\Actions\FetchEducatorAction;
 use App\Domain\Educator\Resource\EducatorResource;
 use App\Domain\Educator\Resource\Profile\EducatorProfileResource;
+use App\Domain\AppBase\Models\NotificationNew;
 use App\Http\Controllers\Controller;
 use App\Mail\Educator\InviteEducatorMail;
 use App\Support\Traits\Api\ApiResponseTrait;
 use Domain\Educator\Models\Educator;
 use Domain\Educator\Models\EducatorAcademicMajor;
 use Domain\Educator\Models\EducatorInvitation;
+use Domain\Notification\Models\DeviceToken;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\Messaging\CloudMessage;
 use Symfony\Component\HttpFoundation\Response;
 
 use function Laravel\Prompts\error;
@@ -36,6 +40,44 @@ class EducatorController extends Controller
             ]);
         } catch (\Exception $e) {
             return $this->responseError(msg: __('Failed to fetch educators. Please try again.'), code: 500);
+        }
+    }
+
+    public function invitations(): JsonResponse
+    {
+        try {
+            $invitations = EducatorInvitation::query()
+                ->latest()
+                ->limit(100)
+                ->get();
+            $educatorsByEmail = Educator::query()
+                ->whereIn('email', $invitations->pluck('email'))
+                ->get(['uuid', 'name', 'email'])
+                ->keyBy('email');
+
+            return $this->responseData(data: [
+                'invitations' => $invitations->map(function (EducatorInvitation $invitation) use ($educatorsByEmail) {
+                    $educator = $educatorsByEmail->get($invitation->email);
+
+                    return [
+                        'id' => $invitation->id,
+                        'email' => $invitation->email,
+                        'status' => $invitation->completed_at
+                            ? 'completed'
+                            : ($invitation->expires_at->isPast() ? 'expired' : 'sent'),
+                        'sent_at' => $invitation->created_at,
+                        'expires_at' => $invitation->expires_at,
+                        'completed_at' => $invitation->completed_at,
+                        'educator' => $educator ? [
+                            'id' => $educator->uuid,
+                            'name' => $educator->name,
+                        ] : null,
+                    ];
+                }),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to fetch educator invitations', ['exception' => $e]);
+            return $this->responseError(msg: __('Failed to fetch educator invitations.'), code: 500);
         }
     }
 
@@ -204,22 +246,113 @@ class EducatorController extends Controller
     public function approveIdentity(Request $request, Educator $educator): JsonResponse
     {
         try {
-            if (!$educator->profile) {
-                return $this->responseError(msg: __('Educator profile not found.'), code: Response::HTTP_NOT_FOUND);
-            }
+            $profile = DB::transaction(function () use ($educator) {
+                $profile = $educator->profile()->withTrashed()->first();
 
-            if ($educator->profile->identity_status === 'verified') {
+                if ($profile) {
+                    $identityStatus = $profile->identity_status instanceof \BackedEnum
+                        ? $profile->identity_status->value
+                        : $profile->identity_status;
+                    if ($identityStatus === 'verified') {
+                        return null;
+                    }
+
+                    if ($profile->trashed()) {
+                        $profile->restore();
+                    }
+
+                    $profile->update([
+                        'identity_status' => 'verified',
+                        'rejection_reason' => null,
+                    ]);
+
+                    return $profile;
+                }
+
+                return $educator->profile()->create([
+                    'identity_status' => 'verified',
+                    'rejection_reason' => null,
+                ]);
+            });
+
+            if (!$profile) {
                 return $this->responseError(msg: __('The identity is already verified.'), code: Response::HTTP_CONFLICT);
             }
 
-            $educator->profile()->update([
-                'identity_status' => 'verified',
-                'rejection_reason' => null,
-            ]);
-
             return $this->responseData(msg: __('The identity has been verified successfully'));
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::error('Failed to approve educator identity', ['educator_id' => $educator->id, 'exception' => $e]);
             return $this->responseError(msg: __('Failed to approve identity. Please try again.'), code: 500);
+        }
+    }
+
+    public function sendVerificationReminder(Request $request, Educator $educator): JsonResponse
+    {
+        $profile = $educator->profile()->withTrashed()->first();
+        $identityStatus = $profile?->identity_status instanceof \BackedEnum
+            ? $profile->identity_status->value
+            : $profile?->identity_status;
+        if ($identityStatus === 'verified') {
+            return $this->responseError(msg: __('The identity is already verified.'), code: Response::HTTP_CONFLICT);
+        }
+
+        $admin = $request->user('admin-api');
+        if (!$admin) {
+            return $this->responseError(msg: __('Unauthenticated.'), code: Response::HTTP_UNAUTHORIZED);
+        }
+
+        $title = 'تذكير بتوثيق الحساب';
+        $body = 'يرجى استكمال توثيق هويتك ورفع المستندات المطلوبة من ملفك.';
+
+        try {
+            DB::transaction(function () use ($educator, $admin, $title, $body) {
+                NotificationNew::create([
+                    'title' => $title,
+                    'body' => $body,
+                    'channel' => 'mobile',
+                    'device_type' => Educator::class,
+                    'educator_id' => $educator->id,
+                    'admin_id' => $admin->id,
+                ]);
+            });
+
+            $tokens = DeviceToken::query()
+                ->where('deviceable_type', Educator::class)
+                ->where('deviceable_id', $educator->id)
+                ->pluck('token')
+                ->all();
+
+            if ($tokens) {
+                try {
+                    $messaging = (new Factory)
+                        ->withServiceAccount(config_path('firebase_credentials.json'))
+                        ->createMessaging();
+                    $report = $messaging->sendMulticast(
+                        CloudMessage::fromArray(['notification' => ['title' => $title, 'body' => $body]]),
+                        $tokens
+                    );
+
+                    if ($report->failures()->count() > 0) {
+                        Log::warning('Some educator verification reminder push notifications failed', [
+                            'educator_id' => $educator->id,
+                            'failure_count' => $report->failures()->count(),
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Educator verification reminder push notification failed', [
+                        'educator_id' => $educator->id,
+                        'exception' => $e,
+                    ]);
+                }
+            }
+
+            return $this->responseData(msg: 'تم إرسال تنبيه التوثيق بنجاح');
+        } catch (\Throwable $e) {
+            Log::error('Failed to send educator verification reminder', [
+                'educator_id' => $educator->id,
+                'exception' => $e,
+            ]);
+            return $this->responseError(msg: 'تعذر إرسال تنبيه التوثيق.', code: Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -302,7 +435,7 @@ class EducatorController extends Controller
             return $this->responseError(msg: __('Please provide a valid email address.'), code: 422);
         }
 
-        $email = $request->input('email');
+        $email = strtolower(trim($request->input('email')));
 
         try {
             $existingEducator = Educator::where('email', $email)->first();
@@ -326,7 +459,7 @@ class EducatorController extends Controller
             ]);
 
             $frontendUrl = config('app.frontend_url', 'http://localhost:5173');
-            $registrationUrl = rtrim($frontendUrl, '/') . '/educator/login?token=' . $invitation->token;
+            $registrationUrl = rtrim($frontendUrl, '/') . '/educator/register?token=' . $invitation->token;
 
             try {
                 Mail::to($email)->send(new InviteEducatorMail($registrationUrl));
@@ -350,7 +483,15 @@ class EducatorController extends Controller
                 );
             }
 
-            return $this->responseData(code: 201, msg: __('Invitation sent successfully.'));
+            return $this->responseData(data: [
+                'invitation' => [
+                    'id' => $invitation->id,
+                    'email' => $invitation->email,
+                    'status' => 'sent',
+                    'sent_at' => $invitation->created_at,
+                    'expires_at' => $invitation->expires_at,
+                ],
+            ], code: 201, msg: __('Invitation sent successfully.'));
         } catch (\Throwable $e) {
             Log::error('Educator invite error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return $this->responseError(msg: __('Failed to send invitation. Please try again.'), code: 500);

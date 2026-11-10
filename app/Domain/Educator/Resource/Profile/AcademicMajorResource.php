@@ -19,6 +19,7 @@ class AcademicMajorResource extends JsonResource
             'degree' => $this->degree,
 
             'documentUrl' => $this->certificateFile?->url ?? null,
+            'documentMimeType' => $this->certificateFile?->mime_type ?? null,
             'verificationStatus' => $this->approval_document ? 'VERIFIED' : 'PENDING',
             'rejectionReason' => $this->rejection_reason ?? null,
         ];

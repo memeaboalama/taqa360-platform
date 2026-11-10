@@ -24,9 +24,6 @@ return new class extends Migration
             $table->string('urgency_level')->default('normal');
             $table->text('additional_notes')->nullable();
 
-            $table->string('project_site_type')->nullable();
-            $table->string('solar_system_type')->nullable();
-
             $table->timestamp('accepted_at')->nullable();
             $table->timestamp('rejected_at')->nullable();
             $table->timestamp('completed_at')->nullable();

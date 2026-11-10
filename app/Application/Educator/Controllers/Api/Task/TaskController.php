@@ -3,17 +3,17 @@
 namespace App\Application\Educator\Controllers\Api\Task;
 
 use App\Actions\Project\Task\CreateSubTaskAction;
-use App\Actions\Project\Task\CreateTaskNoteAction;
 use App\Actions\Project\Task\UpdateSubTaskAction;
 use App\Application\Project\Enums\AssignmentStatus;
-use App\Application\Project\Enums\TaskStatus;
+use App\Application\Project\Enums\ProjectStatus;
+use App\Application\Project\Requests\Task\StoreTaskNoteRequest;
 use App\Application\Project\Requests\Task\UploadAttachmentRequest;
 use App\Domain\Educator\Resource\Task\TaskDetailResource;
 use App\Domain\Educator\Resource\Task\TaskFileResource;
 use App\Domain\Educator\Resource\Task\TaskResource;
+use App\Domain\Project\Actions\Task\CreateTaskNoteAction;
 use App\Http\Controllers\Controller;
 
-use App\Http\Requests\Api\V1\Educator\Project\Task\StoreTaskNoteRequest;
 use App\Http\Requests\Api\V1\Educator\Project\Task\UpdateSubTaskRequest;
 
 use App\Support\Traits\Api\ApiResponseTraitV2;
@@ -87,11 +87,30 @@ class TaskController extends Controller
             return $this->responseError([], 403, 'Unauthorized');
         }
 
-        $task->update(['status' => TaskStatus::COMPLETED, 'completed_at' => now()]);
+        if ($task->status !== ProjectStatus::IN_PROGRESS) {
+            return $this->responseError([], 409, 'Task must be in progress before it can be completed.');
+        }
+
+        $task->update(['status' => ProjectStatus::COMPLETED, 'completed_at' => now()]);
 
         // the message was passed as the 2nd positional argument, which is $code
         // (an int), so completing a task always ended in a 500 TypeError
         return $this->responseData(['task' => $task->fresh(['assignments','subTasks','attachments','notes'])], 200, 'Task completed');
+    }
+
+    public function start(Request $request, Task $task): JsonResponse
+    {
+        if (! $this->assertEducatorOwnsTask($request, $task)) {
+            return $this->responseError([], 403, 'Unauthorized');
+        }
+
+        if ($task->status !== ProjectStatus::PENDING) {
+            return $this->responseError([], 409, 'Only pending tasks can be started.');
+        }
+
+        $task->update(['status' => ProjectStatus::IN_PROGRESS]);
+
+        return $this->responseData(['task' => $task->fresh(['assignments','subTasks','attachments','notes'])], 200, 'Task started');
     }
 
     public function uploadAttachment(UploadAttachmentRequest $request, Task $task, StoreAttachmentAction $storeAttachmentAction): JsonResponse
@@ -131,19 +150,19 @@ class TaskController extends Controller
         return $this->responseData([], 200, 'Deliverable deleted successfully');
     }
 
-    // public function storeTaskNote(StoreTaskNoteRequest $request, Task $task, CreateTaskNoteAction $createTaskNoteAction): JsonResponse
-    // {
-    //     $educatorId = auth()->id();
-    //     $isAssigned = $task->assignments()->where('assigned_to', $educatorId)->where('status', AssignmentStatus::ACCEPTED)->exists();
+    public function storeTaskNote(
+        StoreTaskNoteRequest $request,
+        Task $task,
+        CreateTaskNoteAction $createTaskNoteAction
+    ): JsonResponse {
+        if (! $this->assertEducatorOwnsTask($request, $task)) {
+            return $this->responseError([], 403, 'You are not authorized to add notes to this task.');
+        }
 
-    //     if (!$isAssigned) {
-    //         return $this->responseError([], 403, 'You are not authorized to add notes to this task.');
-    //     }
+        $note = $createTaskNoteAction->execute($task, $request->validated(), (string) $request->user()->id);
 
-    //     $note = $createTaskNoteAction->execute($task, $request->validated(), $educatorId);
-
-    //     return $this->responseData([
-    //         'note' => TaskNoteResource::make($note)
-    //     ], 201, 'Note added successfully');
-    // }
+        return $this->responseData([
+            'note' => \Domain\Project\Resources\Task\TaskNoteResource::make($note->load('creatable')),
+        ], 201, 'Note added successfully');
+    }
 }

@@ -18,9 +18,9 @@ class AchievementRequest extends FormRequest
             'type' => ['required', 'string', 'in:work_experience,certificate,course,workshop', 'max:255'],
             'description' => ['required', 'string'],
             'organization' => ['required', 'string', 'max:255'],
-            'issue_date' => ['nullable','required_if:type,certificate,course,workshop', 'date'],
+            'issue_date' => ['nullable','required_if:type,certificate,course,workshop', 'date', 'before_or_equal:today'],
             'start_date' => ['nullable','required_if:type,work_experience|', 'date'],
-            'end_date' => ['nullable','required_with:start_date', 'date', 'after_or_equal:start_date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'attachment' => ['sometimes', 'file', 'mimes:jpg,jpeg,png,gif,bmp,webp,pdf,doc,docx,zip'],
         ];
 
@@ -33,5 +33,14 @@ class AchievementRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    public function messages(): array
+    {
+        return [
+            'end_date.after_or_equal' => app()->getLocale() === 'ar'
+                ? 'يجب أن يكون تاريخ الانتهاء مطابقاً لتاريخ البدء أو لاحقاً له.'
+                : 'The end date must be the same as or later than the start date.',
+        ];
     }
 }

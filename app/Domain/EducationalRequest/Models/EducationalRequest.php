@@ -30,6 +30,8 @@ class EducationalRequest extends Model
         'final_agreement',
         'urgency_level',
         'additional_notes',
+        'project_site_type',
+        'solar_system_type',
         'accepted_at',
         'rejected_at',
         'completed_at',
@@ -83,8 +85,7 @@ class EducationalRequest extends Model
 
     public function activityLog()
     {
-        return null;
-        // return $this->hasMany(RequestActivityLog::class);
+        return $this->hasMany(RequestActivityLog::class)->latest('created_at');
     }
 
     public function getCodeAttribute(): string

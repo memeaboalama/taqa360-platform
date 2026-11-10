@@ -28,6 +28,8 @@ class BasicInfoRequest extends FormRequest
             'experience_years' => 'sometimes|integer|min:0|max:60',
             'identityImageFront' => 'sometimes|file|mimes:jpg,jpeg,png,gif,bmp,webp,pdf',
             'identityImageBack' => 'sometimes|file|mimes:jpg,jpeg,png,gif,bmp,webp,pdf',
+            'delete_identity_front' => 'sometimes|boolean',
+            'delete_identity_back' => 'sometimes|boolean',
         ];
 
         if ($this->input('identity_type') === 'national_id') {

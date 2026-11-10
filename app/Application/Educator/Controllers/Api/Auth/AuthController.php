@@ -37,6 +37,9 @@ class AuthController extends Controller
     {
         Log::info("DEFLIJHWLIFKWS");
         $data = $request->validated();
+        $hasRememberPreference = array_key_exists('remember_me', $data);
+        $rememberMe = (bool) ($data['remember_me'] ?? false);
+        unset($data['remember_me']);
         unset($data["device_token"]);
         unset($data["platform"]);
         Log::info("DEFLIJHWLIFKWS", [$request->all()]);
@@ -47,15 +50,18 @@ class AuthController extends Controller
         // See the note in the Admin AuthController: config('sanctum.expiration', 1440)
         // resolves to null because the key exists with a null value, which produced
         // tokens that were expired the moment they were created.
-        $expirationMinutes = config('sanctum.expiration') ?: 1440;
+        $expirationMinutes = $rememberMe ? 43200 : (config('sanctum.expiration') ?: 1440);
+        $expiresAt = Carbon::now()->addMinutes($expirationMinutes);
+        $accessToken = $hasRememberPreference
+            ? $educator->createToken('educator-api', ['*'], $expiresAt)->plainTextToken
+            : $educator->createToken('educator-api')->plainTextToken;
 
         $data = [
             'user' => new EducatorResource($educator),
             'tokens' => [
-                'accessToken' => $educator->createToken('educator-api')->plainTextToken,
-                // 'accessToken' => $educator->createToken('educator-api', ['*'], now()->addMinutes($expirationMinutes))->plainTextToken,
+                'accessToken' => $accessToken,
                 'refreshToken' => $educator->createToken('admin-refresh-token', ['*'], now()->addDays(30))->plainTextToken,
-                'expiresAt' => Carbon::now()->addMinutes($expirationMinutes)->toIso8601String(),
+                'expiresAt' => $expiresAt->toIso8601String(),
             ],
         ];
         Log::info("DEFLIJHWLIFKWS" , $data);

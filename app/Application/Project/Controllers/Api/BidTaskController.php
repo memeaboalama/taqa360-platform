@@ -29,7 +29,9 @@ class BidTaskController extends Controller
                 'bidTasks.task',
                 'attachments',
                 'links',
-                'educator'
+                'educator.profile',
+                'educator.skills.approvedSkill',
+                'educator.languages.language'
             ])
             ->firstOrFail();
 

@@ -15,7 +15,7 @@ class UpdateAttachmentRequest extends FormRequest
     {
         return [
             'title' => ['sometimes', 'string', 'max:255'],
-            'attachment' => ['sometimes', 'file', 'mimes:jpg,jpeg,png,gif,bmp,webp,pdf,doc,docx,zip'],
+            'attachment' => ['sometimes', 'file', 'max:10240', 'mimes:jpg,jpeg,png,gif,bmp,webp,pdf,doc,docx,zip'],
             'description' => ['sometimes', 'nullable', 'string'],
         ];
     }
@@ -27,6 +27,7 @@ class UpdateAttachmentRequest extends FormRequest
             'title.max' => 'عنوان المرفق يجب أن يكون أقل من 255 حرف.',
             'attachment.file' => 'المرفق يجب أن يكون ملف.',
             'attachment.max' => 'حجم الملف يجب أن يكون أقل من 10 ميجابايت.',
+            'attachment.mimes' => 'نوع الملف غير مدعوم. الأنواع المسموحة: jpg, jpeg, png, gif, bmp, webp, pdf, doc, docx, zip.',
             'description.string' => 'الوصف يجب أن يكون نص.',
         ];
     }

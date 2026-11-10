@@ -5,6 +5,8 @@ namespace Domain\Project\Repositories;
 use App\Application\Project\Enums\AssignmentStatus;
 use App\Application\Project\Enums\BidStatus;
 use App\Application\Project\Enums\CreationType;
+use App\Application\Project\Enums\ProjectStatus;
+use App\Application\Project\Enums\ProjectTab;
 use App\Application\Project\Enums\TaskStatus;
 use Domain\Project\Models\Project;
 use App\Support\Repositories\Main\EloquentMainRepository;
@@ -44,6 +46,10 @@ class ProjectRepository extends EloquentMainRepository
 
     public function applyFilters($query, array $filters)
     {
+        if (isset($filters['tab'])) {
+            $this->applyTabFilter($query, $filters['tab']);
+        }
+
         if (isset($filters['status'])) {
             $query->where('status', $filters['status']);
         }
@@ -98,6 +104,74 @@ class ProjectRepository extends EloquentMainRepository
         }
 
         return $query;
+    }
+
+    public function applyTabFilter(Builder $query, string $tab): Builder
+    {
+        return match ($tab) {
+            ProjectTab::WITH_OFFERS->value => $query->whereHas('bids'),
+
+            ProjectTab::PENDING->value => $query
+                ->where('status', ProjectStatus::PENDING->value)
+                ->whereDoesntHave('bids.bidTasks', function ($bidTasks) {
+                    $bidTasks->where('status', BidStatus::ASSIGNED->value);
+                })
+                ->whereDoesntHave('tasks.assignments', function ($assignments) {
+                    $assignments->whereIn('status', [
+                        AssignmentStatus::ACCEPTED->value,
+                        AssignmentStatus::IN_PROGRESS->value,
+                    ]);
+                }),
+
+            ProjectTab::IN_PROGRESS->value => $query->where(function ($projects) {
+                $projects->where('status', ProjectStatus::IN_PROGRESS->value)
+                    ->orWhere(function ($activeProjects) {
+                        $activeProjects
+                            ->whereNotIn('status', [
+                                ProjectStatus::COMPLETED->value,
+                                ProjectStatus::CANCELED->value,
+                            ])
+                            ->where(function ($started) {
+                                $started
+                                    ->whereHas('bids.bidTasks', function ($bidTasks) {
+                                        $bidTasks->where('status', BidStatus::ASSIGNED->value);
+                                    })
+                                    ->orWhereHas('tasks.assignments', function ($assignments) {
+                                        $assignments->whereIn('status', [
+                                            AssignmentStatus::ACCEPTED->value,
+                                            AssignmentStatus::IN_PROGRESS->value,
+                                        ]);
+                                    });
+                            });
+                    });
+            }),
+
+            ProjectTab::COMPLETED->value => $query->where('status', ProjectStatus::COMPLETED->value),
+            default => $query,
+        };
+    }
+
+    public function tabCounts(array $filters = []): array
+    {
+        $baseFilters = $filters;
+        unset(
+            $baseFilters['tab'],
+            $baseFilters['status'],
+            $baseFilters['paginated'],
+            $baseFilters['per_page'],
+            $baseFilters['page'],
+            $baseFilters['sorting'],
+        );
+
+        $counts = [];
+        foreach (ProjectTab::cases() as $tab) {
+            $query = $this->modal->newQuery();
+            $this->applyFilters($query, $baseFilters);
+            $this->applyTabFilter($query, $tab->value);
+            $counts[$tab->value] = $query->count();
+        }
+
+        return $counts;
     }
 
     public function getProjectsWithOpenTasksCount(array $filters = [], array $relations = [], int $perPage = 15): LengthAwarePaginator

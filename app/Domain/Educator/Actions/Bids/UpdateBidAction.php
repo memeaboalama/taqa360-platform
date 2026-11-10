@@ -5,7 +5,7 @@ namespace App\Domain\Educator\Actions\Bids;
 use App\Domain\Project\Exceptions\BidException;
 use App\Support\Services\ImagesServices\ImageService;
 use Domain\Project\Models\Bid;
-use Domain\Project\Models\BidTask;
+use Domain\Project\Models\Project;
 use Domain\Project\Models\Task;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\UploadedFile;
@@ -21,6 +21,9 @@ class UpdateBidAction
     {
         return DB::transaction(function () use ($bid, $data) {
             $this->validateBidCanBeUpdated($bid);
+            if (isset($data['bid_tasks'])) {
+                $this->validateNewBidTasks($bid, $data['bid_tasks']);
+            }
 
             $this->updateBidDetails($bid, $data);
 
@@ -51,6 +54,41 @@ class UpdateBidAction
     private function validateBidCanBeUpdated(Bid $bid): void
     {
         throw_unless($bid->isUpdatable(), BidException::class, 'Bid cannot be updated if any task is not in PENDING status.', 403);
+    }
+
+    private function validateNewBidTasks(Bid $bid, array $bidTasks): void
+    {
+        $submittedTaskUuids = collect($bidTasks)
+            ->pluck('task_id')
+            ->filter()
+            ->unique()
+            ->values();
+        $existingTaskUuids = $bid->bidTasks()
+            ->with('task')
+            ->get()
+            ->pluck('task.uuid')
+            ->filter();
+        $newTaskUuids = $submittedTaskUuids->diff($existingTaskUuids)->values();
+
+        if ($newTaskUuids->isEmpty()) {
+            return;
+        }
+
+        $project = $bid->project;
+        throw_unless($project instanceof Project && $project->is_published, BidException::class, 'New tasks cannot be added to a bid while the project is not accepting offers.');
+
+        $eligibleTasksCount = Task::query()
+            ->where('project_id', $project->id)
+            ->whereIn('uuid', $newTaskUuids)
+            ->where('is_public', true)
+            ->where('bidding_status', 'OPEN')
+            ->count();
+
+        throw_unless(
+            $eligibleTasksCount === $newTaskUuids->count(),
+            BidException::class,
+            'One or more selected tasks are not open for bidding.'
+        );
     }
 
     private function updateBidDetails(Bid $bid, array $data): void

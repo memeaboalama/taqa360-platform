@@ -27,6 +27,7 @@ use Domain\Project\Resources\Project\ProjectResource;
 use Domain\Project\Resources\Project\ProjectListResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class ProjectController extends Controller
 {
@@ -44,6 +45,12 @@ class ProjectController extends Controller
         ]);
     }
 
+    public function tabCounts(FetchProjectRequest $request): JsonResponse
+    {
+        return $this->responseData(data: [
+            'counts' => $this->projectRepository->tabCounts($request->validated()),
+        ]);
+    }
 
     public function store(StoreProjectRequest $request, CreateProjectAction $action, LogProjectActivityAction $logActivity): JsonResponse
     {
@@ -60,7 +67,7 @@ class ProjectController extends Controller
 
     public function show(Project $project, LogProjectActivityAction $logActivity): JsonResponse
     {
-        $project->load(['tasks.assignments.educator','attachments','educationalRequest','bids','activityLog' => fn ($q) => $q->orderByDesc('timestamp')->orderByDesc('id')]);
+        $this->loadProjectDetails($project, includeAttachments: true, includeBids: true);
 
         // Read-side trace: separates "never written" from "written but not returned".
         $logActivity->trace('ProjectController@show', [
@@ -77,6 +84,34 @@ class ProjectController extends Controller
         ]);
     }
 
+    private function loadProjectDetails(
+        Project $project,
+        bool $includeAttachments = false,
+        bool $includeBids = false
+    ): Project {
+        $relations = ['createdBy', 'tasks.assignments.educator', 'educationalRequest'];
+
+        if ($includeAttachments) {
+            $relations[] = 'attachments';
+        }
+
+        if ($includeBids) {
+            $relations[] = 'bids';
+        }
+
+        $project->load($relations);
+
+        if (Schema::hasTable('project_activity_logs')) {
+            $project->load([
+                'activityLog' => fn ($query) => $query->orderByDesc('timestamp')->orderByDesc('id'),
+            ]);
+        } else {
+            $project->setRelation('activityLog', collect());
+        }
+
+        return $project;
+    }
+
 
     public function update(UpdateProjectRequest $request, Project $project, UpdateProjectAction $updateProjectAction, LogProjectActivityAction $logActivity): JsonResponse
     {
@@ -87,8 +122,8 @@ class ProjectController extends Controller
         ]);
 
         return $this->responseData(data: [
-            'project' => new ProjectResource($project->load(['tasks.assignments.educator','educationalRequest','activityLog'])
-        )]);
+            'project' => new ProjectResource($this->loadProjectDetails($project))
+        ]);
     }
 
     public function changeStatus(ChangeProjectStatusRequest $request, Project $project, ProjectChangeStatusAction $changeProjectStatusAction, LogProjectActivityAction $logActivity): JsonResponse
@@ -103,7 +138,7 @@ class ProjectController extends Controller
         ]);
 
         return $this->responseData(data: [
-            'project' => new ProjectResource($updatedProject->load(['tasks.assignments.educator','educationalRequest','activityLog']))
+            'project' => new ProjectResource($this->loadProjectDetails($updatedProject))
         ]);
     }
 
@@ -113,7 +148,7 @@ class ProjectController extends Controller
             $project->update(['is_published' => true]);
             $logActivity->forProject($project, LogProjectActivityAction::PROJECT_PUBLISHED, ['title' => $project->title]);
             return $this->responseData(
-                data: ['project' => new ProjectResource($project->load(['tasks.assignments.educator','educationalRequest','activityLog']))],
+                data: ['project' => new ProjectResource($this->loadProjectDetails($project))],
                 msg: 'Project publish successfully'
             );
 
@@ -128,7 +163,7 @@ class ProjectController extends Controller
             $project->update(['is_published' => false]);
             $logActivity->forProject($project, LogProjectActivityAction::PROJECT_UNPUBLISHED, ['title' => $project->title]);
             return $this->responseData(
-                data: ['project' => new ProjectResource($project->load(['tasks.assignments.educator','educationalRequest','activityLog']))],
+                data: ['project' => new ProjectResource($this->loadProjectDetails($project))],
                 msg: 'Project unpublish successfully'
             );
 

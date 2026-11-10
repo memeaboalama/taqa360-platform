@@ -9,6 +9,8 @@ class EducationalRequestResource extends JsonResource
 {
     public function toArray($request)
     {
+        $serviceType = $this->type instanceof \BackedEnum ? $this->type->value : $this->type;
+
         return [
             'id' => $this->uuid,
             'code' => '#'. $this->id,
@@ -28,12 +30,17 @@ class EducationalRequestResource extends JsonResource
 
             'status' => $this->status,
             'reviewedAt' => $this->reviewed_at?->toIso8601String(),
+            'serviceType' => $serviceType,
+            'projectSiteType' => $this->project_site_type,
+            'solarSystemType' => $this->solar_system_type,
             'subject' => $this->academicMajor?->name ?? '',
             'academicMajor' => $this->academicMajor?->name,
             'educationLevel' => $this->education_level,
             'paymentStatus' => $this->payment_status,
             'executionStatus' => $this->execution_status,
-            'budget' =>  $this->budget !== null ? (float) $this->budget : ($this->project ? (float) $this->project->budget : null),
+            'budget' => $this->project?->budget !== null
+                ? (float) $this->project->budget
+                : ($this->budget !== null ? (float) $this->budget : null),
             'urgencyLevel' => $this->urgency_level,
             'pricingType' => (is_object($this->type) ? $this->type->value : (string) $this->type) === 'hourly' ? 'HOURLY' : 'FIXED',
             'expectedDeliveryDate' => $this->project?->deadline?->toDateString(),
@@ -53,7 +60,19 @@ class EducationalRequestResource extends JsonResource
 
             'finalAgreement' => $this->final_agreement,
             'additionalNotes' => $this->additional_notes,
-            'activityLog' => [],
+            'activityLog' => $this->whenLoaded('activityLog', fn () => $this->activityLog
+                ->map(fn ($activity) => [
+                    'id' => (string) $activity->id,
+                    'type' => $activity->activity_type,
+                    'fromStatus' => $activity->from_status,
+                    'toStatus' => $activity->to_status,
+                    'reason' => $activity->reason,
+                    'details' => $activity->details ? json_decode($activity->details, true) : null,
+                    'actor' => $activity->actor_name ?? 'الإدارة',
+                    'timestamp' => $activity->created_at?->toIso8601String(),
+                ])
+                ->values()
+            ),
             'project' => $this->whenLoaded('project', function () {
                 return [
                     'id' => $this->project->uuid,

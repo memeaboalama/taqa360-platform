@@ -13,8 +13,11 @@ use App\Http\Controllers\Controller;
 use App\Support\Enum\PaymentStatusEnum;
 use App\Support\Traits\Api\ApiResponseTrait;
 use Domain\EducationalRequest\Models\EducationalRequest;
+use Domain\EducationalRequest\Models\RequestActivityLog;
 use Domain\EducationalRequest\Repositories\EducationalRequestRepository;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class EducationalController extends Controller
@@ -29,9 +32,28 @@ class EducationalController extends Controller
 
     public function fetch(Request $request)
     {
+        $filters = $request->validate([
+            'search' => ['sometimes', 'nullable', 'string'],
+            'status' => ['sometimes', 'nullable', Rule::in(['pending', 'approved', 'rejected'])],
+            'paymentStatus' => ['sometimes', 'nullable', Rule::in(['paid', 'unpaid', 'partially_paid'])],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'page' => ['sometimes', 'integer', 'min:1'],
+        ]);
+
         $requests = EducationalRequest::with(['requester', 'academicMajor', 'project'])
+            ->when(!empty($filters['search']), function ($query) use ($filters) {
+                $search = trim($filters['search']);
+                $query->where(function ($query) use ($search) {
+                    $query->where('title', 'like', "%{$search}%")
+                        ->orWhereHas('requester', function ($requesterQuery) use ($search) {
+                            $requesterQuery->where('name', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->when(!empty($filters['status']), fn ($query) => $query->where('status', $filters['status']))
+            ->when(!empty($filters['paymentStatus']), fn ($query) => $query->where('payment_status', $filters['paymentStatus']))
             ->latest('id')
-            ->paginate($request->get('per_page', 15));
+            ->paginate($filters['per_page'] ?? 10);
 
         return $this->responseData(data:['educationalRequests' => EducationalListRequestResource::collection($requests)]);
     }
@@ -51,23 +73,39 @@ class EducationalController extends Controller
 
     public function show(EducationalRequest $educationalRequest)
     {
-        return $this->responseData(data:['educationalRequest' => new EducationalRequestResource($educationalRequest->load('requester','project','attachments','academicMajor'))]);
+        return $this->responseData(data:['educationalRequest' => new EducationalRequestResource($educationalRequest->load('requester','project','attachments','academicMajor','activityLog'))]);
     }
 
     public function update(Request $request, EducationalRequest $educationalRequest)
     {
         try {
+            $request->validate([
+                'serviceType' => ['sometimes', 'nullable', 'in:'.implode(',', EducationalRequestType::values())],
+                'service_type' => ['sometimes', 'nullable', 'in:'.implode(',', EducationalRequestType::values())],
+                'type' => ['sometimes', 'nullable', 'in:'.implode(',', EducationalRequestType::values())],
+                'projectSiteType' => ['sometimes', 'nullable', 'in:residential,commercial,agricultural,industrial,medical,educational,other'],
+                'project_site_type' => ['sometimes', 'nullable', 'in:residential,commercial,agricultural,industrial,medical,educational,other'],
+                'solarSystemType' => ['sometimes', 'nullable', 'in:off-grid,on-grid,hybrid,not_sure'],
+                'solar_system_type' => ['sometimes', 'nullable', 'in:off-grid,on-grid,hybrid,not_sure'],
+                'budget' => ['sometimes', 'nullable', 'numeric', 'min:0'],
+                'expectedDeliveryDate' => ['sometimes', 'nullable', 'date'],
+                'expected_delivery_date' => ['sometimes', 'nullable', 'date'],
+            ]);
+
             $mapped = [];
             if ($request->has('title'))                  $mapped['title'] = $request->input('title');
             if ($request->has('description'))            $mapped['description'] = $request->input('description');
             if ($request->has('budget'))                 $mapped['budget'] = $request->input('budget');
-            if ($request->has('pricingType'))            $mapped['type'] = strtolower($request->input('pricingType'));
-            if ($request->has('pricing_type'))           $mapped['type'] = strtolower($request->input('pricing_type'));
-            if ($request->has('type'))                   $mapped['type'] = strtolower($request->input('type'));
+            $serviceType = $request->input('serviceType', $request->input('service_type', $request->input('type')));
+            if ($serviceType !== null) {
+                $mapped['type'] = $serviceType === '' ? EducationalRequestType::GENERAL->value : strtolower($serviceType);
+            }
             if ($request->has('finalAgreement'))         $mapped['final_agreement'] = $request->input('finalAgreement');
             if ($request->has('final_agreement'))        $mapped['final_agreement'] = $request->input('final_agreement');
-            if ($request->has('educationLevel'))         $mapped['education_level'] = $request->input('educationLevel');
-            if ($request->has('education_level'))        $mapped['education_level'] = $request->input('education_level');
+            if ($request->has('projectSiteType'))        $mapped['project_site_type'] = $request->input('projectSiteType');
+            if ($request->has('project_site_type'))      $mapped['project_site_type'] = $request->input('project_site_type');
+            if ($request->has('solarSystemType'))        $mapped['solar_system_type'] = $request->input('solarSystemType');
+            if ($request->has('solar_system_type'))      $mapped['solar_system_type'] = $request->input('solar_system_type');
             if ($request->has('additionalNotes'))        $mapped['additional_notes'] = $request->input('additionalNotes');
             if ($request->has('additional_notes'))       $mapped['additional_notes'] = $request->input('additional_notes');
 
@@ -85,33 +123,91 @@ class EducationalController extends Controller
                 }
             }
 
-            if (!empty($mapped)) {
-                $educationalRequest->update($mapped);
-            }
+            DB::transaction(function () use ($request, $educationalRequest, $mapped) {
+                $educationalRequest->loadMissing('project');
+                $project = $educationalRequest->project;
+                $before = [
+                    'title' => $educationalRequest->title,
+                    'description' => $educationalRequest->description,
+                    'budget' => $educationalRequest->budget,
+                    'service_type' => $educationalRequest->type instanceof \BackedEnum ? $educationalRequest->type->value : $educationalRequest->type,
+                    'project_site_type' => $educationalRequest->project_site_type,
+                    'solar_system_type' => $educationalRequest->solar_system_type,
+                    'final_agreement' => $educationalRequest->final_agreement,
+                    'additional_notes' => $educationalRequest->additional_notes,
+                    'subject' => $educationalRequest->academicMajor?->name,
+                    'deadline' => $project?->deadline?->toDateString(),
+                ];
 
-            if ($request->has('expectedDeliveryDate') || $request->has('expected_delivery_date')) {
-                $deadline = $request->input('expectedDeliveryDate') ?? $request->input('expected_delivery_date');
-                if ($deadline) {
-                    $adminId = auth('admin-api')->id()
-                        ?? auth()->id()
-                        ?? \Domain\Admin\Models\Admin::query()->min('id');
-                    if ($educationalRequest->project) {
-                        $educationalRequest->project->update(['deadline' => $deadline]);
-                    } else {
-                        \Domain\Project\Models\Project::create([
-                            'educational_request_id' => $educationalRequest->id,
-                            'title' => $educationalRequest->title,
-                            'description' => $educationalRequest->description,
-                            'deadline' => $deadline,
-                            'budget' => $educationalRequest->budget,
-                            'created_by' => $adminId,
-                        ]);
+                if (!empty($mapped)) {
+                    $educationalRequest->update($mapped);
+                }
+
+                if ($request->has('expectedDeliveryDate') || $request->has('expected_delivery_date')) {
+                    $deadline = $request->input('expectedDeliveryDate') ?? $request->input('expected_delivery_date');
+                    if ($deadline) {
+                        $adminId = auth('admin-api')->id()
+                            ?? auth()->id()
+                            ?? \Domain\Admin\Models\Admin::query()->min('id');
+                        if ($project) {
+                            $project->update(['deadline' => $deadline]);
+                        } else {
+                            $project = \Domain\Project\Models\Project::create([
+                                'educational_request_id' => $educationalRequest->id,
+                                'title' => $educationalRequest->title,
+                                'description' => $educationalRequest->description,
+                                'deadline' => $deadline,
+                                'budget' => $educationalRequest->budget,
+                                'created_by' => $adminId,
+                            ]);
+                        }
+                    } elseif ($project) {
+                        $project->update(['deadline' => null]);
                     }
                 }
-            }
+
+                if (array_key_exists('budget', $mapped) && $project) {
+                    $project->update(['budget' => $mapped['budget']]);
+                }
+
+                $educationalRequest->load('academicMajor');
+                $after = [
+                    'title' => $educationalRequest->title,
+                    'description' => $educationalRequest->description,
+                    'budget' => $educationalRequest->budget,
+                    'service_type' => $educationalRequest->type instanceof \BackedEnum ? $educationalRequest->type->value : $educationalRequest->type,
+                    'project_site_type' => $educationalRequest->project_site_type,
+                    'solar_system_type' => $educationalRequest->solar_system_type,
+                    'final_agreement' => $educationalRequest->final_agreement,
+                    'additional_notes' => $educationalRequest->additional_notes,
+                    'subject' => $educationalRequest->academicMajor?->name,
+                    'deadline' => $project?->fresh()?->deadline?->toDateString(),
+                ];
+                $changes = [];
+                foreach ($after as $field => $newValue) {
+                    $oldValue = $before[$field];
+                    if ((string) ($oldValue ?? '') !== (string) ($newValue ?? '')) {
+                        $changes[$field] = [
+                            'from' => $oldValue === null ? null : (string) $oldValue,
+                            'to' => $newValue === null ? null : (string) $newValue,
+                        ];
+                    }
+                }
+
+                if ($changes) {
+                    $actor = auth('admin-api')->user() ?? auth()->user();
+                    RequestActivityLog::create([
+                        'educational_request_id' => $educationalRequest->id,
+                        'activity_type' => 'details',
+                        'to_status' => 'details_updated',
+                        'actor_name' => $actor?->name ?? $actor?->email ?? 'الإدارة',
+                        'details' => json_encode($changes, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+                    ]);
+                }
+            });
 
             return $this->responseData(
-                data: ['educationalRequest' => new EducationalRequestResource($educationalRequest->fresh()->load('requester', 'project', 'attachments', 'academicMajor'))],
+                data: ['educationalRequest' => new EducationalRequestResource($educationalRequest->fresh()->load('requester', 'project', 'attachments', 'academicMajor', 'activityLog'))],
                 msg: 'تم تحديث الطلب بنجاح'
             );
         } catch (\Throwable $e) {
@@ -132,45 +228,65 @@ class EducationalController extends Controller
             $type        = $request->input('type', 'request');
             $rawStatus   = (string) $request->input('status');
             $reason      = $request->input('reason');
+            $newStatus = match ($type) {
+                'payment' => $this->mapPaymentStatus($rawStatus),
+                'fulfillment', 'request' => $this->mapRequestStatus($rawStatus),
+            };
 
-            switch ($type) {
-                case 'payment':
-                    $enumStatus = $this->mapPaymentStatus($rawStatus);
-                    if (!$enumStatus) {
-                        return $this->responseError(msg: "حالة الدفع غير صالحة: {$rawStatus}", code: 422);
-                    }
-                    $educationalRequest->update(['payment_status' => $enumStatus]);
-                    break;
-
-                case 'fulfillment':
-                    $enumStatus = $this->mapRequestStatus($rawStatus);
-                    if (!$enumStatus) {
-                        return $this->responseError(msg: "حالة الإنجاز غير صالحة: {$rawStatus}", code: 422);
-                    }
-                    $educationalRequest->update(['execution_status' => $enumStatus]);
-                    break;
-
-                default:
-                    $enumStatus = $this->mapRequestStatus($rawStatus);
-                    if (!$enumStatus) {
-                        return $this->responseError(msg: "حالة الطلب غير صالحة: {$rawStatus}", code: 422);
-                    }
-                    $educationalRequest->update([
-                        'status'           => $enumStatus,
-                        'reviewed_at'      => now(),
-                        'rejection_reason' => ($enumStatus === EducationalRequestStatus::REJECTED) ? $reason : null,
-                    ]);
-                    break;
+            if (!$newStatus) {
+                $label = match ($type) {
+                    'payment' => 'الدفع',
+                    'fulfillment' => 'الإنجاز',
+                    default => 'الطلب',
+                };
+                return $this->responseError(msg: "حالة {$label} غير صالحة: {$rawStatus}", code: 422);
             }
 
+            $statusField = match ($type) {
+                'payment' => 'payment_status',
+                'fulfillment' => 'execution_status',
+                default => 'status',
+            };
+            $fromStatus = $this->statusValue($educationalRequest->{$statusField});
+            $toStatus = $this->statusValue($newStatus);
+            $actor = auth('admin-api')->user() ?? auth()->user();
+
+            DB::transaction(function () use ($educationalRequest, $type, $newStatus, $reason, $fromStatus, $toStatus, $actor) {
+                $changes = [$type === 'payment' ? 'payment_status' : ($type === 'fulfillment' ? 'execution_status' : 'status') => $newStatus];
+                if ($type === 'request') {
+                    $changes += [
+                        'reviewed_at' => now(),
+                        'reviewed_by' => auth('admin-api')->id(),
+                        'rejection_reason' => ($newStatus === EducationalRequestStatus::REJECTED) ? $reason : null,
+                    ];
+                }
+                $educationalRequest->update($changes);
+
+                if ($fromStatus !== $toStatus) {
+                    RequestActivityLog::create([
+                        'educational_request_id' => $educationalRequest->id,
+                        'activity_type' => $type,
+                        'from_status' => $fromStatus,
+                        'to_status' => $toStatus,
+                        'reason' => $reason,
+                        'actor_name' => $actor?->name ?? $actor?->email ?? 'الإدارة',
+                    ]);
+                }
+            });
+
             return $this->responseData(
-                data: ['educationalRequest' => new EducationalRequestResource($educationalRequest->fresh()->load('requester', 'project', 'attachments'))],
+                data: ['educationalRequest' => new EducationalRequestResource($educationalRequest->fresh()->load('requester', 'project', 'attachments', 'activityLog'))],
                 msg: 'تم تغيير الحالة بنجاح'
             );
         } catch (\Throwable $e) {
             Log::error('EducationalRequest changeStatus error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return $this->responseError(msg: 'حدث خطأ أثناء تغيير الحالة: ' . $e->getMessage(), code: 500);
         }
+    }
+
+    private function statusValue(mixed $status): string
+    {
+        return $status instanceof \BackedEnum ? (string) $status->value : (string) $status;
     }
 
     private function mapRequestStatus(string $status): ?EducationalRequestStatus

@@ -2,7 +2,9 @@
 
 namespace Domain\Educator\Actions\Profile;
 
+use App\Domain\AppBase\Models\Setting\Language;
 use Domain\Educator\Models\Educator;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -12,7 +14,18 @@ class UpdateLanguagesAction
     {
         DB::beginTransaction();
         try {
-            $data['language_id'] = (int) $data['language_id'];
+            $languageQuery = Language::query();
+            $languageId = is_numeric($data['language_id'])
+                ? $languageQuery->whereKey((int) $data['language_id'])->value('id')
+                : $languageQuery->where('uuid', $data['language_id'])->value('id');
+
+            if (!$languageId) {
+                throw ValidationException::withMessages([
+                    'language_id' => __('validation.exists', ['attribute' => 'language']),
+                ]);
+            }
+
+            $data['language_id'] = (int) $languageId;
 
             if ($data['is_primary']) {
                 $educator->languages()->where('id', '!=', $editingId)->update(['is_primary' => false]);

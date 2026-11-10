@@ -3,9 +3,12 @@
 namespace App\Application\Educator\Controllers\Api\Profile;
 
 use App\Application\Educator\Requests\Profile\SkillRequest;
+use App\Domain\AppBase\Resources\Edu\SkillResource;
 use App\Domain\Educator\Resource\Profile\EducatorSkillResource;
 use App\Http\Controllers\Controller;
+use App\Support\Enum\StatusEnum;
 use App\Support\Traits\Api\ApiResponseTraitV2;
+use Domain\AppBase\Models\Edu\Skill;
 use Domain\Educator\Actions\Profile\UpdateSkillsAction;
 use Domain\Educator\Models\EducatorSkill;
 use Illuminate\Http\Request;
@@ -13,6 +16,17 @@ use Illuminate\Http\Request;
 class SkillController extends Controller
 {
     use ApiResponseTraitV2;
+
+    public function options()
+    {
+        $skills = Skill::query()
+            ->where('status', StatusEnum::ACTIVE->value)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
+
+        return $this->responseData(['skills' => SkillResource::collection($skills)]);
+    }
 
     public function fetch(Request $request)
     {

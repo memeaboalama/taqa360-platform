@@ -42,20 +42,34 @@ class UpdateBasicInfoAction
             $educatorData = Arr::only($data, ['name', 'email', 'phone']);
             $educator->update($educatorData);
 
-            $profileData = Arr::except($data, ['name', 'email', 'phone', 'identityImageFront', 'identityImageBack']);
+            $profileData = Arr::except($data, [
+                'name',
+                'email',
+                'phone',
+                'identityImageFront',
+                'identityImageBack',
+                'delete_identity_front',
+                'delete_identity_back',
+            ]);
             $educator->profile()->updateOrCreate(['educator_id' => $educator->id], $profileData);
             if(isset($data['identity_type'])) {
                 if ($data['identity_type'] === 'national_id') {
                     if ($frontImage) {
                         $this->storeOrUpdateFile($educator, $frontImage, 'identity_front');
+                    } elseif (($data['delete_identity_front'] ?? false) === true || ($data['delete_identity_front'] ?? null) === '1') {
+                        $this->deleteFile($educator, 'identity_front');
                     }
                     if ($backImage) {
                         $this->storeOrUpdateFile($educator, $backImage, 'identity_back');
+                    } elseif (($data['delete_identity_back'] ?? false) === true || ($data['delete_identity_back'] ?? null) === '1') {
+                        $this->deleteFile($educator, 'identity_back');
                     }
                     $this->deleteFile($educator, 'passport_image');
                 } elseif ($data['identity_type'] === 'passport') {
                     if ($frontImage) {
                         $this->storeOrUpdateFile($educator, $frontImage, 'passport_image');
+                    } elseif (($data['delete_identity_front'] ?? false) === true || ($data['delete_identity_front'] ?? null) === '1') {
+                        $this->deleteFile($educator, 'passport_image');
                     }
                     $this->deleteFile($educator, 'identity_front');
                     $this->deleteFile($educator, 'identity_back');

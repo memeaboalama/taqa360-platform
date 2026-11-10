@@ -29,6 +29,7 @@ class ProjectListResource extends JsonResource
 
         return [
             'id' => $this->uuid,
+            'projectNumber' => $this->id,
             'title' => $this->title,
             'status' => $this['status'],
             'budget' => $this->budget ? (float) $this->budget : null,

@@ -8,8 +8,9 @@ Route::group(['prefix' => 'educators','middleware' => 'throttle:35,1'], function
 
     Route::controller(EducatorController::class)->group(function (){
         Route::get('/','fetch');
+        Route::get('/invitations','invitations');
         Route::post('/invite','invite');
-        Route::post('/invite/complete','completeRegistration');
+        Route::post('/invite/complete','completeRegistration')->withoutMiddleware('auth:admin-api');
         Route::get('/{educator}','show');
         Route::delete('/{educator}','destroy');
         Route::patch('/{educator}/status','updateStatus');
@@ -19,6 +20,7 @@ Route::group(['prefix' => 'educators','middleware' => 'throttle:35,1'], function
         Route::post('/{educator}/academic-majors/{educatorMajor}/reject','rejectAcademicMajor');
         Route::post('/{educator}/approve-identity','approveIdentity');
         Route::post('/{educator}/reject-identity','rejectIdentity');
+        Route::post('/{educator}/send-verification-reminder','sendVerificationReminder');
         Route::post('/{educator}/suspend','suspend');
         Route::post('/{educator}/unsuspend','unsuspend');
     });

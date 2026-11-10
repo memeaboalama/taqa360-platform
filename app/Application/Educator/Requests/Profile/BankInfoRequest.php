@@ -17,7 +17,7 @@ class BankInfoRequest extends FormRequest
             'iban' => ['required','string','max:34'],
             'name' => ['required','string','max:255'],
             'address' => ['nullable','string','max:500'],
-            'bank_country' => ['required','string','max:255'],
+            'bank_country' => ['nullable','string','max:255'],
             'bank_code' => ['nullable','string','max:20'],
             'bank_name' => ['required','string','max:255'],
         ];

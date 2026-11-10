@@ -3,9 +3,12 @@
 namespace App\Application\Educator\Controllers\Api\Profile;
 
 use App\Application\Educator\Requests\Profile\ServiceRequest;
+use App\Domain\AppBase\Resources\Edu\ServiceResource;
 use App\Domain\Educator\Resource\Profile\EducatorServiceResource;
 use App\Http\Controllers\Controller;
+use App\Support\Enum\StatusEnum;
 use App\Support\Traits\Api\ApiResponseTraitV2;
+use Domain\AppBase\Models\Edu\Service as BaseService;
 use Domain\Educator\Actions\Profile\UpdateServiceAction;
 use Domain\Educator\Models\EducatorService;
 use Illuminate\Http\Request;
@@ -13,6 +16,17 @@ use Illuminate\Http\Request;
 class ServiceController extends Controller
 {
     use ApiResponseTraitV2;
+
+    public function options()
+    {
+        $services = BaseService::query()
+            ->where('status', StatusEnum::ACTIVE->value)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
+
+        return $this->responseData(['services' => ServiceResource::collection($services)]);
+    }
 
     public function fetch(Request $request)
     {

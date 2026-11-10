@@ -86,7 +86,7 @@ class Educator extends Authenticatable
 
     public function achievements()
     {
-        return $this->hasMany(EducatorAchievement::class);
+        return $this->hasMany(EducatorAchievement::class)->orderByDesc('created_at')->orderByDesc('id');
     }
 
     public function assignments()
@@ -106,17 +106,19 @@ class Educator extends Authenticatable
 
     public function services(): HasMany
     {
-        return $this->hasMany(EducatorService::class);
+        return $this->hasMany(EducatorService::class)->orderByDesc('created_at')->orderByDesc('id');
     }
 
     public function academicMajors(): HasMany
     {
-        return $this->hasMany(EducatorAcademicMajor::class);
+        return $this->hasMany(EducatorAcademicMajor::class)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
     }
 
     public function skills(): HasMany
     {
-        return $this->hasMany(EducatorSkill::class);
+        return $this->hasMany(EducatorSkill::class)->orderByDesc('created_at')->orderByDesc('id');
     }
 
     public function bankInfo(): HasOne

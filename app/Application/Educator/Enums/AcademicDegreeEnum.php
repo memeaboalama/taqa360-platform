@@ -4,11 +4,8 @@ namespace App\Application\Educator\Enums;
 
 enum AcademicDegreeEnum: string
 {
-    // Keep this list aligned with App\Support\Enum\Edu\EducationLevelEnum, which is
-    // what AcademicMajorRequest validates against and what the provider profile
-    // builder offers. A value that passes validation but is missing here makes
-    // Eloquent throw a ValueError while casting, which killed the whole admin
-    // "qualifications and achievements" tab.
+    // Keep this list aligned with the educator qualification form and the
+    // AcademicMajorRequest validation rules.
     case HIGH_SCHOOL = 'high_school';
     case DIPLOMA = 'diploma';
     case BACHELOR = 'bachelor';

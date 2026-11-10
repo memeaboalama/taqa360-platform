@@ -45,10 +45,12 @@ class EducatorResource extends JsonResource
                 'profileCompletion' => $profile->is_complete ? 100 : ($profile->completion_step ?? 0),
             ] : null,
             'academicMajors' => \App\Domain\Educator\Resource\Profile\AcademicMajorResource::collection($this->whenLoaded('academicMajors')),
+            'languages' => \App\Domain\Educator\Resource\Profile\LanguageResource::collection($this->whenLoaded('languages')),
             'createdAt' => $this->created_at,
             'skills' => $this->whenLoaded('skills', fn() => $this->skills->map(fn($skill) => [
                 'id' => (string) $skill->uuid,
-                'name' => $skill->title,
+                'name' => $skill->approvedSkill?->name ?? $skill->custom_name,
+                'level' => $skill->level,
             ])->values()->toArray()),
         ];
     }

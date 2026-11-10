@@ -249,7 +249,7 @@ class EducatorProfileController extends Controller
     public function workExperienceIndex(Request $request)
     {
         $educator = $request->user();
-        $items = $educator->achievements()->where('type','work_experience')->with('file')->orderBy('start_date','desc')->get();
+        $items = $educator->achievements()->where('type','work_experience')->with('file')->orderByDesc('created_at')->orderByDesc('id')->get();
         return $this->responseData(['items' => AchievementResource::collection($items)]);
     }
 
@@ -258,7 +258,7 @@ class EducatorProfileController extends Controller
         $educator = $request->user();
         $data = array_merge($request->validated(), ['type' => 'work_experience']);
         $this->achievementsAction->handle($educator, $data, null, $request->file('attachment'));
-        $items = $educator->fresh()->achievements()->where('type','work_experience')->with('file')->orderBy('start_date','desc')->get();
+        $items = $educator->fresh()->achievements()->where('type','work_experience')->with('file')->orderByDesc('created_at')->orderByDesc('id')->get();
         return $this->responseData(['items' => AchievementResource::collection($items)]);
     }
 
@@ -267,7 +267,7 @@ class EducatorProfileController extends Controller
         $educator = $request->user();
         $data = array_merge($request->validated(), ['type' => 'work_experience']);
         $this->achievementsAction->handle($educator, $data, (int)$id, $request->file('attachment'));
-        $items = $educator->fresh()->achievements()->where('type','work_experience')->with('file')->orderBy('start_date','desc')->get();
+        $items = $educator->fresh()->achievements()->where('type','work_experience')->with('file')->orderByDesc('created_at')->orderByDesc('id')->get();
         return $this->responseData(['items' => AchievementResource::collection($items)]);
     }
 
@@ -275,14 +275,14 @@ class EducatorProfileController extends Controller
     {
         $educator = $request->user();
         $this->achievementsAction->delete($educator, (int)$id);
-        $items = $educator->fresh()->achievements()->where('type','work_experience')->with('file')->orderBy('start_date','desc')->get();
+        $items = $educator->fresh()->achievements()->where('type','work_experience')->with('file')->orderByDesc('created_at')->orderByDesc('id')->get();
         return $this->responseData(['items' => AchievementResource::collection($items)]);
     }
 
     public function certificationsIndex(Request $request)
     {
         $educator = $request->user();
-        $items = $educator->achievements()->whereIn('type',['certificate','course','workshop'])->with('file')->orderBy('start_date','desc')->get();
+        $items = $educator->achievements()->whereIn('type',['certificate','course','workshop'])->with('file')->orderByDesc('created_at')->orderByDesc('id')->get();
         return $this->responseData(['items' => AchievementResource::collection($items)]);
     }
 
@@ -294,7 +294,7 @@ class EducatorProfileController extends Controller
             $data['type'] = 'certificate';
         }
         $this->achievementsAction->handle($educator, $data, null, $request->file('attachment'));
-        $items = $educator->fresh()->achievements()->whereIn('type',['certificate','course','workshop'])->with('file')->orderBy('start_date','desc')->get();
+        $items = $educator->fresh()->achievements()->whereIn('type',['certificate','course','workshop'])->with('file')->orderByDesc('created_at')->orderByDesc('id')->get();
         return $this->responseData(['items' => AchievementResource::collection($items)]);
     }
 
@@ -306,7 +306,7 @@ class EducatorProfileController extends Controller
             $data['type'] = 'certificate';
         }
         $this->achievementsAction->handle($educator, $data, (int)$id, $request->file('attachment'));
-        $items = $educator->fresh()->achievements()->whereIn('type',['certificate','course','workshop'])->with('file')->orderBy('start_date','desc')->get();
+        $items = $educator->fresh()->achievements()->whereIn('type',['certificate','course','workshop'])->with('file')->orderByDesc('created_at')->orderByDesc('id')->get();
         return $this->responseData(['items' => AchievementResource::collection($items)]);
     }
 
@@ -314,7 +314,7 @@ class EducatorProfileController extends Controller
     {
         $educator = $request->user();
         $this->achievementsAction->delete($educator, (int)$id);
-        $items = $educator->fresh()->achievements()->whereIn('type',['certificate','course','workshop'])->with('file')->orderBy('start_date','desc')->get();
+        $items = $educator->fresh()->achievements()->whereIn('type',['certificate','course','workshop'])->with('file')->orderByDesc('created_at')->orderByDesc('id')->get();
         return $this->responseData(['items' => AchievementResource::collection($items)]);
     }
 

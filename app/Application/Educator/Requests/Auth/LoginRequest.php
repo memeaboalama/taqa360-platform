@@ -17,6 +17,7 @@ class LoginRequest extends FormRequest
         return [
             'email'    =>  ['required','email','exists:educators,email'],
             'password'    =>  ['required','string'],
+            'remember_me' => ['sometimes', 'boolean'],
             'device_token'    =>  ['nullable'],
             'platform'    =>  ['nullable','in:web,ios,android'],
         ];

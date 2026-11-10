@@ -18,7 +18,11 @@ class UserController extends Controller
 
     private function findUser(string $id): ?User
     {
-        return User::where('uuid', $id)->orWhere('id', $id)->first();
+        if (ctype_digit($id)) {
+            return User::find($id);
+        }
+
+        return User::where('uuid', $id)->first();
     }
 
     public function index(Request $request, UserRepository $userRepository): JsonResponse
@@ -38,7 +42,7 @@ class UserController extends Controller
                 });
             }
 
-            $users = $query->latest()->paginate((int) $perPage);
+            $users = $query->latest()->orderByDesc('id')->paginate((int) $perPage);
 
             return $this->responseData(data: [
                 'users' => $users,
@@ -51,29 +55,35 @@ class UserController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $phone = trim((string) $request->input('phone', ''));
+        $city = trim((string) $request->input('city', ''));
+        $address = trim((string) $request->input('address', ''));
+        $request->merge([
+            'name' => trim((string) $request->input('name', '')),
+            'email' => trim((string) $request->input('email', '')),
+            'phone' => $phone !== '' ? $phone : null,
+            'city' => $city !== '' ? $city : null,
+            'address' => $address !== '' ? $address : null,
+        ]);
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'nullable|string|max:20|unique:users,phone',
             'city' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:500',
             'password' => 'required|string|min:8',
         ]);
 
         if ($validator->fails()) {
-            return $this->responseError(msg: $validator->errors()->first(), code: 422, data: $validator->errors()->toArray());
+            return $this->responseError($validator->errors()->toArray(), 422, $validator->errors()->first());
         }
 
         try {
-            $user = User::create([
-                'name' => $request->input('name'),
-                'email' => $request->input('email'),
-                'phone' => $request->input('phone'),
-                'city' => $request->input('city'),
-                'address' => $request->input('address'),
-                'password' => Hash::make($request->input('password')),
-                'status' => 'active',
-            ]);
+            $validated = $validator->validated();
+            $validated['password'] = Hash::make($validated['password']);
+            $validated['status'] = 'active';
+            $user = User::create($validated);
 
             return $this->responseData(data: [
                 'user' => $user,

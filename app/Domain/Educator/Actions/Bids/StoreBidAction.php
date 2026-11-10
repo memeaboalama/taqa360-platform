@@ -7,6 +7,7 @@ use App\Support\Services\Main\FilesServices\FileService;
 use Domain\Project\Models\Bid;
 use Domain\Educator\Models\Educator;
 use Domain\Project\Models\Project;
+use Domain\Project\Models\Task;
 use App\Domain\Project\Repositories\BidRepository;
 use App\Support\Services\ImagesServices\ImageService;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +42,20 @@ class StoreBidAction
     private function validateBidSubmission(Educator $educator, Project $project, array $newTasks): void
     {
         if (empty($newTasks)) return;
+
+        $taskUuids = collect($newTasks)->pluck('task_id')->unique()->values();
+        $eligibleTasksCount = Task::query()
+            ->where('project_id', $project->id)
+            ->whereIn('uuid', $taskUuids)
+            ->where('is_public', true)
+            ->where('bidding_status', 'OPEN')
+            ->count();
+
+        throw_unless(
+            $eligibleTasksCount === $taskUuids->count(),
+            BidException::class,
+            'One or more selected tasks are not open for bidding.'
+        );
 
         $existingBid = $this->bidRepository->findByCols(['project_id' => $project->id,'educator_id' => $educator->id]);
 

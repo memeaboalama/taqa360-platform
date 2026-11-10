@@ -5,6 +5,7 @@ namespace App\Application\Project\Requests\Task;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 
 class UploadAttachmentRequest extends FormRequest
 {
@@ -45,7 +46,7 @@ class UploadAttachmentRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
-            'attachment' => ['sometimes', 'file', 'mimes:jpg,jpeg,png,gif,bmp,webp,pdf,doc,docx,zip'],
+            'attachment' => ['sometimes', 'file', 'max:10240', 'mimes:jpg,jpeg,png,gif,bmp,webp,pdf,doc,docx,zip'],
             'description' => ['nullable', 'string'],
         ];
     }

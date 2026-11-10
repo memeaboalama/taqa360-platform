@@ -14,7 +14,7 @@ class SocialLinksRequest extends FormRequest
     public function rules()
     {
         return [
-            'social_links' => 'required|array',
+            'social_links' => 'present|array',
             'social_links.*.platform' => 'required|string',
             'social_links.*.url' => 'required|url',
         ];

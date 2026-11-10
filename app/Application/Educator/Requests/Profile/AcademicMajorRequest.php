@@ -2,7 +2,7 @@
 
 namespace App\Application\Educator\Requests\Profile;
 
-use App\Support\Enum\Edu\EducationLevelEnum;
+use App\Application\Educator\Enums\AcademicDegreeEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AcademicMajorRequest extends FormRequest
@@ -15,7 +15,7 @@ class AcademicMajorRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'degree' => ['required', 'in:' . implode(',', EducationLevelEnum::values())],
+            'degree' => ['required', 'in:' . implode(',', AcademicDegreeEnum::values())],
             'is_custom' => ['required', 'boolean'],
             'academic_major_id' => ['required_if:is_custom,false', 'exists:academic_majors,uuid'],
             'custom_name' => ['required_if:is_custom,true', 'string', 'max:255'],

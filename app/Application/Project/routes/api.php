@@ -29,6 +29,7 @@ Route::group(['prefix' => 'v1/admin', 'middleware' => 'auth:admin-api'],function
     Route::prefix('projects')->group(function () {
 
         Route::controller(ProjectController::class)->group(function () {
+            Route::get('/tab-counts', 'tabCounts');
             Route::get('/','fetch');
             Route::post('/','store');
             Route::get('/{project}','show');
