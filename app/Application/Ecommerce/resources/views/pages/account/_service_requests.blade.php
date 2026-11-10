@@ -188,6 +188,20 @@
 </style>
 
 @php
+    $paymentStatusLabel = static function ($value): string {
+        $key = 'lang.educational_request.payment_status.' . $value;
+        if (\Illuminate\Support\Facades\Lang::has($key)) {
+            return __($key);
+        }
+
+        $fallbackKey = match ($value) {
+            'paid', 'unpaid', 'partially_paid', 'partial' => 'ecommerce::ecommerce.payment_status_values.' . $value,
+            default => 'ecommerce::ecommerce.payment_status_values.unknown',
+        };
+
+        return __($fallbackKey);
+    };
+
     function serviceRequestStatusColor($status): string {
         $value = $status instanceof \UnitEnum ? $status->value : (string) $status;
         return match ($value) {
@@ -300,7 +314,7 @@
                                     @php($paymentStatus = $serviceRequest->payment_status)
                                     @php($paymentStatusValue = $paymentStatus instanceof \UnitEnum ? $paymentStatus->value : (string) $paymentStatus)
                                     <span class="status-badge {{ serviceRequestStatusColor($paymentStatusValue) }}">
-                                        {{ $paymentStatusValue !== '' ? __('lang.educational_request.payment_status.' . $paymentStatusValue) : __('ecommerce::ecommerce.not_started') }}
+                                        {{ $paymentStatusValue !== '' ? $paymentStatusLabel($paymentStatusValue) : __('ecommerce::ecommerce.not_started') }}
                                     </span>
                                 </td>
                                 <td data-label="@lang('ecommerce::ecommerce.amount')">

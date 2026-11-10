@@ -748,6 +748,13 @@ return [
     'total' => 'المجموع',
     'status' => 'الحالة',
     'payment_status' => 'حالة الدفع',
+    'payment_status_values' => [
+        'paid' => 'مدفوع',
+        'unpaid' => 'غير مدفوع',
+        'partially_paid' => 'مدفوع جزئياً',
+        'partial' => 'مدفوع جزئياً',
+        'unknown' => 'حالة دفع غير معروفة',
+    ],
     'no_orders' => 'لا توجد طلبات',
     'delivery_addresses' => 'عناوين التوصيل',
     'no_addresses' => 'لا توجد عناوين مسجلة',

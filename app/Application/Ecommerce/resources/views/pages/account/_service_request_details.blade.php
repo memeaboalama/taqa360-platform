@@ -190,6 +190,20 @@
         'cancelled' => 'bg-cancelled',
         default => 'bg-pending',
     };
+    $paymentStatusLabel = static function ($value): string {
+        $key = 'lang.educational_request.payment_status.' . $value;
+        if (\Illuminate\Support\Facades\Lang::has($key)) {
+            return __($key);
+        }
+
+        $fallbackKey = match ($value) {
+            'paid', 'unpaid', 'partially_paid', 'partial' => 'ecommerce::ecommerce.payment_status_values.' . $value,
+            default => 'ecommerce::ecommerce.payment_status_values.unknown',
+        };
+
+        return __($fallbackKey);
+    };
+
     $statusColor = static fn ($value) => match ($value) {
         'draft' => 'bg-draft',
         'pending', 'unpaid' => 'bg-pending',
@@ -293,7 +307,7 @@
         }
 
         $activityStatus = $activity->activity_type === 'payment'
-            ? __('lang.educational_request.payment_status.' . $activity->to_status)
+            ? $paymentStatusLabel($activity->to_status)
             : $statusLabel($activity->to_status);
         $activityField = match ($activity->activity_type) {
             'payment' => __('ecommerce::ecommerce.payment_status'),
@@ -410,7 +424,7 @@
                     <div class="label">@lang('ecommerce::ecommerce.payment_status')</div>
                     <div class="value">
                         <span class="status-badge {{ $statusColor($paymentStatusValue) }}">
-                            {{ $paymentStatusValue !== '' ? __('lang.educational_request.payment_status.' . $paymentStatusValue) : __('ecommerce::ecommerce.not_started') }}
+                            {{ $paymentStatusValue !== '' ? $paymentStatusLabel($paymentStatusValue) : __('ecommerce::ecommerce.not_started') }}
                         </span>
                     </div>
                 </div>

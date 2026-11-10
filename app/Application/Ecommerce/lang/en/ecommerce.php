@@ -754,6 +754,13 @@ return [
     'total' => 'Total',
     'status' => 'Status',
     'payment_status' => 'Payment Status',
+    'payment_status_values' => [
+        'paid' => 'Paid',
+        'unpaid' => 'Unpaid',
+        'partially_paid' => 'Partially paid',
+        'partial' => 'Partially paid',
+        'unknown' => 'Unknown payment status',
+    ],
     'no_orders' => 'No orders found',
     'delivery_addresses' => 'Delivery Addresses',
     'no_addresses' => 'No addresses found',
