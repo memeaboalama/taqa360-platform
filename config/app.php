@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'name' => in_array(env('APP_NAME'), [null, '', 'Laravel'], true)
+    'name' => in_array(env('APP_NAME'), [null, '', 'Laravel', '_APP_NAME_', '__APP_NAME__'], true)
         ? (env('APP_BRAND') === 'huloolcom' ? 'Huloolcom' : 'TAQA 360')
         : env('APP_NAME'),
 
