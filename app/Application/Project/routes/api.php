@@ -4,6 +4,7 @@ use App\Application\Admin\Controllers\Api\Auth\AuthController;
 use App\Application\Project\Controllers\Api\BidController;
 use Application\Project\Controllers\Api\AssignmentController;
 use App\Application\Project\Controllers\Api\BidTaskController;
+use App\Application\Project\Controllers\Api\BidModificationController;
 use Application\Project\Controllers\Api\AttachmentController;
 use Application\Project\Controllers\Api\ProjectController;
 use Application\Project\Controllers\Api\TaskController;
@@ -25,6 +26,7 @@ Route::group(['prefix' => 'v1/admin', 'middleware' => 'auth:admin-api'],function
             Route::get('/{bid}', 'show');
         });
     });
+    Route::post('/bid-modifications/{modification}/decision', [BidModificationController::class, 'decide']);
 
     Route::prefix('projects')->group(function () {
 

@@ -46,6 +46,11 @@ class Bid extends Model
         return $this->hasMany(BidTask::class);
     }
 
+    public function modificationRequests()
+    {
+        return $this->hasMany(BidModificationRequest::class)->latest();
+    }
+
     public function attachments()
     {
         return $this->morphMany(ProjectFile::class, 'fileable');

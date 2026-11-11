@@ -45,6 +45,7 @@ class BidController extends Controller
             $bid = Bid::where('uuid', $bid->uuid)->with([
                     'project.tasks',
                     'bidTasks.task',
+                    'modificationRequests',
                     'attachments',
                     'links',
                     'educator.profile',

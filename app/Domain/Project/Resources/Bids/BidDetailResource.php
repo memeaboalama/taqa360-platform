@@ -28,6 +28,16 @@ class BidDetailResource extends JsonResource
             'createdAt' => $this->created_at?->toISOString(),
             'updatedAt' => $this->updated_at?->toISOString(),
             'bidTasks' => $this->whenLoaded('bidTasks', fn() => BidTaskResource::collection($this->bidTasks)),
+            'modificationRequests' => $this->whenLoaded('modificationRequests', fn() => $this->modificationRequests->map(fn($modification) => [
+                'id' => $modification->uuid,
+                'status' => $modification->status,
+                'previousValues' => $modification->previous_values,
+                'requestedValues' => $modification->requested_values,
+                'decisionNote' => $modification->decision_note,
+                'decidedBy' => $modification->decided_by,
+                'createdAt' => $modification->created_at?->toISOString(),
+                'decidedAt' => $modification->decided_at?->toISOString(),
+            ])->values()),
             'attachments' => $this->whenLoaded('attachments', fn() => TaskFileResource::collection($this->attachments)),
             'links' => $this->when($this->resource->relationLoaded('links'), function () {
                 $links = $this->resource->getRelation('links');

@@ -72,6 +72,7 @@ class BidController extends Controller
             ->with([
                 'project.tasks',
                 'bidTasks.task',
+                'modificationRequests',
                 'attachments',
                 'links',
                 'educator'

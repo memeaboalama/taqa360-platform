@@ -4,6 +4,7 @@ use App\Application\Educator\Controllers\Api\AssignmentController;
 use App\Application\Educator\Controllers\Api\Auth\AuthController;
 use App\Application\Educator\Controllers\Api\Auth\PasswordResetController;
 use App\Application\Educator\Controllers\Api\BidController;
+use App\Application\Project\Controllers\Api\BidModificationController;
 use App\Application\Educator\Controllers\Api\DashboardController;
 use App\Application\Educator\Controllers\Api\FileController;
 use App\Application\Educator\Controllers\Api\OpportunityController;
@@ -70,6 +71,7 @@ Route::group(['prefix' => 'v1/educator'],function () {
             Route::post('/', 'store');
             Route::put('/{bid}', 'update');
         });
+        Route::post('/bids/{bid}/modification-requests', [BidModificationController::class, 'store']);
 
         Route::prefix('dashboard')->controller(DashboardController::class)->group(function() {
             Route::get('/stats', 'stats');

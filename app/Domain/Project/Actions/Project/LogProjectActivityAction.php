@@ -83,6 +83,9 @@ class LogProjectActivityAction
     public const BID_APPROVED = 'bid.approved';
     public const BID_REJECTED = 'bid.rejected';
     public const BID_ASSIGNED = 'bid.assigned';
+    public const BID_MODIFICATION_REQUESTED = 'bid.modification_requested';
+    public const BID_MODIFICATION_APPROVED = 'bid.modification_approved';
+    public const BID_MODIFICATION_REJECTED = 'bid.modification_rejected';
 
     /** Best-effort actor label: whoever the current guard resolves to. */
     private function actorName(): ?string
