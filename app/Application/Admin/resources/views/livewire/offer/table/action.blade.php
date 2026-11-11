@@ -12,13 +12,13 @@
         @endif
         @endAdminHasRole
 
-        @AdminHasRole(['edit_coupons'])
+        @AdminHasRole(['edit_offers', 'edit_coupons'])
         <a
             class="btn btn-icon btn-sm btn-info-transparent rounded-pill"
             wire:click="$emit('updateOffer',{{ $row->id }})"
             title="edit"><i class="ri-edit-line"></i></a>
         @endAdminHasRole
-        @AdminHasRole(['edit_coupons'])
+        @AdminHasRole(['edit_offers', 'edit_coupons'])
         @if($row->status->value != \App\Support\Enum\StatusEnum::ACTIVE->value)
         <a href="javascript:void(0);" 
             class="btn btn-icon btn-sm btn-success-transparent rounded-pill"
@@ -27,7 +27,7 @@
             @endif
         @endAdminHasRole
 
-        @AdminHasRole(['delete_coupons'])
+        @AdminHasRole(['delete_offers', 'delete_coupons'])
         @if($row->status->value == \App\Support\Enum\StatusEnum::ACTIVE->value)
             <a href="javascript:void(0);" 
             class="btn btn-icon btn-sm btn-danger-transparent rounded-pill" 

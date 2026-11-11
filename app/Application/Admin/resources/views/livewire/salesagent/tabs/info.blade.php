@@ -96,17 +96,17 @@
 
                                 <div class="col-xl-4">
                                     <div>
-                                        <label for="branch-city" class="form-label text-black">@lang('admin::home.Region') <span class="text-danger">*</span></label>
+                                        <label for="branch-region" class="form-label text-black">@lang('admin::home.Region') <span class="text-danger">*</span></label>
                                         <select class="form-control selectCity"
                                                 wire:model="region_id"
-                                                id="branch-city">
+                                                id="branch-region">
                                             <option value="">@lang('admin::home.Select')</option>
                                             @foreach($regions as $region)
                                                 <option value="{{ $region->id }}">{{ $region->title }}</option>
                                             @endforeach
                                         </select>
                                     </div>
-                                    @error('city_id') <span
+                                    @error('region_id') <span
                                         class="d-inline-block text-danger">{{ $message }}</span> @enderror
                                 </div>
 

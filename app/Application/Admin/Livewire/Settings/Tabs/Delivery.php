@@ -20,10 +20,10 @@ class Delivery extends Component
     protected function rules(): array
     {
         return [
-            'vat' => 'required|numeric',
-            'delivery_km' => 'required|numeric',
-            'delivery_fees' => 'required|numeric',
-            'extra_km_fees' => 'required|numeric',
+            'vat' => 'required|numeric|min:0|max:100',
+            'delivery_km' => 'required|numeric|min:0',
+            'delivery_fees' => 'required|numeric|min:0',
+            'extra_km_fees' => 'required|numeric|min:0',
         ];
     }
 
@@ -37,14 +37,12 @@ class Delivery extends Component
         ];
     }
 
-    public function updateSearchCapacity(UpdateGeneralSettingAction $updateGeneralSettingAction): void
+    public function updateDeliverySettings(UpdateGeneralSettingAction $updateGeneralSettingAction): void
     {
         $data = $this->validate(attributes: $this->nickNames());
-        DB::beginTransaction();
-        $settings = $updateGeneralSettingAction->handle($data);
+        $settings = DB::transaction(fn () => $updateGeneralSettingAction->handle($data));
         $this->fillData($settings);
         $this->alert('success', __('admin::home.data_updated_successfully'));
-        DB::commit();
     }
 
     protected function fillData($settings): void

@@ -9,13 +9,10 @@ use Application\Admin\Livewire\Settings\Tabs\ContentUser\Ar\Quill as QuillUserAr
 use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
-use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\Log;
 
 class Auth extends Component
 {
     use LivewireAlert;
-    use WithFileUploads;
     public $user_page_content_en, $user_page_content_ar;
 
     public $listeners = [
@@ -40,28 +37,23 @@ class Auth extends Component
     protected function rules(): array
     {
         return [
-            '' => '',
+            'user_page_content_en' => 'nullable|string',
+            'user_page_content_ar' => 'nullable|string',
         ];
     }
 
-   
     public function updateUserPageContent(UpdateGeneralSettingAction $updateGeneralSettingAction): void
     {
-        $data = $this->all();
-        Log::debug($data);
-        DB::beginTransaction();
-        $settings = $updateGeneralSettingAction->handle($data);
+        $data = $this->validate();
+        $settings = DB::transaction(fn () => $updateGeneralSettingAction->handle($data));
         $this->fillData($settings);
         $this->alert('success', __('admin::home.data_updated_successfully'));
-        DB::commit();
     }
 
     protected function fillData($settings): void
     {
         $this->user_page_content_en = $settings?->user_page_content_en;
         $this->user_page_content_ar = $settings?->user_page_content_ar;
-        Log::debug($this->user_page_content_en);
-        Log::debug($this->user_page_content_ar);
     }
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application
     {

@@ -2,7 +2,6 @@
 
 namespace Application\Admin\Livewire\Settings\Tabs\Content\Ar;
 
-use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class Quill extends Component
@@ -20,7 +19,6 @@ class Quill extends Component
 
     public function updatedValueAr($value) {
         $this->emit(self::EVENT_VALUE_UPDATED_AR, $this->value_ar);
-        Log::debug($value);
     }
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application
     {

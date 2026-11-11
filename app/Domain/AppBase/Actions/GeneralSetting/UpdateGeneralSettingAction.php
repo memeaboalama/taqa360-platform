@@ -9,6 +9,7 @@ use App\Support\Services\ImagesServices\ImageService;
 class UpdateGeneralSettingAction
 {
     private GeneralSettingRepository $generalSettingRepository;
+    private ImageService $imageService;
 
     public function __construct(GeneralSettingRepository $generalSettingRepository, ImageService $imageService)
     {

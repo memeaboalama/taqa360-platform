@@ -90,7 +90,7 @@
                                             <div class="col-xl-4">
                                                 <label for="max_discount" class="form-label text-black">{{__('admin::home.Max Discount')}}</label>
                                                 <input type="number" step="0.5" min="0" class="form-control @error("max_discount") is-invalid @enderror"
-                                                id="min_order_value" placeholder="0" wire:model.defer="max_discount">
+                                                id="max_discount" placeholder="0" wire:model.defer="max_discount">
                                                 
                                                 @error("max_discount") <span
                                                 class="text-danger d-block mt-2">{{ $message }}</span> @enderror

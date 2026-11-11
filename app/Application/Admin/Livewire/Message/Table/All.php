@@ -8,6 +8,7 @@ use App\Domain\AppBase\Repositories\MessageRepository;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
@@ -41,10 +42,21 @@ class All extends DataTableComponent
 
     public function updateStatus(UpdateStatusAction $updateStatusAction ,$status, $id): void
     {
-        DB::beginTransaction();
-        $updateStatusAction->handle($id, ['status' => $status]);
+        Validator::validate(
+            ['status' => $status, 'id' => $id],
+            ['status' => 'required|in:active,inactive', 'id' => 'required|integer|min:1']
+        );
+
+        $updated = DB::transaction(
+            fn () => $updateStatusAction->handle((int) $id, ['status' => $status])
+        );
+
+        if (!$updated) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $this->alert('success', __('admin::home.Message Updated Successfully'));
-        DB::commit();
     }
 
     public function columns(): array

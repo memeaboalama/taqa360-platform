@@ -24,7 +24,7 @@
             <div class="row gy-3" style="margin-top: 6rem">
                 <div class="col-xl-6">
                     <label for="auth_page_image" class="form-label text-black">@lang('admin::home.Login/Register Image') <span class="text-danger">*</span></label>
-                    <input type="file" class="form-control" id="auth_page_image"  wire:model.defer="auth_page_image" accept="image/png, image/jpeg, image/webp">
+                    <input type="file" class="form-control" id="auth_page_image" wire:model="auth_page_image" accept="image/png, image/jpeg, image/webp">
                     <label for="auth_page_image" class="form-label mt-2 text-danger">Max size : 1 MB , 250 px * 250 px</label>
                     @error("auth_page_image")
                         <span class="text-danger d-block mt-2">{{ $message }}</span>

@@ -707,6 +707,7 @@ return [
     'wait' => 'انتظر',
     'view_notification' => 'عرض الإشعار',
     'not_found' => 'الإشعار غير موجود',
+    'sales_agent_not_found' => 'المندوب غير موجود أو تم حذفه.',
 
     'show' => 'عرض',
     'activate' => 'تفعيل',

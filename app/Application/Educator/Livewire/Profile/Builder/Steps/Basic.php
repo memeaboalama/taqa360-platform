@@ -20,6 +20,7 @@ class Basic extends Component
 
     public Educator $educator;
     public bool $isAdminEdit = false;
+    public bool $returnToPending = false;
     public $name, $email, $phone;
     public $nationality_id, $gender, $country_id, $city_id;
     public $identity_type, $identity_id, $experience_years, $specialization;
@@ -75,6 +76,7 @@ class Basic extends Component
     public function mount(Educator $educator)
     {
         $this->educator = $educator->load(['profile']);
+        $this->returnToPending = request()->query('return_to') === 'pending';
         $this->fillData($this->educator);
         $this->nationalities = Nationality::where('status', 'active')->get();
         $this->countries = Country::where('status', 'active')->get();
@@ -172,6 +174,14 @@ class Basic extends Component
 
                 $this->educator->refresh()->load('profile');
                 $this->alert('success', __('admin::home.data_updated_successfully'));
+                $route = $this->returnToPending ? 'admin:educators.pending' : 'admin:educators.show';
+                $parameters = $this->returnToPending ? [] : ['id' => $this->educator->id];
+                $url = \Mcamara\LaravelLocalization\Facades\LaravelLocalization::getLocalizedURL(
+                    app()->getLocale(),
+                    route($route, $parameters)
+                );
+
+                return redirect()->to($url);
             } catch (\Exception $e) {
                 Log::error("Error in admin educator edit: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
                 $this->alert('error', __('educator::builder.messages.generic_error'));

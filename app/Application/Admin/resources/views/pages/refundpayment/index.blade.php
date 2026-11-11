@@ -10,20 +10,26 @@
                     <div class="row mb-0">
                         <livewire:admin::refund-payment.table.filter/>
                     </div>
+                    @AdminHasRole(['create_refundpayments', 'show_roles'])
                     <div class="prism-toggle">
                         <button
                             class="btn btn-primary-light m-1"
                             data-bs-toggle="modal"
                             data-bs-target="#createRefundPayment">{{ __('admin::home.Add New') }}<i class="bi bi-plus-lg ms-2"></i></button>
                     </div>
+                    @endAdminHasRole
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <livewire:admin::refund-payment.table.all/>
+                        @AdminHasRole(['show_refundpayments', 'show_roles'])
+                            <livewire:admin::refund-payment.table.all/>
+                        @endAdminHasRole
                     </div>
                 </div>
 
-                <livewire:admin::refund-payment.modal.create/>
+                @AdminHasRole(['create_refundpayments', 'show_roles'])
+                    <livewire:admin::refund-payment.modal.create/>
+                @endAdminHasRole
             </div>
         </div>
     </div>

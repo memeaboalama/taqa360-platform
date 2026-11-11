@@ -38,10 +38,10 @@ class Profile extends Component
     public function updateProfile(UpdateProfileAction $updateProfileAction): void
     {
         $data = $this->validate(attributes: $this->nickNames());
-        DB::beginTransaction();
-        $admin = $updateProfileAction->handle($this->admin->id ,$data);
+        $admin = DB::transaction(fn () => $updateProfileAction->handle($this->admin->id, $data));
+        $this->admin = $admin;
+        $this->fillData($admin);
         $this->alert('success', __('admin::home.data_updated_successfully'));
-        DB::commit();
     }
 
     protected function fillData($admin)

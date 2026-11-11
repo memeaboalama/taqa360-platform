@@ -118,10 +118,10 @@ class All extends DataTableComponent
                     echo number_format($value, 2);
                 })
                 ->searchable(),        
-            Column::make(__('admin::home.totalServices'), 'subtotal')
+            Column::make(__('admin::home.totalServices'), 'total_after_vat')
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
-                    echo number_format($value+$row->delivery_fee, 2) . ' SAR';
+                    echo number_format($value, 2) . ' SAR';
                 })
                 ->searchable(),
 

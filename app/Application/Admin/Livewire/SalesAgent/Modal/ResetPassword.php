@@ -38,18 +38,19 @@ class ResetPassword extends Component
     {
         $data = $this->validate();
 
-        DB::beginTransaction();
-        try {
-            $updateSalesAgentAction->handle($this->salesAgentId, ['password' => $data['password']]);
-            DB::commit();
-            $this->emit('closeModal', '#resetSalesAgentPassword');
-            $this->emit('refreshDatatable');
-            $this->reset('password', 'password_confirmation', 'salesAgentId');
-            $this->localizedAlert('success', __('admin::home.password_reset_successfully'));
-        } catch (\Throwable $e) {
-            DB::rollBack();
+        $updated = DB::transaction(
+            fn () => $updateSalesAgentAction->handle($this->salesAgentId, ['password' => $data['password']])
+        );
+
+        if (!$updated) {
             $this->localizedAlert('error', __('admin::home.something_went_wrong'));
+            return;
         }
+
+        $this->emit('closeModal', '#resetSalesAgentPassword');
+        $this->emit('refreshDatatable');
+        $this->reset('password', 'password_confirmation', 'salesAgentId');
+        $this->localizedAlert('success', __('admin::home.password_reset_successfully'));
     }
 
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application

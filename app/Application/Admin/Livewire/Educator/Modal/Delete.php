@@ -22,12 +22,24 @@ class Delete extends Component
 
     public function destroy(DestroyEducatorAction $destroyEducatorAction): void
     {
-        DB::beginTransaction();
-        $destroyEducatorAction->handle($this->element_id);
+        if ($this->element_id === null) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
+        $deleted = DB::transaction(
+            fn () => $destroyEducatorAction->handle($this->element_id)
+        );
+
+        if (!$deleted) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $this->emit('closeModal', '#deleteEducator');
         $this->emit('refreshEducatorTables');
         $this->alert('success', __('admin::home.data_deleted_successfully'));
-        DB::commit();
+        $this->element_id = null;
     }
 
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application

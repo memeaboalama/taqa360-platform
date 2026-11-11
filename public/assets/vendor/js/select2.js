@@ -1,6 +1,10 @@
 (function () {
     "use strict"
 
+    if (typeof $.fn.select2 !== 'function') {
+        return;
+    }
+
     /* basic select2 */
     $('.js-example-basic-single').select2();
 

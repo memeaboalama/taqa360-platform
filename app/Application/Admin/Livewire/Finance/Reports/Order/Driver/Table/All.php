@@ -44,8 +44,7 @@ class All extends DataTableComponent
     public function builder(): Builder
     {
         return $this->orderRepository->filterOrders($this->filters,
-            ['user', 'merchant', 'branch', 'driver'],
-            ['id', 'code', 'total_after_vat']);
+            ['user', 'merchant', 'branch', 'driver']);
     }
 
     public function columns(): array

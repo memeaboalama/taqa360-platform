@@ -2,7 +2,7 @@
     <div class="hstack gap-2 fs-15">
         <a
             class="btn btn-icon btn-sm btn-secondary-transparent rounded-pill"
-            href="{{ url("admin/educators/show/$row->id") }}"
+            href="{{ \Mcamara\LaravelLocalization\Facades\LaravelLocalization::getLocalizedURL(app()->getLocale(), route('admin:educators.show', ['id' => $row->id])) }}"
             title="{{ __('admin::home.showProvider') }}"
             target="_blank">
             <span><i class="ri-eye-line"></i></span>
@@ -20,7 +20,7 @@
         @AdminHasRole(['edit_educators'])
         <a
             class="btn btn-icon btn-sm btn-info-transparent rounded-pill position-relative"
-            href="{{ url("admin/educators/edit/$row->id") }}"
+            href="{{ \Mcamara\LaravelLocalization\Facades\LaravelLocalization::getLocalizedURL(app()->getLocale(), route('admin:educators.edit', ['id' => $row->id] + (($isPending ?? false) ? ['return_to' => 'pending'] : []))) }}"
             title="{{ __('admin::home.Edit') }}"
             onclick="this.querySelector('.btn-lbl').classList.add('invisible'); this.querySelector('.btn-spin').classList.remove('d-none'); this.classList.add('disabled');">
             <span class="btn-lbl"><i class="ri-edit-line"></i></span>

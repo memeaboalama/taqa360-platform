@@ -8,14 +8,15 @@ use Domain\SalesAgent\Models\SalesAgent;
 use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
+use Illuminate\Validation\Rule;
 
 class Update extends Component
 {
     use LivewireAlert;
 
     public string $status = 'active';
-    public string $type = 'falt';
-    // public string $type_amount = "order";
+    public string $type = 'flat';
+    public string $type_amount = 'order';
 
     public string $code;
     public int $usages_left;
@@ -42,15 +43,15 @@ class Update extends Component
             $this->usages_left = $this->walletcoupon->usages_left;
             $this->limit_per_user = $this->walletcoupon->limit_per_user;
             $this->status = $this->walletcoupon->status->value;
-            // $this->type = $this->walletcoupon->type;
-            // $this->type_amount = $this->walletcoupon?->type_amount;
+            $this->type = $this->walletcoupon->type;
+            $this->type_amount = $this->walletcoupon->type_amount;
             $this->amount_value = $this->walletcoupon->amount_value;
             // $this->max_amount = $this->walletcoupon->max_amount;
             // $this->min_order_value = $this->walletcoupon->min_order_value;
             $this->is_custom = $this->walletcoupon->is_custom;
             $this->sales_agent_id = $this->walletcoupon->sales_agent_id;
             $this->sales_agent_name = $this->walletcoupon->sales_agent?->name;
-            $this->expired_at = $this->walletcoupon->expired_at->format('Y-m-d');
+            $this->expired_at = $this->walletcoupon->expired_at?->format('Y-m-d');
             if ($this->walletcoupon->sales_agent) {
                 $this->emit('setSalesAgent', $this->walletcoupon->sales_agent);
             } else {
@@ -63,18 +64,18 @@ class Update extends Component
     protected function rules(): array
     {
         return [
-            'code' => 'required',
-            'usages_left' => 'required',
-            'limit_per_user' => 'integer',
+            'code' => ['required', 'string', 'max:20', Rule::unique('wallet_coupons', 'code')->ignore($this->walletcoupon?->id)],
+            'usages_left' => 'required|integer|min:0',
+            'limit_per_user' => 'required|integer|min:1',
+            'type' => 'required|string|in:flat,percent',
+            'type_amount' => 'required|string|in:order,delivery',
             // 'min_order_value' => 'required',
             // 'max_amount' => 'required',
-            'amount_value' => 'required',
-            // 'type' => 'required|string|in:flat,percent',
-            'expired_at' => 'required',
+            'amount_value' => 'required|numeric|gt:0',
+            'expired_at' => 'required|date',
             'status' => 'required|string|in:active,inactive',
-            'is_custom' => 'required',
+            'is_custom' => 'required|boolean',
             'sales_agent_id' => 'nullable',
-            // 'type_amount' => 'string',
         ];
     }
 

@@ -2,7 +2,7 @@
      role="tabpanel" aria-labelledby="DeliveryFees-tab" tabindex="0" wire:ignore.self>
 
     <div class="mt-4">
-        <form method="POST" wire:submit.prevent="updateSearchCapacity">
+        <form method="POST" wire:submit.prevent="updateDeliverySettings">
 
             <div class="row gy-3">
                 <div class="col-xl-3">

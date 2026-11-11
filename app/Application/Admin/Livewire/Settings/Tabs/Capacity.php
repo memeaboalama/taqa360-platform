@@ -21,8 +21,8 @@ class Capacity extends Component
     protected function rules(): array
     {
         return [
-            'restaurant_search_capacity' => 'required|numeric|max:300',
-            'driver_search_capacity' => 'required|numeric',
+            'restaurant_search_capacity' => 'required|numeric|min:0|max:300',
+            'driver_search_capacity' => 'required|numeric|min:0',
         ];
     }
 
@@ -37,11 +37,9 @@ class Capacity extends Component
     public function updateSearchCapacity(UpdateGeneralSettingAction $updateGeneralSettingAction): void
     {
         $data = $this->validate(attributes: $this->nickNames());
-        DB::beginTransaction();
-        $settings = $updateGeneralSettingAction->handle($data);
+        $settings = DB::transaction(fn () => $updateGeneralSettingAction->handle($data));
         $this->fillData($settings);
         $this->alert('success', __('admin::home.data_updated_successfully'));
-        DB::commit();
     }
 
     protected function fillData($settings): void

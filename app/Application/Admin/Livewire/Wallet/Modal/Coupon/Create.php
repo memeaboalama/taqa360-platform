@@ -7,6 +7,7 @@ use Domain\SalesAgent\Models\SalesAgent;
 use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
+use Illuminate\Validation\Rule;
 
 class Create extends Component
 {
@@ -31,16 +32,18 @@ class Create extends Component
     protected function rules(): array
     {
         return [
-            'code' => 'required',
-            'usages_left' => 'required',
-            'limit_per_user' => 'integer',
+            'code' => ['required', 'string', 'max:20', Rule::unique('wallet_coupons', 'code')],
+            'usages_left' => 'required|integer|min:0',
+            'limit_per_user' => 'required|integer|min:1',
+            'type' => 'required|string|in:flat,percent',
+            'type_amount' => 'required|string|in:order,delivery',
             // 'min_order_value' => 'required',
             // 'max_amount' => 'required',
-            'amount_value' => 'required',
+            'amount_value' => 'required|numeric|gt:0',
             // 'type' => 'required|string|in:flat',
-            'expired_at' => 'required',
+            'expired_at' => 'required|date',
             'status' => 'required|string|in:active,inactive',
-            'is_custom' => 'required',
+            'is_custom' => 'required|boolean',
             'sales_agent_id' => 'nullable',
             // 'type_amount' => 'required|string',
         ];

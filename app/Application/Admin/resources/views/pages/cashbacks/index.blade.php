@@ -11,12 +11,14 @@
                         @lang('admin::home.Cash back')
                     </div>
                     
+                    @AdminHasRole(['create_cashbacks', 'create_coupons'])
                     <div class="prism-toggle">
                         <button
                             class="btn btn-primary-light m-1"
                             data-bs-toggle="modal"
                             data-bs-target="#createCashBack">{{__('admin::home.Add New')}}<i class="bi bi-plus-lg ms-2"></i></button>
                     </div>
+                    @endAdminHasRole
                  
                 </div>
                 <div class="card-body">
@@ -25,18 +27,20 @@
                     </div>
                 </div>
 
-                <!-- @AdminHasRole(['create_coupons']) -->
+                @AdminHasRole(['create_cashbacks', 'create_coupons'])
                 <livewire:admin::cash-back.modal.create/> 
-                <!-- @endAdminHasRole -->
+                @endAdminHasRole
 
-                <!-- @AdminHasRole(['edit_coupons']) -->
+                @AdminHasRole(['edit_cashbacks', 'edit_coupons'])
                 <livewire:admin::cash-back.modal.update/> 
-                <!-- @endAdminHasRole -->
+                @endAdminHasRole
 
-                <!-- @AdminHasRole(['delete_coupons']) -->
+                @AdminHasRole(['delete_cashbacks', 'delete_coupons'])
                 <livewire:admin::cash-back.modal.delete/> 
-                <!-- @endAdminHasRole -->
+                @endAdminHasRole
+                @AdminHasRole(['edit_cashbacks', 'edit_coupons'])
                 <livewire:admin::cash-back.modal.enable/> 
+                @endAdminHasRole
 
 
             </div>

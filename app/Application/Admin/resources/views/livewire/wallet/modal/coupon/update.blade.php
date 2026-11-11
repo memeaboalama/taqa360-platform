@@ -71,7 +71,6 @@
                                                     class="text-danger d-block mt-2">{{ $message }}</span> @enderror
 
                                             </div> --}}
-{{-- 
                                             <div class="col-xl-4">
                                                 <label for="type" class="form-label text-black">{{__('admin::home.Type')}}</label>
                                                 <select class="form-control @error('type') is-invalid @enderror" wire:model.defer="type">
@@ -83,7 +82,7 @@
                                                 @error("type") <span
                                                     class="text-danger d-block mt-2">{{ $message }}</span> @enderror
 
-                                            </div> --}}
+                                            </div>
 
 
                                             <div class="col-xl-4">
@@ -123,7 +122,7 @@
                                                     class="text-danger d-block mt-2">{{ $message }}</span> @enderror
 
                                             </div>
-                                            {{-- <div class="col-xl-4">
+                                            <div class="col-xl-4">
                                                 <label for="type_amount" class="form-label text-black">{{__('admin::home.Discount type')}}</label>
                                                 <select class="form-control @error('type_amount') is-invalid @enderror"  wire:model.defer="type_amount">
                                                     <option value="">{{__('admin::home.Select Discount type')}}</option>
@@ -134,7 +133,7 @@
                                                 @error("type_amount") <span
                                                     class="text-danger d-block mt-2">{{ $message }}</span> @enderror
 
-                                            </div> --}}
+                                            </div>
                                             <div class="col-xl-4">
                                                 <label for="is_custom" class="form-label text-black">{{__('admin::home.Choose Type')}} <span class="text-danger">*</span></label>
                                                 <br>

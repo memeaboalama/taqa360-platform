@@ -20,14 +20,18 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <livewire:admin::cash-back.table.merchants.all/>
+                        @AdminHasRole(['show_merchant cashbacks', 'show_coupons'])
+                            <livewire:admin::cash-back.table.merchants.all/>
+                        @endAdminHasRole
                     </div>
                 </div>
 
-
-                <livewire:admin::cash-back.modal.merchants.update/>
-
-                <livewire:admin::cash-back.modal.merchants.delete/>
+                @AdminHasRole(['edit_merchant cashbacks', 'edit_merchant coupons', 'edit_coupons'])
+                    <livewire:admin::cash-back.modal.merchants.update/>
+                @endAdminHasRole
+                @AdminHasRole(['delete_merchant cashbacks', 'delete_merchant coupons', 'delete_coupons'])
+                    <livewire:admin::cash-back.modal.merchants.delete/>
+                @endAdminHasRole
                 
 
 

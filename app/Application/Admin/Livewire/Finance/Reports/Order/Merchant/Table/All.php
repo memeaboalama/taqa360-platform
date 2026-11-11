@@ -45,8 +45,7 @@ class All extends DataTableComponent
     {
         return $this->orderRepository->filterOrders(
             $this->filters,
-            ['user', 'merchant', 'branch', 'payment', 'merchant.packages', 'promocode'],
-            ['id', 'code', 'user_id', 'merchant_id', 'merchant_branch_id', 'total_after_vat', 'created_at', 'status', 'payment_method', 'discount', 'subtotal','cash_back_id']
+            ['user', 'merchant', 'branch', 'payment', 'merchant.packages', 'promocode']
         );
     }
 

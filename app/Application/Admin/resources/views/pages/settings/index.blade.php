@@ -67,9 +67,9 @@
                                     @endAdminHasRole
                                     @AdminHasRole(['show delivery fees_settings'])
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="OrdersSettings-tab" data-bs-toggle="tab"
+                                        <button class="nav-link" id="PaymentSettings-tab" data-bs-toggle="tab"
                                                 data-bs-target="#PaymentSettings-tab-pane" type="button" role="tab"
-                                                aria-controls="PaymentSettings-tab-pane" aria-selected="true"><i
+                                                aria-controls="PaymentSettings-tab-pane" aria-selected="false"><i
                                                 class="ri-exchange-dollar-fill me-1 align-middle d-inline-block"></i>{{ __('admin::home.Payment Methods Commission') }}</button>
                                     </li>
                                     @endAdminHasRole

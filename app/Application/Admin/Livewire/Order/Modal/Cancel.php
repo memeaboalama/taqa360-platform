@@ -22,12 +22,20 @@ class Cancel extends Component
 
     public function destroy(CancelOrderAction $cancelOrderAction): void
     {
-        DB::beginTransaction();
-        $cancelOrderAction->handle($this->element_id);
+        if (!$this->element_id) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
+        $order = DB::transaction(fn () => $cancelOrderAction->handle($this->element_id));
+        if (!$order) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $this->emit('closeModal', '#cancelOrder');
         $this->emit('refreshDatatable');
         $this->alert('success', 'Order Canceled Successfully');
-        DB::commit();
     }
 
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application

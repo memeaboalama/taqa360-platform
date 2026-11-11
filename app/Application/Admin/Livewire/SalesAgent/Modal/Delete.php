@@ -22,12 +22,20 @@ class Delete extends Component
 
     public function destroy(DestroySalesAgentAction $destroySalesAgentAction): void
     {
-        DB::beginTransaction();
-        $destroySalesAgentAction->handle($this->element_id);
+        if (!$this->element_id) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
+        $deleted = DB::transaction(fn () => $destroySalesAgentAction->handle($this->element_id));
+        if (!$deleted) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $this->emit('closeModal', '#deleteSalseAgent');
         $this->emit('refreshDatatable');
         $this->alert('success', __('admin::home.data_deleted_successfully'));
-        DB::commit();
     }
 
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application

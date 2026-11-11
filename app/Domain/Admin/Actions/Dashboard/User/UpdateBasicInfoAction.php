@@ -16,6 +16,10 @@ class UpdateBasicInfoAction
     public function handle(int $userId ,array $data = []): ?\Illuminate\Database\Eloquent\Model
     {
         $user = $this->userRepository->findByCols(['id'=>$userId]);
+        if (!$user) {
+            return null;
+        }
+
         $user->update($data);
         return $user;
     }

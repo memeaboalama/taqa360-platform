@@ -233,7 +233,7 @@
                     </li>
                 @endAdminHasRole
 
-                {{-- @AdminHasRole([
+                @AdminHasRole([
                         'show merchant order report_reports',
                         'show driver order report_reports',
                         'show invoice delivery report_reports'
@@ -268,7 +268,7 @@
 
                         </ul>
                     </li>
-                @endAdminHasRole --}}
+                @endAdminHasRole
 
                 @AdminHasRole(['show_messages'])
                     <li class="slide">
@@ -426,7 +426,7 @@
                 </li>
                 {{-- @endAdminHasRole --}}
 
-                @AdminHasRole(['send notifications_general'])
+                @AdminHasRole(['show_notifications', 'send_notifications', 'send notifications_general'])
                     <li class="slide">
                         <a href="{{ url('admin/notification') }}" class="side-menu__item {{ isActive(url('admin/notification')) }}">
                             <i class="bx bxs-alarm-exclamation side-menu__icon"></i>
@@ -444,7 +444,7 @@
 
 
 
-                @AdminHasRole(['show_coupons'])
+                @AdminHasRole(['show_coupons', 'show_merchant coupons', 'show_offers', 'show_cashbacks', 'show_merchant cashbacks'])
                     <li class="slide has-sub {{ isActiveSection([url('admin/coupons'), url('admin/merchantCoupons'), url('admin/offer'), url('admin/cashBack'), url('admin/merchantsCashBack')]) }}">
                         <a href="javascript:void(0);" class="side-menu__item {{ isActiveSection([url('admin/coupons'), url('admin/merchantCoupons'), url('admin/offer'), url('admin/cashBack'), url('admin/merchantsCashBack')]) ? 'active' : '' }}">
                             <i class="bx bxs-coupon side-menu__icon"></i>
@@ -453,11 +453,13 @@
                         </a>
 
                         <ul class="slide-menu child1">
-                            <li class="slide">
-                                <a href="{{ url('admin/coupons') }}" class="side-menu__item {{ isActive(url('admin/coupons')) }}">
-                                    <span class="side-menu__label">{{ __('admin::home.promocodes') }}</span>
-                                </a>
-                            </li>
+                            @AdminHasRole(['show_coupons'])
+                                <li class="slide">
+                                    <a href="{{ url('admin/coupons') }}" class="side-menu__item {{ isActive(url('admin/coupons')) }}">
+                                        <span class="side-menu__label">{{ __('admin::home.promocodes') }}</span>
+                                    </a>
+                                </li>
+                            @endAdminHasRole
                             @AdminHasRole(['show_merchant coupons'])
                                 <li class="slide">
                                     <a href="{{ url('admin/merchantCoupons') }}" class="side-menu__item {{ isActive(url('admin/merchantCoupons')) }}">
@@ -465,21 +467,27 @@
                                     </a>
                                 </li>
                             @endAdminHasRole
-                            <li class="slide">
-                                <a href="{{ url('admin/offer') }}" class="side-menu__item {{ isActive(url('admin/offer')) }}">
-                                    <span class="side-menu__label">{{ __('admin::home.offers') }}</span>
-                                </a>
-                            </li>
-                            <li class="slide">
-                                <a href="{{ url('admin/cashBack') }}" class="side-menu__item {{ isActive(url('admin/cashBack')) }}">
-                                    <span class="side-menu__label">{{ __('admin::home.Cash back') }}</span>
-                                </a>
-                            </li>
-                            <li class="slide">
-                                <a href="{{ url('admin/merchantsCashBack') }}" class="side-menu__item {{ isActive(url('admin/merchantsCashBack')) }}">
-                                    <span class="side-menu__label">{{ __('admin::home.Cash back Merchants') }}</span>
-                                </a>
-                            </li>
+                            @AdminHasRole(['show_offers', 'show_coupons'])
+                                <li class="slide">
+                                    <a href="{{ url('admin/offer') }}" class="side-menu__item {{ isActive(url('admin/offer')) }}">
+                                        <span class="side-menu__label">{{ __('admin::home.offers') }}</span>
+                                    </a>
+                                </li>
+                            @endAdminHasRole
+                            @AdminHasRole(['show_cashbacks', 'show_coupons'])
+                                <li class="slide">
+                                    <a href="{{ url('admin/cashBack') }}" class="side-menu__item {{ isActive(url('admin/cashBack')) }}">
+                                        <span class="side-menu__label">{{ __('admin::home.Cash back') }}</span>
+                                    </a>
+                                </li>
+                            @endAdminHasRole
+                            @AdminHasRole(['show_merchant cashbacks', 'show_coupons'])
+                                <li class="slide">
+                                    <a href="{{ url('admin/merchantsCashBack') }}" class="side-menu__item {{ isActive(url('admin/merchantsCashBack')) }}">
+                                        <span class="side-menu__label">{{ __('admin::home.Cash back Merchants') }}</span>
+                                    </a>
+                                </li>
+                            @endAdminHasRole
                         </ul>
                     </li>
                 @endAdminHasRole
@@ -512,14 +520,14 @@
                         @endAdminHasRole
                     </ul>
                 </li>
-                <!-- @AdminHasRole(['show_roles']) -->
-                <li class="slide">
-                    <a href="{{ url('admin/refundPayment') }}" class="side-menu__item {{ isActive(url('admin/refundPayment')) }}">
-                        <i class="bx bxs-tag-alt side-menu__icon"></i>
-                        <span class="side-menu__label">{{ __('admin::home.Refundpayment') }}</span>
-                    </a>
-                </li>
-                <!-- @endAdminHasRole -->
+                @AdminHasRole(['show_refundpayments', 'create_refundpayments', 'show_roles'])
+                    <li class="slide">
+                        <a href="{{ url('admin/refundPayment') }}" class="side-menu__item {{ isActive(url('admin/refundPayment')) }}">
+                            <i class="bx bxs-tag-alt side-menu__icon"></i>
+                            <span class="side-menu__label">{{ __('admin::home.Refundpayment') }}</span>
+                        </a>
+                    </li>
+                @endAdminHasRole
 
                 @AdminHasRole(['show_roles'])
                     <li class="slide">

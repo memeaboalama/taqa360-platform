@@ -12,6 +12,7 @@
                            min="0.00"
                            class="form-control form-control-lg @error('restaurant_search_capacity') is-invalid @enderror"
                            id="restaurant_search_capacity"
+                           max="300"
                            value="{{ $this->restaurant_search_capacity }}"
                            wire:model.defer="restaurant_search_capacity"
                            placeholder="0.00">
@@ -25,7 +26,7 @@
                            min="0.00"
                            class="form-control form-control-lg @error('driver_search_capacity') is-invalid @enderror"
                            id="driver_search_capacity"
-                           value="{{ $this->restaurant_search_capacity }}"
+                           value="{{ $this->driver_search_capacity }}"
                            wire:model.defer="driver_search_capacity"
                            placeholder="0.00">
                     @error('driver_search_capacity') <span class="d-block text-danger">{{ $message }}</span>@enderror

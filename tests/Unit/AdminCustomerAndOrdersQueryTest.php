@@ -4,10 +4,18 @@ namespace Tests\Unit;
 
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use App\Domain\MarketPlace\Repositories\Order\MerchantOrderRepository;
+use App\Domain\SalesAgent\Repositories\SalesAgentRepository;
 use App\Domain\User\Models\User;
 use App\Support\Enum\ActiveEnum;
+use Application\Admin\Controllers\SalesAgentController;
+use Application\Admin\Livewire\Finance\Reports\Driver\Invoice\Table\All as DriverInvoiceReportTable;
+use Application\Admin\Livewire\Finance\Reports\Order\Driver\Table\All as DriverOrderReportTable;
+use Application\Admin\Livewire\Finance\Reports\Order\Merchant\Table\All as MerchantOrderReportTable;
+use Application\Admin\Livewire\SalesAgent\Modal\Create as CreateSalesAgent;
+use Application\Admin\Livewire\SalesAgent\Tabs\Info as SalesAgentInfo;
 use Application\Admin\Livewire\User\Tabs\Info\Info;
 use Illuminate\Support\Collection;
+use Illuminate\Http\RedirectResponse;
 use Tests\TestCase;
 
 class AdminCustomerAndOrdersQueryTest extends TestCase
@@ -19,6 +27,53 @@ class AdminCustomerAndOrdersQueryTest extends TestCase
         $query = $repository->filterOrders();
 
         $this->assertNull($query->getQuery()->columns);
+    }
+
+    public function test_finance_report_tables_select_all_columns_used_by_their_rows(): void
+    {
+        foreach ([
+            new MerchantOrderReportTable(),
+            new DriverOrderReportTable(),
+            new DriverInvoiceReportTable(),
+        ] as $table) {
+            $this->assertNull($table->builder()->getQuery()->columns);
+        }
+    }
+
+    public function test_sales_agent_forms_validate_uniqueness_against_sales_agents(): void
+    {
+        $create = new class extends CreateSalesAgent {
+            public function exposedRules(): array
+            {
+                return $this->rules();
+            }
+        };
+        $edit = new class extends SalesAgentInfo {
+            public function exposedRules(): array
+            {
+                return $this->rules();
+            }
+        };
+        $edit->salesAgentId = 42;
+
+        $this->assertContains('unique:sales_agents,email', explode('|', $create->exposedRules()['email']));
+        $this->assertContains('unique:sales_agents,phone', explode('|', $create->exposedRules()['phone']));
+        $this->assertContains('unique:sales_agents,email,42', explode('|', $edit->exposedRules()['email']));
+        $this->assertContains('unique:sales_agents,phone,42', explode('|', $edit->exposedRules()['phone']));
+    }
+
+    public function test_missing_sales_agent_redirects_to_the_list_instead_of_showing_a_404(): void
+    {
+        $repository = \Mockery::mock(SalesAgentRepository::class);
+        $repository->shouldReceive('findById')->once()->with(3)->andReturnNull();
+        $repository->shouldNotReceive('getSalesAgentTotalOrderReport');
+
+        $response = (new SalesAgentController($repository))->show(3);
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertStringEndsWith('/admin/salesagents', parse_url($response->getTargetUrl(), PHP_URL_PATH));
+        $this->assertSame('warning', session('livewire-alert')['type']);
+        $this->assertSame(__('admin::home.sales_agent_not_found'), session('livewire-alert')['message']);
     }
 
     public function test_customer_order_list_selects_and_loads_columns_used_by_its_table(): void

@@ -44,9 +44,19 @@ class All extends DataTableComponent
     }
 
 
-    public function updateStatus(UpdateBasicInfoAction $updateBasicInfoAction ,$status, $id): void
+    public function updateStatus(UpdateBasicInfoAction $updateBasicInfoAction, string $status, int $id): void
     {
-        DB::transaction(fn () => $updateBasicInfoAction->handle($id, ['status' => $status]));
+        if (!in_array($status, ['active', 'inactive'], true)) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
+        $user = DB::transaction(fn () => $updateBasicInfoAction->handle($id, ['status' => $status]));
+        if (!$user) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $this->alert('success', "Customer Updated Successfully");
         $this->emit('refreshDatatable');
     }

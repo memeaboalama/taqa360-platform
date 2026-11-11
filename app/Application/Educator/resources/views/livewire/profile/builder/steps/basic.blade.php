@@ -80,7 +80,7 @@
                 </div>
             </div>
             <div class="d-flex justify-content-end gap-2 mt-4">
-                <a href="{{ url('admin/educators/show/' . $educator->id) }}" class="btn btn-light">@lang('admin::home.Back')</a>
+                <a href="{{ \Mcamara\LaravelLocalization\Facades\LaravelLocalization::getLocalizedURL(app()->getLocale(), route('admin:educators.show', ['id' => $educator->id])) }}" class="btn btn-light">@lang('admin::home.Back')</a>
                 <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="save">
                     <span wire:loading.remove wire:target="save">@lang('admin::home.Save')</span>
                     <span wire:loading wire:target="save"><span class="spinner-border spinner-border-sm"></span></span>

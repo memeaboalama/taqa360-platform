@@ -7,7 +7,6 @@ use Domain\SalesAgent\Models\SalesAgent;
 use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
-use Illuminate\Support\Facades\Log;
 
 class Create extends Component
 {
@@ -60,7 +59,6 @@ class Create extends Component
     public function store(StoreCashBackAction $storeCashBackAction): void
     {
         $data = $this->validate();
-        Log::debug($data);
         DB::beginTransaction();
         $storeCashBackAction->handle($data);
         $this->emit('refreshDatatable');

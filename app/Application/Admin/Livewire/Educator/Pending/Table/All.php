@@ -107,7 +107,9 @@ class All extends DataTableComponent
 
             Column::make(__('admin::home.actions'), 'action')
                 ->label(function ($row, Column $column) {
-                    return view('admin::livewire.educator.table.action')->withRow($row);
+                    return view('admin::livewire.educator.table.action')
+                        ->withRow($row)
+                        ->withIsPending(true);
                 })
 
         ];

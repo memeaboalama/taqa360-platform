@@ -40,7 +40,11 @@ class Auth extends Component
     protected function rules(): array
     {
         return [
-            'auth_page_image' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'auth_page_content_en' => 'nullable|string',
+            'auth_page_content_ar' => 'nullable|string',
+            'auth_page_image' => $this->auth_page_image
+                ? 'image|mimes:jpeg,png,webp|max:1024'
+                : 'nullable',
         ];
     }
 
@@ -53,17 +57,16 @@ class Auth extends Component
 
     public function updateAuthPageContent(UpdateGeneralSettingAction $updateGeneralSettingAction): void
     {
-        $data = $this->all();
-        if($this->auth_page_image_path == null && $data['auth_page_image'] == null)
+        $data = $this->validate(attributes: $this->nickNames());
+        if (empty($this->auth_page_image_path) && empty($data['auth_page_image']))
         {
             $this->addError('auth_page_image', __('admin::messages.IMAGE_REQUIRED'));
             return;
         }
-        DB::beginTransaction();
-        $settings = $updateGeneralSettingAction->handle($data);
+        $settings = DB::transaction(fn () => $updateGeneralSettingAction->handle($data));
         $this->fillData($settings);
+        $this->auth_page_image = '';
         $this->alert('success', __('admin::home.data_updated_successfully'));
-        DB::commit();
     }
 
     protected function fillData($settings): void

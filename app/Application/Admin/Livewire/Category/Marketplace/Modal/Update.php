@@ -66,13 +66,23 @@ class Update extends Component
 
     public function store(UpdateMarketplaceCategoryAction $updateMarketplaceCategoryAction): void
     {
+        if (!$this->category_id) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $data = $this->validate(attributes: $this->nickNames());
-        DB::beginTransaction();
-        $updateMarketplaceCategoryAction->handle($this->category_id, $data);
+        $category = DB::transaction(
+            fn () => $updateMarketplaceCategoryAction->handle($this->category_id, $data)
+        );
+        if (!$category) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $this->emit('closeModal', '#updateMarketplaceCategory');
         $this->emit('refreshDatatable');
         $this->alert('success', __('admin::home.data_updated_successfully'));
-        DB::commit();
     }
 
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application
@@ -80,4 +90,3 @@ class Update extends Component
         return view('admin::livewire.category.marketplace.modal.update');
     }
 }
-

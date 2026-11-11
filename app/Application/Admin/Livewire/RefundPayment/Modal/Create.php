@@ -9,6 +9,7 @@ use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use App\Domain\MarketPlace\Actions\Api\Wallet\WalletOrderAction;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class Create extends Component
 {
@@ -46,12 +47,12 @@ class Create extends Component
     protected function rules(): array
     {
         return [
-            'type' => 'required|string|in:toWallet,toAccount',
-            'order_id' => 'required',
+            'type' => 'required|string|in:toWallet',
+            'order_id' => 'required|integer',
             'payment_id' => 'required',
-            'user_id' => 'required',
+            'user_id' => 'required|integer',
             'refund_payment_id' => '',
-            'amount' => 'required',
+            'amount' => 'required|numeric|gt:0',
             'currency' => 'required',
             'note' => 'required|string',
             'user_name' => 'required|string',
@@ -79,11 +80,27 @@ class Create extends Component
     }
     public function store(StoreRefundPaymentAction $storeRefundPaymentAction): void
     {
-        $sumPay = ($this->refund_payment_amount_last + $this->amount);
-        if ($sumPay <= $this->payment_amount) {
+        $data = $this->validate();
+        $order = MerchantOrder::with(['refPayment', 'refundpayment'])->find($data['order_id']);
+
+        if (
+            !$order
+            || !$order->refPayment
+            || (int) $order->user_id !== (int) $data['user_id']
+            || (string) $order->refPayment->payment_id !== (string) $data['payment_id']
+        ) {
+            throw ValidationException::withMessages([
+                'order_id' => __('validation.exists', ['attribute' => __('admin::home.Order')]),
+            ]);
+        }
+
+        $refundedAmount = (float) ($order->refundpayment?->sum('amount') ?? 0);
+        $paymentAmount = (float) $order->refPayment->amount / 100;
+        if ($refundedAmount + (float) $data['amount'] <= $paymentAmount) {
             $this->messageFlag = false;
             $this->type = 'toWallet';
-            $data = $this->validate();
+            $data['type'] = 'toWallet';
+            $this->orderNew = $order;
             try {
                 DB::beginTransaction();
                 $walletOrderAction = new WalletOrderAction();

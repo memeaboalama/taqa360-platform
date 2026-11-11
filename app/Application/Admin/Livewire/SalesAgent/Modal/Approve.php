@@ -2,7 +2,7 @@
 
 namespace Application\Admin\Livewire\SalesAgent\Modal;
 
-use App\Domain\Admin\Actions\Dashboard\Driver\ApproveSalesAgentAction;
+use App\Domain\Admin\Actions\Dashboard\SalesAgent\ApproveSalesAgentAction;
 use App\Domain\Admin\Actions\Dashboard\SalesAgent\FetchSingleSalesAgentAction;
 use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
@@ -26,12 +26,20 @@ class Approve extends Component
 
     public function accept(ApproveSalesAgentAction $approveSalesAgentAction): void
     {
-        DB::beginTransaction();
-        $approveSalesAgentAction->handle($this->sales_agent_id);
+        if (!$this->sales_agent_id) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
+        $approved = DB::transaction(fn () => $approveSalesAgentAction->handle((int) $this->sales_agent_id));
+        if (!$approved) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $this->emit('refreshDatatable');
         $this->emit('closeModal', '#approveSalesAgent');
         $this->alert('success', __('admin::home.data_updated_successfully'));
-        DB::commit();
     }
 
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application

@@ -17,12 +17,16 @@ use Database\Seeders\Spatie\Admin\PermissionDistrictsSeeder;
 use Database\Seeders\Spatie\Admin\PermissionDriversSeeder;
 use Database\Seeders\Spatie\Admin\PermissionEmployeesSeeder;
 use Database\Seeders\Spatie\Admin\PermissionMerchantCouponsSeeder;
+use Database\Seeders\Spatie\Admin\PermissionCashBacksSeeder;
+use Database\Seeders\Spatie\Admin\PermissionNotificationsSeeder;
 use Database\Seeders\Spatie\Admin\PermissionMerchantPackagesSeeder;
 use Database\Seeders\Spatie\Admin\PermissionMerchantsSeeder;
 use Database\Seeders\Spatie\Admin\PermissionMessagesSeeder;
 use Database\Seeders\Spatie\Admin\PermissionOrdersSeeder;
 use Database\Seeders\Spatie\Admin\PermissionPrivacyPoliciesSeeder;
 use Database\Seeders\Spatie\Admin\PermissionReportsSeeder;
+use Database\Seeders\Spatie\Admin\PermissionOffersSeeder;
+use Database\Seeders\Spatie\Admin\PermissionRefundPaymentsSeeder;
 use Database\Seeders\Spatie\Admin\PermissionRolesSeeder;
 use Database\Seeders\Spatie\Admin\PermissionSalesAgentSeeder;
 use Database\Seeders\Spatie\Admin\PermissionSettingsSeeder;
@@ -78,6 +82,10 @@ class PermissionsSeeder extends Seeder
             PermissionCompaniesSeeder::class,
             PermissionCouponsSeeder::class,
             PermissionMerchantCouponsSeeder::class,
+            PermissionOffersSeeder::class,
+            PermissionCashBacksSeeder::class,
+            PermissionRefundPaymentsSeeder::class,
+            PermissionNotificationsSeeder::class,
             PermissionDistrictsSeeder::class,
             PermissionDriversSeeder::class,
             PermissionEmployeesSeeder::class,

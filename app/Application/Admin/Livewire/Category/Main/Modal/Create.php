@@ -45,13 +45,16 @@ class Create extends Component
     public function store(StoreMainCategoryAction $storeMainCategoryAction): void
     {
         $data = $this->validate(attributes: $this->nickNames());
-        DB::beginTransaction();
-        $storeMainCategoryAction->handle($data);
+        $category = DB::transaction(fn () => $storeMainCategoryAction->handle($data));
+        if (!$category) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $this->emit('refreshDatatable');
         $this->emit('closeModal', '#createMainCategory');
         $this->alert('success', __('admin::home.data_saved_successfully'));
-        $this->reset('title','description', 'type','status');
-        DB::commit();
+        $this->reset('title', 'description', 'type', 'status');
     }
 
 

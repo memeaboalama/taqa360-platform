@@ -22,12 +22,22 @@ class Delete extends Component
 
     public function destroy(DestroyMarketplaceCategoryAction $destroyMarketplaceCategoryAction): void
     {
-        DB::beginTransaction();
-        $destroyMarketplaceCategoryAction->handle($this->element_id);
+        if (!$this->element_id) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
+        $deleted = DB::transaction(
+            fn () => $destroyMarketplaceCategoryAction->handle($this->element_id)
+        );
+        if (!$deleted) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $this->emit('closeModal', '#deleteMarketplaceCategory');
         $this->emit('refreshDatatable');
         $this->alert('success', __('admin::home.data_deleted_successfully'));
-        DB::commit();
     }
 
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application

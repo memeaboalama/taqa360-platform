@@ -236,6 +236,5 @@
             </div>
         </div>
     </div>
+    <livewire:marketplace::order.modal.cancel />
 </div>
-
-<livewire:marketplace::order.modal.cancel />

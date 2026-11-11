@@ -32,8 +32,8 @@ class Create extends Component
     {
         return [
             'name' => 'required|string|min:2|max:120',
-            'email' => 'required|string|min:2|max:200|unique:admins,email',
-            'phone' => 'required|string|min:2|max:200|unique:drivers,phone',
+            'email' => 'required|string|min:2|max:200|unique:sales_agents,email',
+            'phone' => 'required|string|min:2|max:200|unique:sales_agents,phone',
             'password' => 'required|string|min:6|max:50|confirmed',
             'status' => 'required|string|in:active,inactive',
             'country_id' => 'required|int|min:1',
@@ -43,7 +43,7 @@ class Create extends Component
             'Id_expire_date' => 'nullable',
             'Id_number' => 'nullable',
             'iban' => 'nullable',
-            'taken_commission' => 'required',
+            'taken_commission' => 'required|numeric|min:0|max:100',
         ];
     }
 
@@ -54,12 +54,20 @@ class Create extends Component
 
     public function updateCountry($country): void
     {
-        if($country != "") {
+        if ($country !== "") {
             $country = json_decode($country);
-            $this->reset('country_id', 'regions');
-            $this->country_id = $country->id;
-            $this->regions = Region::where('country_id', $country->id)->get();
-        }else{
+            if (!$country || !isset($country->id) || !is_numeric($country->id)) {
+                $this->addError('country_id', __('validation.exists', ['attribute' => __('admin::home.Country')]));
+                return;
+            }
+
+            $this->country_id = (int) $country->id;
+            $this->reset('region_id', 'city_id', 'district_id');
+            $this->regions = Region::where('country_id', $this->country_id)->get();
+            $this->cities = [];
+            $this->districts = [];
+        } else {
+            $this->reset('country_id', 'region_id', 'city_id', 'district_id');
             $this->regions = [];
             $this->cities = [];
             $this->districts = [];
@@ -96,8 +104,12 @@ class Create extends Component
     public function store(StoreSalesAgentAction $storeSalesAgentAction): void
     {
         $data = $this->validate();
-        DB::beginTransaction();
-        $storeSalesAgentAction->handle($data);
+        $created = DB::transaction(fn () => $storeSalesAgentAction->handle($data));
+        if (!$created) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $this->emit('refreshDatatable');
         $this->emit('closeModal', '#createSalseAgents');
         $this->alert('success', __('admin::home.data_saved_successfully'));
@@ -115,7 +127,6 @@ class Create extends Component
             'iban',
             'region_id'
         );
-        DB::commit();
     }
 
 

@@ -25,6 +25,7 @@ use Application\Admin\Controllers\CountryController;
 use Application\Admin\Controllers\RegionController;
 use Application\Admin\Controllers\DistrictController;
 use Application\Admin\Controllers\AuthController;
+use App\Http\Middleware\AdminLoginSecurityHeaders;
 use Application\Admin\Controllers\PasswordController;
 use Application\Admin\Controllers\ContactUsController;
 use Application\Admin\Controllers\EmployeesController;
@@ -90,6 +91,7 @@ Route::group(
         'middleware' => ['localeSessionRedirect', 'localizationRedirect', 'localeViewPath']
     ], function () { //...
     Route::middleware('checkAdmin')->prefix('admin')->as('admin:')->group(function () {
+        Route::get('/', fn () => redirect()->route('admin:home'))->name('index');
         Route::get('/home', [AdminController::class, 'index'])->name('home');
 
         Route::prefix('merchants')->as('merchant.')->group(function () {
@@ -111,7 +113,6 @@ Route::group(
             Route::get('/{merchant_id}/orders/{id}', [MerchantController::class, 'show_orders'])->name('orders.show');
         });
 
-        /*
         Route::prefix('finance')->as('finance.')->group(function () {
             Route::prefix('reports')->as('reports.')->group(function () {
                 Route::prefix('orders')->as('orders.')->group(function () {
@@ -132,7 +133,6 @@ Route::group(
                 });
             });
         });
-        */
 
         Route::prefix('drivers')->as('drivers.')->group(function () {
             Route::get('/', [DriverController::class, 'index']);
@@ -149,7 +149,7 @@ Route::group(
             Route::get('show/{id}', [EducatorController::class, 'show'])->name('show');
             Route::get('edit/{id}', [EducatorController::class, 'edit'])->name('edit');
             Route::get('showEducator/{id}', [DriverRegisterController::class, 'showDriver'])->name('showDriver');
-            Route::get('/pending', [EducatorController::class, 'getPending']);
+            Route::get('/pending', [EducatorController::class, 'getPending'])->name('pending');
         });
 
 
@@ -333,7 +333,9 @@ Route::group(
     });
 
 
-    Route::get('admin/login', [AuthController::class, 'index'])->name('admin.login');
+    Route::get('admin/login', [AuthController::class, 'index'])
+        ->middleware(AdminLoginSecurityHeaders::class)
+        ->name('admin.login');
 
     Route::get('admin/forget-password', [PasswordController::class, 'forgetPassword'])
         ->name('admin.forgetPassword');

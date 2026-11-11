@@ -1,4 +1,16 @@
 <div class="row">
+    @php
+        $orderAddress = $order->addressInOrder;
+        if (is_string($orderAddress)) {
+            $orderAddress = json_decode($orderAddress);
+        }
+        if (is_array($orderAddress)) {
+            $orderAddress = (object) $orderAddress;
+        }
+        if (!is_object($orderAddress)) {
+            $orderAddress = null;
+        }
+    @endphp
     <div class="col-xl-1"></div>
     <div class="col-xl-7">
         <div class="row">
@@ -197,7 +209,7 @@
 
                 </div>
             </div>
-            @if($order->client_lat??$address->latitude??$order?->addressInOrder?->latitude)
+            @if($order->client_lat??$address?->latitude??$orderAddress?->latitude)
             <div class="col-xl-12">
                 <div class="card custom-card">
                     <div class="card-header d-flex justify-content-between">
@@ -245,8 +257,8 @@
                                 <a href="https://maps.google.com/?q={{ $address?->address }}" target="_blank"
                                     style="color:#0b5ee7">{{ $address?->address }}</a>
                                 @else
-                                <a href="https://maps.google.com/?q={{ $order?->addressInOrder?->address??$address?->address }}" target="_blank"
-                                    style="color:#0b5ee7">{{ $order?->addressInOrder?->address??$address?->address }}</a>
+                                <a href="https://maps.google.com/?q={{ $orderAddress?->address??$address?->address }}" target="_blank"
+                                    style="color:#0b5ee7">{{ $orderAddress?->address??$address?->address }}</a>
                                 @endif
                             </p>
                             @if($address)
@@ -255,7 +267,7 @@
                             </p>
                             @else
                             <p class="mb-2 text-muted"><span
-                                    class="fw-semibold text-default">@lang('admin::home.Country') : </span>{{ $order?->addressInOrder?->title ?? $address?->country->title }}
+                                    class="fw-semibold text-default">@lang('admin::home.Country') : </span>{{ $orderAddress?->title ?? $address?->country->title }}
                             </p>
                             @endif
 
@@ -467,7 +479,7 @@
         fromLocation = new google.maps.LatLng('{{ $order?->branch?->latitude }}', '{{ $order?->branch?->longitude }}');
 
 
-        toLocation = new google.maps.LatLng('{{ $order->client_lat?? $address?->latitude??$order?->addressInOrder?->latitude }}', '{{  $order->client_long?? $address?->longitude??$order?->addressInOrder?->longitude }}');
+        toLocation = new google.maps.LatLng('{{ $order->client_lat?? $address?->latitude??$orderAddress?->latitude }}', '{{  $order->client_long?? $address?->longitude??$orderAddress?->longitude }}');
         // toLocation = new google.maps.LatLng('{{ $order->client_lat?? $address?->latitude}}', '{{  $order->client_long??$address?->longitude }}');
 
 

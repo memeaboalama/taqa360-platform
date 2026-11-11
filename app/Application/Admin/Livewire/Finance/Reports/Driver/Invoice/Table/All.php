@@ -45,7 +45,7 @@ class All extends DataTableComponent
     {
         return $this->orderRepository->filterOrders($this->filters,
             ['user', 'merchant', 'branch', 'driver'],
-            ['id', 'code', 'total_after_vat'], ['status' => MerchantOrderStatuses::PREVIOUS->value]);
+            [], ['status' => MerchantOrderStatuses::PREVIOUS->value]);
     }
 
     public function columns(): array

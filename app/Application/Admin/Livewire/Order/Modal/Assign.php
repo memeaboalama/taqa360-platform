@@ -6,6 +6,7 @@ use App\Domain\MarketPlace\Actions\Dashboard\Employee\FetchEmployeeAction;
 use App\Domain\MarketPlace\Actions\Dashboard\Order\AssignEmployeeAction;
 use App\Domain\MarketPlace\Actions\Dashboard\Order\FetchSingleOrderAction;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 
@@ -30,20 +31,34 @@ class Assign extends Component
     protected function rules(): array
     {
         return [
-            'employee' => 'required|exists:merchant_employees,id',
+            'employee' => [
+                'required',
+                Rule::exists('merchant_employees', 'id')
+                    ->where('merchant_id', $this->order->merchant_id),
+            ],
         ];
     }
 
     public function store(AssignEmployeeAction $assignEmployeeAction): void
     {
+        if (!$this->order) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $data = $this->validate();
-        DB::beginTransaction();
-        $assignEmployeeAction->handle($this->order->id, $data);
+        $order = DB::transaction(
+            fn () => $assignEmployeeAction->handle($this->order->id, $data)
+        );
+        if (!$order) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $this->emit('closeModal', '#assignEmployee');
         $this->emit( 'refresh_employees', $this->order);
         $this->emit('refreshDatatable');
         $this->alert('success', 'Employee Assigned Successfully');
-        DB::commit();
     }
 
 

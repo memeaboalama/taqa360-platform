@@ -17,6 +17,8 @@ class DestroySalesAgentAction
 
     public function handle(int $id): bool
     {
-        return $this->salesAgentRepository->findByCols(['id' => $id])->delete();
+        $salesAgent = $this->salesAgentRepository->findByCols(['id' => $id]);
+
+        return $salesAgent ? (bool) $salesAgent->delete() : false;
     }
 }

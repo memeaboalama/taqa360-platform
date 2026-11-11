@@ -10,22 +10,30 @@
                     <div class="card-title">
                         @lang('admin::home.notifications')
                     </div>
+                    @AdminHasRole(['send_notifications', 'send notifications_general'])
                     <div class="prism-toggle">
                         <button
                             class="btn btn-primary-light m-1"
                             data-bs-toggle="modal"
                             data-bs-target="#sendNotification">{{__('admin::home.Create new Notification')}}<i class="bi bi-plus-lg ms-2"></i></button>
                     </div>
+                    @endAdminHasRole
                  
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <livewire:admin::notification.table.all/>
+                        @AdminHasRole(['show_notifications', 'send_notifications', 'send notifications_general'])
+                            <livewire:admin::notification.table.all/>
+                        @endAdminHasRole
                     </div>
                 </div>
 
-                <livewire:admin::notification.component.send/>
-                <livewire:admin::notification.component.show/>
+                @AdminHasRole(['send_notifications', 'send notifications_general'])
+                    <livewire:admin::notification.component.send/>
+                @endAdminHasRole
+                @AdminHasRole(['show_notifications', 'send_notifications', 'send notifications_general'])
+                    <livewire:admin::notification.component.show/>
+                @endAdminHasRole
                 
 
             </div>

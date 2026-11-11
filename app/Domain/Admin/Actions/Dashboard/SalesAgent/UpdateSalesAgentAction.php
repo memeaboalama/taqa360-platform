@@ -18,11 +18,19 @@ class UpdateSalesAgentAction
 
     public function handle(int $id, array $data = []): ?\Illuminate\Database\Eloquent\Model
     {
+        $salesAgent = $this->salesAgentRepository->findByCols(['id' => $id]);
+        if (!$salesAgent) {
+            return null;
+        }
+
         if (!empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
         } else {
             unset($data['password']);
         }
-        return $this->salesAgentRepository->update($id, $data);
+
+        $salesAgent->update($data);
+
+        return $salesAgent;
     }
 }

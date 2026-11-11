@@ -15,6 +15,14 @@ class ApproveSalesAgentAction
 
     public function handle(int $id): \Illuminate\Database\Eloquent\Model|null
     {
-        return $this->salesAgentRepository->update($id, ['is_complete' => 1]);
+        $salesAgent = $this->salesAgentRepository->findByCols(['id' => $id]);
+
+        if (!$salesAgent) {
+            return null;
+        }
+
+        $salesAgent->update(['is_complete' => 1]);
+
+        return $salesAgent;
     }
 }

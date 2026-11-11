@@ -3,7 +3,6 @@
 namespace Application\Admin\Livewire\Category\Main\Modal;
 
 use App\Domain\Admin\Actions\Dashboard\Category\Main\DestroyMainCategoryAction;
-use App\Domain\Admin\Actions\Dashboard\Nationality\DestroyNationalityAction;
 use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
@@ -23,12 +22,22 @@ class Delete extends Component
 
     public function destroy(DestroyMainCategoryAction $destroyMainCategoryAction): void
     {
-        DB::beginTransaction();
-        $destroyMainCategoryAction->handle($this->element_id);
+        if (!$this->element_id) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
+        $deleted = DB::transaction(
+            fn () => $destroyMainCategoryAction->handle($this->element_id)
+        );
+        if (!$deleted) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $this->emit('closeModal', '#deleteMainCategory');
         $this->emit('refreshDatatable');
         $this->alert('success', __('admin::home.data_deleted_successfully'));
-        DB::commit();
     }
 
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application

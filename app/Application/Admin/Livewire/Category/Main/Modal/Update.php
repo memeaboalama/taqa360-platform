@@ -65,13 +65,23 @@ class Update extends Component
 
     public function store(UpdateMainCategoryAction $updateMainCategoryAction): void
     {
+        if (!$this->main_category_id) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $data = $this->validate(attributes: $this->nickNames());
-        DB::beginTransaction();
-        $updateMainCategoryAction->handle($this->main_category_id, $data);
+        $category = DB::transaction(
+            fn () => $updateMainCategoryAction->handle($this->main_category_id, $data)
+        );
+        if (!$category) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $this->emit('closeModal', '#updateMainCategory');
         $this->emit('refreshDatatable');
         $this->alert('success', __('admin::home.data_updated_successfully'));
-        DB::commit();
     }
 
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application

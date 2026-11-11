@@ -48,6 +48,12 @@ class Send extends Component
 
     public function send(NotificationController $notificationController,SendNotificationAction $sendNotificationAction): void
     {
+        $admin = auth()->guard('admin')->user();
+        abort_unless(
+            $admin && ($admin->type === 'admin' || $admin->hasAnyPermission(['send_notifications', 'send notifications_general'])),
+            403
+        );
+
         try{
 
             $this->admin_id = auth()->guard('admin')->user()->id;

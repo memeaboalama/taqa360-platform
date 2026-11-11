@@ -101,18 +101,30 @@ class Read extends Component
         $assignAction = new ManuallyAssignDriverAction($orderRepo, $logHistory);
 
         $driverModel = Driver::find($this->selected_driver_id);
-        if ($driverModel) {
-            $user = auth()->user() ?? $this->orderUser;
-            $assignAction->handle($this->order->id, [
+        if (!$driverModel) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
+        $user = auth()->user() ?? $this->orderUser;
+        if (!$user) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
+        $order = DB::transaction(fn () => $assignAction->handle($this->order->id, [
                 'driver_id' => $driverModel->id,
                 'commission_from_driver' => $driverModel->taken_commission ?? 0,
-            ], $user);
-
-            $this->order->refresh();
-            $this->driver = $driverModel;
-            $this->emit('refreshDatatable');
-            $this->alert('success', __('admin::home.driver_assigned_successfully'));
+            ], $user));
+        if (!$order) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
         }
+
+        $this->order->refresh();
+        $this->driver = $driverModel;
+        $this->emit('refreshDatatable');
+        $this->alert('success', __('admin::home.driver_assigned_successfully'));
     }
     public function render()
     {
@@ -134,20 +146,38 @@ class Read extends Component
     {
         $orderRepo = new MerchantOrderRepository(new MerchantOrder());
         $orderAction = new OrderAction($orderRepo);
-        DB::beginTransaction();
-        $orderAction->updateAdminNote($this->order->id, $this->admin_note);
-        DB::commit();
+        $order = DB::transaction(
+            fn () => $orderAction->updateAdminNote($this->order->id, $this->admin_note)
+        );
+        if (!$order) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $this->alert('success', __('admin::home.data_updated_successfully'));
     }
+
     public function updateMark(): void
     {
+        $markValue = $this->mark instanceof MerchantOrderMarks ? $this->mark->value : $this->mark;
+        $mark = is_string($markValue) ? MerchantOrderMarks::tryFrom($markValue) : null;
+        if (!$mark) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $orderRepo = new MerchantOrderRepository(new MerchantOrder());
         $orderAction = new OrderAction($orderRepo);
-        DB::beginTransaction();
-        $orderAction->updateMark($this->order->id, $this->mark);
-        $this->mark = MerchantOrderMarks::from($this->mark);
+        $order = DB::transaction(
+            fn () => $orderAction->updateMark($this->order->id, $mark->value)
+        );
+        if (!$order) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
+        $this->mark = $mark;
         $this->marks = collect(MerchantOrderMarks::cases());
         $this->emit('refresh');
-        DB::commit();
     }
 }

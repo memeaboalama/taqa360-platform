@@ -18,6 +18,8 @@ class DestroyEducatorAction
 
     public function handle(int $id): bool
     {
-        return $this->educatorRepository->findByCols(['id' => $id])->delete();
+        $educator = $this->educatorRepository->findByCols(['id' => $id]);
+
+        return $educator ? (bool) $educator->delete() : false;
     }
 }

@@ -19,6 +19,16 @@ class ManuallyAssignDriverAction
     }
     public function handle($order_id,array $data ,Model $user)
     { 
+        $order = $this->merchantOrderRepository->findByCols(['id' => $order_id]);
+        if (!$order) {
+            return null;
+        }
+
+        $updatedOrder = $this->merchantOrderRepository->update($order_id, $data);
+        if (!$updatedOrder) {
+            return null;
+        }
+
         $reason = "Driver Assign Manually By Admin";
         $this->logOrderHistoryAction->handle(
             $order_id,
@@ -27,7 +37,7 @@ class ManuallyAssignDriverAction
             $user,
         );
         
-        return $this->merchantOrderRepository->update($order_id , $data);
+        return $updatedOrder;
     }
 
 }

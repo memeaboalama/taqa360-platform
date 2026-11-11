@@ -699,6 +699,7 @@ return [
     'wait' => 'Wait',
     'view_notification' => 'View Notification',
     'not_found' => 'Notification not found',
+    'sales_agent_not_found' => 'The sales agent was not found or has been deleted.',
 
     'show' => 'Show',
     'activate' => 'Activate',

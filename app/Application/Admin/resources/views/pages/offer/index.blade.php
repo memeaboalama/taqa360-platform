@@ -13,8 +13,8 @@
                     <div class="row mb-0">
                         <livewire:admin::offer.table.filter/>
                     </div>
-                    @AdminHasRole(['create_coupons'])
-                    <div class="prism-toggle" hidden>
+                    @AdminHasRole(['create_offers', 'create_coupons'])
+                    <div class="prism-toggle">
                         <button
                             class="btn btn-primary-light m-1"
                             data-bs-toggle="modal"
@@ -28,15 +28,15 @@
                     </div>
                 </div>
 
-                @AdminHasRole(['create_coupons'])
+                @AdminHasRole(['create_offers', 'create_coupons'])
                 <livewire:admin::offer.modal.create/>
                 @endAdminHasRole
 
-                @AdminHasRole(['edit_coupons'])
+                @AdminHasRole(['edit_offers', 'edit_coupons'])
                 <livewire:admin::offer.modal.update/>
                 @endAdminHasRole
 
-                @AdminHasRole(['delete_coupons'])
+                @AdminHasRole(['delete_offers', 'delete_coupons'])
                 <livewire:admin::offer.modal.delete/>
                 @endAdminHasRole
 

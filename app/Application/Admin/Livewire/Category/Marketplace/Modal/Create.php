@@ -48,13 +48,16 @@ class Create extends Component
     public function store(StoreMarketplaceCategoryAction $storeMarketplaceCategoryAction): void
     {
         $data = $this->validate(attributes: $this->nickNames());
-        DB::beginTransaction();
-        $storeMarketplaceCategoryAction->handle($data);
+        $category = DB::transaction(fn () => $storeMarketplaceCategoryAction->handle($data));
+        if (!$category) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $this->emit('refreshDatatable');
         $this->emit('closeModal', '#createCategory');
         $this->alert('success', __('admin::home.data_saved_successfully'));
-        $this->reset('title', 'sort','status', 'image', 'color');
-        DB::commit();
+        $this->reset('title', 'sort', 'status', 'image', 'color');
     }
 
 

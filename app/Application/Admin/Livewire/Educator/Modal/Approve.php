@@ -26,12 +26,24 @@ class Approve extends Component
 
     public function accept(ApproveEducatorAction $approveEducatorAction): void
     {
-        DB::beginTransaction();
-        $approveEducatorAction->handle($this->educator_id);
+        if (!$this->educator_id) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
+        $approved = DB::transaction(
+            fn () => $approveEducatorAction->handle((int) $this->educator_id)
+        );
+
+        if (!$approved) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
         $this->emit('refreshEducatorTables');
         $this->emit('closeModal', '#approveEducator');
         $this->alert('success', __('admin::home.data_updated_successfully'));
-        DB::commit();
+        $this->educator_id = null;
     }
 
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application

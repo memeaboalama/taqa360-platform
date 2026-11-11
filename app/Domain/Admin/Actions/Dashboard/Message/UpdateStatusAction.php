@@ -17,6 +17,13 @@ class UpdateStatusAction
 
     public function handle(int $element_id, array $data = []): ?\Illuminate\Database\Eloquent\Model
     {
-        return $this->messageRepository->update($element_id, $data);
+        $message = $this->messageRepository->findByCols(['id' => $element_id]);
+        if (!$message) {
+            return null;
+        }
+
+        $message->update($data);
+
+        return $message;
     }
 }

@@ -4,7 +4,6 @@ namespace Application\Admin\Livewire\Settings\Tabs;
 
 use App\Domain\AppBase\Actions\GeneralSetting\FetchGeneralSettingsAction;
 use App\Domain\AppBase\Actions\GeneralSetting\UpdateGeneralSettingAction;
-use App\Domain\AppBase\Models\GeneralSetting;
 use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
@@ -21,10 +20,10 @@ class Orders extends Component
     protected function rules(): array
     {
         return [
-            'min_order_price' => 'required|numeric',
-            'pending_order_expiry' => 'required|numeric',
-            'confirmed_order_expiry' => 'required|numeric',
-            'resend_order_to_drivers' => 'required|numeric',
+            'min_order_price' => 'required|numeric|min:0',
+            'pending_order_expiry' => 'required|numeric|min:0',
+            'confirmed_order_expiry' => 'required|numeric|min:0',
+            'resend_order_to_drivers' => 'required|numeric|min:0',
         ];
     }
 
@@ -38,14 +37,12 @@ class Orders extends Component
         ];
     }
 
-    public function updateOrdersSeetings(UpdateGeneralSettingAction $updateGeneralSettingAction): void
+    public function updateOrderSettings(UpdateGeneralSettingAction $updateGeneralSettingAction): void
     {
         $data = $this->validate(attributes: $this->nickNames());
-        DB::beginTransaction();
-        $settings = $updateGeneralSettingAction->handle($data);
+        $settings = DB::transaction(fn () => $updateGeneralSettingAction->handle($data));
         $this->fillData($settings);
         $this->alert('success', __('admin::home.data_updated_successfully'));
-        DB::commit();
     }
 
     protected function fillData($settings): void

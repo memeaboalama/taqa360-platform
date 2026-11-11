@@ -4,6 +4,7 @@
         <div class="card-body p-4">
 
             @if($profile)
+            @php($identityStatus = $profile->identity_status)
             <div class="border rounded-3 p-4 mb-4 bg-light">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
@@ -13,7 +14,7 @@
                             @lang('admin::educators.identity_number_label'): {{ $profile->identity_id }}
                         </p>
                     </div>
-                    <span class="badge {{ $profile->identity_status->color() }}">{{ $profile->identity_status->trans() }}</span>
+                    <span class="badge {{ $identityStatus?->color() ?? 'bg-warning' }}">{{ $identityStatus?->trans() ?? __('admin::educators.pending_review') }}</span>
                 </div>
 
                 @if($identityFiles->isNotEmpty())
@@ -36,11 +37,11 @@
                 @endif
 
                 <div class="d-flex justify-content-end gap-2 mt-3 pt-3 border-top">
-                    <button wire:click="setIdentityStatus('rejected')" wire:loading.attr="disabled" wire:target="setIdentityStatus" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1" @if($profile->identity_status->value === 'rejected') disabled @endif>
+                    <button wire:click="setIdentityStatus('rejected')" wire:loading.attr="disabled" wire:target="setIdentityStatus" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1" @if($identityStatus?->value === 'rejected') disabled @endif>
                         <svg wire:loading wire:target="setIdentityStatus('rejected')" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></svg>
                         <span>@lang('admin::educators.reject')</span>
                     </button>
-                    <button wire:click="setIdentityStatus('verified')" wire:loading.attr="disabled" wire:target="setIdentityStatus" class="btn btn-sm btn-success d-inline-flex align-items-center gap-1" @if($profile->identity_status->value === 'verified') disabled @endif>
+                    <button wire:click="setIdentityStatus('verified')" wire:loading.attr="disabled" wire:target="setIdentityStatus" class="btn btn-sm btn-success d-inline-flex align-items-center gap-1" @if($identityStatus?->value === 'verified') disabled @endif>
                         <svg wire:loading wire:target="setIdentityStatus('verified')" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></svg>
                         <span>@lang('admin::educators.approve')</span>
                     </button>
