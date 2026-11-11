@@ -6,6 +6,7 @@ use App\Support\Services\Registration\RegisterServiceProviders;
 use App\Websocket\Router;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
@@ -87,11 +88,23 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         $brandKey = config('app.brand');
-        $brand = config("brand.brands.{$brandKey}");
-        if (!is_array($brand)) {
-            throw new \InvalidArgumentException('APP_BRAND must be either taqa360 or huloolcom.');
+        $brands = config('brand.brands', []);
+        $brand = is_string($brandKey) ? ($brands[$brandKey] ?? null) : null;
+
+        if (!is_array($brand) || !isset($brand['primary_rgb'])) {
+            Log::warning('Invalid APP_BRAND configuration; falling back to taqa360.', [
+                'app_brand' => $brandKey,
+            ]);
+
+            $brandKey = 'taqa360';
+            $brand = $brands[$brandKey] ?? null;
         }
 
+        if (!is_array($brand) || !isset($brand['primary_rgb'])) {
+            throw new \RuntimeException('The taqa360 brand configuration is missing or invalid in config/brand.php.');
+        }
+
+        config(['app.brand' => $brandKey]);
         config(['app.primary_rgp' => $brand['primary_rgb']]);
         View::share('platformBrand', $brand);
 
