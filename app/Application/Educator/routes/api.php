@@ -85,6 +85,7 @@ Route::group(['prefix' => 'v1/educator'],function () {
 
         Route::prefix('assignments')->controller(AssignmentController::class)->group(function() {
             Route::get('/', 'fetch');
+            Route::get('/{assignment}', 'show');
             Route::post('/{assignment}/accept', 'acceptInvitation');
             Route::post('/{assignment}/decline', 'declineInvitation');
         });

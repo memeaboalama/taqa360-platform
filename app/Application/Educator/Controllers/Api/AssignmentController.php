@@ -84,6 +84,17 @@ class AssignmentController extends Controller
         ], 200, 'Assignments retrieved successfully');
     }
 
+    public function show(Assignment $assignment): JsonResponse
+    {
+        if ((string) $assignment->assigned_to !== (string) auth()->id()) {
+            return $this->responseError([], 404, 'Assignment not found.');
+        }
+
+        return $this->responseData([
+            'assignment' => AssignmentResource::make($assignment->load('task.project')),
+        ], 200, 'Assignment retrieved successfully');
+    }
+
     public function acceptInvitation(Request $request, Assignment $assignment): JsonResponse
     {
         if ($assignment->assigned_to !== auth()->id() || $assignment->status !== AssignmentStatus::PENDING) {
