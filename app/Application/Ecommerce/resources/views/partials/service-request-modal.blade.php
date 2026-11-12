@@ -8,14 +8,15 @@
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content border-0 shadow-lg style-service-modal" style="border-radius: 16px; overflow: visible;">
             <div class="modal-header text-white"
+                dir="{{ in_array(app()->getLocale(), ['ar', 'he', 'fa', 'ur'], true) ? 'rtl' : 'ltr' }}"
                 style="background-color:{{ $platformBrand['primary_color'] }}; padding: 18px 24px;">
                 <h5 class="modal-title font-weight-bold d-flex align-items-center" id="serviceRequestModalLabel"
-                    style="font-size: 1.25rem;">
-                    <i class="fa fa-file-text-o me-2" style="font-size: 1.3rem;"></i>
+                    style="font-size: 1.25rem; gap: 0.5rem;">
+                    <i class="fa fa-file-text-o" style="font-size: 1.3rem;"></i>
                     @lang(config('app.brand') === 'huloolcom' ? 'ecommerce::ecommerce.sr_title_hulool' : 'ecommerce::ecommerce.sr_title_taqa')
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"
-                    style="filter: brightness(0) invert(1);"></button>
+                    style="filter: brightness(0) invert(1); margin: 0;"></button>
             </div>
 
             <form id="serviceRequestForm" action="{{ route('service-requests.store', [], false) }}" method="POST"
@@ -42,6 +43,46 @@
                     #serviceRequestForm .form-select.is-invalid {
                         border-color: #c62828 !important;
                         background-image: none;
+                    }
+
+                    .sr-budget-input-group {
+                        border: 1px solid #ced4da;
+                        border-radius: 10px;
+                        overflow: hidden;
+                        background: #fff;
+                    }
+
+                    .sr-budget-input-group:focus-within {
+                        border-color: #86b7fe;
+                        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+                    }
+
+                    .sr-budget-input-group.is-invalid {
+                        border-color: #c62828;
+                    }
+
+                    .sr-budget-input-group .form-control {
+                        border: 0;
+                        border-radius: 0;
+                        box-shadow: none;
+                    }
+
+                    #sr_budget {
+                        appearance: textfield;
+                        -moz-appearance: textfield;
+                    }
+
+                    #sr_budget::-webkit-inner-spin-button,
+                    #sr_budget::-webkit-outer-spin-button {
+                        -webkit-appearance: none;
+                        margin: 0;
+                    }
+
+                    .sr-budget-input-group .input-group-text {
+                        border: 0;
+                        border-inline-start: 1px solid #dee2e6;
+                        border-radius: 0;
+                        background: #f8f9fa;
                     }
 
                     /* URGENCY RADIO BUTTONS */
@@ -232,13 +273,13 @@
                             <label for="sr_budget" class="form-label font-weight-bold text-dark mb-1">
                                 @lang('ecommerce::ecommerce.sr_budget_label')
                             </label>
-                            <div class="input-group">
+                            <div class="input-group sr-budget-input-group"
+                                dir="{{ in_array(app()->getLocale(), ['ar', 'he', 'fa', 'ur'], true) ? 'rtl' : 'ltr' }}">
                                 <input type="number" dir="ltr" step="0.01" min="0"
-                                    class="form-control form-control-lg border-2" id="sr_budget" name="budget"
+                                    class="form-control form-control-lg" id="sr_budget" name="budget"
                                     placeholder="@lang('ecommerce::ecommerce.sr_budget_placeholder')"
-                                    style="border-top-right-radius: 10px; border-bottom-right-radius: 10px; font-size: 0.95rem;">
-                                <span class="input-group-text bg-white border-2"
-                                    style="border-top-left-radius: 10px; border-bottom-left-radius: 10px;">@lang('ecommerce::ecommerce.currency_symbol')</span>
+                                    style="font-size: 0.95rem;">
+                                <span class="input-group-text">@lang('ecommerce::ecommerce.currency_symbol')</span>
                             </div>
                         </div>
 
@@ -404,6 +445,9 @@
             form.querySelectorAll('.is-invalid').forEach(function(el) {
                 el.classList.remove('is-invalid');
             });
+            form.querySelectorAll('.sr-budget-input-group').forEach(function(el) {
+                el.classList.remove('is-invalid');
+            });
         }
 
         function setFieldError(field, message) {
@@ -411,6 +455,7 @@
 
             const wrapper = field.closest('.col-12, .col-md-6') || field.parentElement;
             field.classList.add('is-invalid');
+            field.closest('.sr-budget-input-group')?.classList.add('is-invalid');
 
             let err = wrapper.querySelector('.sr-field-error');
 
@@ -428,6 +473,7 @@
             ['input', 'change'].forEach(function(evt) {
                 field.addEventListener(evt, function() {
                     field.classList.remove('is-invalid');
+                    field.closest('.sr-budget-input-group')?.classList.remove('is-invalid');
 
                     const err = field.closest('.col-12, .col-md-6')?.querySelector(
                         '.sr-field-error'

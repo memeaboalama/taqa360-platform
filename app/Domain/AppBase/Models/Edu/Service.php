@@ -14,11 +14,12 @@ class Service extends Model
 {
     use SoftDeletes, HasTranslations, HasUuid;
 
-    public $translatable = ['name', 'description'];
+    public $translatable = ['name', 'description', 'scope_of_work'];
 
     protected $fillable = [
         'name',
         'description',
+        'scope_of_work',
         'status',
     ];
 

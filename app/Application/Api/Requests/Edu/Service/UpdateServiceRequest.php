@@ -16,12 +16,15 @@ class UpdateServiceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['sometimes', 'required', 'array'],
-            'name.en' => ['sometimes', 'required', 'string', 'max:255'],
-            'name.ar' => ['sometimes', 'required', 'string', 'max:255'],
-            'description' => ['sometimes', 'required', 'array'],
-            'description.en' => ['sometimes', 'required', 'string'],
-            'description.ar' => ['sometimes', 'required', 'string'],
+            'name' => ['required', 'array'],
+            'name.en' => ['required', 'string', 'max:255'],
+            'name.ar' => ['required', 'string', 'max:255'],
+            'description' => ['sometimes', 'nullable', 'array'],
+            'description.en' => ['nullable', 'string', 'max:500'],
+            'description.ar' => ['nullable', 'string', 'max:500'],
+            'scope_of_work' => ['sometimes', 'nullable', 'array'],
+            'scope_of_work.en' => ['nullable', 'string', 'max:5000'],
+            'scope_of_work.ar' => ['nullable', 'string', 'max:5000'],
             'status' => ['sometimes', 'required', 'string', Rule::in(StatusEnum::values())],
         ];
     }

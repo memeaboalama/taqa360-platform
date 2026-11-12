@@ -13,6 +13,8 @@ use App\Support\Traits\Api\ApiResponseTrait;
 use Domain\AppBase\Models\Edu\Service;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ServiceController extends Controller
 {
@@ -29,7 +31,14 @@ class ServiceController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $services = Service::paginate($request->get('per_page', 15));
+        $query = Service::query();
+        $search = trim((string) $request->input('search', ''));
+
+        if ($search !== '') {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $services = $query->paginate($request->get('per_page', 15));
         return $this->responseData([
             'services' => ServiceResource::collection($services)
         ], 200, 'Services retrieved successfully');
@@ -60,6 +69,15 @@ class ServiceController extends Controller
 
     public function destroy(Service $service): JsonResponse
     {
+        $isUsedByEducator = Schema::hasTable('educator_services')
+            && $service->educatorServices()->exists();
+        $isUsedByRequest = Schema::hasTable('educational_requests')
+            && DB::table('educational_requests')->where('service_id', $service->getKey())->exists();
+
+        if ($isUsedByEducator || $isUsedByRequest) {
+            return $this->errorResponse(409, 'SERVICE_IN_USE');
+        }
+
         $service->delete();
         return $this->responseData([], 200, 'Service deleted successfully');
     }
