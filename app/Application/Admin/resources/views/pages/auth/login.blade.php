@@ -18,6 +18,30 @@
             color: {{ $platformBrand['primary_color'] }} !important;
         }
 
+        @media (min-width: 992px) {
+            body.bg-white {
+                background: linear-gradient(
+                    to {{ LaravelLocalization::getCurrentLocale() === 'ar' ? 'left' : 'right' }},
+                    #fff 50%,
+                    {{ $platformBrand['primary_color'] }} 50%
+                ) !important;
+            }
+
+            .admin-login-cover {
+                min-height: 100vh;
+            }
+
+            .admin-login-promo {
+                display: block;
+                width: 100%;
+                max-width: 100%;
+                height: auto;
+                max-height: calc(100vh - 400px);
+                padding: 16px !important;
+                object-fit: contain;
+            }
+        }
+
         @media (min-width: 1200px) {
             .admin-login-layout {
                 height: 100vh;
@@ -112,7 +136,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-xxl-6 col-xl-6 col-lg-6 d-xl-block d-none px-0 bg-primary admin-login-cover" style="background-color: {{ $platformBrand['primary_color'] }} !important;">
+        <div class="col-xxl-6 col-xl-6 col-lg-6 d-lg-block d-none px-0 bg-primary admin-login-cover" style="background-color: {{ $platformBrand['primary_color'] }} !important;">
             <img src="{{ asset($platformBrand['logo_white']) }}" alt="logo"
                 class="desktop-logo mt-4 gy-3 m-4" style="height:auto !important;" width="170">
             <div class="row justify-content-center align-items-center">

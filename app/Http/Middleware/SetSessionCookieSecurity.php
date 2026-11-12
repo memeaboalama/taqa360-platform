@@ -11,7 +11,8 @@ class SetSessionCookieSecurity
     public function handle(Request $request, Closure $next): Response
     {
         $configuredSecureValue = config('session.secure');
-        config(['session.secure' => $request->isSecure()]);
+        $forwardedProto = strtolower(trim((string) $request->headers->get('x-forwarded-proto')));
+        config(['session.secure' => $request->isSecure() || $forwardedProto === 'https']);
 
         try {
             return $next($request);

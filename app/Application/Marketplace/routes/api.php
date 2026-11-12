@@ -1,6 +1,5 @@
 <?php
 
-use Application\Marketplace\Controllers\MerchantController;
 use Application\Marketplace\Controllers\OrderPaymentController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,5 +17,4 @@ use Illuminate\Support\Facades\Route;
 */
 
 
-Route::get('/', [MerchantController::class, 'index']);
 

@@ -43,6 +43,24 @@ class AdminLoginSessionCookieTest extends TestCase
         $this->assertSame('lax', $cookie->getSameSite());
     }
 
+    public function test_session_cookie_is_secure_when_https_is_terminated_by_a_proxy(): void
+    {
+        $response = $this->call(
+            'GET',
+            'http://localhost/admin/login',
+            [],
+            [],
+            [],
+            ['HTTP_X_FORWARDED_PROTO' => 'https']
+        );
+        $cookie = $this->sessionCookie($response->headers->getCookies());
+
+        $this->assertNotNull($cookie);
+        $this->assertTrue($cookie->isSecure());
+        $this->assertTrue($cookie->isHttpOnly());
+        $this->assertSame('lax', $cookie->getSameSite());
+    }
+
     /**
      * @param  array<int, \Symfony\Component\HttpFoundation\Cookie>  $cookies
      */

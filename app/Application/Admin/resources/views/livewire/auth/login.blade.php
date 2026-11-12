@@ -1,21 +1,4 @@
 <div>
-    @if($redirecting)
-        <div style="position: fixed; inset: 0; z-index: 99999; background: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-            <div class="mb-4">
-                <span class="avatar avatar-rounded bg-primary-transparent d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                    <i class="ri-user-smile-line fs-1"></i>
-                </span>
-            </div>
-            <h3 class="fw-bolder mb-1" style="color: #000;">@lang('admin::home.welcome_back_msg', ['name' => $welcomeName])</h3>
-            <p class="text-muted mb-4">@lang('admin::home.redirecting_msg')</p>
-            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">...</span></div>
-        </div>
-        <script>
-            setTimeout(function () {
-                window.location.href = @json($redirectUrl);
-            }, 1500);
-        </script>
-    @else
     <form method="POST" wire:submit.prevent="store">
         <div class="row gy-3">
 
@@ -53,5 +36,4 @@
             </div>
         </div>
     </form>
-    @endif
 </div>

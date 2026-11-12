@@ -1,7 +1,5 @@
 <?php
 
-use Application\Driver\Controllers\DriverController;
-use Application\Driver\Controllers\OrderPaymentController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -18,5 +16,4 @@ use Illuminate\Support\Facades\Route;
 */
 
 
-Route::get('/', [DriverController::class, 'index']);
 

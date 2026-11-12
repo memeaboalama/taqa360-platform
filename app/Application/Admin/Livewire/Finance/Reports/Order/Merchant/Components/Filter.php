@@ -75,22 +75,23 @@ class Filter extends Component
         $this->filters['status'] = $this->status;
         $this->emit('refreshOrderReport', $this->filters);
     }
-    public function filterCashBack(FetchCashBackAction $fetcCashBackAction): void
+    public function filterCashBack(): void
     {
-        // $this->cashBack = $fetcCashBackAction->handle();
-        Log::debug("message Cash Back Filter");
+        $this->cashBack_name = $this->cashBack
+            ->firstWhere('id', $this->cashBack_id)
+            ?->name;
         $this->filters['cash_back_id'] = $this->cashBack_id;
         $this->emit('refreshOrderReport', $this->filters);
     }
 
-    public function removeCashBackFilter( FetchCashBackAction $fetcCashBackAction, int $cashBack_id = null, string $cashBack_name): void
-{
-    $this->cashBack_id = $cashBack_id;
-    $this->cashBack_name =  null;
-    $this->cashBack = $fetcCashBackAction->handle();
-    $this->filters['cash_back_id'] = $this->cashBack_id;
-    $this->emit('refreshOrderReport', $this->filters);
-}
+    public function removeCashBackFilter(FetchCashBackAction $fetchCashBackAction): void
+    {
+        $this->cashBack_id = null;
+        $this->cashBack_name = null;
+        $this->cashBack = $fetchCashBackAction->handle();
+        $this->filters['cash_back_id'] = null;
+        $this->emit('refreshOrderReport', $this->filters);
+    }
     public function removeStatusFilter(): void
     {
         $this->status = null;

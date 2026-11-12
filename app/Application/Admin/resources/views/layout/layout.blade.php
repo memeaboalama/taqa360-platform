@@ -17,20 +17,27 @@
             <span class="avatar avatar-rounded bg-primary-transparent d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
                 <i class="ri-user-smile-line fs-1"></i>
             </span>
-            <p class="fw-bolder mb-3" style="color: #000;">@lang('admin::home.loading_dashboard_msg')</p>
+            <p class="fw-bolder mb-2" style="color: #000;">{{ session('login_welcome') }}</p>
+            <p class="text-muted mb-3">@lang('admin::home.loading_dashboard_msg')</p>
             <div class="spinner-border text-primary" role="status"><span class="visually-hidden">...</span></div>
         </div>
         <script>
-            window.addEventListener('load', function () {
+            function hidePageLoader() {
+                var loader = document.getElementById('page-loader');
+                if (!loader) return;
+
+                loader.style.transition = 'opacity 0.4s ease';
+                loader.style.opacity = '0';
                 setTimeout(function () {
-                    var loader = document.getElementById('page-loader');
-                    if (loader) {
-                        loader.style.transition = 'opacity 0.4s ease';
-                        loader.style.opacity = '0';
-                        setTimeout(function () { if (loader.parentNode) loader.parentNode.removeChild(loader); }, 450);
-                    }
-                }, 500);
+                    if (loader.parentNode) loader.parentNode.removeChild(loader);
+                }, 450);
+            }
+
+            window.addEventListener('load', function () {
+                setTimeout(hidePageLoader, 500);
             });
+
+            setTimeout(hidePageLoader, 4000);
         </script>
     @endif
 

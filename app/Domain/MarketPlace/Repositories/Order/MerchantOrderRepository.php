@@ -453,6 +453,9 @@ class MerchantOrderRepository extends EloquentMainRepository
         if (isset($filters['status']))
             $query->where('status', $filters['status']);
 
+        if (isset($filters['cash_back_id']))
+            $query->where('cash_back_id', $filters['cash_back_id']);
+
         if (isset($filters['merchant_branch_id']) && $filters['merchant_branch_id'] != null)
             $query->where('merchant_branch_id', $filters['merchant_branch_id']);
 

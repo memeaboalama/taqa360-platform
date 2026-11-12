@@ -29,6 +29,16 @@ class AdminCustomerAndOrdersQueryTest extends TestCase
         $this->assertNull($query->getQuery()->columns);
     }
 
+    public function test_cash_back_filter_is_applied_to_order_reports(): void
+    {
+        $repository = new MerchantOrderRepository(new MerchantOrder());
+
+        $query = $repository->filterOrders(['cash_back_id' => 17]);
+
+        $this->assertStringContainsString('cash_back_id', $query->toSql());
+        $this->assertContains(17, $query->getBindings());
+    }
+
     public function test_finance_report_tables_select_all_columns_used_by_their_rows(): void
     {
         foreach ([

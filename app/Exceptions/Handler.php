@@ -95,6 +95,10 @@ class Handler extends ExceptionHandler
             return parent::render($request, $exception);
         }
 
+        if (!$request->expectsJson()) {
+            return parent::render($request, $exception);
+        }
+
         if (($exception instanceof MissingScopeException || $exception instanceof AuthenticationException) && $request->wantsJson()) {
 
             return $this->errorResponse(401, __('admin::home.Unauthenticated'));
@@ -116,11 +120,14 @@ class Handler extends ExceptionHandler
         }
 
         if ($exception instanceof BadMethodCallException && $request->wantsJson()) {
-            return $this->errorResponse(500, 'Unexpected Exception. Try later' . $exception->getMessage());
+            return $this->errorResponse(500, 'Unexpected Exception. Try later');
         }
 
         if ($exception instanceof HttpException) {
-            return $this->errorResponse($exception->getStatusCode(), $exception->getMessage());
+            $status = $exception->getStatusCode();
+            $message = $status >= 500 ? 'Unexpected Exception. Try later' : $exception->getMessage();
+
+            return $this->errorResponse($status, $message);
         }
 
         if ($exception instanceof ValidationException && $request->wantsJson()) {
@@ -130,17 +137,17 @@ class Handler extends ExceptionHandler
         }
         if ($exception instanceof RelationNotFoundException && $request->wantsJson()) {
 
-            return $this->errorResponse(500, 'Unexpected Exception. Try later' . $exception->getMessage());
+            return $this->errorResponse(500, 'Unexpected Exception. Try later');
 
         }
 
         if ($exception  && $request->wantsJson()) {
 
-            return $this->errorResponse(500, 'Unexpected Exception. Try later' . $exception->getMessage());
+            return $this->errorResponse(500, 'Unexpected Exception. Try later');
 
         }
 
-        return $this->errorResponse(500, 'Unexpected Exception. Try later' . $exception->getMessage());
+        return $this->errorResponse(500, 'Unexpected Exception. Try later');
 
     }
 
