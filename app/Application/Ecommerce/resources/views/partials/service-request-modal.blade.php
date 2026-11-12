@@ -1,8 +1,5 @@
 @php
     $academicMajors = config('app.brand') === 'huloolcom' ? \Domain\AppBase\Models\Edu\AcademicMajor::all() : collect();
-    $availableServices = config('app.brand') === 'taqa360'
-        ? \Domain\AppBase\Models\Edu\Service::query()->where('status', 'active')->orderBy('id')->get()
-        : collect();
 @endphp
 
 <!-- Service Request Modal -->
@@ -21,7 +18,7 @@
                     style="filter: brightness(0) invert(1);"></button>
             </div>
 
-            <form id="serviceRequestForm" action="{{ route('service-requests.store') }}" method="POST"
+            <form id="serviceRequestForm" action="{{ route('service-requests.store', [], false) }}" method="POST"
                 enctype="multipart/form-data" novalidate>
                 @csrf
                 <style>
@@ -221,31 +218,13 @@
 
                         <!-- Request Type -->
                         <div class="col-md-6">
-                            <label for="{{ config('app.brand') === 'taqa360' ? 'sr_service_id' : 'sr_type' }}" class="form-label font-weight-bold text-dark mb-1">
+                            <label for="sr_type" class="form-label font-weight-bold text-dark mb-1">
                                 @lang('ecommerce::ecommerce.service_type')
                             </label>
-                            @if (config('app.brand') === 'taqa360')
-                                <select class="form-select form-select-lg border-2" id="sr_service_id"
-                                    name="service_id" required
-                                    style="border-radius: 10px; font-size: 0.95rem;">
-                                    <option value="" selected disabled>@lang('ecommerce::ecommerce.sr_select_service')</option>
-                                    @foreach ($availableServices as $service)
-                                        <option value="{{ $service->id }}">{{ $service->name }}</option>
-                                    @endforeach
-                                </select>
-                                @if ($availableServices->isEmpty())
-                                    <div class="form-text text-danger">@lang('ecommerce::ecommerce.sr_no_services')</div>
-                                @endif
-                            @else
-                                <select class="form-select form-select-lg border-2" id="sr_type" name="type"
-                                    style="border-radius: 10px; font-size: 0.95rem;">
-                                    <option value="general" selected>@lang('lang.educational_request.type.general')</option>
-                                    <option value="task">@lang('lang.educational_request.type.task')</option>
-                                    <option value="project">@lang('lang.educational_request.type.project')</option>
-                                    <option value="research">@lang('lang.educational_request.type.research')</option>
-                                    <option value="explanation">@lang('lang.educational_request.type.explanation')</option>
-                                </select>
-                            @endif
+                            <select class="form-select form-select-lg border-2" id="sr_type" name="service_id"
+                                required disabled style="border-radius: 10px; font-size: 0.95rem;">
+                                <option value="">@lang('ecommerce::ecommerce.loading')</option>
+                            </select>
                         </div>
 
                         <!-- Budget -->
@@ -326,7 +305,7 @@
                         @lang('ecommerce::ecommerce.sr_cancel')
                     </button>
                     <button type="submit" id="sr_submit_btn" class="btn btn-danger btn-lg px-5 font-weight-bold"
-                        style="    background: #306FAA;border-color: #306FAA;color: #ffffff;; border-radius: 10px; font-size: 0.95rem;">
+                        style="background: #306FAA;border-color: #306FAA;color: #ffffff;; border-radius: 10px; font-size: 0.95rem;">
                         <span id="sr_submit_spinner" class="spinner-border spinner-border-sm me-2 d-none"
                             role="status" aria-hidden="true"></span>
                         <i class="fa fa-paper-plane me-1"></i> @lang('ecommerce::ecommerce.sr_submit')
@@ -353,14 +332,75 @@
             successMsg: @json(__('ecommerce::ecommerce.sr_success_msg')),
             submitError: @json(__('ecommerce::ecommerce.sr_submit_error')),
             connectionError: @json(__('ecommerce::ecommerce.sr_connection_error')),
+            selectService: @json(__('ecommerce::ecommerce.sr_select_service')),
+            noServices: @json(__('ecommerce::ecommerce.sr_no_services')),
+            servicesError: @json(__('ecommerce::ecommerce.sr_services_error')),
+            loading: @json(__('ecommerce::ecommerce.loading')),
         };
 
         if (!form) return;
+
+        const serviceSelect = document.getElementById('sr_type');
+        let servicesLoading = false;
+        let servicesError = false;
+
+        async function loadServices() {
+            if (servicesLoading) return;
+            servicesLoading = true;
+            servicesError = false;
+            const selected = serviceSelect.value;
+            serviceSelect.disabled = true;
+            serviceSelect.replaceChildren(new Option(messages.loading, ''));
+
+            try {
+                const response = await fetch(@json(route('service-requests.services', [], false)), {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) throw new Error();
+
+                const result = await response.json();
+                const services = result.data?.services;
+
+                if (!Array.isArray(services)) throw new Error();
+
+                serviceSelect.replaceChildren(new Option(
+                    services.length ? messages.selectService : messages.noServices, ''
+                ));
+
+                const locale = @json(app()->getLocale());
+
+                services.forEach(function(service) {
+                    const name = typeof service.name === 'string' ? service.name :
+                        (service.name?.[locale] || service.name?.ar || service.name?.en || '');
+
+                    serviceSelect.add(new Option(name, service.id));
+                });
+
+                if (services.some(service => String(service.id) === String(selected))) {
+                    serviceSelect.value = selected;
+                }
+
+                serviceSelect.disabled = services.length === 0;
+            } catch (error) {
+                servicesError = true;
+                serviceSelect.replaceChildren(new Option(messages.servicesError, ''));
+            } finally {
+                servicesLoading = false;
+            }
+        }
+
+        loadServices();
+
+        document.getElementById('serviceRequestModal').addEventListener('show.bs.modal', loadServices);
 
         function clearFieldErrors() {
             form.querySelectorAll('.sr-field-error').forEach(function(el) {
                 el.remove();
             });
+
             form.querySelectorAll('.is-invalid').forEach(function(el) {
                 el.classList.remove('is-invalid');
             });
@@ -368,14 +408,18 @@
 
         function setFieldError(field, message) {
             if (!field) return;
+
             const wrapper = field.closest('.col-12, .col-md-6') || field.parentElement;
             field.classList.add('is-invalid');
+
             let err = wrapper.querySelector('.sr-field-error');
+
             if (!err) {
                 err = document.createElement('div');
                 err.className = 'sr-field-error';
                 wrapper.appendChild(err);
             }
+
             err.textContent = message;
         }
 
@@ -384,8 +428,11 @@
             ['input', 'change'].forEach(function(evt) {
                 field.addEventListener(evt, function() {
                     field.classList.remove('is-invalid');
+
                     const err = field.closest('.col-12, .col-md-6')?.querySelector(
-                        '.sr-field-error');
+                        '.sr-field-error'
+                    );
+
                     if (err) err.remove();
                 });
             });
@@ -393,10 +440,22 @@
 
         function validateForm() {
             clearFieldErrors();
+
             let valid = true;
             let firstInvalid = null;
 
+            if (servicesLoading || servicesError || !serviceSelect.value) {
+                setFieldError(
+                    serviceSelect,
+                    servicesError ? messages.servicesError : messages.selectService
+                );
+
+                valid = false;
+                firstInvalid = serviceSelect;
+            }
+
             const title = document.getElementById('sr_title');
+
             if (!title.value.trim()) {
                 setFieldError(title, messages.titleRequired);
                 valid = false;
@@ -404,6 +463,7 @@
             }
 
             const description = document.getElementById('sr_description');
+
             if (!description.value.trim()) {
                 setFieldError(description, messages.descriptionRequired);
                 valid = false;
@@ -414,14 +474,8 @@
                 firstInvalid = firstInvalid || description;
             }
 
-            const service = document.getElementById('sr_service_id');
-            if (service && !service.value) {
-                setFieldError(service, messages.serviceRequired);
-                valid = false;
-                firstInvalid = firstInvalid || service;
-            }
-
             const budget = document.getElementById('sr_budget');
+
             if (budget.value !== '' && (isNaN(budget.value) || Number(budget.value) < 0)) {
                 setFieldError(budget, messages.budgetInvalid);
                 valid = false;
@@ -433,10 +487,12 @@
                     behavior: 'smooth',
                     block: 'center'
                 });
+
                 firstInvalid.focus({
                     preventScroll: true
                 });
             }
+
             return valid;
         }
 
@@ -445,20 +501,24 @@
 
             Object.keys(errors).forEach(function(name) {
                 const msgs = Array.isArray(errors[name]) ? errors[name] : [errors[name]];
+
                 const message = msgs.find(function(item) {
                     return typeof item === 'string' && item.length > 0;
                 }) || msgs.find(function(item) {
                     return item && typeof item.message === 'string';
                 });
+
                 if (!message) return;
 
                 let fieldName = name;
                 let field = form.querySelector('[name="' + fieldName + '"]');
+
                 if (!field && fieldName.indexOf('.') !== -1) {
                     const base = fieldName.split('.')[0];
                     field = form.querySelector('[name="' + base + '[]"]');
                     fieldName = base + '[]';
                 }
+
                 setFieldError(field, typeof message === 'string' ? message : message.message);
             });
         }
@@ -476,6 +536,7 @@
 
             // Disable button & show spinner
             submitBtn.disabled = true;
+
             if (submitSpinner) submitSpinner.classList.remove('d-none');
 
             const formData = new FormData(form);
@@ -494,16 +555,19 @@
                     const data = await response.json().catch(function() {
                         return {};
                     });
+
                     if (response.ok && data.success) {
                         alertBox.className = 'd-none';
                         alertBox.innerHTML = '';
                         form.reset();
 
                         const modalEl = document.getElementById('serviceRequestModal');
+
                         if (modalEl) {
                             if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
                                 let instance = typeof bootstrap.Modal.getInstance ===
                                     'function' ? bootstrap.Modal.getInstance(modalEl) : null;
+
                                 if (instance) {
                                     instance.hide();
                                 } else if (typeof $ !== 'undefined' && $.fn.modal) {
@@ -515,6 +579,7 @@
                         }
 
                         const successMsg = data.message || messages.successMsg;
+
                         if (typeof showNotification === 'function') {
                             showNotification(successMsg, 'success');
                         } else if (typeof toastr !== 'undefined') {
@@ -533,11 +598,14 @@
                         }
                     } else if (response.status === 422) {
                         const validationErrors = data.errors || data.data;
+
                         if (!validationErrors || typeof validationErrors !== 'object') {
                             throw new Error(data.message || messages.submitError);
                         }
+
                         clearFieldErrors();
                         showServerErrors(validationErrors);
+
                         throw {
                             silent: true
                         };
@@ -547,12 +615,14 @@
                 })
                 .catch(error => {
                     if (error && error.silent) return;
+
                     alertBox.className = 'alert alert-danger d-block mb-3';
-                    alertBox.innerHTML = '<i class="fa fa-exclamation-triangle me-1"></i> ' + (error
-                        .message || messages.connectionError);
+                    alertBox.innerHTML = '<i class="fa fa-exclamation-triangle me-1"></i> ' +
+                        (error.message || messages.connectionError);
                 })
                 .finally(() => {
                     submitBtn.disabled = false;
+
                     if (submitSpinner) submitSpinner.classList.add('d-none');
                 });
         });
@@ -594,23 +664,33 @@
 <script>
     function toggleDD(id) {
         var menu = document.getElementById(id + '_menu');
+
         if (!menu) return;
+
         var open = menu.style.display === 'block';
+
         // close all
         document.querySelectorAll('.custom-dd-menu').forEach(function(m) {
             m.style.display = 'none';
         });
+
         if (!open) menu.style.display = 'block';
     }
 
     function pickDD(ddId, inputId, value, text) {
         var input = document.getElementById(inputId);
+
         if (input) input.value = value;
+
         var label = document.getElementById(ddId + '_label');
+
         if (label) label.textContent = text;
+
         var menu = document.getElementById(ddId + '_menu');
+
         if (menu) menu.style.display = 'none';
     }
+
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.custom-dd')) {
             document.querySelectorAll('.custom-dd-menu').forEach(function(m) {

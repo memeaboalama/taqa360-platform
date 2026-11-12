@@ -3,24 +3,6 @@
 @include('ecommerce::partials.login-required-modal')
 <script src="{{ asset('assets/ecommerce/js/bootstrap.min.js') }}"></script>
 <script>
-    window.handleServiceRequestClick = function () {
-        function openModalById(id) {
-            var el = document.getElementById(id);
-            if (!el) return;
-            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                var modal = typeof bootstrap.Modal.getInstance === 'function' ? bootstrap.Modal.getInstance(el) : null;
-                if (!modal) modal = new bootstrap.Modal(el);
-                modal.show();
-            } else if (typeof $ !== 'undefined' && $.fn.modal) {
-                $(el).modal('show');
-            }
-        }
-        @auth
-        openModalById('serviceRequestModal');
-        @else
-        openModalById('loginRequiredModal');
-        @endauth
-    };
     if (typeof window.showNotification !== 'function') {
         window.showNotification = function (message, type) {
             var el = document.createElement('div');

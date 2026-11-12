@@ -1,3 +1,4 @@
+
 <?php
 
 namespace App\Domain\EducationalRequest\Resources;
@@ -10,6 +11,7 @@ class EducationalRequestResource extends JsonResource
     public function toArray($request)
     {
         $serviceType = $this->type instanceof \BackedEnum ? $this->type->value : $this->type;
+
         $brandFields = config('app.brand') === 'huloolcom'
             ? [
                 'subject' => $this->academicMajor?->name ?? '',
@@ -26,8 +28,9 @@ class EducationalRequestResource extends JsonResource
             'code' => '#'. $this->id,
             'title' => $this->title,
             'description' => $this->description,
+
             'requester' => $this->whenLoaded('requester', function () {
-                return  [
+                return [
                     'id' => $this->requester?->uuid,
                     'name' => $this->requester?->name,
                     'email' => $this->requester?->email,
@@ -45,15 +48,21 @@ class EducationalRequestResource extends JsonResource
             'serviceName' => $this->whenLoaded('service', fn () => $this->service?->name),
             'paymentStatus' => $this->payment_status,
             'executionStatus' => $this->execution_status,
+
             'budget' => $this->project?->budget !== null
                 ? (float) $this->project->budget
                 : ($this->budget !== null ? (float) $this->budget : null),
+
             'urgencyLevel' => $this->urgency_level,
-            'pricingType' => (is_object($this->type) ? $this->type->value : (string) $this->type) === 'hourly' ? 'HOURLY' : 'FIXED',
+            'pricingType' => (is_object($this->type) ? $this->type->value : (string) $this->type) === 'hourly'
+                ? 'HOURLY'
+                : 'FIXED',
+
             'expectedDeliveryDate' => $this->project?->deadline?->toDateString(),
             'dedline' => $this->project?->deadline?->toDateString(),
+
             // 'attachments' => AttachmentResource::collection($this->whenLoaded('attachments')),
-            'attachments' => $this->attachments->map(function($attachment){
+            'attachments' => $this->attachments->map(function ($attachment) {
                 return [
                     'id' => $attachment->uuid,
                     'name' => $attachment->title,
@@ -67,6 +76,7 @@ class EducationalRequestResource extends JsonResource
 
             'finalAgreement' => $this->final_agreement,
             'additionalNotes' => $this->additional_notes,
+
             'activityLog' => $this->whenLoaded('activityLog', fn () => $this->activityLog
                 ->map(fn ($activity) => [
                     'id' => (string) $activity->id,
@@ -80,6 +90,7 @@ class EducationalRequestResource extends JsonResource
                 ])
                 ->values()
             ),
+
             'project' => $this->whenLoaded('project', function () {
                 return [
                     'id' => $this->project->uuid,
@@ -87,6 +98,7 @@ class EducationalRequestResource extends JsonResource
                     'status' => $this->project->status,
                 ];
             }) ?? null,
+
             'createdAt' => $this->created_at,
         ];
 

@@ -39,6 +39,8 @@ Route::group(
     function () {
 
         Route::get('/ecommerce/index', [EcommerceController::class, 'index']);
+        Route::get('/service-requests/services', [\App\Application\Admin\Controllers\Api\Edu\ServiceController::class, 'options'])
+            ->name('service-requests.services');
 
         Route::get('/', [EcommerceController::class, 'staticIndex'])->name('ecommerce.static');
         Route::get('/ecommerce-static', function () {

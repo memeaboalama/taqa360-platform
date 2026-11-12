@@ -398,9 +398,12 @@
                 <div>
                     <div class="d-flex align-items-center gap-3 mb-2">
                         <span class="request-code num" style="font-weight:800; color:#1a202c; font-family:monospace; font-size:18px;">{{ $serviceRequest->code }}</span>
+                      
                         <span class="service-type-badge">
-                            <i class="ti-settings"></i> {{ (config('app.brand') === 'taqa360' ? $serviceRequest->service?->name : null) ?? ($serviceRequest->type instanceof \UnitEnum ? $serviceRequest->type->trans() : $serviceRequest->type) }}
+                            <i class="ti-settings"></i>
+                            {{ (config('app.brand') === 'taqa360' ? $serviceRequest->service?->name : null) ?? ($serviceRequest->type instanceof \UnitEnum ? $serviceRequest->type->trans() : $serviceRequest->type) }}
                         </span>
+
                     </div>
                     <h4 style="font-size:19px; font-weight:700; color:#1a202c; margin:0;">{{ $serviceRequest->title }}</h4>
                     <small class="text-muted d-block mt-2">{{ \Carbon\Carbon::parse($serviceRequest->created_at)->format('d M Y - h:i A') }}</small>

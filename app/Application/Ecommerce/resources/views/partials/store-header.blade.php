@@ -15,7 +15,8 @@
             <form class="search" id="store-search" method="get" action="{{ $storeSearchAction }}"><button type="submit"
                     aria-label="{{ __('ecommerce::ecommerce.search') }}">⌕</button><input name="q" type="search"
                     placeholder="{{ $storeSearchPlaceholder }}" aria-label="{{ __('ecommerce::ecommerce.search') }}"></form>
-            <div class="top-actions"><button type="button" class="service" onclick="handleServiceRequestClick()"><i
+            <div class="top-actions"><button type="button" class="service" data-bs-toggle="modal"
+                    data-bs-target="{{ auth()->check() ? '#serviceRequestModal' : '#loginRequiredModal' }}"><i
                         class="fa fa-plus-circle"></i>
                     @lang('ecommerce::ecommerce.request_service')</button>@if($storeShowLanguage)@include('ecommerce::partials.language-switcher')@endif<a
                     class="action" href="{{ route('account.index') }}"

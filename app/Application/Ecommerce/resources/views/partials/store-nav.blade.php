@@ -23,7 +23,8 @@
             <li><a class="active" href="{{ route('auth.login') }}">@lang('ecommerce::ecommerce.auth.login')</a></li>
         @endif
         <li class="mobile-service-item">
-            <button type="button" class="service" onclick="handleServiceRequestClick()">
+            <button type="button" class="service" data-bs-toggle="modal"
+                data-bs-target="{{ auth()->check() ? '#serviceRequestModal' : '#loginRequiredModal' }}">
                 <i class="fa fa-plus-circle" aria-hidden="true"></i>
                 @lang('ecommerce::ecommerce.request_service')
             </button>

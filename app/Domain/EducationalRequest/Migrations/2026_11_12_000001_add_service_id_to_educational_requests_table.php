@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -16,7 +17,10 @@ return new class extends Migration
         }
 
         Schema::table('educational_requests', function (Blueprint $table) {
-            $table->foreignId('service_id')->nullable()->constrained('services')->restrictOnDelete();
+            $table->foreignId('service_id')
+                ->nullable()
+                ->constrained('services')
+                ->restrictOnDelete();
         });
     }
 

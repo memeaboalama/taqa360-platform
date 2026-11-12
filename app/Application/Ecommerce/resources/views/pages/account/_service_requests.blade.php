@@ -1,3 +1,4 @@
+
 @if(request()->hasHeader('X-Up-Target'))
 <div class="dashboard-content">
 @endif
@@ -90,6 +91,7 @@
         flex-shrink: 0;
         white-space: nowrap;
     }
+
     .status-badge::before {
         content: '';
         display: block;
@@ -106,7 +108,6 @@
     .bg-draft { background-color: #f3e5f5 !important; color: #7b1fa2 !important; }
     .bg-not-started { background-color: #f1f3f5 !important; color: #6c757d !important; }
 
-    /* Service type badge */
     .service-type-badge {
         display: inline-flex;
         align-items: center;
@@ -120,6 +121,7 @@
         border: 1px solid #d8e6f2;
         white-space: nowrap;
     }
+
     .service-type-badge i { font-size: 12px; }
 
     .request-id { font-weight: 800; color: #1a202c; font-family: monospace; font-size: 15px; }
@@ -143,6 +145,7 @@
         flex-shrink: 0;
         white-space: nowrap;
     }
+
     .btn-view:hover {
         border-color: #306FAA;
         color: #fff;
@@ -153,6 +156,7 @@
     @media (max-width: 768px) {
         .precise-table thead { display: none; }
         .precise-table, .precise-table tbody, .precise-table tr, .precise-table td { display: block; width: 100%; }
+
         .precise-table tr {
             margin-bottom: 20px;
             border: 1px solid #eef2f5;
@@ -162,6 +166,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.03);
             overflow: hidden;
         }
+
         .precise-table td {
             padding: 12px 20px;
             border-bottom: 1px solid #f7fafc;
@@ -170,11 +175,13 @@
             align-items: center;
             text-align: start;
         }
+
         .precise-table td:last-child {
             background: #f8f9fa;
             padding: 15px 20px;
             justify-content: flex-end;
         }
+
         .precise-table td::before {
             content: attr(data-label);
             font-weight: 600;
@@ -183,6 +190,7 @@
             margin-inline-end: auto;
             padding-inline-end: 15px;
         }
+
         .request-title { white-space: normal; max-width: 100%; }
     }
 </style>

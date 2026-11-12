@@ -37,6 +37,7 @@ class CreateEducationalRequestAction
 
             $educationalRequest = $this->educationalRequestRepository->store([
                 'title'             => $data['title'],
+                'service_id'        => $data['service_id'] ?? null,
                 'requester_id'      => $data['user_id'],
                 'description'       => $data['description'],
                 'type'              => $data['type'] ?? EducationalRequestType::GENERAL->value,

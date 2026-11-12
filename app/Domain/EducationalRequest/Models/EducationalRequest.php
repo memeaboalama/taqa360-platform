@@ -1,3 +1,4 @@
+
 <?php
 
 namespace Domain\EducationalRequest\Models;
@@ -20,11 +21,11 @@ class EducationalRequest extends Model
 
     protected $fillable = [
         'title',
+        'service_id',
         'description',
         'requester_id',
         'academic_major_id',
         'education_level',
-        'service_id',
         'type',
         'status',
         'execution_status',
@@ -39,7 +40,6 @@ class EducationalRequest extends Model
         'accepted_at',
         'rejected_at',
         'completed_at',
-
         'rejection_reason',
         'reviewed_by',
         'reviewed_at',
@@ -70,6 +70,13 @@ class EducationalRequest extends Model
     public function service()
     {
         return $this->belongsTo(Service::class)->withTrashed();
+    }
+
+    public function getServiceTypeLabelAttribute(): string
+    {
+        return $this->service?->name ?? ($this->type instanceof EducationalRequestType
+            ? $this->type->trans()
+            : (string) $this->type);
     }
 
     public function attachments()

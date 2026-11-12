@@ -4,6 +4,8 @@ namespace App\Application\Educational\Controllers;
 
 use App\Domain\EducationalRequest\Actions\CreateEducationalRequestAction;
 use App\Http\Controllers\Controller;
+use App\Support\Enum\StatusEnum;
+use Domain\AppBase\Models\Edu\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
@@ -33,6 +35,8 @@ class ServiceRequestWebController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'type' => ['nullable', 'string'],
+            'service_id' => ['required', 'uuid', Rule::exists('services', 'uuid')
+                ->where('status', StatusEnum::ACTIVE->value)->whereNull('deleted_at')],
             'budget' => ['nullable', 'numeric', 'min:0'],
             'urgency_level' => ['nullable', 'in:normal,urgent,very_urgent'],
             'additional_notes' => ['nullable', 'string'],
@@ -53,6 +57,7 @@ class ServiceRequestWebController extends Controller
         try {
             $data = array_merge($validated, [
                 'user_id' => auth()->id() ?? 1,
+                'service_id' => Service::where('uuid', $validated['service_id'])->value('id'),
             ]);
 
             if (!empty($data['type'])) {
