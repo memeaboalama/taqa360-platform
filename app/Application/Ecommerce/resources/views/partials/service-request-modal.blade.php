@@ -18,7 +18,7 @@
                     style="filter: brightness(0) invert(1);"></button>
             </div>
 
-            <form id="serviceRequestForm" action="{{ route('service-requests.store') }}" method="POST"
+            <form id="serviceRequestForm" action="{{ route('service-requests.store', [], false) }}" method="POST"
                 enctype="multipart/form-data" novalidate>
                 @csrf
                 <style>
@@ -351,7 +351,7 @@
             serviceSelect.disabled = true;
             serviceSelect.replaceChildren(new Option(messages.loading, ''));
             try {
-                const response = await fetch(@json(route('service-requests.services')), {
+                const response = await fetch(@json(route('service-requests.services', [], false)), {
                     headers: { 'Accept': 'application/json' }
                 });
                 if (!response.ok) throw new Error();
