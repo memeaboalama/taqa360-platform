@@ -1,5 +1,8 @@
 @php
     $academicMajors = config('app.brand') === 'huloolcom' ? \Domain\AppBase\Models\Edu\AcademicMajor::all() : collect();
+    $availableServices = config('app.brand') === 'taqa360'
+        ? \Domain\AppBase\Models\Edu\Service::query()->where('status', 'active')->orderBy('id')->get()
+        : collect();
 @endphp
 
 <!-- Service Request Modal -->
@@ -218,17 +221,31 @@
 
                         <!-- Request Type -->
                         <div class="col-md-6">
-                            <label for="sr_type" class="form-label font-weight-bold text-dark mb-1">
+                            <label for="{{ config('app.brand') === 'taqa360' ? 'sr_service_id' : 'sr_type' }}" class="form-label font-weight-bold text-dark mb-1">
                                 @lang('ecommerce::ecommerce.service_type')
                             </label>
-                            <select class="form-select form-select-lg border-2" id="sr_type" name="type"
-                                style="border-radius: 10px; font-size: 0.95rem;">
-                                <option value="general" selected>@lang('lang.educational_request.type.general')</option>
-                                <option value="task">@lang('lang.educational_request.type.task')</option>
-                                <option value="project">@lang('lang.educational_request.type.project')</option>
-                                <option value="research">@lang('lang.educational_request.type.research')</option>
-                                <option value="explanation">@lang('lang.educational_request.type.explanation')</option>
-                            </select>
+                            @if (config('app.brand') === 'taqa360')
+                                <select class="form-select form-select-lg border-2" id="sr_service_id"
+                                    name="service_id" required
+                                    style="border-radius: 10px; font-size: 0.95rem;">
+                                    <option value="" selected disabled>@lang('ecommerce::ecommerce.sr_select_service')</option>
+                                    @foreach ($availableServices as $service)
+                                        <option value="{{ $service->id }}">{{ $service->name }}</option>
+                                    @endforeach
+                                </select>
+                                @if ($availableServices->isEmpty())
+                                    <div class="form-text text-danger">@lang('ecommerce::ecommerce.sr_no_services')</div>
+                                @endif
+                            @else
+                                <select class="form-select form-select-lg border-2" id="sr_type" name="type"
+                                    style="border-radius: 10px; font-size: 0.95rem;">
+                                    <option value="general" selected>@lang('lang.educational_request.type.general')</option>
+                                    <option value="task">@lang('lang.educational_request.type.task')</option>
+                                    <option value="project">@lang('lang.educational_request.type.project')</option>
+                                    <option value="research">@lang('lang.educational_request.type.research')</option>
+                                    <option value="explanation">@lang('lang.educational_request.type.explanation')</option>
+                                </select>
+                            @endif
                         </div>
 
                         <!-- Budget -->
@@ -331,6 +348,7 @@
             titleRequired: @json(__('ecommerce::ecommerce.sr_title_required')),
             descriptionRequired: @json(__('ecommerce::ecommerce.sr_description_required')),
             descriptionMin: @json(__('ecommerce::ecommerce.sr_description_min')),
+            serviceRequired: @json(__('ecommerce::ecommerce.sr_service_required')),
             budgetInvalid: @json(__('ecommerce::ecommerce.sr_budget_invalid')),
             successMsg: @json(__('ecommerce::ecommerce.sr_success_msg')),
             submitError: @json(__('ecommerce::ecommerce.sr_submit_error')),
@@ -394,6 +412,13 @@
                 setFieldError(description, messages.descriptionMin);
                 valid = false;
                 firstInvalid = firstInvalid || description;
+            }
+
+            const service = document.getElementById('sr_service_id');
+            if (service && !service.value) {
+                setFieldError(service, messages.serviceRequired);
+                valid = false;
+                firstInvalid = firstInvalid || service;
             }
 
             const budget = document.getElementById('sr_budget');

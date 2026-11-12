@@ -8,6 +8,7 @@ use App\Domain\User\Models\User;
 use App\Support\Enum\PaymentStatusEnum;
 use Domain\Admin\Models\Admin;
 use Domain\AppBase\Models\Edu\AcademicMajor;
+use Domain\AppBase\Models\Edu\Service;
 use Domain\Project\Models\Project;
 use Domain\Project\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
@@ -23,6 +24,7 @@ class EducationalRequest extends Model
         'requester_id',
         'academic_major_id',
         'education_level',
+        'service_id',
         'type',
         'status',
         'execution_status',
@@ -63,6 +65,11 @@ class EducationalRequest extends Model
     public function academicMajor()
     {
         return $this->belongsTo(AcademicMajor::class);
+    }
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class)->withTrashed();
     }
 
     public function attachments()

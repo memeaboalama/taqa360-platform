@@ -2,16 +2,18 @@
     <div class="card-body">
         <div class="btn-list">
 
-            <button class="btn btn-outline-primary rounded-pill btn-wave waves-effect waves-light dropdown-toggle" type="button" id="dropdownMenu2"
-                    data-bs-toggle="dropdown" aria-expanded="false">
-                {{ __('admin::home.Driver Name') }}
-            </button>
+            <div class="dropdown d-inline-block">
+                <button class="btn btn-outline-primary rounded-pill btn-wave waves-effect waves-light dropdown-toggle" type="button" id="dropdownMenu2"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    {{ __('admin::home.Driver Name') }}
+                </button>
 
-            <div class="dropdown-menu" wire:ignore.self>
-                <div class="row gy-3">
-                    <livewire:admin::driver.search.drivers />
+                <div class="dropdown-menu" wire:ignore.self>
+                    <div class="row gy-3">
+                        <livewire:admin::driver.search.drivers />
+                    </div>
+                    <div class="dropdown-divider"></div>
                 </div>
-                <div class="dropdown-divider"></div>
             </div>
 
             @if($driver_name != null)
@@ -23,23 +25,37 @@
             @endif
 
 
-            <div class="dropdown">
+            <div class="dropdown d-inline-block">
                 <button class="btn btn-outline-primary rounded-pill btn-wave waves-effect waves-light dropdown-toggle" type="button" id="dropdownMenuOrderStatus"
-                        data-bs-toggle="dropdown" aria-expanded="false">
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                     {{ __('admin::home.Order Status') }}
                 </button>
 
-                <div class="dropdown-menu">
+                <div class="dropdown-menu" wire:ignore.self>
                     <form class="px-4 py-3" wire:submit.prevent="filterOrderStatus">
                         <div class="row gy-3">
                             <div class="col-xl-12 mt-2">
                                 <label for="order-status-filter" class="form-label">{{ __('admin::home.Order Status') }}</label>
-                                <select class="form-control" id="order-status-filter" wire:model.defer="order_status">
-                                    <option selected value="">-- {{ __('admin::home.Select') }} --</option>
-                                    @foreach($this->order_statuses as $value)
-                                        <option value="{{ $value->value }}">{{ $value->trans() }}</option>
-                                    @endforeach
-                                </select>
+                                <div class="dropdown w-100" style="min-width: 150px;">
+                                    <button class="form-select text-start w-100" type="button" id="order-status-filter"
+                                            wire:click="toggleOrderStatusOptions"
+                                            aria-expanded="{{ $orderStatusOptionsOpen ? 'true' : 'false' }}">
+                                        {{ $this->order_statuses->firstWhere('value', $order_status)?->trans() ?? '-- ' . __('admin::home.Select') . ' --' }}
+                                    </button>
+                                    @if($orderStatusOptionsOpen)
+                                        <div class="dropdown-menu show w-100" style="max-height: 180px; overflow-y: auto;">
+                                            <button class="dropdown-item text-end" type="button" wire:click="selectOrderStatus(null)">
+                                                -- {{ __('admin::home.Select') }} --
+                                            </button>
+                                            @foreach($this->order_statuses as $value)
+                                                <button class="dropdown-item text-end" type="button"
+                                                        wire:click="selectOrderStatus('{{ $value->value }}')">
+                                                    {{ $value->trans() }}
+                                                </button>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
 
                             <button type="submit" class="col-md-12 mt-2 btn btn-primary">

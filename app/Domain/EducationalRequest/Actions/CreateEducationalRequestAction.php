@@ -30,6 +30,7 @@ class CreateEducationalRequestAction
                     'education_level' => $data['education_level'] ?? 'Bachelor',
                 ]
                 : [
+                    'service_id' => $data['service_id'] ?? null,
                     'project_site_type' => $data['project_site_type'] ?? null,
                     'solar_system_type' => $data['solar_system_type'] ?? null,
                 ];

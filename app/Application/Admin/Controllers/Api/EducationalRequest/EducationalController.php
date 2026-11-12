@@ -41,6 +41,9 @@ class EducationalController extends Controller
         ]);
 
         $relations = ['requester', 'project'];
+        if (config('app.brand') === 'taqa360') {
+            $relations[] = 'service';
+        }
         if (config('app.brand') === 'huloolcom') {
             $relations[] = 'academicMajor';
         }
@@ -264,6 +267,10 @@ class EducationalController extends Controller
 
     private function requestRelations(array $relations): array
     {
+        if (config('app.brand') === 'taqa360') {
+            $relations[] = 'service';
+        }
+
         if (config('app.brand') === 'huloolcom') {
             $relations[] = 'academicMajor';
         }

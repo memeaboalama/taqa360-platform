@@ -271,8 +271,10 @@
 
         .footer-logo {
             display: block;
-            width: 160px;
-            max-height: 80px;
+            width: auto;
+            max-width: 160px;
+            height: auto;
+            max-height: 65px;
             object-fit: contain;
             margin: 0 auto 8px
         }

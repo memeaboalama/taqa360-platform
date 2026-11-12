@@ -27,6 +27,8 @@ class EducationalListRequestResource extends JsonResource
             'title' => $this->title,
             'requesterName' => $this->requester->name,
             'serviceType' => $serviceType,
+            'serviceId' => $this->whenLoaded('service', fn () => $this->service?->uuid),
+            'serviceName' => $this->whenLoaded('service', fn () => $this->service?->name),
             'status' => $this->status,
             'paymentStatus' => $this->payment_status,
             'executionStatus' => $this->execution_status,

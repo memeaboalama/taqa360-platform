@@ -153,6 +153,10 @@ class AccountController extends Controller
                 });
             });
 
+        if (config('app.brand') === 'taqa360') {
+            $query->with('service');
+        }
+
         if (config('app.brand') === 'huloolcom') {
             $query->with('academicMajor');
         }
@@ -173,6 +177,9 @@ class AccountController extends Controller
                 'project.tasks.attachments',
                 'project.tasks.acceptedAssignments.educator',
             ];
+        if (config('app.brand') === 'taqa360') {
+            array_unshift($relations, 'service');
+        }
         if (config('app.brand') === 'huloolcom') {
             array_unshift($relations, 'academicMajor');
         }

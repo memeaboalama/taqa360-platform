@@ -6,6 +6,7 @@ use App\Domain\EducationalRequest\Actions\CreateEducationalRequestAction;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class ServiceRequestWebController extends Controller
 {
@@ -17,6 +18,13 @@ class ServiceRequestWebController extends Controller
                 'education_level' => ['nullable', 'string', 'max:100'],
             ]
             : [
+                'service_id' => [
+                    'required',
+                    'integer',
+                    Rule::exists('services', 'id')
+                        ->where('status', 'active')
+                        ->whereNull('deleted_at'),
+                ],
                 'project_site_type' => ['nullable', 'in:residential,commercial,agricultural,industrial,medical,educational,other'],
                 'solar_system_type' => ['nullable', 'in:off-grid,on-grid,hybrid,not_sure'],
             ];
@@ -34,6 +42,8 @@ class ServiceRequestWebController extends Controller
             'title.required' => 'عنوان الطلب مطلوب',
             'title.max' => 'عنوان الطلب يجب ألا يتجاوز 255 حرفاً',
             'description.required' => 'وصف الطلب مطلوب',
+            'service_id.required' => 'نوع الخدمة مطلوب',
+            'service_id.exists' => 'الخدمة المحددة غير متاحة للطلب الجديد',
             'budget.numeric' => 'الميزانية يجب أن تكون رقماً',
             'budget.min' => 'الميزانية يجب أن تكون أكبر من أو تساوي 0',
             'attachments.*.max' => 'حجم كل ملف يجب ألا يتجاوز 10 ميجابايت',

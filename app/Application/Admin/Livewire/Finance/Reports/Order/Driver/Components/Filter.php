@@ -10,6 +10,7 @@ use Livewire\Component;
 class Filter extends Component
 {
     public $order_status = null;
+    public bool $orderStatusOptionsOpen = false;
     public $driver_id = null;
     public $driver_name = null;
     public $driver_phone = null;
@@ -48,13 +49,26 @@ class Filter extends Component
 
     public function filterOrderStatus(): void
     {
+        $this->orderStatusOptionsOpen = false;
         $this->filters['status'] =  $this->order_status;
         $this->emit('refreshDriverOrderReport', $this->filters);
+    }
+
+    public function toggleOrderStatusOptions(): void
+    {
+        $this->orderStatusOptionsOpen = !$this->orderStatusOptionsOpen;
+    }
+
+    public function selectOrderStatus(?string $status): void
+    {
+        $this->order_status = $status;
+        $this->orderStatusOptionsOpen = false;
     }
 
     public function removeOrderStatusFilter(): void
     {
         $this->order_status = null;
+        $this->orderStatusOptionsOpen = false;
         $this->filters['status'] = null;
         $this->emit('refreshDriverOrderReport', $this->filters);
     }

@@ -354,12 +354,6 @@
             text-align: center
         }
 
-        .footer-logo {
-            width: 160px;
-            height: 65px;
-            object-fit: contain
-        }
-
         .footer-copy {
             margin: 5px 0 0;
             color: #d2d4d6;

@@ -90,6 +90,9 @@ class ProjectController extends Controller
         bool $includeBids = false
     ): Project {
         $relations = ['createdBy', 'tasks.assignments.educator', 'educationalRequest'];
+        if (config('app.brand') === 'taqa360') {
+            $relations[] = 'educationalRequest.service';
+        }
 
         if ($includeAttachments) {
             $relations[] = 'attachments';
