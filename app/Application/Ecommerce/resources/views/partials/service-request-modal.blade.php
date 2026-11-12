@@ -221,13 +221,9 @@
                             <label for="sr_type" class="form-label font-weight-bold text-dark mb-1">
                                 @lang('ecommerce::ecommerce.service_type')
                             </label>
-                            <select class="form-select form-select-lg border-2" id="sr_type" name="type"
-                                style="border-radius: 10px; font-size: 0.95rem;">
-                                <option value="general" selected>@lang('lang.educational_request.type.general')</option>
-                                <option value="task">@lang('lang.educational_request.type.task')</option>
-                                <option value="project">@lang('lang.educational_request.type.project')</option>
-                                <option value="research">@lang('lang.educational_request.type.research')</option>
-                                <option value="explanation">@lang('lang.educational_request.type.explanation')</option>
+                            <select class="form-select form-select-lg border-2" id="sr_type" name="service_id"
+                                required disabled style="border-radius: 10px; font-size: 0.95rem;">
+                                <option value="">@lang('ecommerce::ecommerce.loading')</option>
                             </select>
                         </div>
 
@@ -335,9 +331,54 @@
             successMsg: @json(__('ecommerce::ecommerce.sr_success_msg')),
             submitError: @json(__('ecommerce::ecommerce.sr_submit_error')),
             connectionError: @json(__('ecommerce::ecommerce.sr_connection_error')),
+            selectService: @json(__('ecommerce::ecommerce.sr_select_service')),
+            noServices: @json(__('ecommerce::ecommerce.sr_no_services')),
+            servicesError: @json(__('ecommerce::ecommerce.sr_services_error')),
+            loading: @json(__('ecommerce::ecommerce.loading')),
         };
 
         if (!form) return;
+
+        const serviceSelect = document.getElementById('sr_type');
+        let servicesLoading = false;
+        let servicesError = false;
+
+        async function loadServices() {
+            if (servicesLoading) return;
+            servicesLoading = true;
+            servicesError = false;
+            const selected = serviceSelect.value;
+            serviceSelect.disabled = true;
+            serviceSelect.replaceChildren(new Option(messages.loading, ''));
+            try {
+                const response = await fetch(@json(route('service-requests.services')), {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!response.ok) throw new Error();
+                const result = await response.json();
+                const services = result.data?.services;
+                if (!Array.isArray(services)) throw new Error();
+                serviceSelect.replaceChildren(new Option(
+                    services.length ? messages.selectService : messages.noServices, ''
+                ));
+                const locale = @json(app()->getLocale());
+                services.forEach(function(service) {
+                    const name = typeof service.name === 'string' ? service.name
+                        : (service.name?.[locale] || service.name?.ar || service.name?.en || '');
+                    serviceSelect.add(new Option(name, service.id));
+                });
+                if (services.some(service => service.id === selected)) serviceSelect.value = selected;
+                serviceSelect.disabled = services.length === 0;
+            } catch (error) {
+                servicesError = true;
+                serviceSelect.replaceChildren(new Option(messages.servicesError, ''));
+            } finally {
+                servicesLoading = false;
+            }
+        }
+
+        loadServices();
+        document.getElementById('serviceRequestModal').addEventListener('show.bs.modal', loadServices);
 
         function clearFieldErrors() {
             form.querySelectorAll('.sr-field-error').forEach(function(el) {
@@ -377,6 +418,12 @@
             clearFieldErrors();
             let valid = true;
             let firstInvalid = null;
+
+            if (servicesLoading || servicesError || !serviceSelect.value) {
+                setFieldError(serviceSelect, servicesError ? messages.servicesError : messages.selectService);
+                valid = false;
+                firstInvalid = serviceSelect;
+            }
 
             const title = document.getElementById('sr_title');
             if (!title.value.trim()) {

@@ -18,6 +18,15 @@ class ServiceController extends Controller
 {
     use ApiResponseTrait;
 
+    public function options(): JsonResponse
+    {
+        return $this->responseData([
+            'services' => ServiceResource::collection(
+                Service::where('status', StatusEnum::ACTIVE->value)->get()
+            ),
+        ], 200, 'Services retrieved successfully');
+    }
+
     public function index(Request $request): JsonResponse
     {
         $services = Service::paginate($request->get('per_page', 15));

@@ -399,7 +399,7 @@
                     <div class="d-flex align-items-center gap-3 mb-2">
                         <span class="request-code num" style="font-weight:800; color:#1a202c; font-family:monospace; font-size:18px;">{{ $serviceRequest->code }}</span>
                         <span class="service-type-badge">
-                            <i class="ti-settings"></i> {{ $serviceRequest->type instanceof \UnitEnum ? $serviceRequest->type->trans() : $serviceRequest->type }}
+                            <i class="ti-settings"></i> {{ $serviceRequest->service_type_label }}
                         </span>
                     </div>
                     <h4 style="font-size:19px; font-weight:700; color:#1a202c; margin:0;">{{ $serviceRequest->title }}</h4>

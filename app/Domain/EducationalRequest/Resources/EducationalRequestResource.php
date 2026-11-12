@@ -41,6 +41,8 @@ class EducationalRequestResource extends JsonResource
             'status' => $this->status,
             'reviewedAt' => $this->reviewed_at?->toIso8601String(),
             'serviceType' => $serviceType,
+            'serviceId' => $this->service?->uuid,
+            'serviceName' => $this->service?->name,
             'paymentStatus' => $this->payment_status,
             'executionStatus' => $this->execution_status,
             'budget' => $this->project?->budget !== null

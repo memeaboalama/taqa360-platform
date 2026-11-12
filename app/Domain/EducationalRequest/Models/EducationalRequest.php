@@ -8,6 +8,7 @@ use App\Domain\User\Models\User;
 use App\Support\Enum\PaymentStatusEnum;
 use Domain\Admin\Models\Admin;
 use Domain\AppBase\Models\Edu\AcademicMajor;
+use Domain\AppBase\Models\Edu\Service;
 use Domain\Project\Models\Project;
 use Domain\Project\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
@@ -19,6 +20,7 @@ class EducationalRequest extends Model
 
     protected $fillable = [
         'title',
+        'service_id',
         'description',
         'requester_id',
         'academic_major_id',
@@ -63,6 +65,18 @@ class EducationalRequest extends Model
     public function academicMajor()
     {
         return $this->belongsTo(AcademicMajor::class);
+    }
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class)->withTrashed();
+    }
+
+    public function getServiceTypeLabelAttribute(): string
+    {
+        return $this->service?->name ?? ($this->type instanceof EducationalRequestType
+            ? $this->type->trans()
+            : (string) $this->type);
     }
 
     public function attachments()

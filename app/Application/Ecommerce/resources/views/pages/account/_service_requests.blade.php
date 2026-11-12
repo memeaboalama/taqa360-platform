@@ -296,7 +296,7 @@
                                 </td>
                                 <td data-label="@lang('ecommerce::ecommerce.service_type')">
                                     <span class="service-type-badge" title="@lang('ecommerce::ecommerce.service_request_tooltip')">
-                                        <i class="ti-settings"></i> {{ $serviceRequest->type instanceof \UnitEnum ? $serviceRequest->type->trans() : $serviceRequest->type }}
+                                        <i class="ti-settings"></i> {{ $serviceRequest->service_type_label }}
                                     </span>
                                 </td>
                                 <td data-label="@lang('ecommerce::ecommerce.request_status')">

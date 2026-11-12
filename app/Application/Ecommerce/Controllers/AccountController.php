@@ -142,6 +142,7 @@ class AccountController extends Controller
     private function getServiceRequests($user, Request $request)
     {
         $query = EducationalRequest::where('requester_id', $user->id)
+            ->with('service')
             ->withCount('attachments')
             ->when($search = trim((string) $request->query('search', '')), function ($query) use ($search) {
                 $requestNumber = ltrim($search, '#');
