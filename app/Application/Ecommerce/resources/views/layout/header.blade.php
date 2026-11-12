@@ -471,7 +471,8 @@
                         <button type="button"
                             class="btn text-white me-2 ms-2 font-weight-bold"
                             style="background: #306FAA; color: #fff !important; border: none; border-radius: 6px; padding: 10px 18px; font-size: 0.95rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(48, 111, 170, 0.25);"
-                            onclick="handleServiceRequestClick()">
+                            data-bs-toggle="modal"
+                            data-bs-target="{{ auth()->check() ? '#serviceRequestModal' : '#loginRequiredModal' }}">
                             <i class="fa fa-plus-circle"></i> @lang('ecommerce::ecommerce.request_service')
                         </button>
 
@@ -494,28 +495,6 @@
 </div>
 
 <script>
-    window.handleServiceRequestClick = function() {
-        function openModalById(id) {
-            const modalEl = document.getElementById(id);
-            if (!modalEl) return;
-            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                let modal = typeof bootstrap.Modal.getInstance === 'function' ? bootstrap.Modal.getInstance(modalEl) : null;
-                if (!modal) {
-                    modal = new bootstrap.Modal(modalEl);
-                }
-                modal.show();
-            } else if (typeof $ !== 'undefined' && $.fn.modal) {
-                $(modalEl).modal('show');
-            }
-        }
-
-        @auth
-        openModalById('serviceRequestModal');
-        @else
-        openModalById('loginRequiredModal');
-        @endauth
-    };
-
     document.addEventListener('DOMContentLoaded', function() {
         applyDirection();
         // initializeSearch();
