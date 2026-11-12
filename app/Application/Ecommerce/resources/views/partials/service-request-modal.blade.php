@@ -1,21 +1,25 @@
 @php
-$academicMajors = config('app.brand') === 'huloolcom'
-    ? \Domain\AppBase\Models\Edu\AcademicMajor::all()
-    : collect();
+    $academicMajors = config('app.brand') === 'huloolcom' ? \Domain\AppBase\Models\Edu\AcademicMajor::all() : collect();
 @endphp
 
 <!-- Service Request Modal -->
-<div class="modal fade" id="serviceRequestModal" tabindex="-1" aria-labelledby="serviceRequestModalLabel" aria-hidden="true">
+<div class="modal fade" id="serviceRequestModal" tabindex="-1" aria-labelledby="serviceRequestModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content border-0 shadow-lg style-service-modal" style="border-radius: 16px; overflow: visible;">
-            <div class="modal-header text-white" style="background-color:{{ $platformBrand['primary_color'] }}; padding: 18px 24px;">
-                <h5 class="modal-title font-weight-bold d-flex align-items-center" id="serviceRequestModalLabel" style="font-size: 1.25rem;">
-                    <i class="fa fa-file-text-o me-2" style="font-size: 1.3rem;"></i> @lang('ecommerce::ecommerce.sr_title')
+            <div class="modal-header text-white"
+                style="background-color:{{ $platformBrand['primary_color'] }}; padding: 18px 24px;">
+                <h5 class="modal-title font-weight-bold d-flex align-items-center" id="serviceRequestModalLabel"
+                    style="font-size: 1.25rem;">
+                    <i class="fa fa-file-text-o me-2" style="font-size: 1.3rem;"></i>
+                    @lang(config('app.brand') === 'huloolcom' ? 'ecommerce::ecommerce.sr_title_hulool' : 'ecommerce::ecommerce.sr_title_taqa')
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="filter: brightness(0) invert(1);"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"
+                    style="filter: brightness(0) invert(1);"></button>
             </div>
 
-            <form id="serviceRequestForm" action="{{ route('service-requests.store') }}" method="POST" enctype="multipart/form-data" novalidate>
+            <form id="serviceRequestForm" action="{{ route('service-requests.store') }}" method="POST"
+                enctype="multipart/form-data" novalidate>
                 @csrf
                 <style>
                     .sr-field-error {
@@ -27,11 +31,13 @@ $academicMajors = config('app.brand') === 'huloolcom'
                         align-items: center;
                         gap: 4px;
                     }
+
                     .sr-field-error::before {
                         content: '\f06a';
                         font-family: 'FontAwesome';
                         font-size: 0.85rem;
                     }
+
                     #serviceRequestForm .form-control.is-invalid,
                     #serviceRequestForm .form-select.is-invalid {
                         border-color: #c62828 !important;
@@ -43,14 +49,17 @@ $academicMajors = config('app.brand') === 'huloolcom'
                         display: flex;
                         gap: 10px;
                     }
+
                     .urgency-option {
                         flex: 1 1 0;
                         cursor: pointer;
                         margin: 0;
                     }
+
                     .urgency-option input {
                         display: none;
                     }
+
                     .urgency-option span {
                         display: flex;
                         align-items: center;
@@ -66,21 +75,25 @@ $academicMajors = config('app.brand') === 'huloolcom'
                         transition: all 0.2s;
                         white-space: nowrap;
                     }
-                    .urgency-option input:checked + span {
+
+                    .urgency-option input:checked+span {
                         border-color: {{ $platformBrand['primary_color'] }};
                         background: {{ $platformBrand['primary_light_color'] }};
                         color: {{ $platformBrand['primary_hover_color'] }};
                         box-shadow: 0 0 0 2px {{ $platformBrand['primary_color'] }} inset;
                     }
+
                     .urgency-option span i {
                         font-size: 0.95rem;
                     }
-                    .urgency-option input[value="urgent"]:checked + span {
+
+                    .urgency-option input[value="urgent"]:checked+span {
                         border-color: #EA993E;
                         color: #EA993E;
                         box-shadow: 0 0 0 2px #EA993E inset;
                     }
-                    .urgency-option input[value="very_urgent"]:checked + span {
+
+                    .urgency-option input[value="very_urgent"]:checked+span {
                         border-color: #e53e3e;
                         background: #fff5f5;
                         color: #c53030;
@@ -98,16 +111,18 @@ $academicMajors = config('app.brand') === 'huloolcom'
                             <label for="sr_title" class="form-label font-weight-bold text-dark mb-1">
                                 @lang('ecommerce::ecommerce.sr_request_title') <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control form-control-lg border-2" id="sr_title" name="title" required
-                                placeholder="@lang('ecommerce::ecommerce.sr_title_placeholder')" style="border-radius: 10px; font-size: 0.95rem;">
+                            <input type="text" class="form-control form-control-lg border-2" id="sr_title"
+                                name="title" required placeholder="@lang('ecommerce::ecommerce.sr_title_placeholder')"
+                                style="border-radius: 10px; font-size: 0.95rem;">
                         </div>
 
-                        @if(config('app.brand') === 'huloolcom')
+                        @if (config('app.brand') === 'huloolcom')
                             <div class="col-md-6">
                                 <label for="sr_education_level" class="form-label font-weight-bold text-dark mb-1">
                                     @lang('ecommerce::ecommerce.education_level')
                                 </label>
-                                <select class="form-select form-select-lg border-2" id="sr_education_level" name="education_level" style="border-radius: 10px; font-size: 0.95rem;">
+                                <select class="form-select form-select-lg border-2" id="sr_education_level"
+                                    name="education_level" style="border-radius: 10px; font-size: 0.95rem;">
                                     <option value="">@lang('ecommerce::ecommerce.sr_select_education_level')</option>
                                     <option value="Elementary">@lang('ecommerce::ecommerce.level_elementary')</option>
                                     <option value="Middle">@lang('ecommerce::ecommerce.level_middle')</option>
@@ -122,9 +137,10 @@ $academicMajors = config('app.brand') === 'huloolcom'
                                 <label for="sr_academic_major_id" class="form-label font-weight-bold text-dark mb-1">
                                     @lang('ecommerce::ecommerce.academic_major')
                                 </label>
-                                <select class="form-select form-select-lg border-2" id="sr_academic_major_id" name="academic_major_id" style="border-radius: 10px; font-size: 0.95rem;">
+                                <select class="form-select form-select-lg border-2" id="sr_academic_major_id"
+                                    name="academic_major_id" style="border-radius: 10px; font-size: 0.95rem;">
                                     <option value="">@lang('ecommerce::ecommerce.sr_select_major')</option>
-                                    @foreach($academicMajors as $major)
+                                    @foreach ($academicMajors as $major)
                                         <option value="{{ $major->id }}">{{ $major->name }}</option>
                                     @endforeach
                                 </select>
@@ -136,20 +152,34 @@ $academicMajors = config('app.brand') === 'huloolcom'
                                     @lang('ecommerce::ecommerce.sr_project_site_type')
                                 </label>
                                 <div class="custom-dd w-100" id="cd_project">
-                                    <button type="button" class="form-select form-select-lg border-2 text-start" style="border-radius: 10px; font-size: 0.95rem;" onclick="toggleDD('cd_project')">
+                                    <button type="button" class="form-select form-select-lg border-2 text-start"
+                                        style="border-radius: 10px; font-size: 0.95rem;"
+                                        onclick="toggleDD('cd_project')">
                                         <span id="cd_project_label">اختر نوع الموقع</span>
                                     </button>
                                     <div class="custom-dd-menu" id="cd_project_menu" style="display:none;">
-                                        <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','','اختر نوع الموقع')">اختر نوع الموقع</a>
-                                        <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','residential','سكني')">سكني</a>
-                                        <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','commercial','تجاري')">تجاري</a>
-                                        <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','agricultural','زراعي/مزرعة')">زراعي/مزرعة</a>
-                                        <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','industrial','صناعي')">صناعي</a>
-                                        <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','medical','مرفق طبي')">مرفق طبي</a>
-                                        <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','educational','مرفق تعليمي')">مرفق تعليمي</a>
-                                        <a href="javascript:void(0)" onclick="pickDD('cd_project','sr_project_site_type','other','أخرى')">أخرى</a>
+                                        <a href="javascript:void(0)"
+                                            onclick="pickDD('cd_project','sr_project_site_type','','اختر نوع الموقع')">اختر
+                                            نوع الموقع</a>
+                                        <a href="javascript:void(0)"
+                                            onclick="pickDD('cd_project','sr_project_site_type','residential','سكني')">سكني</a>
+                                        <a href="javascript:void(0)"
+                                            onclick="pickDD('cd_project','sr_project_site_type','commercial','تجاري')">تجاري</a>
+                                        <a href="javascript:void(0)"
+                                            onclick="pickDD('cd_project','sr_project_site_type','agricultural','زراعي/مزرعة')">زراعي/مزرعة</a>
+                                        <a href="javascript:void(0)"
+                                            onclick="pickDD('cd_project','sr_project_site_type','industrial','صناعي')">صناعي</a>
+                                        <a href="javascript:void(0)"
+                                            onclick="pickDD('cd_project','sr_project_site_type','medical','مرفق طبي')">مرفق
+                                            طبي</a>
+                                        <a href="javascript:void(0)"
+                                            onclick="pickDD('cd_project','sr_project_site_type','educational','مرفق تعليمي')">مرفق
+                                            تعليمي</a>
+                                        <a href="javascript:void(0)"
+                                            onclick="pickDD('cd_project','sr_project_site_type','other','أخرى')">أخرى</a>
                                     </div>
-                                    <input type="hidden" name="project_site_type" id="sr_project_site_type" value="">
+                                    <input type="hidden" name="project_site_type" id="sr_project_site_type"
+                                        value="">
                                 </div>
                             </div>
                             <!-- Solar System Type -->
@@ -158,17 +188,30 @@ $academicMajors = config('app.brand') === 'huloolcom'
                                     @lang('ecommerce::ecommerce.sr_solar_system_type')
                                 </label>
                                 <div class="custom-dd w-100" id="cd_solar">
-                                    <button type="button" class="form-select form-select-lg border-2 text-start" style="border-radius: 10px; font-size: 0.95rem;" onclick="toggleDD('cd_solar')">
+                                    <button type="button" class="form-select form-select-lg border-2 text-start"
+                                        style="border-radius: 10px; font-size: 0.95rem;"
+                                        onclick="toggleDD('cd_solar')">
                                         <span id="cd_solar_label">اختر نوع النظام</span>
                                     </button>
                                     <div class="custom-dd-menu" id="cd_solar_menu" style="display:none;">
-                                        <a href="javascript:void(0)" onclick="pickDD('cd_solar','sr_solar_system_type','','اختر نوع النظام')">اختر نوع النظام</a>
-                                        <a href="javascript:void(0)" onclick="pickDD('cd_solar','sr_solar_system_type','off-grid','خارج الشبكة (Off-Grid)')">خارج الشبكة (Off-Grid)</a>
-                                        <a href="javascript:void(0)" onclick="pickDD('cd_solar','sr_solar_system_type','on-grid','متصل بالشبكة (On-Grid)')">متصل بالشبكة (On-Grid)</a>
-                                        <a href="javascript:void(0)" onclick="pickDD('cd_solar','sr_solar_system_type','hybrid','هجين (Hybrid)')">هجين (Hybrid)</a>
-                                        <a href="javascript:void(0)" onclick="pickDD('cd_solar','sr_solar_system_type','not_sure','غير متأكد – أحتاج استشارة فنية')">غير متأكد – أحتاج استشارة فنية</a>
+                                        <a href="javascript:void(0)"
+                                            onclick="pickDD('cd_solar','sr_solar_system_type','','اختر نوع النظام')">اختر
+                                            نوع النظام</a>
+                                        <a href="javascript:void(0)"
+                                            onclick="pickDD('cd_solar','sr_solar_system_type','off-grid','خارج الشبكة (Off-Grid)')">خارج
+                                            الشبكة (Off-Grid)</a>
+                                        <a href="javascript:void(0)"
+                                            onclick="pickDD('cd_solar','sr_solar_system_type','on-grid','متصل بالشبكة (On-Grid)')">متصل
+                                            بالشبكة (On-Grid)</a>
+                                        <a href="javascript:void(0)"
+                                            onclick="pickDD('cd_solar','sr_solar_system_type','hybrid','هجين (Hybrid)')">هجين
+                                            (Hybrid)</a>
+                                        <a href="javascript:void(0)"
+                                            onclick="pickDD('cd_solar','sr_solar_system_type','not_sure','غير متأكد – أحتاج استشارة فنية')">غير
+                                            متأكد – أحتاج استشارة فنية</a>
                                     </div>
-                                    <input type="hidden" name="solar_system_type" id="sr_solar_system_type" value="">
+                                    <input type="hidden" name="solar_system_type" id="sr_solar_system_type"
+                                        value="">
                                 </div>
                             </div>
                         @endif
@@ -178,7 +221,8 @@ $academicMajors = config('app.brand') === 'huloolcom'
                             <label for="sr_type" class="form-label font-weight-bold text-dark mb-1">
                                 @lang('ecommerce::ecommerce.service_type')
                             </label>
-                            <select class="form-select form-select-lg border-2" id="sr_type" name="type" style="border-radius: 10px; font-size: 0.95rem;">
+                            <select class="form-select form-select-lg border-2" id="sr_type" name="type"
+                                style="border-radius: 10px; font-size: 0.95rem;">
                                 <option value="general" selected>@lang('lang.educational_request.type.general')</option>
                                 <option value="task">@lang('lang.educational_request.type.task')</option>
                                 <option value="project">@lang('lang.educational_request.type.project')</option>
@@ -193,9 +237,12 @@ $academicMajors = config('app.brand') === 'huloolcom'
                                 @lang('ecommerce::ecommerce.sr_budget_label')
                             </label>
                             <div class="input-group">
-                                <input type="number" dir="ltr" step="0.01" min="0" class="form-control form-control-lg border-2" id="sr_budget" name="budget"
-                                    placeholder="@lang('ecommerce::ecommerce.sr_budget_placeholder')" style="border-top-right-radius: 10px; border-bottom-right-radius: 10px; font-size: 0.95rem;">
-                                <span class="input-group-text bg-white border-2" style="border-top-left-radius: 10px; border-bottom-left-radius: 10px;">@lang('ecommerce::ecommerce.currency_symbol')</span>
+                                <input type="number" dir="ltr" step="0.01" min="0"
+                                    class="form-control form-control-lg border-2" id="sr_budget" name="budget"
+                                    placeholder="@lang('ecommerce::ecommerce.sr_budget_placeholder')"
+                                    style="border-top-right-radius: 10px; border-bottom-right-radius: 10px; font-size: 0.95rem;">
+                                <span class="input-group-text bg-white border-2"
+                                    style="border-top-left-radius: 10px; border-bottom-left-radius: 10px;">@lang('ecommerce::ecommerce.currency_symbol')</span>
                             </div>
                         </div>
 
@@ -246,7 +293,8 @@ $academicMajors = config('app.brand') === 'huloolcom'
                             <label for="sr_attachments" class="form-label font-weight-bold text-dark mb-1">
                                 @lang('ecommerce::ecommerce.sr_attachments_label')
                             </label>
-                            <input class="form-control border-2" type="file" id="sr_attachments" name="attachments[]" multiple style="border-radius: 10px; font-size: 0.9rem;">
+                            <input class="form-control border-2" type="file" id="sr_attachments"
+                                name="attachments[]" multiple style="border-radius: 10px; font-size: 0.9rem;">
                             <div class="form-text text-muted" style="font-size: 0.8rem;">
                                 @lang('ecommerce::ecommerce.sr_attachments_hint')
                             </div>
@@ -256,11 +304,14 @@ $academicMajors = config('app.brand') === 'huloolcom'
                 </div>
 
                 <div class="modal-footer bg-white border-top p-3 d-flex justify-content-between">
-                    <button type="button" class="btn btn-light btn-lg px-4 border" data-bs-dismiss="modal" style="border-radius: 10px; font-size: 0.95rem;">
+                    <button type="button" class="btn btn-light btn-lg px-4 border" data-bs-dismiss="modal"
+                        style="border-radius: 10px; font-size: 0.95rem;">
                         @lang('ecommerce::ecommerce.sr_cancel')
                     </button>
-                    <button type="submit" id="sr_submit_btn" class="btn btn-danger btn-lg px-5 font-weight-bold" style="    background: #306FAA;border-color: #306FAA;color: #ffffff;; border-radius: 10px; font-size: 0.95rem;">
-                        <span id="sr_submit_spinner" class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                    <button type="submit" id="sr_submit_btn" class="btn btn-danger btn-lg px-5 font-weight-bold"
+                        style="    background: #306FAA;border-color: #306FAA;color: #ffffff;; border-radius: 10px; font-size: 0.95rem;">
+                        <span id="sr_submit_spinner" class="spinner-border spinner-border-sm me-2 d-none"
+                            role="status" aria-hidden="true"></span>
                         <i class="fa fa-paper-plane me-1"></i> @lang('ecommerce::ecommerce.sr_submit')
                     </button>
                 </div>
@@ -289,8 +340,12 @@ $academicMajors = config('app.brand') === 'huloolcom'
         if (!form) return;
 
         function clearFieldErrors() {
-            form.querySelectorAll('.sr-field-error').forEach(function(el) { el.remove(); });
-            form.querySelectorAll('.is-invalid').forEach(function(el) { el.classList.remove('is-invalid'); });
+            form.querySelectorAll('.sr-field-error').forEach(function(el) {
+                el.remove();
+            });
+            form.querySelectorAll('.is-invalid').forEach(function(el) {
+                el.classList.remove('is-invalid');
+            });
         }
 
         function setFieldError(field, message) {
@@ -311,7 +366,8 @@ $academicMajors = config('app.brand') === 'huloolcom'
             ['input', 'change'].forEach(function(evt) {
                 field.addEventListener(evt, function() {
                     field.classList.remove('is-invalid');
-                    const err = field.closest('.col-12, .col-md-6')?.querySelector('.sr-field-error');
+                    const err = field.closest('.col-12, .col-md-6')?.querySelector(
+                        '.sr-field-error');
                     if (err) err.remove();
                 });
             });
@@ -325,27 +381,36 @@ $academicMajors = config('app.brand') === 'huloolcom'
             const title = document.getElementById('sr_title');
             if (!title.value.trim()) {
                 setFieldError(title, messages.titleRequired);
-                valid = false; firstInvalid = firstInvalid || title;
+                valid = false;
+                firstInvalid = firstInvalid || title;
             }
 
             const description = document.getElementById('sr_description');
             if (!description.value.trim()) {
                 setFieldError(description, messages.descriptionRequired);
-                valid = false; firstInvalid = firstInvalid || description;
+                valid = false;
+                firstInvalid = firstInvalid || description;
             } else if (description.value.trim().length < 10) {
                 setFieldError(description, messages.descriptionMin);
-                valid = false; firstInvalid = firstInvalid || description;
+                valid = false;
+                firstInvalid = firstInvalid || description;
             }
 
             const budget = document.getElementById('sr_budget');
             if (budget.value !== '' && (isNaN(budget.value) || Number(budget.value) < 0)) {
                 setFieldError(budget, messages.budgetInvalid);
-                valid = false; firstInvalid = firstInvalid || budget;
+                valid = false;
+                firstInvalid = firstInvalid || budget;
             }
 
             if (firstInvalid) {
-                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                firstInvalid.focus({ preventScroll: true });
+                firstInvalid.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                firstInvalid.focus({
+                    preventScroll: true
+                });
             }
             return valid;
         }
@@ -396,11 +461,14 @@ $academicMajors = config('app.brand') === 'huloolcom'
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute('content') || ''
                     }
                 })
                 .then(async response => {
-                    const data = await response.json().catch(function() { return {}; });
+                    const data = await response.json().catch(function() {
+                        return {};
+                    });
                     if (response.ok && data.success) {
                         alertBox.className = 'd-none';
                         alertBox.innerHTML = '';
@@ -409,7 +477,8 @@ $academicMajors = config('app.brand') === 'huloolcom'
                         const modalEl = document.getElementById('serviceRequestModal');
                         if (modalEl) {
                             if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                                let instance = typeof bootstrap.Modal.getInstance === 'function' ? bootstrap.Modal.getInstance(modalEl) : null;
+                                let instance = typeof bootstrap.Modal.getInstance ===
+                                    'function' ? bootstrap.Modal.getInstance(modalEl) : null;
                                 if (instance) {
                                     instance.hide();
                                 } else if (typeof $ !== 'undefined' && $.fn.modal) {
@@ -444,7 +513,9 @@ $academicMajors = config('app.brand') === 'huloolcom'
                         }
                         clearFieldErrors();
                         showServerErrors(validationErrors);
-                        throw { silent: true };
+                        throw {
+                            silent: true
+                        };
                     } else {
                         throw new Error(data.message || messages.submitError);
                     }
@@ -452,7 +523,8 @@ $academicMajors = config('app.brand') === 'huloolcom'
                 .catch(error => {
                     if (error && error.silent) return;
                     alertBox.className = 'alert alert-danger d-block mb-3';
-                    alertBox.innerHTML = '<i class="fa fa-exclamation-triangle me-1"></i> ' + (error.message || messages.connectionError);
+                    alertBox.innerHTML = '<i class="fa fa-exclamation-triangle me-1"></i> ' + (error
+                        .message || messages.connectionError);
                 })
                 .finally(() => {
                     submitBtn.disabled = false;
@@ -463,50 +535,62 @@ $academicMajors = config('app.brand') === 'huloolcom'
 </script>
 
 <style>
-.custom-dd { position: relative; }
-.custom-dd-menu {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 2000;
-    background: #fff;
-    border: 1px solid #ced4da;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    max-height: 240px;
-    overflow-y: auto;
-}
-.custom-dd-menu a {
-    display: block;
-    padding: 10px 14px;
-    color: #333;
-    text-decoration: none;
-    font-size: 0.95rem;
-}
-.custom-dd-menu a:hover { background: #f1f5f9; }
+    .custom-dd {
+        position: relative;
+    }
+
+    .custom-dd-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 2000;
+        background: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        max-height: 240px;
+        overflow-y: auto;
+    }
+
+    .custom-dd-menu a {
+        display: block;
+        padding: 10px 14px;
+        color: #333;
+        text-decoration: none;
+        font-size: 0.95rem;
+    }
+
+    .custom-dd-menu a:hover {
+        background: #f1f5f9;
+    }
 </style>
 
 <script>
-function toggleDD(id) {
-    var menu = document.getElementById(id + '_menu');
-    if (!menu) return;
-    var open = menu.style.display === 'block';
-    // close all
-    document.querySelectorAll('.custom-dd-menu').forEach(function(m){ m.style.display = 'none'; });
-    if (!open) menu.style.display = 'block';
-}
-function pickDD(ddId, inputId, value, text) {
-    var input = document.getElementById(inputId);
-    if (input) input.value = value;
-    var label = document.getElementById(ddId + '_label');
-    if (label) label.textContent = text;
-    var menu = document.getElementById(ddId + '_menu');
-    if (menu) menu.style.display = 'none';
-}
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.custom-dd')) {
-        document.querySelectorAll('.custom-dd-menu').forEach(function(m){ m.style.display = 'none'; });
+    function toggleDD(id) {
+        var menu = document.getElementById(id + '_menu');
+        if (!menu) return;
+        var open = menu.style.display === 'block';
+        // close all
+        document.querySelectorAll('.custom-dd-menu').forEach(function(m) {
+            m.style.display = 'none';
+        });
+        if (!open) menu.style.display = 'block';
     }
-});
+
+    function pickDD(ddId, inputId, value, text) {
+        var input = document.getElementById(inputId);
+        if (input) input.value = value;
+        var label = document.getElementById(ddId + '_label');
+        if (label) label.textContent = text;
+        var menu = document.getElementById(ddId + '_menu');
+        if (menu) menu.style.display = 'none';
+    }
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.custom-dd')) {
+            document.querySelectorAll('.custom-dd-menu').forEach(function(m) {
+                m.style.display = 'none';
+            });
+        }
+    });
 </script>

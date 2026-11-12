@@ -46,6 +46,7 @@ class UpdateAttachmentAction
                 $fileDetails = $this->imageService->storeImage($file, $path, "PROJECT_ATTACHMENT", $disk, 'webp');
 
                 $updateData = array_merge($updateData, $fileDetails, [
+                    'size' => $file->getSize(),
                     'uploader_type' => get_class($uploader),
                     'uploader_id' => $uploader?->id,
                 ]);

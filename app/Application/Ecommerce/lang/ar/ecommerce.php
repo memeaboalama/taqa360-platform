@@ -1028,7 +1028,7 @@ return [
     'additional_notes' => 'ملاحظات إضافية',
     'attachments' => 'المرفقات',
     'rejection_reason' => 'سبب الرفض',
-    'sr_title' => 'تقديم طلب خدمة تعليمية جديد',
+    'sr_title' => 'إضافة خدمة جديدة',
     'sr_request_title' => 'عنوان الطلب',
     'sr_title_placeholder' => 'أدخل عنواناً واضحاً ومختصراً للطلب',
     'sr_project_site_type' => 'نوع موقع المشروع',
@@ -1063,7 +1063,9 @@ return [
     'iban_required' => 'رقم الآيبان (IBAN) مطلوب',
 
     // Service Request Modal
-    'sr_title' => 'تقديم طلب خدمة تعليمية جديد',
+    'sr_title' => 'إضافة خدمة جديدة',
+    'sr_title_taqa' => 'إضافة خدمة جديدة',
+    'sr_title_hulool' => 'تقديم طلب خدمة تعليمية جديد',
     'sr_request_title' => 'عنوان الطلب',
     'sr_title_placeholder' => 'أدخل عنواناً واضحاً ومختصراً للطلب',
     'sr_select_education_level' => '-- اختر المستوى التعليمي --',

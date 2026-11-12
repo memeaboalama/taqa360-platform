@@ -1062,7 +1062,7 @@ return [
     'additional_notes' => 'Additional Notes',
     'attachments' => 'Attachments',
     'rejection_reason' => 'Rejection Reason',
-    'sr_title' => 'Submit a New Educational Service Request',
+    'sr_title' => 'Add new service',
     'sr_request_title' => 'Request Title',
     'sr_title_placeholder' => 'Enter a clear and concise title for your request',
     'sr_project_site_type' => 'Project Site Type',
@@ -1097,7 +1097,9 @@ return [
     'iban_required' => 'IBAN is required',
 
     // Service Request Modal
-    'sr_title' => 'Submit a New Educational Service Request',
+    'sr_title' => 'Add new service',
+    'sr_title_taqa' => 'Add a New Service',
+    'sr_title_hulool' => 'Submit a New Educational Service Request',
     'sr_request_title' => 'Request Title',
     'sr_title_placeholder' => 'Enter a clear and concise title for your request',
     'sr_select_education_level' => '-- Select Education Level --',

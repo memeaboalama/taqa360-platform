@@ -149,13 +149,7 @@ class TaskController extends Controller
                 $educator = Educator::where('uuid', $educatorUuid)->first();
 
                 if (! $educator) {
-                    // Silently skipped before - this is why a 200 could hide a no-op.
-                    $logActivity->trace('educator NOT FOUND (skipped silently)', [
-                        'step' => 'assignEducators',
-                        'uuid' => $educatorUuid,
-                        'task_id' => $task->id,
-                    ]);
-                    continue;
+                    throw new \Exception('Educator not found.');
                 }
 
                 $assignTaskToEducatorAction->handle($task, $educator, $assignmentData);
@@ -183,12 +177,12 @@ class TaskController extends Controller
             $reason = $request->input('reason') ?? '';
             $task = $assignment->task;
             $educatorName = $assignment->educator?->name;
+            $assignment = $cancelAssignmentAction->handle($reason, $assignment->id);
             $logActivity->forTask($task, LogProjectActivityAction::ASSIGNMENT_CANCELLED, [
                 'educator' => $educatorName,
-                'title' => $task?->title,
+                'title' => $task->title,
                 'reason' => $reason ?: null,
             ]);
-            $assignment = $cancelAssignmentAction->handle($reason, $assignment->id);
 
             return $this->responseData(data: [
                 'assignment' => new AssignmentResource($assignment->load('educator')),

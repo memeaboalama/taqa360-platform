@@ -34,7 +34,9 @@ class StoreAttachmentAction
                         'collection_name' => 'project_attachment',
                         'uploader_type' => get_class($uploader),
                         'uploader_id' => $uploader?->id,
-                    ], $fileDetails);
+                    ], $fileDetails, [
+                        'size' => $file->getSize(),
+                    ]);
 
                     $attachment = $this->projectRepository->storeAttachment($project, $fileData);
                     // event(new ProjectUpdated($project));

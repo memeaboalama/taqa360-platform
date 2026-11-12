@@ -185,41 +185,34 @@ class LogProjectActivityAction
         $ctx = ['step' => 'forTask', 'key' => $messageKey, 'task_id' => $task->id ?? null];
         $this->trace('enter', $ctx);
 
-        if (! $this->tableReady('task_activity_logs')) {
+        $log = null;
+        if ($this->tableReady('task_activity_logs')) {
+            try {
+                $log = TaskActivityLog::create([
+                    'task_id' => $task->id,
+                    'message_key' => $messageKey,
+                    'message_payload' => $payload,
+                    'actor_name' => $this->actorName(),
+                    'timestamp' => now(),
+                ]);
+
+                $this->trace('written', $ctx + ['log_id' => $log->id]);
+            } catch (\Throwable $e) {
+                $this->trace('WRITE FAILED', $ctx, $e);
+                report($e);
+            }
+        } else {
             $this->trace('skipped:no-tables', $ctx);
-
-            // The task table is gone but the project table may be fine - still
-            // record the event on the project so the tab is not left empty.
-            if ($alsoOnProject && $task->project) {
-                $this->forProject($task->project, $messageKey, $payload, $this->actorName());
-            }
-
-            return null;
         }
 
-        try {
-            $log = TaskActivityLog::create([
-                'task_id' => $task->id,
-                'message_key' => $messageKey,
-                'message_payload' => $payload,
-                'actor_name' => $this->actorName(),
-                'timestamp' => now(),
-            ]);
-
-            $this->trace('written', $ctx + ['log_id' => $log->id]);
-
-            if ($alsoOnProject && $task->project) {
-                // ProjectActivityLog uses `actor`, TaskActivityLog uses `actor_name`
-                $this->forProject($task->project, $messageKey, $payload, $this->actorName());
-            } else {
-                $this->trace('mirror skipped (no project relation)', $ctx);
-            }
-
-            return $log;
-        } catch (\Throwable $e) {
-            $this->trace('WRITE FAILED', $ctx, $e);
-            report($e);
-            return null;
+        // Keep project-level logging independent: a task log table with an
+        // outdated schema must not prevent events from reaching the project tab.
+        if ($alsoOnProject && $task->project) {
+            $this->forProject($task->project, $messageKey, $payload, $this->actorName());
+        } else {
+            $this->trace('mirror skipped (no project relation)', $ctx);
         }
+
+        return $log;
     }
 }

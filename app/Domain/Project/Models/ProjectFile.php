@@ -3,6 +3,7 @@
 namespace Domain\Project\Models;
 
 use Domain\Project\Traits\HasUuid;
+use Domain\Project\Traits\HasFileSizeInBytes;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ProjectFile extends Model
 {
-    use SoftDeletes, HasUuid;
+    use SoftDeletes, HasUuid, HasFileSizeInBytes;
 
     protected $fillable = [
         'title',

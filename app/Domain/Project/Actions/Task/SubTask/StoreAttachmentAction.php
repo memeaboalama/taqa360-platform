@@ -35,7 +35,9 @@ class StoreAttachmentAction
                         'collection_name' => 'subTask_attachment',
                         'uploader_type' => $uploader ? get_class($uploader) : null,
                         'uploader_id' => $uploader?->id,
-                    ], $fileDetails);
+                    ], $fileDetails, [
+                        'size' => $file->getSize(),
+                    ]);
 
                     $subTask = $this->subTaskRepository->storeAttachment($subTask, $fileData);
                     return $subTask->load('attachments');

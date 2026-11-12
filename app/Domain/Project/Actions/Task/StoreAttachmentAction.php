@@ -34,7 +34,9 @@ class StoreAttachmentAction
                         'collection_name' => $collectionName ?? Str::lower($type),
                         'uploader_type' => get_class($uploader),
                         'uploader_id' => $uploader?->id,
-                    ], $fileDetails);
+                    ], $fileDetails, [
+                        'size' => $file->getSize(),
+                    ]);
 
                     $task = $this->taskRepository->storeAttachment($task, $fileData);
                     // event(new TaskUpdated($task));

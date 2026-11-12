@@ -84,7 +84,7 @@ class ProjectOpportunityResource extends JsonResource
                                 return [
                                     'id' => $attachment->uuid,
                                     'name' => $attachment->title,
-                                    'size' => $attachment->size,
+                                    'size' => $attachment->sizeInBytes(),
                                     'url' => $attachment->url,
                                     'uploadedAt' => $attachment->uploaded_at?->format('Y-m-d H:i:s') ?? null,
                                 ];
@@ -97,7 +97,7 @@ class ProjectOpportunityResource extends JsonResource
                             'id' => $attachment->uuid,
                             'title' => $attachment->title,
                             'original_name' => $attachment->original_name,
-                            'size' => $attachment->size,
+                            'size' => $attachment->sizeInBytes(),
                             'url' => $attachment->url,
                         ];
                     }),
