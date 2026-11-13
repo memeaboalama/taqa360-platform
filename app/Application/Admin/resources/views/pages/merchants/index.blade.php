@@ -8,9 +8,7 @@
             <div class="card custom-card">
                 <livewire:admin::merchant.table.filter/>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <livewire:admin::merchant.table.all/>
-                    </div>
+                    <livewire:admin::merchant.table.all/>
                 </div>
                 <livewire:admin::merchant.modal.activate/>
                 <livewire:admin::merchant.modal.deactivate/>

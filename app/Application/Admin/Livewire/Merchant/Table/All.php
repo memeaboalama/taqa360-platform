@@ -46,11 +46,21 @@ class All extends DataTableComponent
 
     public function configure(): void
     {
-        $this->setPrimaryKey('id')->setSearchStatus(false);;
+        $this->setPrimaryKey('id')->setSearchStatus(false);
+        $this->setTableWrapperAttributes([
+            'class' => 'merchant-table-scroll',
+            'style' => 'width:100%; max-width:100%; overflow-x:auto; overflow-y:hidden;',
+        ]);
+        $this->setTableAttributes([
+            'class' => 'table text-nowrap',
+            'style' => 'width:max-content; min-width:100%;',
+        ]);
     }
 
     public function columns(): array
     {
+        $canShowDetails = $this->canShowMerchantDetails();
+
         return [
             Column::make('#', 'id')
                 ->hideIf(true)
@@ -58,6 +68,16 @@ class All extends DataTableComponent
                 ->searchable(),
 
             Column::make(__('admin::home.name'), 'company_name')
+                ->format(function ($value, $row, Column $column) use ($canShowDetails) {
+                    $name = e($value ?? '');
+                    if (!$canShowDetails) {
+                        echo $name;
+                        return;
+                    }
+
+                    $url = e(url('admin/merchants/'.$row->id));
+                    echo '<a href="'.$url.'" data-edit-loading>'.$name.'</a>';
+                })
                 ->sortable()
                 ->searchable(),
 
@@ -134,5 +154,20 @@ class All extends DataTableComponent
                     return view('admin::livewire.merchant.table.action')->withRow($row);
                 })
         ];
+    }
+
+    private function canShowMerchantDetails(): bool
+    {
+        $admin = auth()->guard('admin')->user();
+        if ($admin?->type === 'admin') {
+            return true;
+        }
+
+        if ($admin?->type !== 'employee') {
+            return false;
+        }
+
+        setPermissionsTeamId(1);
+        return $admin->hasAnyPermission(['show details_merchants']);
     }
 }
