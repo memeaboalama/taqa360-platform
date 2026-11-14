@@ -1,15 +1,21 @@
 <div>
+    <span class="badge {{ $row->status === 'active' ? 'bg-success' : 'bg-secondary' }}">
+        {{ $row->status === 'active' ? __('admin::home.contacted') : __('admin::home.not_contacted') }}
+    </span>
+
     @AdminHasRole(['contact sender_messages'])
-    <div class="hstack gap-2 fs-15">
+    <div class="hstack gap-2 fs-15 mt-1">
         <div class="prism-toggle">
-            <div class="custom-toggle-switch d-flex align-items-center mb-4 mt-3">
-                <input id="active"
-                       type="checkbox" {{ $row->status == "active"  ? 'checked' : '' }}>
-                <label for="active" class="label-success"
-                       wire:click.prevent="updateStatus('{{ $row->status == "active"  ? "inactive" : "active" }}', {{ $row->id }})" wire:ignore.self></label>
+            <div class="custom-toggle-switch d-flex align-items-center">
+                <input id="message-status-{{ $row->id }}"
+                       type="checkbox"
+                       aria-label="{{ __('admin::home.contacted') }}"
+                       {{ $row->status === 'active' ? 'checked' : '' }}>
+                <label for="message-status-{{ $row->id }}" class="label-success"
+                       wire:click.prevent="updateStatus('{{ $row->status === 'active' ? 'inactive' : 'active' }}', {{ $row->id }})"
+                       wire:ignore.self></label>
             </div>
         </div>
-
     </div>
     @endAdminHasRole
 </div>

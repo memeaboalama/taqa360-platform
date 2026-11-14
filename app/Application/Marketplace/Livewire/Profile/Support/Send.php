@@ -46,11 +46,14 @@ class Send extends Component
     public function sendMessage(SendMessageAction $sendMessageAction): void
     {
         $data = $this->validate(attributes: $this->nickNames());
-        DB::beginTransaction();
-        $sendMessageAction->handle($data);
+        $data['source'] = 'merchant_portal';
+
+        DB::transaction(function () use ($sendMessageAction, $data): void {
+            $sendMessageAction->handle($data);
+        });
+
         $this->alert('success', __('marketplace::home.data_saved_successfully'));
         $this->reset('email', 'phone', 'name', 'message');
-        DB::commit();
     }
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application
     {

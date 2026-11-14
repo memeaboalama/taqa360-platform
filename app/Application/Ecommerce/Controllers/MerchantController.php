@@ -4,8 +4,11 @@ namespace App\Application\Ecommerce\Controllers;
 
 use App\Domain\Ecommerce\Actions\Merchant\FetchMerchantCategoryAction;
 use App\Domain\Ecommerce\Actions\Merchant\FetchMerchantItemAction;
+use App\Domain\AppBase\Models\Category\MainCategory;
 use App\Domain\MarketPlace\Models\Favorite;
 use App\Http\Controllers\Controller;
+use App\Support\Enum\MainCategoryType;
+use App\Support\Enum\StatusEnum;
 use Domain\MarketPlace\Models\Merchant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -58,6 +61,7 @@ class MerchantController extends Controller
         }
 
         $merchants = $query->paginate($request->get('per_page', 12))->withQueryString();
+        $this->attachMainCategoryTags($merchants);
 
 
 
@@ -103,6 +107,7 @@ class MerchantController extends Controller
         };
 
         $merchants = $query->paginate($request->get('per_page', 12))->withQueryString();
+        $this->attachMainCategoryTags($merchants);
         $categories = \Domain\MarketPlace\Models\Catalog\Category::whereHas('items', function ($q) {
             $q->where('status', 'active')->availableForStorefront();
         })->get();
@@ -166,5 +171,29 @@ class MerchantController extends Controller
             : [];
 
         return view('ecommerce::pages.merchant.merchant', $data);
+    }
+
+    private function attachMainCategoryTags(\Illuminate\Contracts\Pagination\LengthAwarePaginator $merchants): void
+    {
+        $merchantCollection = $merchants->getCollection();
+        $ids = $merchantCollection->flatMap(function ($merchant) {
+            return array_filter(explode(',', (string) $merchant->main_categories), 'ctype_digit');
+        })->unique()->values();
+
+        $tags = MainCategory::query()
+            ->where('status', StatusEnum::ACTIVE->value)
+            ->where('type', MainCategoryType::MARKET->value)
+            ->whereIn('id', $ids)
+            ->get()
+            ->keyBy('id');
+
+        $merchantCollection->each(function ($merchant) use ($tags) {
+            $selectedTags = collect(explode(',', (string) $merchant->main_categories))
+                ->map(fn ($id) => $tags->get((int) $id))
+                ->filter()
+                ->values();
+
+            $merchant->setRelation('selectedMainCategoryTags', $selectedTags);
+        });
     }
 }

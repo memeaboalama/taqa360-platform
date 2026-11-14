@@ -38,6 +38,20 @@
                                                 </div>
                                             @endforeach
 
+                                            <div class="col-xl-6">
+                                                <label for="city-country-update" class="form-label text-black">
+                                                    @lang('admin::home.Country') <span class="text-danger">*</span>
+                                                </label>
+                                                <select id="city-country-update" class="form-control @error('country_id') is-invalid @enderror"
+                                                        wire:model.defer="country_id">
+                                                    <option value="">--{{ __('admin::home.Select Country') }}--</option>
+                                                    @foreach($countries as $country)
+                                                        <option value="{{ $country->id }}">{{ $country->title }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('country_id') <span class="text-danger d-block mt-2">{{ $message }}</span> @enderror
+                                            </div>
+
                                                 <div class="col-xl-4">
                                                     <label for="priority"
                                                            class="form-label text-black">@lang('admin::lang.Priority') <span class="text-danger">*</span></label>

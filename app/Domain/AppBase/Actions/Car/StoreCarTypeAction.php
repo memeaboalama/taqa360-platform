@@ -16,7 +16,7 @@ class StoreCarTypeAction
 
     public function handle(array $data = []): ?Model
     {
-        $data['key'] = isset($data['title']['ar']) ? $data['title']['ar'] : null;
+        $data['key'] = filled($data['key'] ?? null) ? $data['key'] : ($data['title']['ar'] ?? null);
         return $this->carTypeRepository->store($data);
     }
 }

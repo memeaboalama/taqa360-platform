@@ -20,7 +20,8 @@ class StoreRegionAction
     {
         $city_id = $data['city_id'] ?? null;
         unset($data['city_id']);
-        $data['country_id'] = 1;
+        $city = City::query()->findOrFail($city_id);
+        $data['country_id'] = $city->country_id;
         $data['key'] = isset($data['title']['ar']) ? $data['title']['ar'] : null;
         $region = $this->regionRepository->store($data);
 

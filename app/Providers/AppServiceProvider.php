@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Support\Services\Registration\RegisterServiceProviders;
+use App\Domain\AppBase\Models\GeneralSetting;
 use App\Websocket\Router;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
@@ -107,6 +108,14 @@ class AppServiceProvider extends ServiceProvider
         config(['app.brand' => $brandKey]);
         config(['app.primary_rgp' => $brand['primary_rgb']]);
         View::share('platformBrand', $brand);
+        View::composer([
+            'ecommerce::layout.footer',
+            'ecommerce::partials.store-footer',
+        ], function ($view): void {
+            $view->with('legalContent', GeneralSetting::query()
+                ->select('terms_conditions_ar', 'terms_conditions_en', 'policies_ar', 'policies_en')
+                ->find(1));
+        });
 
          // Schema::defaultStringLength(1000);
 

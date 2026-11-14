@@ -14,5 +14,6 @@ class Message extends Model
         'phone',
         'message',
         'status',
+        'source',
     ];
 }

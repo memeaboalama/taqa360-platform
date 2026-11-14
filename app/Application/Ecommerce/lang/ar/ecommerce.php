@@ -337,6 +337,7 @@ return [
 
 
     'categories' => [
+        'store_tags' => 'وسوم المتجر',
         'main_categories' => 'الفئات الرئيسية',
         'sub_categories' => 'الفئات الفرعية',
         'child_categories' => 'الفئات الفرعية الثانية',

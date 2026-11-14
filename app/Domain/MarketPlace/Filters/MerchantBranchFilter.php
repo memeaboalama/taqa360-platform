@@ -43,6 +43,19 @@ class MerchantBranchFilter extends QueryFilters
 
     public function main_category($value = ''): \Illuminate\Database\Eloquent\Builder
     {
-        return $this->builder->where('merchants.main_categories', 'LIKE', '%' . implode(',', $value) . '%');
+        $ids = array_values(array_unique(array_filter(array_map('intval', (array) $value), fn ($id) => $id > 0)));
+
+        if ($ids === []) {
+            return $this->builder;
+        }
+
+        return $this->builder->where(function ($query) use ($ids) {
+            foreach ($ids as $id) {
+                $query->orWhere('merchants.main_categories', (string) $id)
+                    ->orWhere('merchants.main_categories', 'LIKE', $id . ',%')
+                    ->orWhere('merchants.main_categories', 'LIKE', '%,' . $id . ',%')
+                    ->orWhere('merchants.main_categories', 'LIKE', '%,' . $id);
+            }
+        });
     }
 }

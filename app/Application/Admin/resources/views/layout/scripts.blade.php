@@ -144,6 +144,7 @@
 
         var currentTargetVal = getVal(targetId, targetEl);
         if (!force && currentTargetVal !== '') return;
+        var targetValueAtRequest = currentTargetVal;
 
         var key = sourceId;
         if (window.__translationInProgress[key]) return;
@@ -164,7 +165,7 @@
             })
             .then(function(data) {
                 var translated = data && data.responseData && data.responseData.translatedText;
-                if (translated) {
+                if (translated && getVal(targetId, targetEl) === targetValueAtRequest) {
                     setVal(targetId, targetEl, translated);
                 }
             })

@@ -42,6 +42,12 @@ class All extends DataTableComponent
 
     public function updateStatus(UpdateStatusAction $updateStatusAction ,$status, $id): void
     {
+        $admin = auth()->guard('admin')->user();
+        if ($admin?->type !== 'admin') {
+            setPermissionsTeamId(1);
+            abort_unless($admin && $admin->hasAnyPermission(['contact sender_messages']), 403);
+        }
+
         Validator::validate(
             ['status' => $status, 'id' => $id],
             ['status' => 'required|in:active,inactive', 'id' => 'required|integer|min:1']
@@ -80,6 +86,16 @@ class All extends DataTableComponent
                 ->searchable(),
 
             Column::make(__('admin::home.message'), 'message')
+                ->sortable()
+                ->searchable(),
+
+            Column::make(__('admin::home.Message Source'), 'source')
+                ->format(fn ($value) => match ($value) {
+                    'api' => __('admin::home.message_source_api'),
+                    'merchant_portal' => __('admin::home.message_source_merchant_portal'),
+                    'driver_portal' => __('admin::home.message_source_driver_portal'),
+                    default => __('admin::home.message_source_unknown'),
+                })
                 ->sortable()
                 ->searchable(),
 

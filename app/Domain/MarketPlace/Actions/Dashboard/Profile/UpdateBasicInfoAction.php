@@ -19,8 +19,10 @@ class UpdateBasicInfoAction
 
     public function handle(int $merchantId ,array $data = [] , array $cropImageInfo = []): ?\Illuminate\Database\Eloquent\Model
     {
-        if (isset($data['main_category_ids']))
-            $data['main_categories'] = implode(",", $data['main_category_ids']);
+        $data['main_categories'] = empty($data['main_category_ids'] ?? [])
+            ? null
+            : implode(',', $data['main_category_ids']);
+        unset($data['main_category_ids']);
 
 
         $merchant = $this->merchantRepository->findByCols(['id'=>$merchantId]);

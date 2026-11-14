@@ -156,6 +156,7 @@
 
                 <div class="col-xl-4">
                     <label for="main_category_ids" class="form-label text-black">@lang('admin::home.Choose Tags')</label>
+                    <small class="form-text text-muted d-block">@lang('admin::home.store_tags_help')</small>
                     <br>
                     @foreach ($this->mainCategories as $key => $value)
                         <input class="form-check-input" type="checkbox" wire:model="main_category_ids" value="{{ $key }}">

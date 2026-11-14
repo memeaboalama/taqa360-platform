@@ -38,8 +38,8 @@ class MainCategorySeeder extends Seeder
             ],
             [
                 'title'  =>  [
-                    'ar'    =>  'Category3',
-                    'en'    =>  'Category3',
+                    'ar'    =>  'الطاقة المتجددة',
+                    'en'    =>  'Renewable Energy',
                 ],
                 'type'=>MainCategoryType::MARKET->value,
 

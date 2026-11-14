@@ -343,13 +343,6 @@
                                         class="side-menu__item {{ isActive(route('admin:vars.car-types')) }}">{{ __('admin::lang.Car Types') }} </a>
                                 </li>
                             @endAdminHasRole
-                            @AdminHasRole(['show_banners'])
-                                <li class="slide">
-                                    <a href="{{ route('admin:vars.banners') }}"
-                                        class="side-menu__item {{ isActive(route('admin:vars.banners')) }}">{{ __('admin::home.Banners') }} </a>
-                                </li>
-                            @endAdminHasRole
-
                             @AdminHasRole(['show_countries'])
                                 <li class="slide">
                                     <a href="{{ route('admin:countries.index') }}"

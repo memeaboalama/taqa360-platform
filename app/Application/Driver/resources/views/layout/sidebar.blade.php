@@ -33,6 +33,14 @@
                     </a>
                 </li>
 
+                <li class="slide">
+                    <a href="{{ route('driver:sendMessage') }}"
+                        class="side-menu__item {{ isActive(route('driver:sendMessage')) }}">
+                        <i class="bx bx-support side-menu__icon"></i>
+                        <span class="side-menu__label">{{ __('driver::home.Support') }}</span>
+                    </a>
+                </li>
+
                 @DriverHasRole(['show_menu', 'show_menu choices', 'show_menu addition groups'])
                 <li class="slide has-sub">
                     <a href="javascript:void(0);" class="side-menu__item">

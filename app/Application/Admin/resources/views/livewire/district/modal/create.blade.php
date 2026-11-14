@@ -41,9 +41,9 @@
                                             <div class="col-md-8">
                                                 <label for="city" class="form-label text-black">@lang('admin::lang.City') <span class="text-danger">*</span></label>
                                                 <select class="form-control @error("city_id") is-invalid @enderror" wire:model.defer="city_id">
-                                                    <option selected value="">--{{ __('admin::lang.Select City') }}--</option>
+                                                    <option value="">--{{ __('admin::lang.Select City') }}--</option>
                                                     @foreach($cities as $city)
-                                                        <option selected value="{{ $city->id }}">{{ $city->title }}</option>
+                                                        <option value="{{ $city->id }}">{{ $city->title }}</option>
                                                     @endforeach
                                                 </select>
 

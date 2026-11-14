@@ -12,6 +12,16 @@
     $storeFooter = $footerData ?? [];
     $storeFooterLogo = $storeFooter['logo'] ?? asset($platformBrand['logo_white']);
 @endphp
+@php
+    $storeTerms = data_get($legalContent, 'terms_conditions_' . $storeLocale)
+        ?? data_get($legalContent, 'terms_conditions_en')
+        ?? data_get($legalContent, 'terms_conditions_ar')
+        ?? '';
+    $storePrivacy = data_get($legalContent, 'policies_' . $storeLocale)
+        ?? data_get($legalContent, 'policies_en')
+        ?? data_get($legalContent, 'policies_ar')
+        ?? '';
+@endphp
 <footer>
     <div class="container footer-grid">
         <div class="footer-col footer-brand"><img class="footer-logo"
@@ -20,12 +30,19 @@
         </div>
     </div>
     <div class="container copyright">
-        <div class="footer-links"><a href="{{ $storeFooter['links']['privacy'] ?? '#' }}">@lang('ecommerce::ecommerce.privacy_policy')</a><a
-                href="{{ $storeFooter['links']['terms'] ?? '#' }}">@lang('ecommerce::ecommerce.terms_conditions')</a><a
-                href="{{ $storeFooter['links']['contact'] ?? '#' }}">@lang('ecommerce::ecommerce.contact_us')</a></div>
+        <div class="footer-links">
+            @if(filled($storePrivacy))
+                <a href="#privacyPolicyModal" data-bs-toggle="modal" aria-controls="privacyPolicyModal">@lang('ecommerce::ecommerce.privacy_policy')</a>
+            @endif
+            @if(filled($storeTerms))
+                <a href="#termsConditionsModal" data-bs-toggle="modal" aria-controls="termsConditionsModal">@lang('ecommerce::ecommerce.terms_conditions')</a>
+            @endif
+            <a href="{{ $storeFooter['links']['contact'] ?? '#' }}">@lang('ecommerce::ecommerce.contact_us')</a>
+        </div>
         <div class="socials"><a href="https://wa.me/" aria-label="@lang('ecommerce::ecommerce.whatsapp')"><i class="fa fa-whatsapp"></i></a><a
                 href="https://www.facebook.com/" aria-label="@lang('ecommerce::ecommerce.facebook')"><i class="fa fa-facebook"></i></a><a
                 href="https://www.instagram.com/" aria-label="@lang('ecommerce::ecommerce.instagram')"><i class="fa fa-instagram"></i></a></div>
         <span>{{ $storeLocalized($storeFooter['copyright'] ?? null, __('ecommerce::ecommerce.copyright')) }}</span>
     </div>
 </footer>
+@include('ecommerce::partials.legal-content-modals')

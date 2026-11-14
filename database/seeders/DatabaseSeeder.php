@@ -40,6 +40,7 @@ use Database\Seeders\Merchant\MerchantOrderSeeder;
 use Database\Seeders\Merchant\MerchantOrderServiceSeeder;
 use Database\Seeders\Merchant\MerchantSeeder;
 use Database\Seeders\Merchant\MerchantServiceSeeder;
+use Database\Seeders\Merchant\MerchantTagsSeeder;
 use Database\Seeders\Provider\CompanyProviderVehicleSeeder;
 use Database\Seeders\Provider\CompanySeeder;
 use Database\Seeders\Provider\ProviderCategorySeeder;
@@ -112,6 +113,7 @@ class DatabaseSeeder extends Seeder
         Schema::enableForeignKeyConstraints();
         $this->call([
             MainCategorySeeder::class,
+            MerchantTagsSeeder::class,
             LanguageSeeder::class,
             OtpSettingSeeder::class,
             CurrencySeeder::class,

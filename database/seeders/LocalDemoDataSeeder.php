@@ -8,6 +8,7 @@ use App\Domain\AppBase\Models\AdPage;
 use App\Domain\AppBase\Models\AdPlacement;
 use App\Domain\AppBase\Models\AdProductContent;
 use App\Domain\AppBase\Models\Offer;
+use Database\Seeders\Merchant\MerchantTagsSeeder;
 use Domain\AppBase\Models\AdCategoryContent;
 use Domain\MarketPlace\Models\Catalog\Category;
 use Domain\MarketPlace\Models\Item;
@@ -84,6 +85,7 @@ class LocalDemoDataSeeder extends Seeder
         $placements = $this->ensurePlacements($page);
 
         $merchants = $this->ensureMerchants();
+        $this->call(MerchantTagsSeeder::class);
         $this->ensureBranches($merchants);
         $products = $this->ensureProducts($merchants);
 

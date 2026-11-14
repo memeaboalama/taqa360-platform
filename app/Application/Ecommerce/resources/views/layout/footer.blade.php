@@ -51,11 +51,11 @@
                                 </div>
                                 <div class="footer-contant">
                                     <ul>
-                                        @if(isset($footerData['links']['terms']) && $footerData['links']['terms'])
-                                            <li><a href="{{ $footerData['links']['terms'] }}"><i class="fa fa-chevron-circle-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}"></i> {{ __('ecommerce::ecommerce.terms_conditions') }}</a></li>
+                                        @if(filled($legalContent?->terms_conditions_ar) || filled($legalContent?->terms_conditions_en))
+                                            <li><a href="#termsConditionsModal" data-bs-toggle="modal" aria-controls="termsConditionsModal"><i class="fa fa-chevron-circle-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}"></i> {{ __('ecommerce::ecommerce.terms_conditions') }}</a></li>
                                         @endif
-                                        @if(isset($footerData['links']['privacy']) && $footerData['links']['privacy'])
-                                            <li><a href="{{ $footerData['links']['privacy'] }}"><i class="fa fa-chevron-circle-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}"></i> {{ __('ecommerce::ecommerce.privacy_policy') }}</a></li>
+                                        @if(filled($legalContent?->policies_ar) || filled($legalContent?->policies_en))
+                                            <li><a href="#privacyPolicyModal" data-bs-toggle="modal" aria-controls="privacyPolicyModal"><i class="fa fa-chevron-circle-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}"></i> {{ __('ecommerce::ecommerce.privacy_policy') }}</a></li>
                                         @endif
                                         @if(isset($footerData['links']['contact']) && $footerData['links']['contact'])
                                             <li><a href="{{ $footerData['links']['contact'] }}"><i class="fa fa-chevron-circle-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}"></i> {{ __('ecommerce::ecommerce.contact_us') }}</a></li>
@@ -126,3 +126,4 @@
         </section>
         <!-- Copyright section End -->
     </footer>
+    @include('ecommerce::partials.legal-content-modals')

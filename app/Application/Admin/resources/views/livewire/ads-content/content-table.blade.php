@@ -13,7 +13,7 @@
                 @endforeach
             </select>
 
-            <div class="btn-group" role="group">
+            <div class="d-flex gap-2" role="group">
                 <button type="button" class="btn btn-sm btn-outline-primary {{ $viewMode === 'grid' ? 'active' : '' }}" wire:click="toggleViewMode('grid')">
                     <i class="fe fe-grid"></i>
                 </button>
@@ -30,9 +30,9 @@
 
     @if(count($contents) > 0)
         @if($viewMode === 'grid')
-            <div class="row row-sm" id="sortable-grid" wire:ignore>
+            <div class="row row-sm" id="sortable-grid">
                 @foreach($contents as $item)
-                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 mb-4 sortable-item" data-id="{{ $item->id }}">
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 mb-4 sortable-item" wire:key="grid-content-{{ $item->id }}" data-id="{{ $item->id }}">
                         <div class="card custom-card h-100 border shadow-sm hover-card">
                             <div class="position-relative">
                                 @php $deviceImages = []; @endphp
@@ -52,6 +52,15 @@
                                         @else
                                             <div class="bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
                                                 <i class="fe fe-list fs-40 text-muted"></i>
+                                            </div>
+                                        @endif
+                                    @elseif(isset($item->content_type) && $item->content_type === 'merchant')
+                                        @php $merchant = $item->displayable_merchant; @endphp
+                                        @if($merchant && $merchant->logo)
+                                            <img src="{{ $merchant->logo }}" class="card-img-top" alt="{{ $merchant->company_name }}" style="height: 180px; object-fit: contain;">
+                                        @else
+                                            <div class="bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                                                <i class="fe fe-store fs-40 text-muted"></i>
                                             </div>
                                         @endif
                                     @else
@@ -98,7 +107,6 @@
                                         @endforeach
                                     </div>
                                 </div>
-                                </div>
 
                                 <div class="position-absolute top-0 end-0 p-2">
                                     @if($item->status->value === 'active')
@@ -125,6 +133,9 @@
                                     @elseif(isset($item->content_type) && $item->content_type === 'category')
                                         @php $category = $item->displayable_category; @endphp
                                         <h6 class="card-title mb-0 fw-bold text-dark">{{ $category ? $category->title : 'N/A' }}</h6>
+                                    @elseif(isset($item->content_type) && $item->content_type === 'merchant')
+                                        @php $merchant = $item->displayable_merchant; @endphp
+                                        <h6 class="card-title mb-0 fw-bold text-dark">{{ $merchant ? $merchant->company_name : 'N/A' }}</h6>
                                     @else
                                         <h6 class="card-title mb-0 fw-bold text-dark">{{ $item->name }}</h6>
                                     @endif
@@ -170,7 +181,7 @@
                     </thead>
                     <tbody>
                         @foreach($contents as $item)
-                            <tr class="sortable-row" data-id="{{ $item->id }}">
+                            <tr class="sortable-row" wire:key="table-content-{{ $item->id }}" data-id="{{ $item->id }}">
                                 <td class="text-center align-middle">
                                     <span class="drag-handle cursor-move text-muted">
                                         <i class="fe fe-menu fs-18"></i>
@@ -198,7 +209,7 @@
                                     @elseif(isset($item->content_type) && $item->content_type === 'merchant')
                                         @php $merchant = $item->displayable_merchant; @endphp
                                         @if($merchant && $merchant->logo)
-                                            <img src="{{ \Illuminate\Support\Facades\Storage::url($merchant->logo) }}" alt="{{ $merchant->name }}" style="width: 50px; height: 50px; object-fit: cover;" class="rounded border">
+                                            <img src="{{ $merchant->logo }}" alt="{{ $merchant->company_name }}" style="width: 50px; height: 50px; object-fit: contain;" class="rounded border">
                                         @else
                                             <div style="width: 50px; height: 50px;" class="bg-light rounded border d-flex align-items-center justify-content-center">
                                                 <i class="fe fe-store text-muted"></i>
@@ -253,7 +264,7 @@
                                         <small class="text-muted">Category ID: {{ $item->category_id }}</small>
                                     @elseif(isset($item->content_type) && $item->content_type === 'merchant')
                                         @php $merchant = $item->displayable_merchant; @endphp
-                                        <h6 class="mb-1 fw-semibold">{{ $merchant ? $merchant->name : 'N/A' }}</h6>
+                                        <h6 class="mb-1 fw-semibold">{{ $merchant ? $merchant->company_name : 'N/A' }}</h6>
                                         <small class="text-muted">Merchant ID: {{ $item->merchant_id }}</small>
                                     @else
                                         <h6 class="mb-1 fw-semibold">{{ $item->name }}</h6>
@@ -296,7 +307,7 @@
                                     </span>
                                 </td>
                                 <td class="align-middle text-center">
-                                    <div class="btn-group">
+                                    <div class="d-inline-flex gap-2">
                                         <button class="btn btn-sm btn-primary" wire:click="openUpdateModal({{ $item->id }})" title="{{ __('admin::lang.Edit') }}"
                                                     data-edit-loading>
                                             <i class="fe fe-edit"></i>

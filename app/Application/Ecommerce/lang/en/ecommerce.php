@@ -340,6 +340,7 @@ return [
     ],
 
     'categories' => [
+        'store_tags' => 'Store tags',
         'categories' => 'Categories',
         'main_categories' => 'Main Categories',
         'sub_categories' => 'Sub Categories',

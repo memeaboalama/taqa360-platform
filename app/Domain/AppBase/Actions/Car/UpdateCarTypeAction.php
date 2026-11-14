@@ -15,7 +15,7 @@ class UpdateCarTypeAction
 
     public function handle(int $id, array $data = []): ?\Illuminate\Database\Eloquent\Model
     {
-        $data['key'] = isset($data['title']['ar']) ? $data['title']['ar'] : null;
+        $data['key'] = filled($data['key'] ?? null) ? $data['key'] : ($data['title']['ar'] ?? null);
         return $this->carTypeRepository->update($id, $data);
     }
 }

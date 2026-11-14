@@ -15,6 +15,7 @@ class ContactUsController  extends Controller
     public function send(SendMessageRequest $request, SendMessageAction $sendMessageAction): JsonResponse
     {
         $data = $request->validated();
+        $data['source'] = 'api';
         $message = $sendMessageAction->handle($data);
         return $this->responseData([
             'message' => "Message sent successfully"

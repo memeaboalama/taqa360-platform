@@ -9,6 +9,7 @@ use App\Domain\AppBase\Models\Location\Country;
 use App\Domain\AppBase\Models\Location\Distract;
 use App\Domain\AppBase\Models\Location\Region;
 use App\Domain\MarketPlace\Actions\Dashboard\Profile\UpdateBasicInfoAction;
+use App\Support\Enum\MainCategoryType;
 use App\Support\Enum\StatusEnum;
 use Domain\MarketPlace\Models\MarketPlaceCategory;
 use Domain\MarketPlace\Models\Merchant;
@@ -46,7 +47,10 @@ class Info extends Component
         $this->counties = $fetchCountriesAction->handle();
         $this->emit('renderSelect');
         $this->marketplaceCategories = MarketPlaceCategory::where('status', StatusEnum::ACTIVE->value)->get();
-        $this->mainCategories = MainCategory::where('status', StatusEnum::ACTIVE->value)->pluck('title', 'id')->toArray();
+        $this->mainCategories = MainCategory::where('status', StatusEnum::ACTIVE->value)
+            ->where('type', MainCategoryType::MARKET->value)
+            ->pluck('title', 'id')
+            ->toArray();
     }
 
     public function imageCropped($image_64, $fileInfo)
@@ -94,7 +98,7 @@ class Info extends Component
             'description.ar' => 'nullable|string|min:2|max:200',
             'marketplace_category_id' => 'required|numeric|exists:market_place_categories,id',
             'main_category_ids' => 'nullable|array',
-            'main_category_ids.*' => 'nullable|integer',
+            'main_category_ids.*' => 'integer|exists:main_categories,id',
             'app_logo' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ];
     }

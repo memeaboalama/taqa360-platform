@@ -30,7 +30,7 @@ class All extends DataTableComponent
 
     public function builder(): Builder
     {
-        return $this->cityRepository->builder(order: 'desc');
+        return $this->cityRepository->builder(order: 'desc')->with('country:id,title');
     }
 
     public function columns(): array
@@ -44,6 +44,9 @@ class All extends DataTableComponent
             Column::make(__('admin::lang.Title'), 'title')
                 ->sortable()
                 ->searchable(),
+
+            Column::make(__('admin::lang.Country'), 'country_id')
+                ->format(fn ($value, $row) => $row->country?->title ?? '—'),
 
             Column::make(__('admin::lang.Priority'), 'priority')
                 ->sortable()

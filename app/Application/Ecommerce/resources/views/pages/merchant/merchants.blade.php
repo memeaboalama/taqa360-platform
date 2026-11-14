@@ -229,6 +229,22 @@
             text-overflow: ellipsis
         }
 
+        .merchant-tags {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px;
+            margin: 0 0 8px
+        }
+
+        .merchant-tag {
+            padding: 2px 7px;
+            border: 1px solid #e7e8ea;
+            border-radius: 12px;
+            color: #68717b;
+            font-size: 8px
+        }
+
         .merchant-stats {
             display: flex;
             border: 1px solid #f0f0f0;
@@ -490,6 +506,13 @@
                                     <h2 class="merchant-name">{{ $name }} @if($merchant->is_verified)<i
                                     class="fa fa-check-circle verified"></i>@endif</h2>
                                     <p class="merchant-desc">{{ Str::limit($description, 55) }}</p>
+                                    @if($merchant->selectedMainCategoryTags->isNotEmpty())
+                                        <div class="merchant-tags" aria-label="@lang('ecommerce::ecommerce.categories.store_tags')">
+                                            @foreach($merchant->selectedMainCategoryTags as $tag)
+                                                <span class="merchant-tag">#{{ $localized($tag->title) }}</span>
+                                            @endforeach
+                                        </div>
+                                    @endif
                                     <div class="merchant-stats">
                                         <div class="stat">
                                             <strong>{{ $branches }}</strong><span>@lang('ecommerce::ecommerce.branches')</span>

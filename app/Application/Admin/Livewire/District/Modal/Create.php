@@ -34,7 +34,7 @@ class Create extends Component
     {
         return [
             'title' => 'required|array',
-            'city_id' => 'required',
+            'city_id' => 'required|integer|exists:cities,id',
             'title.*' => 'required|string|min:2|max:120',
             'status' => 'required|string|in:active,inactive',
         ];
