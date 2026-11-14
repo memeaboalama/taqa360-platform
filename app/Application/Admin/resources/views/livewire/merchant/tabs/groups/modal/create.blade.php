@@ -1,6 +1,6 @@
 <div>
     <div class="modal fade" id="creatAdditionGroup" wire:ignore.self data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h6 class="modal-title" id="staticBackdropLabel"> @lang('admin::home.create_new')</h6>
@@ -8,11 +8,11 @@
                 </div>
                 <form wire:submit.prevent="store">
                     <div class="modal-body">
-                        <div class="row gx-5">
-                            <div class="col-xxl-12 col-xl-12 col-lg-12 col-md-6">
+                        <div class="row gx-5 mx-0">
+                            <div class="col-12">
                                 <div class="card custom-card shadow-none mb-0">
-                                    <div class="card-body p-0">
-                                        <div class="row gy-3">
+                                    <div class="card-body p-3">
+                                        <div class="row gy-3 mx-0">
                                             @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
                                                 <div class="col-xl-6">
                                                     <label for="category-name" class="form-label text-black">@lang('admin::home.name') {{$properties['native']}} <span class="text-danger">*</span></label>
@@ -65,32 +65,43 @@
                                                 </div>
                                             </div>
 
-                                            <div class="form-group">
-                                                <a href="#" wire:click.prevent="addOption()" class="btn btn-primary-light m-1">
-                                                    <i class="la la-plus"></i>@lang('admin::home.add') </a>
+                                            <div class="form-group d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                                <a href="#" wire:click.prevent="addOption()" class="btn btn-primary-light addition-group-add-option m-0">
+                                                    <i class="la la-plus"></i> @lang('admin::home.add')
+                                                </a>
+                                                <span class="form-label mt-1 fs-12 op-5 text-info mb-0">* @lang('admin::home.you_should_select_at_least_one_option')</span>
                                             </div>
-                                            <label for="category-name-add" class="form-label mt-1 fs-12 op-5 text-info mb-0">* @lang('admin::home.you_should_select_at_least_one_option')</label>
 
-                                            <div class="form-group">
+                                            @if($choices->isEmpty())
+                                                <div class="alert alert-warning mb-0" role="alert">
+                                                    @lang('admin::home.Create choice before addition group')
+                                                </div>
+                                            @endif
 
-                                                <table class="table">
+                                            <div class="table-responsive">
+
+                                                <table class="table align-middle mb-0" style="min-width: 560px;">
                                                     <thead>
-                                                    <th>@lang('admin::home.name') <span class="text-danger">*</span></th>
-                                                    <th>@lang('admin::home.price') <span class="text-danger">*</span></th>
-                                                    <th>@lang('admin::home.Priority') <span class="text-danger">*</span></th>
-                                                    <th>@lang('admin::home.delete')</th>
+                                                    <tr>
+                                                        <th scope="col">@lang('admin::home.name') <span class="text-danger">*</span></th>
+                                                        <th scope="col">@lang('admin::home.price') <span class="text-danger">*</span></th>
+                                                        <th scope="col">@lang('admin::home.Priority') <span class="text-danger">*</span></th>
+                                                        <th scope="col">@lang('admin::home.delete')</th>
+                                                    </tr>
 
                                                     </thead>
 
                                                     <tbody>
                                                     @error("options")
-                                                    <span class="text-danger d-block mt-2">{{ $message }}</span>
+                                                    <tr>
+                                                        <td colspan="4"><span class="text-danger">{{ $message }}</span></td>
+                                                    </tr>
                                                     @enderror
                                                     @foreach($options as $index => $option)
-                                                        <tr>
-                                                            <input wire:model.defer="options.{{$index}}.id" type="hidden" />
+                                                        <tr wire:key="addition-group-option-{{$index}}">
                                                             <td>
-                                                                <select wire:model.defer="options.{{$index}}.choice_id" class="form-control">
+                                                                <input wire:model.defer="options.{{$index}}.id" type="hidden" />
+                                                                <select wire:model.defer="options.{{$index}}.choice_id" class="form-control" aria-label="@lang('admin::home.name')">
                                                                     <option value="">@lang('admin::home.Select')</option>
                                                                     @foreach ($choices as $choice)
                                                                         <option value="{{ $choice->id }}">{{ $choice->title }}</option>
@@ -100,19 +111,20 @@
                                                             </td>
 
                                                             <td>
-                                                                <input type="number" min="0" step="0.005" required class="form-control" id="category-name" wire:model.defer="options.{{$index}}.price">
+                                                                <input type="number" min="0" step="0.005" required class="form-control" id="choice-price-{{$index}}" aria-label="@lang('admin::home.price')" wire:model.defer="options.{{$index}}.price">
                                                                 @error("options." . $index . ".price") <span class="text-danger d-block mt-2">{{ $message }}</span> @enderror
 
                                                             </td>
 
                                                             <td>
-                                                                <input type="number" min="1" required class="form-control" id="category-name" wire:model.defer="options.{{$index}}.order">
+                                                                <input type="number" min="1" required class="form-control" id="choice-order-{{$index}}" aria-label="@lang('admin::home.Priority')" wire:model.defer="options.{{$index}}.order">
                                                                 @error("options." . $index . ".order") <span class="text-danger d-block mt-2">{{ $message }}</span> @enderror
 
                                                             </td>
                                                             <td>
-                                                                <a href="#" wire:click.prevent="deleteOption({{$index}})" class="btn btn-danger-light btn-sm">
-                                                                    <i class="la la-trash"></i></a>
+                                                                <a href="#" wire:click.prevent="deleteOption({{$index}})" class="btn btn-danger-light btn-icon btn-sm" aria-label="@lang('admin::home.delete')" title="@lang('admin::home.delete')">
+                                                                    <i class="ri-delete-bin-line fs-15" aria-hidden="true"></i>
+                                                                </a>
                                                             </td>
 
 
@@ -133,7 +145,7 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">@lang('admin::home.Close')
                         </button>
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="btn btn-success" @disabled($choices->isEmpty())>
                             <span class="indicator-label" wire:loading.class="d-none">
                                 @lang('admin::home.Save')
                             </span>

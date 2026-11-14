@@ -17,10 +17,61 @@
         #merchant-detail-page .btn-primary-light i {
             color: rgb(var(--primary-rgb)) !important;
         }
+
+        #merchant-detail-page #creatAdditionGroup .addition-group-add-option {
+            transition: none;
+        }
+
+        #merchant-detail-page #creatAdditionGroup .addition-group-add-option:hover,
+        #merchant-detail-page #creatAdditionGroup .addition-group-add-option:focus,
+        #merchant-detail-page #creatAdditionGroup .addition-group-add-option:active,
+        #merchant-detail-page #creatAdditionGroup .addition-group-add-option:hover i,
+        #merchant-detail-page #creatAdditionGroup .addition-group-add-option:focus i,
+        #merchant-detail-page #creatAdditionGroup .addition-group-add-option:active i {
+            background-color: rgb(var(--primary-rgb)) !important;
+            border-color: rgb(var(--primary-rgb)) !important;
+            color: #fff !important;
+        }
+
+        #merchant-detail-page #additionGroups-tab-pane .card-header .btn-primary-light {
+            transition: none;
+        }
+
+        #merchant-detail-page #additionGroups-tab-pane .card-header .btn-primary-light:hover,
+        #merchant-detail-page #additionGroups-tab-pane .card-header .btn-primary-light:focus,
+        #merchant-detail-page #additionGroups-tab-pane .card-header .btn-primary-light:active,
+        #merchant-detail-page #additionGroups-tab-pane .card-header .btn-primary-light:hover i,
+        #merchant-detail-page #additionGroups-tab-pane .card-header .btn-primary-light:focus i,
+        #merchant-detail-page #additionGroups-tab-pane .card-header .btn-primary-light:active i {
+            background-color: rgb(var(--primary-rgb)) !important;
+            border-color: rgb(var(--primary-rgb)) !important;
+            color: #fff !important;
+        }
+
+        #merchant-detail-page #creatAdditionGroup .modal-header,
+        #merchant-detail-page #creatAdditionGroup .modal-body,
+        #merchant-detail-page #creatAdditionGroup .modal-footer {
+            padding-right: 1.5rem;
+            padding-left: 1.5rem;
+        }
+
+        @media (max-width: 575.98px) {
+            #merchant-detail-page #creatAdditionGroup .modal-header,
+            #merchant-detail-page #creatAdditionGroup .modal-body,
+            #merchant-detail-page #creatAdditionGroup .modal-footer {
+                padding-right: 1rem;
+                padding-left: 1rem;
+            }
+        }
     </style>
 @endpush
 
 @section('content')
+    <div class="mb-3">
+        <a href="{{ url('admin/merchants') }}" class="btn btn-primary-light">
+            <i class="ri-arrow-go-back-line me-1"></i>{{ __('admin::home.back_to_merchants') }}
+        </a>
+    </div>
     <div id="merchant-detail-page" class="col-xxl-12 col-xl-12">
         <div class="row">
             <div class="col-xl-12">

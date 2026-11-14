@@ -37,7 +37,10 @@ class Info extends Component
     public $company_name = ['en' => null,  'ar' => null];
     public $description = ['en' => null,  'ar' => null];
 
-    protected $listeners = ['imageUpload' => 'imageCropped'];
+    protected $listeners = [
+        'imageUpload' => 'imageCropped',
+        'cancelMerchantInfo' => 'cancelEditing',
+    ];
 
     public function mount(int $merchant_id, FetchCountriesAction $fetchCountriesAction): void
     {
@@ -55,13 +58,10 @@ class Info extends Component
 
     public function imageCropped($image_64, $fileInfo)
     {
-        if ($this->app_logo_path) {
-            $oldPath = str_replace("/storage/", "", $this->app_logo_path);
-            if (Storage::disk($this->diskName)->exists($oldPath)) {
-                Storage::disk($this->diskName)->delete($oldPath);
-            }
+        if (!empty($this->cropImageInfo['path'])) {
+            Storage::disk($this->diskName)->delete($this->cropImageInfo['path']);
         }
-        
+
         $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $image_64));
         $imageName = "app_logo_" . Str::random(50) . ".png";
         $path = "upload/file/$imageName";
@@ -111,16 +111,35 @@ class Info extends Component
             $this->addError('app_logo', __('marketplace::messages.LOGO_REQUIRED'));
             return;
         }
+        $previousLogoPath = $this->merchant?->app_logo_path;
         DB::beginTransaction();
         try {
             $merchant = $updateBasicInfoAction->handle($this->merchant->id ,$data,$this->cropImageInfo);
+            $this->merchant = $merchant;
             $this->fillData($merchant);
-            $this->alert('success', __('admin::lang.Basic Info Updated Successfully'));
             DB::commit();
+            if ($this->cropImageInfo && $previousLogoPath) {
+                $oldPath = str_replace('/storage/', '', $previousLogoPath);
+                if (Storage::disk($this->diskName)->exists($oldPath)) {
+                    Storage::disk($this->diskName)->delete($oldPath);
+                }
+            }
+            $this->reset('app_logo', 'cropImageInfo');
+            $this->dispatchBrowserEvent('merchant-info-saved');
+            $this->alert('success', __('admin::lang.Basic Info Updated Successfully'));
         } catch (\Exception $e) {
             DB::rollBack();
             $this->alert('error', $e->getMessage());
         }
+    }
+
+    public function cancelEditing(): void
+    {
+        if (!empty($this->cropImageInfo['path'])) {
+            Storage::disk($this->diskName)->delete($this->cropImageInfo['path']);
+        }
+
+        $this->dispatchBrowserEvent('merchant-info-cancelled');
     }
 
     protected function fillData($merchant) : void

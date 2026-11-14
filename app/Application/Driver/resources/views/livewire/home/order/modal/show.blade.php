@@ -143,7 +143,7 @@
                                         @endif
                                         @if(!empty($order['order_type']))
                                             <p class="mb-2">
-                                                <span class="fw-semibold">{{ __('driver::home.Type') }} : </span>{{ $order['order_type'] }}
+                                                <span class="fw-semibold">{{ __('driver::home.Type') }} : </span>{{ \Illuminate\Support\Facades\Lang::has('admin::home.' . $order['order_type']) ? __('admin::home.' . $order['order_type']) : $order['order_type'] }}
                                             </p>
                                         @endif
                                         <p class="mb-2">

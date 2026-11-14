@@ -118,7 +118,14 @@
                     </div>
                 </div>
                 <div class="card-body p-0" wire:ignore>
-                    <div id="map" style="height: 600px; width: 100%;"></div>
+                    @if(config('services.google_maps.api_key'))
+                        <div class="p-3 text-muted small">@lang('admin::home.Set branch location on map')</div>
+                        <div id="map" style="height: 600px; width: 100%;"></div>
+                    @else
+                        <div class="alert alert-warning m-3" role="alert">
+                            @lang('admin::home.Google Maps API key is missing')
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -362,111 +369,127 @@
 
 
 
-        <script type="text/javascript">
-            let map, activeInfoWindow, markers = [];
+        @if(config('services.google_maps.api_key'))
+            <script type="text/javascript">
+                let map, activeInfoWindow;
+                let branchMarkers = new Map();
+                let selectedBranchId = @json($branch_id);
 
-            /* ----------------------------- Initialize Map ----------------------------- */
-            function initMap() {
-                if (map) {
-                    google.maps.event.trigger(map, "resize");
-                    return;
+                function initMap() {
+                    if (!window.google || !window.google.maps || !document.getElementById("map")) {
+                        return;
+                    }
+                    if (map) {
+                        google.maps.event.trigger(map, "resize");
+                        return;
+                    }
+
+                    map = new google.maps.Map(document.getElementById("map"), {
+                        center: { lat: 24.774265, lng: 46.738586 },
+                        zoom: 8,
+                        scrollwheel: true,
+                    });
+                    map.addListener("click", mapClicked);
+                    initMarkers();
                 }
-                map = new google.maps.Map(document.getElementById("map"), {
-                    center: {
-                        lat: 24.774265,
-                        lng: 46.738586,
-                    },
-                    zoom: 8,
-                    scrollwheel: true,
-                });
 
-                map.addListener("click", function(event) {
-                    mapClicked(event);
-                });
-
-                initMarkers();
-            }
-            /* --------------------------- Initialize Markers --------------------------- */
-            function initMarkers() {
-                const result = <?php echo json_encode($branches); ?>;
-                var initialMarkers = Object.keys(result).map((key) => [result[key]]);
-
-                console.log(initialMarkers, "initialMarkers");
-
-                for (let index = 0; index < initialMarkers.length; index++) {
-                    console.log(initialMarkers.length, "length");
-                    const markerData = initialMarkers[index][0];
-                    const icon = {
+                function branchMarkerIcon() {
+                    return {
                         url: "{{ asset('images/map/restaurant.png') }}",
                         scaledSize: new google.maps.Size(50, 50),
-                        origin: new google.maps.Point(0,0),
-                        anchor: new google.maps.Point(0, 0)
+                        origin: new google.maps.Point(0, 0),
+                        anchor: new google.maps.Point(25, 25)
                     };
-                    console.log(icon, "icccc");
-                    const marker = new google.maps.Marker({
-                        position: markerData.position,
-                        draggable: markerData.draggable,
-                        title: "Branch Details",
-                        icon: icon,
-                        map
-                    });
-                    markers.push(marker);
+                }
 
-                    const infowindow = new google.maps.InfoWindow({
-                        content: `<b>Name : <a href="<?php echo url('/'); ?>/admin/merchants/${markerData.merchant_id}" style="color: #0a53be">${markerData.name}</a></b><br><b>Restaurant Name : <a href="<?php echo url('/'); ?>/admin/merchants/${markerData.merchant_id}" style="color: #0a53be">${markerData.restaurant_name}</a></b><br><b>${markerData.position.lat}, ${markerData.position.lng}</b>`,
-                    });
-                    marker.addListener("click", (event) => {
-                        if(activeInfoWindow) {
-                            activeInfoWindow.close();
-                        }
-                        infowindow.open({
-                            anchor: marker,
-                            shouldFocus: false,
+                function initMarkers() {
+                    const initialMarkers = @json(array_values($branches));
+                    for (const markerData of initialMarkers) {
+                        const branchId = String(markerData.id);
+                        const marker = new google.maps.Marker({
+                            position: markerData.position,
+                            draggable: branchId === String(selectedBranchId),
+                            title: "Branch Details",
+                            icon: branchMarkerIcon(),
                             map
                         });
-                        activeInfoWindow = infowindow;
-                        markerClicked(marker, index);
+                        branchMarkers.set(branchId, marker);
+
+                        const infowindow = new google.maps.InfoWindow({
+                            content: `<b>Name : <a href="<?php echo url('/'); ?>/admin/merchants/${markerData.merchant_id}" style="color: #0a53be">${markerData.name}</a></b><br><b>Restaurant Name : <a href="<?php echo url('/'); ?>/admin/merchants/${markerData.merchant_id}" style="color: #0a53be">${markerData.restaurant_name}</a></b><br><b>${markerData.position.lat}, ${markerData.position.lng}</b>`,
+                        });
+                        marker.addListener("click", () => {
+                            if (activeInfoWindow) {
+                                activeInfoWindow.close();
+                            }
+                            infowindow.open({
+                                anchor: marker,
+                                shouldFocus: false,
+                                map
+                            });
+                            activeInfoWindow = infowindow;
+                        });
+                        marker.addListener("dragend", event => {
+                            if (branchId === String(selectedBranchId)) {
+                                saveBranchLocation(event.latLng);
+                            }
+                        });
+                    }
+                }
+
+                function mapClicked(event) {
+                    if (!selectedBranchId) {
+                        return;
+                    }
+
+                    const branchId = String(selectedBranchId);
+                    let marker = branchMarkers.get(branchId);
+                    if (!marker) {
+                        marker = new google.maps.Marker({
+                            position: event.latLng,
+                            draggable: true,
+                            title: "Branch Details",
+                            icon: branchMarkerIcon(),
+                            map
+                        });
+                        branchMarkers.set(branchId, marker);
+                    } else {
+                        marker.setPosition(event.latLng);
+                        marker.setDraggable(true);
+                    }
+
+                    saveBranchLocation(event.latLng);
+                }
+
+                function saveBranchLocation(position) {
+                    window.livewire.emit('setBranchLocation', position.lat(), position.lng());
+                }
+
+                function selectBranchOnMap(branchId) {
+                    selectedBranchId = String(branchId || '');
+                    branchMarkers.forEach((marker, id) => {
+                        marker.setDraggable(id === selectedBranchId);
                     });
 
-                    marker.addListener("dragend", (event) => {
-                        markerDragEnd(event, index);
-                    });
+                    const marker = branchMarkers.get(selectedBranchId);
+                    if (marker && map) {
+                        map.panTo(marker.getPosition());
+                    }
                 }
-            }
 
-            /* Initialize map when Livewire has loaded */
-            document.addEventListener('livewire:load', function () {
-                initMap();
-            });
-
-            /* ------------------------- Handle Map Click Event ------------------------- */
-            function mapClicked(event) {
-                console.log(map);
-                console.log(event.latLng.lat(), event.latLng.lng());
-            }
-
-            /* ------------------------ Handle Marker Click Event ----------------------- */
-            function markerClicked(marker, index) {
-                console.log(map);
-                console.log(marker.position.lat());
-                console.log(marker.position.lng());
-            }
-
-            /* ----------------------- Handle Marker DragEnd Event ---------------------- */
-            function markerDragEnd(event, index) {
-                console.log(map);
-                console.log(event.latLng.lat());
-                console.log(event.latLng.lng());
-            }
-
-            /* Resize map when the branches tab becomes visible */
-            document.addEventListener('shown.bs.tab', function (event) {
-                if (event.target && event.target.id === 'branches-tab' && map) {
-                    google.maps.event.trigger(map, "resize");
-                }
-            });
-        </script>
-        <!-- <script src="https://maps.googleapis.com/maps/api/js?key={{config('services.google_maps.api_key')}}&callback=initMap"></script> -->
-        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCIJH6jbULC8MVaAX2LyxIQEBwWPjjeIF0&callback=initMap"></script>
+                document.addEventListener('livewire:load', initMap);
+                document.addEventListener('shown.bs.tab', function (event) {
+                    if (event.target && event.target.id === 'branches-tab' && map) {
+                        google.maps.event.trigger(map, "resize");
+                    }
+                });
+                document.addEventListener('change', function (event) {
+                    if (event.target && event.target.id === 'branch-menu') {
+                        selectBranchOnMap(event.target.value);
+                    }
+                });
+            </script>
+            <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ urlencode(config('services.google_maps.api_key')) }}&callback=initMap&language={{ app()->getLocale() }}"></script>
+        @endif
     @endpush
 

@@ -22,6 +22,7 @@ class Track extends Component
     use LivewireAlert;
     public mixed $counties = [], $regions = [], $cities = [], $packages = [], $districts = [];
     public  $country_id, $region_id, $distract_id, $city_id, $package_id, $branch_id;
+    public $latitude, $longitude;
     public string $status = 'inactive';
     public string $status1 = 'inactive';
     public string $status2 = 'inactive';
@@ -34,13 +35,13 @@ class Track extends Component
     public $type_services_Package = [];
     public  $listBranches = [];
 
-    protected $listeners = ['updateCountryBrn', "updateRegionBrn", 'updatedCityId', 'updateDistrictBrn', 'updateStatusRowValue'];
+    protected $listeners = ['updateCountryBrn', "updateRegionBrn", 'updatedCityId', 'updateDistrictBrn', 'updateStatusRowValue', 'setBranchLocation'];
     public function mount(int $merchant_id, BranchRepository $branchRepository, FetchCountriesAction $fetchCountriesAction, FetchPackageAction $fetchPackageAction, FetchServiceAction $fetchServiceAction): void
     {
         $this->listBranches = $branchRepository
             ->all(cols: ['*'], relations: ['merchant'], condition: ['merchant_id' => $merchant_id]);
         foreach ($this->listBranches as $key => $value) {
-            if (isset($value->latitude) && $value->latitude != null) {
+            if (is_numeric($value->latitude) && is_numeric($value->longitude)) {
                 $this->branches[$key]['id'] = $value->id;
                 $this->branches[$key]['merchant_id'] = $value->merchant_id;
                 $this->branches[$key]['name'] = $value->title;
@@ -75,6 +76,8 @@ class Track extends Component
             'merchant_id' => 'required|int|min:1',
             'city_id' => 'required|int|min:1',
             'package_id' => 'required',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'package_type_services' => 'nullable|array',
             'package_type_services.*.type_service_id' => 'required',
             'package_type_services.*.package_id' => 'required',
@@ -89,6 +92,8 @@ class Track extends Component
     protected function fillData($branch): void
     {
         $this->branch_id = $branch->id;
+        $this->latitude = $branch->latitude;
+        $this->longitude = $branch->longitude;
         $this->country_id = $branch->country_id ?? $branch->city?->country_id ?? 1;
         $this->package_id = $branch->package_id;
         $this->regions = Region::where('country_id', $this->country_id)->get();
@@ -104,6 +109,17 @@ class Track extends Component
                 $this->status2 = $merchantBranchTypeService->status;
         }
         $this->fullPackageTypeService();
+    }
+
+    public function setBranchLocation($latitude, $longitude): void
+    {
+        if (!$this->branch) {
+            $this->alert('error', __('admin::home.No branches available'));
+            return;
+        }
+
+        $this->latitude = $latitude;
+        $this->longitude = $longitude;
     }
 
     public function updateRegionBrn($region): void

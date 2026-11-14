@@ -134,4 +134,15 @@ class AdminCustomerAndOrdersQueryTest extends TestCase
         $this->assertContains('unique:users,phone,26', explode('|', $rules['phone']));
         $this->assertArrayHasKey('name', get_object_vars($component));
     }
+
+    public function test_customer_phone_number_does_not_show_dial_code_without_a_phone(): void
+    {
+        $user = new User();
+        $user->dialcode = '966';
+
+        $this->assertSame('', $user->phone_number);
+
+        $user->phone = '501234567';
+        $this->assertSame('966501234567', $user->phone_number);
+    }
 }

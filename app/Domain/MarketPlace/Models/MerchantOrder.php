@@ -112,7 +112,21 @@ class MerchantOrder extends Model
     public function type_service_name(): string
     {
         $typeService = TypeService::where('id', $this->service_type_id)->first();
-        return $typeService ? $typeService->name : '';
+        $typeName = $typeService?->name;
+
+        if ($typeName === 'default') {
+            return 'with_delivery';
+        }
+
+        if ($typeName) {
+            return $typeName;
+        }
+
+        return match ((string) $this->service_type_id) {
+            '1', 'with_delivery' => 'with_delivery',
+            '2', 'without_delivery' => 'without_delivery',
+            default => '',
+        };
     }
     public function services(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
@@ -236,20 +250,26 @@ class MerchantOrder extends Model
             }, 0)
         );
     }
-    public static function resolvePaymentStatus(?Payment $payment, ?string $fallback = 'unpaid', ?string $paymentMethod = null): ?string
+    public static function isCashOnDeliveryMethod(?string $paymentMethod): bool
     {
         $normalizedMethod = strtolower(trim((string) ($paymentMethod ?? '')));
-        if (in_array($normalizedMethod, ['cod', 'cash', 'cash_on_delivery', 'cashondelivery'], true)) {
-            return 'pending';
+        return in_array($normalizedMethod, ['cod', 'cash', 'cash_on_delivery', 'cashondelivery'], true);
+    }
+
+    public static function resolvePaymentStatus(?Payment $payment, ?string $fallback = 'unpaid', ?string $paymentMethod = null): ?string
+    {
+        $isCashOnDelivery = self::isCashOnDeliveryMethod($paymentMethod);
+        $status = is_string($payment?->status ?? null)
+            ? strtolower(trim($payment->status))
+            : null;
+
+        if ($isCashOnDelivery) {
+            return in_array($status, ['paid', 'success'], true) ? 'paid' : 'pending';
         }
 
         if (!$payment) {
             return $fallback;
         }
-
-        $status = is_string($payment->status ?? null)
-            ? strtolower(trim($payment->status))
-            : null;
 
         if ($status !== null && $status !== '') {
             return $status === 'success' ? 'paid' : $status;

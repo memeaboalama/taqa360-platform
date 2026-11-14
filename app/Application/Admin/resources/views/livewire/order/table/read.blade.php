@@ -1,4 +1,17 @@
 <div class="row">
+    <style>
+        .order-items-table th,
+        .order-items-table td {
+            padding-inline: 0.75rem;
+            vertical-align: middle;
+        }
+
+        .order-items-table .text-break {
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+    </style>
+
     @php
         $orderAddress = $order->addressInOrder;
         if (is_string($orderAddress)) {
@@ -12,7 +25,7 @@
         }
     @endphp
     <div class="col-xl-1"></div>
-    <div class="col-xl-7">
+    <div class="col-xl-8">
         <div class="row">
             <div class="col-xl-12">
                 <div class="card custom-card">
@@ -73,7 +86,7 @@
 
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table text-nowrap">
+                            <table class="table align-middle mb-0 order-items-table">
                                 <thead>
                                     <tr>
                                         <th scope="col">@lang('admin::home.item')</th>
@@ -87,7 +100,7 @@
                                     @foreach($orderItems as $item)
 
                                     <tr>
-                                        <td>
+                                        <td class="text-break">
                                             <div class="d-flex align-items-center">
 
                                                 <div>
@@ -101,19 +114,19 @@
                                             </div>
                                         </td>
 
-                                        <td><span
+                                        <td class="text-nowrap"><span
                                                 class="fs-15 fw-semibold">{{ $item->qty }}</span>
                                         </td>
 
-                                        <td><span
+                                        <td class="text-nowrap"><span
                                                 class="fs-15 fw-semibold">{{ number_format($item?->itemPrice, 2) }} @lang('admin::home.SAR')</span>
                                         </td>
 
 
-                                        <td><a href="javascript:void(0);"
+                                        <td class="text-break"><a href="javascript:void(0);"
                                                 class="text-info">{{ $item?->merchant?->company_name }} </a></td>
 
-                                        <td> {{ number_format($item?->item_total, 2) }} @lang('admin::home.SAR')</td>
+                                        <td class="text-nowrap"> {{ number_format($item?->item_total, 2) }} @lang('admin::home.SAR')</td>
                                     </tr>
 
                                     @endforeach

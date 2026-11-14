@@ -105,6 +105,10 @@ class User extends Authenticatable implements Wallet ,WalletFloat
 
     public function getPhoneNumberAttribute(): string
     {
+        if (empty($this->phone)) {
+            return '';
+        }
+
         return $this->dialcode . ltrim($this->phone, 0);
     }
 

@@ -1,6 +1,6 @@
     <div>
     <div class="mt-4">
-        <form method="POST" wire:submit.prevent="updateBasicInfo">
+        <form id="merchant-basic-info-form" method="POST" wire:submit.prevent="updateBasicInfo">
             <div class="row gy-3">
                 @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
                     @php
@@ -212,8 +212,11 @@
                 </div>
             </div>
             <div class="row gy-3 mt-3">
-                <div class="col-xl-12  text-end mt-4">
-                    <button class="btn btn-lg btn-primary">{{ __('admin::home.Update basic info') }}</button>
+                <div class="col-xl-12 d-flex justify-content-end gap-2 mt-4">
+                    <button type="submit" class="btn btn-lg btn-primary">{{ __('admin::home.Update basic info') }}</button>
+                    <button type="button" class="btn btn-lg btn-light" onclick="return requestMerchantInfoCancel()">
+                        {{ __('admin::home.cancel_editing') }}
+                    </button>
                 </div>
             </div>
         </form>
@@ -252,6 +255,69 @@
 
 @push('js')
     <script>
+        (function () {
+            var form = document.getElementById('merchant-basic-info-form');
+            if (!form) return;
+
+            var savedState = getFormState();
+            var skipBeforeUnload = false;
+
+            function getFormState() {
+                return JSON.stringify(Array.from(form.elements)
+                    .filter(function (field) {
+                        return field.type !== 'button' && field.type !== 'submit' && field.type !== 'reset';
+                    })
+                    .map(function (field, index) {
+                        var value;
+                        if (field.type === 'checkbox' || field.type === 'radio') {
+                            value = field.checked;
+                        } else if (field.type === 'file') {
+                            value = Array.from(field.files || []).map(function (file) {
+                                return [file.name, file.size, file.lastModified];
+                            });
+                        } else if (field instanceof HTMLSelectElement && field.multiple) {
+                            value = Array.from(field.selectedOptions).map(function (option) {
+                                return option.value;
+                            });
+                        } else {
+                            value = field.value;
+                        }
+
+                        return [field.name || field.id || index, field.type, value];
+                    }));
+            }
+
+            function hasUnsavedChanges() {
+                return getFormState() !== savedState;
+            }
+
+            window.addEventListener('beforeunload', function (event) {
+                if (!skipBeforeUnload && hasUnsavedChanges()) {
+                    event.preventDefault();
+                    event.returnValue = '';
+                }
+            });
+
+            window.requestMerchantInfoCancel = function () {
+                if (hasUnsavedChanges() && !window.confirm(@json(__('admin::home.unsaved_changes_confirm')))) {
+                    return false;
+                }
+
+                window.livewire.emit('cancelMerchantInfo');
+                return false;
+            };
+
+            window.addEventListener('merchant-info-saved', function () {
+                window.requestAnimationFrame(function () {
+                    savedState = getFormState();
+                });
+            });
+
+            window.addEventListener('merchant-info-cancelled', function () {
+                skipBeforeUnload = true;
+                window.location.reload();
+            });
+        })();
 
             function translateLocalizedField(sourceId, targetId, from, to, force) {
                 if (typeof window.__translationInProgress === 'undefined') {

@@ -15,13 +15,22 @@ class Create extends Component
 
     public $options = [], $choices, $choice, $listChoices = [];
     public $merchantId;
+    protected $listeners = ['refreshDatatable' => 'refreshChoices'];
 
     public function mount(int $merchantId): void
     {
         $this->merchantId = $merchantId;
-        $this->choices = \Domain\MarketPlace\Models\Choice::where(['status' =>  'active', 'merchant_id' => $this->merchantId])->get();
+        $this->refreshChoices();
         $this->addOption();
 
+    }
+
+    public function refreshChoices(): void
+    {
+        $this->choices = \Domain\MarketPlace\Models\Choice::where([
+            'status' => 'active',
+            'merchant_id' => $this->merchantId,
+        ])->get();
     }
     protected function rules(): array
     {

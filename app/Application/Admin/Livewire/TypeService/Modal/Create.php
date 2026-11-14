@@ -8,7 +8,9 @@ use App\Domain\AppBase\Actions\Location\GetDistrictsAction;
 use App\Domain\AppBase\Models\Location\City;
 use App\Domain\AppBase\Models\Location\Distract;
 use App\Domain\AppBase\Models\Location\Region;
-use App\Domain\Admin\Actions\TypeService\StoreTypeServiceAction;
+use App\Domain\AppBase\Models\PackageTypeServices;
+use App\Domain\AppBase\Models\TypeService;
+use App\Domain\MarketPlace\Models\Package;
 use App\Support\Rules\LatitudeRule;
 use App\Support\Rules\LongitudeRule;
 use Illuminate\Support\Facades\DB;
@@ -34,26 +36,86 @@ class Create extends Component
     }
     public function getPackageTypeService(): void
     {
-        $this->city_type_services = \App\Domain\AppBase\Models\CityTypeServicePackages::with('package','type_service')
-        ->where(['city_id' =>  $this->city_id])->get();
-        $this->type_services = \App\Domain\AppBase\Models\PackageTypeServices::with('package','type_service')
-        ->where(['status' =>  'active'])->get();
+        if (!$this->city_id) {
+            $this->city_type_services = collect();
+            $this->type_services = collect();
+            $this->package_type_services = [];
+            return;
+        }
+
+        $this->ensureServiceTypes();
+        $this->city_type_services = \App\Domain\AppBase\Models\CityTypeServicePackages::with('package', 'type_service')
+            ->where('city_id', $this->city_id)
+            ->get();
+        $this->type_services = PackageTypeServices::with('package', 'type_service')
+            ->where('status', 'active')
+            ->get();
         $this->fullPackageTypeService();
     }
+
+    private function ensureServiceTypes(): void
+    {
+        DB::transaction(function (): void {
+            $types = [
+                1 => ['name' => 'with_delivery', 'desc' => 'مع التوصيل'],
+                2 => ['name' => 'without_delivery', 'desc' => 'الاستلام من المتجر'],
+            ];
+
+            foreach ($types as $id => $attributes) {
+                $typeService = TypeService::query()->firstOrNew(['id' => $id]);
+                $typeService->name = $attributes['name'];
+                $typeService->desc = $attributes['desc'];
+                $typeService->status = 'active';
+                $typeService->save();
+            }
+
+            foreach (Package::query()->where('status', 'active')->get() as $package) {
+                foreach ($types as $typeId => $attributes) {
+                    $packageTypeService = PackageTypeServices::query()->firstOrNew([
+                        'package_id' => $package->id,
+                        'type_service_id' => $typeId,
+                    ]);
+
+                    if (!$packageTypeService->exists) {
+                        $packageTypeService->commission = $package->commission;
+                        $packageTypeService->discount_rate = 0;
+                        $packageTypeService->desc = '';
+                        $packageTypeService->status = 'active';
+                        $packageTypeService->save();
+                    }
+                }
+            }
+        });
+    }
+
     public function fullPackageTypeService(): void
     {
-        $this->package_type_services=[];
-        $package_type_servicesNew=[];
-        $this->package_type_services=$this->city_type_services;
-        foreach($this->type_services as $type_services)
-        {
-            $package_type_servicesNew[]=["package_id"=>$type_services->package_id,"type_service_id"=>$type_services->type_service_id
-            ,"commission"=>$type_services->commission,"discount_rate"=>$type_services->discount_rate,
-            "city_id"=>$this->city_id,"desc"=>'',"status"=>'inactive',"created_at"=>null,"updated_at"=>null,"package"=>$type_services->package,"type_service"=>$type_services->type_service];
+        $cityServices = $this->city_type_services->keyBy(
+            fn ($service) => $service->package_id . ':' . $service->type_service_id
+        );
+        $this->package_type_services = [];
+
+        foreach ($this->type_services as $typeService) {
+            $key = $typeService->package_id . ':' . $typeService->type_service_id;
+            $cityService = $cityServices->get($key);
+            $this->package_type_services[] = [
+                'package_id' => $typeService->package_id,
+                'type_service_id' => $typeService->type_service_id,
+                'commission' => $cityService?->commission ?? $typeService->commission,
+                'discount_rate' => $cityService?->discount_rate ?? $typeService->discount_rate,
+                'city_id' => $this->city_id,
+                'desc' => $cityService?->desc ?? '',
+                'status' => $cityService?->status ?? 'inactive',
+                'package' => [
+                    'title' => $typeService->package?->getTranslations('title') ?? [],
+                ],
+                'type_service' => [
+                    'name' => $typeService->type_service?->name,
+                ],
+            ];
         }
-        $this->package_type_services=$this->city_type_services->union($package_type_servicesNew)->toArray();
-        // Log::debug($this->package_type_services);
     }
+
     public function updateStatusRow($indx): void
     {
         if( $this->package_type_services[$indx]['status']== "active" )
@@ -70,9 +132,9 @@ class Create extends Component
     {
         return [
             'package_type_services' => 'array|required',
-            'package_type_services.*.package_id' => 'nullable|exists:packages,id',
-            'package_type_services.*.type_service_id' => 'nullable|exists:type_services,id',
-            'package_type_services.*.city_id' => 'nullable|exists:cities,id',
+            'package_type_services.*.package_id' => 'required|exists:packages,id',
+            'package_type_services.*.type_service_id' => 'required|exists:type_services,id',
+            'package_type_services.*.city_id' => 'required|exists:cities,id',
             'package_type_services.*.commission' => 'required|numeric',
             'package_type_services.*.discount_rate' => 'required|numeric',
             'package_type_services.*.status' => 'required|string|in:active,inactive',
@@ -137,12 +199,23 @@ class Create extends Component
     public function store(): void
     {
         $data = $this->validate();
-        // Log::debug($data);
-        DB::beginTransaction();
-        DB::table('city_type_service_packages')->where(['city_id' =>  $this->city_id])->delete();
-        DB::table('city_type_service_packages')->insert($data['package_type_services']);
+        $rows = collect($data['package_type_services'])
+            ->map(fn (array $service) => [
+                'type_service_id' => $service['type_service_id'],
+                'city_id' => $service['city_id'],
+                'package_id' => $service['package_id'],
+                'commission' => $service['commission'],
+                'discount_rate' => $service['discount_rate'],
+                'desc' => $service['desc'] ?? '',
+                'status' => $service['status'],
+            ])
+            ->all();
+
+        DB::transaction(function () use ($rows): void {
+            DB::table('city_type_service_packages')->where('city_id', $this->city_id)->delete();
+            DB::table('city_type_service_packages')->insert($rows);
+        });
         $this->alert('success', __('marketplace::home.data_saved_successfully'));
-        DB::commit();
     }
 
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application

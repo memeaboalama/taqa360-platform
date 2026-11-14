@@ -2,12 +2,9 @@
 
 namespace Database\Seeders\Merchant;
 
-use App\Domain\AppBase\Models\City;
 use App\Support\Enum\StatusEnum;
 use Domain\MarketPlace\Models\MarketPlaceCategory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class MarketPlaceCategorySeeder extends Seeder
 {
@@ -16,56 +13,35 @@ class MarketPlaceCategorySeeder extends Seeder
      */
     public function run(): void
     {
-        Model::unguard();
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        DB::table('market_place_categories')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-        $cat = [
-            1 => [
-                'title' => [
-                    'en' => 'Category1',
-                    'ar' => 'Category1',
-                ],
-                'status' => StatusEnum::ACTIVE->value,
-                'sort' => 1
-
-            ],
-            2 => [
-                'title' => [
-                    'en' => 'Category2',
-                    'ar' => 'Category2',
-                ],
-                'status' => StatusEnum::ACTIVE->value,
-                'sort' => 2
-            ],
-
-            3 => [
-                'title' => [
-                    'en' => 'Category3',
-                    'ar' => 'Category3',
-                ],
-                'status' => StatusEnum::ACTIVE->value,
-                'sort' => 3
-            ],
-            4 => [
-                'title' => [
-                    'en' => 'Category4',
-                    'ar' => 'Category4',
-                ],
-                'status' => StatusEnum::ACTIVE->value,
-                'sort' => 4
-            ],
-
-
+        $categories = [
+            ['en' => 'Renewable Energy', 'ar' => 'الطاقة المتجددة'],
+            ['en' => 'Solar Energy', 'ar' => 'الطاقة الشمسية'],
+            ['en' => 'Batteries', 'ar' => 'البطاريات'],
+            ['en' => 'Inverters', 'ar' => 'المحولات'],
+            ['en' => 'Wind Energy', 'ar' => 'طاقة الرياح'],
+            ['en' => 'Electrical Equipment', 'ar' => 'معدات كهربائية'],
+            ['en' => 'Water Pumps', 'ar' => 'مضخات المياه'],
+            ['en' => 'Safety Equipment', 'ar' => 'معدات السلامة'],
+            ['en' => 'Building Materials', 'ar' => 'مواد البناء'],
+            ['en' => 'Thermal Insulation', 'ar' => 'العزل الحراري'],
         ];
-        foreach ($cat as $vendor) {
-            $data = MarketPlaceCategory::create([
-                'title' => $vendor["title"],
-                'status' => $vendor["status"],
-                'sort' => $vendor["sort"],
 
+        $existingTitles = MarketPlaceCategory::query()->get()
+            ->map(static fn (MarketPlaceCategory $category): string => $category->getTranslation('title', 'en'))
+            ->all();
+
+        foreach ($categories as $index => $title) {
+            if (in_array($title['en'], $existingTitles, true)) {
+                continue;
+            }
+
+            MarketPlaceCategory::create([
+                'title' => $title,
+                'status' => StatusEnum::ACTIVE->value,
+                'sort' => $index + 1,
             ]);
 
+            $existingTitles[] = $title['en'];
         }
     }
 }

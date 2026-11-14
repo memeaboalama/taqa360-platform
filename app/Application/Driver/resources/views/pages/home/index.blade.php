@@ -207,6 +207,10 @@
                                                                 <i class="ri-checkbox-circle-line me-1"></i> تم التسليم
                                                             </button>
                                                         </form>
+                                                    @elseif($statusVal === 'completed')
+                                                        <button type="button" class="btn btn-sm btn-success" disabled>
+                                                            <i class="ri-checkbox-circle-line me-1"></i> {{ __('driver::home.order_status_completed') }}
+                                                        </button>
                                                     @elseif($statusVal === 'started-work')
                                                         <span class="badge bg-warning text-dark"><i class="ri-time-line me-1"></i> جاري التجهيز بالمحل</span>
                                                     @else
@@ -242,6 +246,19 @@
             title: driverToastMsg,
             showConfirmButton: false,
             timer: 3000,
+            timerProgressBar: true
+        });
+    }
+
+    var driverToastError = @json(session('error'));
+    if (driverToastError) {
+        Swal.fire({
+            toast: true,
+            position: '{{ app()->getLocale() === 'ar' ? 'top-start' : 'top-end' }}',
+            icon: 'error',
+            title: driverToastError,
+            showConfirmButton: false,
+            timer: 5000,
             timerProgressBar: true
         });
     }
