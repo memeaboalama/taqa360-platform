@@ -11,6 +11,7 @@ use App\Domain\AppBase\Repositories\AdMerchantContentRepository;
 use App\Domain\MarketPlace\Actions\Dashboard\Catalog\Category\FetchCategoryAction;
 use App\Domain\MarketPlace\Repositories\Merchant\ItemRepository;
 use App\Support\Enum\ActiveEnum;
+use Domain\MarketPlace\Models\Item;
 use Domain\AppBase\Models\AdCategoryContent;
 use Domain\AppBase\Repositories\AdCategoryContentRepository;
 use Domain\MarketPlace\Models\Catalog\Category;
@@ -39,7 +40,7 @@ class FetchHomeDataAction
             Cache::forget('home_page_data_storefront_v2_' . app()->getLocale());
         }
 
-        return Cache::remember('home_page_data_storefront_v2_' . app()->getLocale(), 1800, function() {
+        $data = Cache::remember('home_page_data_storefront_v2_' . app()->getLocale(), 1800, function() {
             $page = AdPage::where('key', 'home')->first();
 
             if (!$page) {
@@ -135,6 +136,65 @@ class FetchHomeDataAction
 
             return $this->fillWithFallbacks($data);
         });
+
+        return $this->filterUnavailableCachedProducts($data);
+    }
+
+    private function filterUnavailableCachedProducts(array $data): array
+    {
+        $productKeys = [
+            'featuredProducts',
+            'newProducts',
+            'bestSellers',
+            'exclusiveProducts',
+            'newProductsSidebar',
+            'recentlyViewed',
+            'sectionNewArrivals',
+            'suggestedProducts',
+        ];
+        $products = collect();
+
+        foreach ($productKeys as $key) {
+            if (($data[$key] ?? null) instanceof \Illuminate\Support\Collection) {
+                $products = $products->merge($data[$key]);
+            }
+        }
+
+        foreach ($data['tabGroups'] ?? [] as $groupProducts) {
+            if ($groupProducts instanceof \Illuminate\Support\Collection) {
+                $products = $products->merge($groupProducts);
+            }
+        }
+
+        $productIds = $products->pluck('id')->filter()->unique()->values();
+        if ($productIds->isEmpty()) {
+            return $data;
+        }
+
+        $availableIds = Item::query()
+            ->whereIn('id', $productIds)
+            ->where('status', ActiveEnum::ACTIVE->value)
+            ->availableForStorefront()
+            ->pluck('id')
+            ->flip();
+
+        foreach ($productKeys as $key) {
+            if (($data[$key] ?? null) instanceof \Illuminate\Support\Collection) {
+                $data[$key] = $data[$key]
+                    ->filter(fn ($product) => $availableIds->has($product->id))
+                    ->values();
+            }
+        }
+
+        foreach ($data['tabGroups'] ?? [] as $key => $groupProducts) {
+            if ($groupProducts instanceof \Illuminate\Support\Collection) {
+                $data['tabGroups'][$key] = $groupProducts
+                    ->filter(fn ($product) => $availableIds->has($product->id))
+                    ->values();
+            }
+        }
+
+        return $data;
     }
 
     private function getGroupProductsFromContents($placement, $groupKey, $limit)

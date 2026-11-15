@@ -29,6 +29,7 @@ class Create extends Component
     public $child_category_id;
     public $brand_id;
     public $master_specification_ids = [];
+    public $selected_master_specification_id;
     public $description = ['en' => null, 'ar' => null];
     public $default_price;
     public $stock;
@@ -54,12 +55,8 @@ class Create extends Component
         $this->categories = Category::where('is_active', true)->get();
         $this->subcategories = collect();
         $this->childCategories = collect();
-        $this->brands = Brand::where('is_active', true)->orderBy('id')->get();
-        $this->masterSpecifications = Specification::query()
-            ->whereNull('item_id')
-            ->where('status', StatusEnum::ACTIVE->value)
-            ->with(['properties' => fn ($query) => $query->where('status', StatusEnum::ACTIVE->value)])
-            ->get();
+        $this->brands = collect();
+        $this->masterSpecifications = collect();
         $this->addition_groups = AdditionGroup::where('status', StatusEnum::ACTIVE->value)->get();
         $this->fullItemPrices();
     }
@@ -106,15 +103,34 @@ class Create extends Component
             'title.*' => 'required|string|min:2|max:120',
             'status' => 'required|string|in:active,inactive',
             'main_category_id' => 'required|exists:categories,id',
-            'sub_category_id' => 'nullable|exists:sub_categories,id',
-            'child_category_id' => 'nullable|exists:child_categories,id',
-            'brand_id' => 'nullable|exists:brands,id',
+            'sub_category_id' => [
+                'nullable',
+                Rule::exists('sub_categories', 'id')->where('category_id', $this->main_category_id),
+            ],
+            'child_category_id' => [
+                'nullable',
+                Rule::exists('child_categories', 'id')->where('subcategory_id', $this->sub_category_id),
+            ],
+            'brand_id' => [
+                'nullable',
+                Rule::exists('brands', 'id')->where('is_active', true)->whereNull('deleted_at'),
+                Rule::exists('brand_category', 'brand_id')->where('category_id', $this->main_category_id),
+            ],
             'master_specification_ids' => 'nullable|array',
+            'selected_master_specification_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('specifications', 'id')->where(function ($query) {
+                    $query->whereNull('item_id')->where('status', StatusEnum::ACTIVE->value);
+                }),
+                Rule::exists('category_specification', 'specification_id')->where('category_id', $this->main_category_id),
+            ],
             'master_specification_ids.*' => [
                 'integer',
                 Rule::exists('specifications', 'id')->where(function ($query) {
                     $query->whereNull('item_id')->where('status', StatusEnum::ACTIVE->value);
                 }),
+                Rule::exists('category_specification', 'specification_id')->where('category_id', $this->main_category_id),
             ],
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'description' => 'required|array',
@@ -158,9 +174,25 @@ class Create extends Component
         $this->subcategories = Subcategory::where('category_id', $value)
             ->where('is_active', true)
             ->get();
+        $this->brands = Brand::query()
+            ->where('is_active', true)
+            ->whereHas('categories', fn ($query) => $query->where('categories.id', $value))
+            ->orderBy('id')
+            ->get();
+        $this->masterSpecifications = Specification::query()
+            ->whereNull('item_id')
+            ->where('status', StatusEnum::ACTIVE->value)
+            ->whereHas('categories', fn ($query) => $query->where('categories.id', $value))
+            ->with(['properties' => fn ($query) => $query
+                ->whereNull('item_id')
+                ->where('status', StatusEnum::ACTIVE->value)])
+            ->get();
+        $this->brand_id = null;
+        $this->master_specification_ids = [];
+        $this->selected_master_specification_id = null;
         $this->sub_category_id = null;
         $this->child_category_id = null;
-        $this->master_specification_ids = [];
+        $this->childCategories = collect();
     }
 
     public function updatedSubCategoryId($value): void
@@ -169,6 +201,29 @@ class Create extends Component
             ->where('is_active', true)
             ->get();
         $this->child_category_id = null;
+    }
+
+    public function addMasterSpecification(): void
+    {
+        $this->validateOnly('selected_master_specification_id');
+
+        if ($this->selected_master_specification_id === null || $this->selected_master_specification_id === '') {
+            return;
+        }
+
+        $id = (int) $this->selected_master_specification_id;
+        if (!in_array($id, array_map('intval', $this->master_specification_ids), true)) {
+            $this->master_specification_ids[] = $id;
+        }
+        $this->selected_master_specification_id = null;
+    }
+
+    public function removeMasterSpecification(int $id): void
+    {
+        $this->master_specification_ids = array_values(array_filter(
+            $this->master_specification_ids,
+            fn ($selectedId) => (int) $selectedId !== $id
+        ));
     }
 
     public function updateStatus($val): void
@@ -225,6 +280,9 @@ class Create extends Component
         $this->categories = Category::where('is_active', true)->get();
         $this->subcategories = collect();
         $this->childCategories = collect();
+        $this->brands = collect();
+        $this->masterSpecifications = collect();
+        $this->selected_master_specification_id = null;
         $this->fullItemPrices();
     }
 

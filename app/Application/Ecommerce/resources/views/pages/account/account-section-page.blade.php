@@ -146,6 +146,50 @@
             gap: 12px
         }
 
+        .content-heading.address-heading {
+            border-bottom: 0;
+            margin-bottom: 18px
+        }
+
+        .content-heading.address-heading h2 {
+            margin-bottom: 0
+        }
+
+        .account-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 9px 14px;
+            border: 1px solid #306FAA;
+            border-radius: 5px;
+            background: #fff;
+            color: #306FAA;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none !important;
+            cursor: pointer
+        }
+
+        .account-button:hover {
+            background: #eef4fa;
+            color: #245C8E
+        }
+
+        .account-button.primary {
+            background: #306FAA;
+            color: #fff
+        }
+
+        .account-button.primary:hover {
+            background: #245C8E;
+            color: #fff
+        }
+
+        .address-card-actions {
+            margin-top: 12px
+        }
+
         .account-form-group {
             margin-bottom: 18px
         }
@@ -560,6 +604,85 @@
     </style>
 @endsection
 
+@section('scripts')
+    <script>
+        document.addEventListener('submit', function (event) {
+            var form = event.target;
+            if (!form.matches || !form.matches('.address-form[data-async-save="true"]')) return;
+
+            event.preventDefault();
+            if (form.dataset.submitting === 'true') return;
+
+            var submitButton = form.querySelector('.btn-save');
+            form.dataset.submitting = 'true';
+            form.classList.add('is-submitting');
+            if (submitButton) submitButton.disabled = true;
+
+            (async function () {
+                var response = await fetch(form.action, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: new FormData(form)
+                });
+
+                if (response.redirected) {
+                    window.location.assign(response.url);
+                    return;
+                }
+
+                var result = await response.json().catch(function () { return null; });
+                if (!response.ok || !result || result.success !== true || !result.redirect_url) {
+                    var message = result && result.message;
+                    if (result && result.errors) {
+                        var firstError = Object.keys(result.errors)[0];
+                        message = firstError && result.errors[firstError][0] || message;
+                    }
+                    throw new Error(message || @json(__('ecommerce::ecommerce.try_again_error')));
+                }
+
+                var pageResponse = await fetch(result.redirect_url, {
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'text/html' }
+                });
+                if (!pageResponse.ok) {
+                    throw new Error(@json(__('ecommerce::ecommerce.try_again_error')));
+                }
+
+                var pageHtml = await pageResponse.text();
+                var parsedPage = new DOMParser().parseFromString(pageHtml, 'text/html');
+                var updatedContent = parsedPage.querySelector('.account-content');
+                var currentContent = document.querySelector('.account-content');
+                if (!updatedContent || !currentContent) {
+                    window.location.assign(pageResponse.url || result.redirect_url);
+                    return;
+                }
+
+                currentContent.replaceWith(updatedContent);
+                window.history.replaceState(window.history.state, '', pageResponse.url || result.redirect_url);
+                if (typeof window.showNotification === 'function') {
+                    window.showNotification(result.message, 'success');
+                }
+            })().catch(function (error) {
+                if (typeof window.showNotification === 'function') {
+                    window.showNotification(error.message || @json(__('ecommerce::ecommerce.try_again_error')), 'danger');
+                } else {
+                    window.alert(error.message || @json(__('ecommerce::ecommerce.try_again_error')));
+                }
+            }).finally(function () {
+                if (submitButton && submitButton.isConnected) submitButton.disabled = false;
+                if (form.isConnected) {
+                    form.classList.remove('is-submitting');
+                    delete form.dataset.submitting;
+                }
+            });
+        }, true);
+    </script>
+@endsection
+
 @section('content')
     <section class="account-hero">
         <div class="container">
@@ -590,15 +713,19 @@
                     <a class="account-tab {{ in_array($section, ['profile', 'edit_profile'], true) ? 'active' : '' }}" href="{{ route('account.index') }}"><i class="ti-user"></i><span>@lang('ecommerce::ecommerce.personal_info')</span></a>
                     <a class="account-tab {{ in_array($section, ['orders', 'order_details'], true) ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'orders']) }}"><i class="ti-package"></i><span>@lang('ecommerce::ecommerce.orders')</span></a>
                     <a class="account-tab {{ in_array($section, ['service_requests', 'service_request_details'], true) ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'service_requests']) }}"><i class="ti-settings"></i><span>@lang('ecommerce::ecommerce.service_requests')</span></a>
-                    <a class="account-tab {{ $section === 'addresses' ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'addresses']) }}"><i class="ti-location-pin"></i><span>@lang('ecommerce::ecommerce.addresses')</span></a>
+                    <a class="account-tab {{ in_array($section, ['addresses', 'create_address', 'edit_address'], true) ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'addresses']) }}"><i class="ti-location-pin"></i><span>@lang('ecommerce::ecommerce.addresses')</span></a>
                     <a class="account-tab {{ in_array($section, ['wallet', 'wallet_deposit', 'wallet_withdraw'], true) ? 'active' : '' }}" href="{{ route('account.wallet.index') }}"><i class="ti-wallet"></i><span>@lang('ecommerce::ecommerce.my_wallet')</span></a>
                 </aside>
                 <section class="account-content">
                     @if(!in_array($section, ['service_requests', 'service_request_details'], true))
-                        <div class="content-heading {{ $section === 'orders' ? 'orders-heading' : '' }}">
+                        <div class="content-heading {{ in_array($section, ['orders', 'addresses'], true) ? 'orders-heading' : '' }} {{ $section === 'addresses' ? 'address-heading' : '' }}">
                             <h2>
                                 @if($section === 'edit_profile')
                                     @lang('ecommerce::ecommerce.personal_info')
+                                @elseif($section === 'create_address')
+                                    @lang('ecommerce::ecommerce.add_new_address')
+                                @elseif($section === 'edit_address')
+                                    @lang('ecommerce::ecommerce.edit_address')
                                 @elseif($section === 'orders')
                                     @lang('ecommerce::ecommerce.orders')
                                 @elseif($section === 'order_details')
@@ -617,6 +744,8 @@
                             </h2>
                             @if($section === 'orders')
                                 <span class="order-count">{{ $orders->total() }} @lang('ecommerce::ecommerce.orders')</span>
+                            @elseif($section === 'addresses')
+                                <a class="account-button primary" href="{{ route('account.create_address') }}"><i class="ti-plus"></i> @lang('ecommerce::ecommerce.add_new_address')</a>
                             @endif
                         </div>
                     @endif
@@ -843,10 +972,20 @@
                             <article class="address-card">
                                 <strong>{{ $address->title ?? __('ecommerce::ecommerce.address') }}</strong>
                                 <p>{{ $address->address ?? $address->street ?? '-' }}</p>
+                                @if($address->district_name)
+                                    <p>{{ $address->district_name }}</p>
+                                @endif
+                                <div class="address-card-actions">
+                                    <a class="account-button" href="{{ route('account.edit_address', $address->id) }}"><i class="ti-pencil"></i> @lang('ecommerce::ecommerce.edit')</a>
+                                </div>
                             </article>
                         @empty
                             <div class="empty">@lang('ecommerce::ecommerce.no_addresses_message')</div>
                         @endforelse
+                    @elseif($section === 'create_address')
+                        @include('ecommerce::pages.account._create_address', ['useNewAccountLayout' => $useNewAccountLayout ?? false])
+                    @elseif($section === 'edit_address')
+                        @include('ecommerce::pages.account._edit_address', ['useNewAccountLayout' => $useNewAccountLayout ?? false])
                     @endif
                 </section>
             </div>

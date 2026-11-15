@@ -31,6 +31,24 @@
                                                     class="text-danger d-block mt-2">{{ $message }}</span> @enderror
                                             </div>
                                             <div class="col-xl-12">
+                                                <label for="specification-categories" class="form-label text-black">
+                                                {{ __('admin::catalog.specification_categories') }}<span class="text-danger">*</span>
+                                                </label>
+                                                <select id="specification-categories" class="form-control @error('category_ids') is-invalid @enderror"
+                                                    wire:model.defer="category_ids" multiple size="4">
+                                                @foreach($categories as $category)
+                                                    <option value="{{ $category->id }}">{{ $category->title }}</option>
+                                                @endforeach
+                                                </select>
+                                                <small class="form-text text-muted">{{ __('admin::catalog.specification_categories_hint') }}</small>
+                                                @error('category_ids')
+                                                <span class="text-danger d-block mt-2">{{ $message }}</span>
+                                                @enderror
+                                                @error('category_ids.*')
+                                                <span class="text-danger d-block mt-2">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+                                            <div class="col-xl-12">
                                                 <label for="category-active"
                                                        class="form-label text-black">{{__('admin::home.status')}}</label>
                                                 <div class="custom-toggle-switch d-flex align-items-center mb-4 mt-3">

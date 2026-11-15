@@ -52,6 +52,10 @@ return [
         'servicer_type' => 'Servicer Type',
         'specification' => 'Specification',
         'brand' => 'Brand',
+        'no_subcategories_available' => 'No subcategories are available for this category.',
+        'no_child_categories_available' => 'No child categories are available for this subcategory.',
+        'no_active_brands' => 'No active brands are available.',
+        'no_specifications_available' => 'No specifications or length options are available.',
         'addition_groups' => 'Addition Groups',
         'files' => 'Files',
         'network_status' => 'Network Status',
@@ -105,6 +109,7 @@ return [
 
     'actions' => [
         'add' => 'Add',
+        'remove' => 'Remove',
         'create' => 'Add New',
         'add_new' => 'Add New',
         'edit' => 'Edit',

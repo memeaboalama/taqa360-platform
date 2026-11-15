@@ -5,6 +5,7 @@ use App\Application\Admin\Controllers\Merchant\PackageController;
 use App\Application\Admin\Controllers\Merchant\MerchantOrdersController;
 use App\Application\Admin\Controllers\ProviderController;
 use App\Application\Admin\Controllers\ServicesController;
+use App\Application\Admin\Controllers\SettlementProofController;
 use App\Application\Admin\Controllers\OrderController;
 use App\Application\Admin\Controllers\User\UserController;
 use App\Domain\MarketPlace\Models\MerchantOrder;
@@ -249,6 +250,10 @@ Route::group(
         Route::prefix('general-settings')->as('settings.')->group(function () {
             Route::get('/', [GeneralSettingController::class, 'index'])->name('index');
         });
+        Route::get('/collection-settings', fn () => view('admin::pages.collection-settings.index'))
+            ->name('collection-settings.index');
+        Route::get('/settlements/{settlement}/proof', [SettlementProofController::class, 'show'])
+            ->name('settlements.proof');
 
         Route::prefix('towing/cities')->as('towing.cities.')->group(function () {
             Route::get('/', [TowingCityController::class, 'index'])->name('index');

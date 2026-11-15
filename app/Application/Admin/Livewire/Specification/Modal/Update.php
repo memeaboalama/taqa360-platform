@@ -4,6 +4,7 @@ namespace Application\Admin\Livewire\Specification\Modal;
 
 use App\Domain\Admin\Actions\Dashboard\Specification\FetchSingleSpecificationAction;
 use App\Domain\Admin\Actions\Dashboard\Specification\UpdateSpecificationAction;
+use Domain\MarketPlace\Models\Catalog\Category;
 use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
@@ -15,11 +16,18 @@ class Update extends Component
     public string $status = 'active';
     public string $name = '';
     public $description;
+    public array $category_ids = [];
+    public $categories;
     public $namePre;
     public $specifications_properties = [];
     public int|null $specification_id;
 
     protected $listeners = ['updateSpecification', 'deletePer'];
+
+    public function mount(): void
+    {
+        $this->categories = Category::orderBy('id')->get();
+    }
 
     public function updateSpecification($id, FetchSingleSpecificationAction $fetchSingleSpecificationAction): void
     {
@@ -29,6 +37,7 @@ class Update extends Component
             $this->name = $specification->name;
             $this->description = $specification->description;
             $this->specification_id = $specification->id;
+            $this->category_ids = $specification->categories()->pluck('categories.id')->map(fn ($id) => (string) $id)->all();
             $this->specifications_properties = $specification->specifications_properties()
                 ->get(['name', 'status'])
                 ->map(fn ($p) => ['name' => $p->name, 'status' => $p->status->value])
@@ -44,6 +53,8 @@ class Update extends Component
             'name' => 'required',
             'description' => 'nullable',
             'status' => 'required|string|in:active,inactive',
+            'category_ids' => 'required|array|min:1',
+            'category_ids.*' => 'integer|distinct|exists:categories,id',
             'specifications_properties' => 'array|required',
             'specifications_properties.*.name' => 'required|string',
             'specifications_properties.*.status' => 'required|string|in:active,inactive',

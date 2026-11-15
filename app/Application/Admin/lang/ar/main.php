@@ -50,7 +50,11 @@ return [
         'sub_category' => 'الفئة الفرعية',
         'servicer_type' => 'نوع الخدمة',
         'specification' => 'المواصفة',
-        'brand' => 'الماركة',
+        'brand' => 'العلامة التجارية',
+        'no_subcategories_available' => 'لا توجد فئات فرعية متاحة لهذه الفئة.',
+        'no_child_categories_available' => 'لا توجد فئات صغرى متاحة لهذه الفئة الفرعية.',
+        'no_active_brands' => 'لا توجد علامات تجارية نشطة حالياً.',
+        'no_specifications_available' => 'لا توجد مواصفات أو خيارات أطوال متاحة حالياً.',
         'addition_groups' => 'مجموعات الإضافات',
         'files' => 'الملفات',
         'network_status' => 'حالة الشبكة',
@@ -104,6 +108,7 @@ return [
 
     'actions' => [
         'add' => 'إضافة',
+        'remove' => 'إزالة',
         'create' => 'إضافة جديد',
         'add_new' => 'إضافة جديد',
         'edit' => 'تعديل',

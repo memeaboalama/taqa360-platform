@@ -74,7 +74,7 @@ class OrderResource extends JsonResource
                 "delivered" => in_array($this->status, [MerchantOrderStatuses::PREVIOUS]),
             ],
             'payment_method' => $this->payment_method,
-            'payment_status' => $this->payment?->status,
+            'payment_status' => $this->payment_status,
             'items' => OrderItemResource::collection($this->orderItems),
             'timing' => $timing,
             'note' => $this->note,

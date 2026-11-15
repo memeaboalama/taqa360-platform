@@ -6,7 +6,10 @@ use Livewire\Component;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use App\Domain\MarketPlace\Actions\Order\OrderAction;
 use App\Domain\MarketPlace\Models\MerchantOrder;
+use App\Domain\MarketPlace\Models\CollectionSetting;
+use App\Domain\MarketPlace\Models\OrderSettlement;
 use App\Domain\MarketPlace\Repositories\Order\MerchantOrderRepository;
+use App\Application\Marketplace\Enums\MerchantOrderStatuses;
 use App\Application\Marketplace\Enums\MerchantOrderMarks;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
@@ -27,6 +30,8 @@ class Read extends Component
     public $address;
     public $mark = MerchantOrderMarks::WHITE; //'white';
     public $admin_note;
+    public $settlementCorrectionAmount;
+    public $settlementCorrectionNote;
 
     public $driver;
     public $drivers = [];
@@ -126,6 +131,138 @@ class Read extends Component
         $this->emit('refreshDatatable');
         $this->alert('success', __('admin::home.driver_assigned_successfully'));
     }
+
+    public function confirmCashCollection(): void
+    {
+        $status = $this->order->status instanceof MerchantOrderStatuses
+            ? $this->order->status->value
+            : (string) $this->order->status;
+
+        if (!MerchantOrder::isCashOnDeliveryMethod($this->order->payment_method)
+            || $status !== MerchantOrderStatuses::PREVIOUS->value) {
+            $this->alert('error', __('admin::home.something_went_wrong'));
+            return;
+        }
+
+        $amount = (int) round((float) $this->order->total_after_vat * 100);
+        if ($amount <= 0) {
+            $this->alert('warning', __('admin::home.something_went_wrong'));
+            return;
+        }
+
+        $payment = $this->order->payment()->latest('id')->first();
+        if (MerchantOrder::resolvePaymentStatus($payment, 'unpaid', $this->order->payment_method) === 'paid') {
+            $this->alert('warning', __('admin::home.Payment Status paid'));
+            return;
+        }
+
+        $timestamp = now()->toIso8601String();
+        $amountFormat = number_format($amount / 100, 2) . ' SAR';
+        $this->payment = DB::transaction(fn () => $this->order->payment()->updateOrCreate(
+            ['payment_id' => 'COD-' . ($this->order->code ?: $this->order->id)],
+            [
+                'status' => 'paid',
+                'amount' => $amount,
+                'currency' => 'SAR',
+                'captured' => $amount,
+                'capturedAt' => $timestamp,
+                'description' => 'Cash on delivery collection confirmed by admin.',
+                'amountFormat' => $amountFormat,
+                'capturedFormat' => $amountFormat,
+                'source_type' => 'cash',
+                'source_message' => MerchantOrder::COD_COLLECTION_CONFIRMATION_MESSAGE,
+                'user_id' => $this->order->user_id,
+                'channel' => $this->order->channel,
+                'createdAt' => $timestamp,
+                'updatedAt' => $timestamp,
+            ]
+        ));
+
+        $this->emit('refreshDatatable');
+        $this->alert('success', __('admin::home.cash_collection_confirmed'));
+    }
+
+    public function reviewSettlement(): void
+    {
+        if (!CollectionSetting::adminCan('review')) {
+            abort(403);
+        }
+
+        $settlement = $this->order->settlement()->first();
+        if (!$settlement || $settlement->status !== 'pending_review') {
+            $this->alert('error', 'حالة التوريد لا تسمح بالمراجعة.');
+            return;
+        }
+
+        $settlement->update([
+            'status' => 'reviewed',
+            'reviewed_by' => auth('admin')->id(),
+            'reviewed_at' => now(),
+        ]);
+        $this->order->load('settlement');
+        $this->alert('success', 'تمت مراجعة التوريد.');
+    }
+
+    public function approveSettlement(): void
+    {
+        if (!CollectionSetting::adminCan('approve')) {
+            abort(403);
+        }
+
+        $settlement = $this->order->settlement()->first();
+        if (!$settlement || $settlement->status !== 'reviewed') {
+            $this->alert('error', 'يجب مراجعة التوريد قبل اعتماده.');
+            return;
+        }
+
+        $settlement->update([
+            'status' => 'approved',
+            'approved_by' => auth('admin')->id(),
+            'approved_at' => now(),
+        ]);
+        $this->order->load('settlement');
+        $this->alert('success', 'تم اعتماد التوريد.');
+    }
+
+    public function correctSettlement(): void
+    {
+        if (!CollectionSetting::adminCan('correct')) {
+            abort(403);
+        }
+
+        $settlement = $this->order->settlement()->first();
+        if (!$settlement || $settlement->status !== 'approved') {
+            $this->alert('error', 'لا يمكن تصحيح تسوية غير معتمدة.');
+            return;
+        }
+
+        DB::transaction(function () use ($settlement): void {
+            $lockedSettlement = OrderSettlement::whereKey($settlement->id)->lockForUpdate()->firstOrFail();
+            $existingAdjustment = (float) $lockedSettlement->corrections()->sum('amount');
+            $minimum = -(float) $lockedSettlement->amount - $existingAdjustment;
+            $maximum = (float) $lockedSettlement->amount - $existingAdjustment;
+            $validated = $this->validate([
+                'settlementCorrectionAmount' => [
+                    'required',
+                    'numeric',
+                    'between:' . $minimum . ',' . $maximum,
+                ],
+                'settlementCorrectionNote' => ['required', 'string', 'max:1000'],
+            ]);
+
+            $lockedSettlement->corrections()->create([
+                'corrected_by' => auth('admin')->id(),
+                'amount' => $validated['settlementCorrectionAmount'],
+                'reason' => $validated['settlementCorrectionNote'],
+                'created_at' => now(),
+            ]);
+        });
+        $this->order->load('settlement.corrections');
+        $this->settlementCorrectionAmount = null;
+        $this->settlementCorrectionNote = null;
+        $this->alert('success', 'تم حفظ التصحيح المالي كسجل مستقل دون تغيير مبلغ التحصيل.');
+    }
+
     public function render()
     {
         if (is_string($this->mark)) {

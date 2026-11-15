@@ -4,6 +4,8 @@ return [
 
     'categories' => 'Categories',
     'category' => 'Category',
+    'specification_categories' => 'Categories linked to this specification',
+    'specification_categories_hint' => 'Select one or more categories where this specification should be available on product forms.',
     'subcategories' => 'Subcategories',
     'subcategory' => 'Subcategory',
     'child_categories' => 'Child Categories',

@@ -955,6 +955,7 @@ return [
     'paid' => 'Paid',
     'unpaid' => 'Unpaid',
     'payment_pending' => 'Payment Pending',
+    'cod_collection_unavailable' => 'Cash on delivery is currently unavailable.',
     'payment_failed' => 'Payment Failed',
     'user_cancelled_reason' => 'Cancelled by user via website',
     'cancel_reason_placeholder' => 'Please mention the reason for cancellation...',

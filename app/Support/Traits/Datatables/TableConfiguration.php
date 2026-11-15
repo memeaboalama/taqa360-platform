@@ -33,7 +33,7 @@ trait TableConfiguration
         ]);
 
         $this->setTableWrapperAttributes([
-            'class' => 'table text-nowrap',
+            'class' => 'table-responsive text-nowrap',
         ]);
 
         $this->setTrAttributes(function($row) {

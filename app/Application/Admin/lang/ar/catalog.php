@@ -4,6 +4,8 @@ return [
 
     'categories' => 'الفئات',
     'category' => 'الفئة',
+    'specification_categories' => 'الفئات المرتبطة بالمواصفة',
+    'specification_categories_hint' => 'اختر فئة واحدة أو أكثر لتظهر هذه المواصفة عند إضافة منتجات ضمنها.',
     'subcategories' => 'الفئات الفرعية',
     'subcategory' => 'فئة فرعية',
     'child_categories' => 'الفئات الفرعية الصغيرة',

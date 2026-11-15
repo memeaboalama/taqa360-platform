@@ -11,6 +11,7 @@ use App\Domain\AppBase\Repositories\DaysRepository;
 use App\Domain\MarketPlace\Models\Favorite;
 use App\Domain\MarketPlace\Models\MerchantIban;
 use App\Domain\MarketPlace\Models\MerchantOrder;
+use App\Domain\MarketPlace\Models\MerchantOrderHistory;
 use App\Domain\MarketPlace\Models\Package;
 use App\Domain\User\Models\User;
 use App\Support\Enum\StatusEnum;
@@ -26,6 +27,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -233,6 +235,11 @@ protected $fillable = [
     public function orders(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(MerchantOrder::class, 'merchant_id');
+    }
+
+    public function logOrderHistory(): MorphMany
+    {
+        return $this->morphMany(MerchantOrderHistory::class, 'changeable');
     }
 
     public function files(): \Illuminate\Database\Eloquent\Relations\MorphMany

@@ -102,7 +102,8 @@
                                                     </div>
                                                     <div class="address-details">
                                                         {{ $address->city?->title }}
-                                                        @if($address->district) - {{ $address->district?->title }} @endif
+                                                        @php($districtName = $address->district_name ?: $address->distract?->title)
+                                                        @if($districtName) - {{ $districtName }} @endif
                                                         - {{ $address->address }}
                                                     </div>
                                                 </div>

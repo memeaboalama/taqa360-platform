@@ -1437,6 +1437,10 @@
                 startAuto();
             })();
 
+            const unavailableMessages = [
+                @json(__('ecommerce::ecommerce.product_not_available')),
+                @json(__('ecommerce::ecommerce.product_out_of_stock'))
+            ];
             const search = document.querySelector('.search input'); search?.addEventListener('input', event => { const query = event.target.value.trim().toLowerCase(); document.querySelectorAll('.product').forEach(card => card.hidden = query && !card.textContent.toLowerCase().includes(query)) });
             document.querySelectorAll('.add-cart-form').forEach(form => form.addEventListener('submit', async event => {
                 event.preventDefault();
@@ -1451,11 +1455,14 @@
                     if (button) { button.textContent = @json(__('ecommerce::ecommerce.added')); button.classList.add('added'); }
                 } catch (error) {
                     const message = error && error.message ? error.message : @json(__('ecommerce::ecommerce.cart.add_error'));
-                    if (window.showStaticConflictModal && typeof window.showStaticConflictModal === 'function') {
-                        window.showStaticConflictModal(message).catch(function () { });
-                        return;
+                    if (unavailableMessages.includes(message)) {
+                        form.closest('.product')?.remove();
                     }
-                    window.alert(message);
+                    if (typeof window.showNotification === 'function') {
+                        window.showNotification(message, 'danger');
+                    } else {
+                        window.alert(message);
+                    }
                 } finally {
                     if (button && !button.classList.contains('added')) {
                         button.disabled = false;

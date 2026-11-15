@@ -34,10 +34,11 @@ class Forget extends Component
 
     public function forget(DetectDriverAction $detectDriverAction, SendOtpAction $sendOtpAction)
     {
+        Session::forget(['driver_password_reset_phone', 'driver_password_reset_verified']);
         $data = $this->validate(attributes: $this->nickNames());
         $driver = $detectDriverAction->detectDriverByPhone($data);
         $sendOtpAction->handle($driver, OTPTypes::USER_RESET_PASS, 60);
-        Session::put('phone', $data['phone']);
+        Session::put('driver_password_reset_phone', $data['phone']);
         return redirect()->route('driver:verifyOTP');
     }
 

@@ -51,7 +51,7 @@
         .summary-total{display:flex;justify-content:space-between;gap:14px;border-top:1px solid var(--line);padding-top:17px;margin-top:17px;font-size:17px;font-weight:800}
         .summary-total span:last-child{color:#306FAA;direction:ltr}
         .checkout-button,.continue-button{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:42px;margin-top:18px;border-radius:5px;font-size:12px;font-weight:700}
-        .checkout-button{background:var(--yellow);color:#fff}.checkout-button:hover{background:#245C8E}
+        .checkout-button{background:var(--yellow);color:#fff}.checkout-button:hover{background:#245C8E;color:#fff}
         .continue-button{border:1px solid #e2e6e9;color:#69737b}.continue-button:hover{border-color:var(--yellow);color:var(--yellow)}
         .clear-button{width:100%;margin-top:12px;padding:8px;background:transparent;color:#b85b5b;font-size:11px}
         .empty-cart{padding:75px 25px;text-align:center;background:linear-gradient(145deg,#fff,#eef4fa)}

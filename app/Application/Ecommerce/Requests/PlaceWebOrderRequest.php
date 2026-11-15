@@ -4,6 +4,7 @@ namespace App\Application\Ecommerce\Requests;
 
 use App\Support\Enum\ChannelTypesEnum;
 use App\Support\Enum\PaymentMethod;
+use App\Domain\MarketPlace\Models\CollectionSetting;
 use App\Support\Rules\IsValidPhone;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -90,10 +91,12 @@ class PlaceWebOrderRequest extends FormRequest
     {
         return [
             function (Validator $validator) {
-                if ($this->payment_method == PaymentMethod::COD->value) {
-                    // $validator->errors()->add(
-                    //     'payment_method',
-                    // );
+                if ($this->payment_method === PaymentMethod::COD->value
+                    && !count(CollectionSetting::current()?->enabled_methods ?? [])) {
+                    $validator->errors()->add(
+                        'payment_method',
+                        __('ecommerce::ecommerce.cod_collection_unavailable')
+                    );
                 }
             }
         ];

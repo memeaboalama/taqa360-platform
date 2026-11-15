@@ -591,7 +591,29 @@
 
                                     <div class="tab-pane fade" id="top-contact" role="tabpanel" aria-labelledby="contact-top-tab">
                                         <div class="specifications">
-                                            @if($product->specifications)
+                                            @if($product->brand || $product->catalogSpecifications->isNotEmpty())
+                                                <table class="table table-bordered">
+                                                    <tbody>
+                                                        @if($product->brand)
+                                                            <tr>
+                                                                <th>@lang('ecommerce::ecommerce.brand')</th>
+                                                                <td>{{ $product->brand->getTranslation('name', app()->getLocale()) }}</td>
+                                                            </tr>
+                                                        @endif
+                                                        @foreach($product->catalogSpecifications as $specification)
+                                                            <tr>
+                                                                <th>{{ $specification->name }}</th>
+                                                                <td>
+                                                                    {{ $specification->properties
+                                                                        ->map(fn ($property) => $property->value ?: $property->name)
+                                                                        ->filter()
+                                                                        ->implode('، ') }}
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            @elseif($product->specifications)
                                                 {!! $product->specifications !!}
                                             @else
                                                 <p>@lang('ecommerce::ecommerce.no_specifications')</p>

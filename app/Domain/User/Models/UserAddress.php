@@ -26,6 +26,7 @@ class UserAddress extends Model
         'country_id',
         'city_id',
         'distract_id',
+        'district_name',
         'title',
         'address',
         'latitude',
@@ -67,17 +68,6 @@ class UserAddress extends Model
             'longitude' => $faker->longitude(),
             'is_default' => $faker->boolean(),
         ];
-    }
-
-    /**
-     * @return void
-     */
-    protected static function boot(): void
-    {
-        parent::boot();
-        static::saving(function ($model) {
-            $model->country_id = 1;
-        });
     }
 
 }

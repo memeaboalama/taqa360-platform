@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Translatable\HasTranslations;
+use Domain\MarketPlace\Models\Catalog\Category;
 
 class Brand extends Model
 {
@@ -20,6 +21,11 @@ class Brand extends Model
         'is_active' => 'boolean',
         'tags' => 'array'
     ];
+
+    public function categories(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Category::class, 'brand_category', 'brand_id', 'category_id');
+    }
 
     public function getImageAttribute($value)
     {

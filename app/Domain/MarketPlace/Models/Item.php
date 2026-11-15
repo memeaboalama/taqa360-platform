@@ -13,6 +13,7 @@ use App\Domain\MarketPlace\Models\Favorite;
 use App\Domain\MarketPlace\Models\MerchantOrderItem;
 use App\Domain\MarketPlace\Models\ItemPrices;
 use App\Domain\MarketPlace\Models\Brand;
+use App\Domain\Catalog\Models\Specification;
 use App\Support\Enum\ActiveEnum;
 use App\Support\Traits\Models\BelongsToMerchant;
 use App\Support\Traits\Models\HasStatus;
@@ -95,6 +96,12 @@ class Item extends Model
     {
         return $this->hasMany(SpecificationsItems::class, 'item_id', 'id');
     }
+
+    public function catalogSpecifications(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Specification::class, 'item_id', 'id');
+    }
+
     public function specificationsPropertiesItems(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(SpecificationsPropertiesItems::class, 'item_id', 'id');
@@ -121,12 +128,18 @@ class Item extends Model
         return $this->stock === null || (int) $this->stock > 0;
     }
 
-    public function scopeAvailableForStorefront(Builder $query): Builder
+    public function scopeAvailableForStorefront(Builder $query, bool $requireStock = true): Builder
     {
-        return $query->whereHas('merchant', function (Builder $merchantQuery) {
+        $query->whereHas('merchant', function (Builder $merchantQuery) {
             $merchantQuery->where('status', 'active')
                 ->whereHas('branches', fn (Builder $branchQuery) => $branchQuery->where('status', 1));
         });
+
+        if ($requireStock) {
+            $query->where(fn (Builder $stockQuery) => $stockQuery->whereNull('stock')->orWhere('stock', '>', 0));
+        }
+
+        return $query;
     }
 
     /**

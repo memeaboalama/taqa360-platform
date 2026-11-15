@@ -6,7 +6,6 @@ use App\Application\Marketplace\Enums\MerchantOrderHistoryStatuses;
 use App\Application\Marketplace\Enums\MerchantOrderStatuses;
 use App\Application\Educational\Enums\EducationalRequestStatus;
 use Domain\EducationalRequest\Models\EducationalRequest;
-use App\Domain\User\Models\UserAddress;
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,8 +13,8 @@ use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\Controller;
 use App\Domain\AppBase\Models\Location\Country;
 use App\Domain\AppBase\Models\Location\City;
-use App\Domain\AppBase\Models\Location\Distract;
 use App\Domain\MarketPlace\Models\MerchantOrderHistory;
+use Illuminate\Validation\Rule;
 
 class AccountController extends Controller
 {
@@ -285,19 +284,31 @@ class AccountController extends Controller
     {
         $user = Auth::user();
         $countries = Country::all();
-        $cities = City::all();
-        $districts = Distract::all();
+        $citiesByCountry = $this->citiesByCountry();
 
         if (request()->header('X-Up-Target') == '.dashboard-content') {
-            return view('ecommerce::pages.account._create_address', compact('user', 'countries', 'cities', 'districts'));
+            return view('ecommerce::pages.account._create_address', compact('user', 'countries', 'citiesByCountry'));
         }
-        return view('ecommerce::pages.account.dashboard', [
-            'page' => 'create_address',
+        return view('ecommerce::pages.account.account-section-page', [
+            'section' => 'create_address',
             'user' => $user,
             'countries' => $countries,
-            'cities' => $cities,
-            'districts' => $districts
+            'citiesByCountry' => $citiesByCountry,
+            'useNewAccountLayout' => true,
         ]);
+    }
+
+    private function citiesByCountry(): array
+    {
+        return City::where('status', 'active')
+            ->get()
+            ->groupBy('country_id')
+            ->map(function ($cities) {
+                return $cities->map(function (City $city) {
+                    return ['id' => $city->id, 'title' => $city->title];
+                })->values();
+            })
+            ->all();
     }
 
     public function storeAddress(Request $request)
@@ -305,8 +316,13 @@ class AccountController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'country_id' => 'required|exists:countries,id',
-            'city_id' => 'required|exists:cities,id',
-            'distract_id' => 'required|exists:distracts,id',
+            'city_id' => [
+                'required',
+                Rule::exists('cities', 'id')
+                    ->where('country_id', $request->input('country_id'))
+                    ->where('status', 'active'),
+            ],
+            'district_name' => 'nullable|string|max:255',
             'address' => 'required|string',
         ]);
 
@@ -320,12 +336,21 @@ class AccountController extends Controller
             'title' => $request->title,
             'country_id' => $request->country_id,
             'city_id' => $request->city_id,
-            'distract_id' => $request->distract_id,
+            'distract_id' => null,
+            'district_name' => $request->input('district_name'),
             'address' => $request->address,
             'latitude' => $request->latitude ?? '0',
             'longitude' => $request->longitude ?? '0',
             'is_default' => $request->is_default ?? false,
         ]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'redirect_url' => route('account.index', ['section' => 'addresses']),
+                'message' => __('ecommerce::ecommerce.address_added'),
+            ]);
+        }
 
         $addresses = $user->addresses;
 
@@ -334,7 +359,8 @@ class AccountController extends Controller
                 ->with('success', __('ecommerce::ecommerce.address_added'));
         }
 
-        return redirect()->route('account.addresses')->with('success', __('ecommerce::ecommerce.address_added'));
+        return redirect()->route('account.index', ['section' => 'addresses'])
+            ->with('success', __('ecommerce::ecommerce.address_added'));
     }
 
     public function editAddress($id)
@@ -342,20 +368,19 @@ class AccountController extends Controller
         $user = Auth::user();
         $address = $user->addresses()->findOrFail($id);
         $countries = Country::all();
-        $cities = City::all();
-        $districts = Distract::all();
+        $citiesByCountry = $this->citiesByCountry();
 
         if (request()->header('X-Up-Target') == '.dashboard-content') {
-            return view('ecommerce::pages.account._edit_address', compact('address', 'user', 'countries', 'cities', 'districts'));
+            return view('ecommerce::pages.account._edit_address', compact('address', 'user', 'countries', 'citiesByCountry'));
         }
 
-        return view('ecommerce::pages.account.dashboard', [
-            'page' => 'edit_address',
+        return view('ecommerce::pages.account.account-section-page', [
+            'section' => 'edit_address',
             'address' => $address,
             'user' => $user,
             'countries' => $countries,
-            'cities' => $cities,
-            'districts' => $districts
+            'citiesByCountry' => $citiesByCountry,
+            'useNewAccountLayout' => true,
         ]);
     }
 
@@ -367,8 +392,13 @@ class AccountController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'country_id' => 'required|exists:countries,id',
-            'city_id' => 'required|exists:cities,id',
-            'distract_id' => 'required|exists:distracts,id',
+            'city_id' => [
+                'required',
+                Rule::exists('cities', 'id')
+                    ->where('country_id', $request->input('country_id'))
+                    ->where('status', 'active'),
+            ],
+            'district_name' => 'nullable|string|max:255',
             'address' => 'required|string',
         ]);
 
@@ -380,21 +410,31 @@ class AccountController extends Controller
             'title' => $request->title,
             'country_id' => $request->country_id,
             'city_id' => $request->city_id,
-            'distract_id' => $request->distract_id,
+            'distract_id' => null,
+            'district_name' => $request->input('district_name'),
             'address' => $request->address,
             'latitude' => $request->latitude ?? $address->latitude,
             'longitude' => $request->longitude ?? $address->longitude,
             'is_default' => $request->is_default ?? false,
         ]);
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'redirect_url' => route('account.index', ['section' => 'addresses']),
+                'message' => __('ecommerce::ecommerce.address_updated'),
+            ]);
+        }
+
         $addresses = $user->addresses;
 
-        if (request()->hasHeader('X-Up-Target')) {
+        if (request()->header('X-Up-Target') === '.dashboard-content') {
             return view('ecommerce::pages.account._addresses', compact('addresses'))
                 ->with('success', __('ecommerce::ecommerce.address_updated'));
         }
 
-        return redirect()->route('account.addresses')->with('success', __('ecommerce::ecommerce.address_updated'));
+        return redirect()->route('account.index', ['section' => 'addresses'])
+            ->with('success', __('ecommerce::ecommerce.address_updated'));
     }
 
     public function deleteAddress($id)

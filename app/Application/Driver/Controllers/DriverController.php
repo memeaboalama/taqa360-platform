@@ -9,7 +9,6 @@ use App\Application\Marketplace\Enums\MerchantOrderHistoryStatuses;
 use App\Application\Marketplace\Enums\MerchantOrderStatuses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class DriverController extends Controller
 {
@@ -123,45 +122,8 @@ class DriverController extends Controller
                 return redirect()->back()->with('error', 'لا يمكن إكمال الطلب قبل بدء التوصيل.');
             }
 
-            if (MerchantOrder::isCashOnDeliveryMethod($order->payment_method)) {
-                DB::transaction(function () use ($order, $driver) {
-                    $amount = (int) round((float) $order->total_after_vat * 100);
-                    $amountFormat = number_format($amount / 100, 2) . ' SAR';
-                    $timestamp = now()->toIso8601String();
-
-                    $order->payment()->updateOrCreate(
-                        ['payment_id' => 'COD-' . ($order->code ?: $order->id)],
-                        [
-                            'status' => 'paid',
-                            'amount' => $amount,
-                            'currency' => 'SAR',
-                            'captured' => $amount,
-                            'capturedAt' => $timestamp,
-                            'description' => 'Cash on delivery collected by driver at delivery.',
-                            'amountFormat' => $amountFormat,
-                            'capturedFormat' => $amountFormat,
-                            'source_type' => 'cash',
-                            'source_message' => 'Collected by driver at delivery.',
-                            'user_id' => $order->user_id,
-                            'channel' => $order->channel,
-                            'createdAt' => $timestamp,
-                            'updatedAt' => $timestamp,
-                        ]
-                    );
-
-                    $order->update(['status' => MerchantOrderStatuses::PREVIOUS->value]);
-                    $logOrderHistoryAction = app(\App\Domain\MarketPlace\Actions\Api\Order\LogOrderHistoryAction::class);
-                    $logOrderHistoryAction->handle(
-                        $order->id,
-                        MerchantOrderHistoryStatuses::COMPLETED->value,
-                        'Driver updated status via web',
-                        $driver
-                    );
-                });
-            } else {
-                $order->update(['status' => MerchantOrderStatuses::PREVIOUS->value]);
-                $historyStatus = MerchantOrderHistoryStatuses::COMPLETED->value;
-            }
+            $order->update(['status' => MerchantOrderStatuses::PREVIOUS->value]);
+            $historyStatus = MerchantOrderHistoryStatuses::COMPLETED->value;
         } else {
             return redirect()->back()->with('error', 'حالة الطلب غير صالحة.');
         }

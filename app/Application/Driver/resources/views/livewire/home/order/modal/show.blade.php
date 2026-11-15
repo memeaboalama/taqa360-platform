@@ -1,5 +1,6 @@
 <div>
     <div class="modal fade" id="showOrderDetailsModal" wire:ignore.self
+         wire:poll.1s.visible="refreshPaymentStatus"
          data-bs-keyboard="false" data-bs-backdrop="static" tabindex="-1" aria-labelledby="showOrderDetailsModalLabel"
          aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -113,7 +114,7 @@
                                         @if(!empty($order['address']))
                                             <p class="mb-0">
                                                 <span class="fw-semibold">{{ __('driver::home.address') }} : </span>
-                                                <a href="https://maps.google.com/?q={{ $order['address'] }}" target="_blank" style="color:#0b5ee7">{{ $order['address'] }}</a>
+                                                <a href="{{ $order['map_url'] }}" target="_blank" rel="noopener" style="color:#0b5ee7">{{ $order['address'] }}</a>
                                             </p>
                                         @endif
                                     </div>
@@ -147,7 +148,10 @@
                                             </p>
                                         @endif
                                         <p class="mb-2">
-                                            <span class="fw-semibold">{{ __('driver::home.Payment Method') }} : </span>{{ $order['payment_label'] ?? $order['payment_method'] ?? '-' }}
+                                            <span class="fw-semibold">{{ __('driver::home.Payment Method') }} : </span>{{ $order['payment_method'] ?? '-' }}
+                                        </p>
+                                        <p class="mb-2">
+                                            <span class="fw-semibold">{{ __('ecommerce::ecommerce.payment_status') }} : </span>{{ $order['payment_label'] ?? '-' }}
                                         </p>
                                         @if(!empty($order['note']))
                                             <p class="mb-0">
@@ -157,6 +161,76 @@
                                     </div>
                                 </div>
                             </div>
+
+                            @if(\App\Domain\MarketPlace\Models\MerchantOrder::isCashOnDeliveryMethod($order['payment_method'] ?? null)
+                                && ($order['status_value'] ?? null) === \App\Application\Marketplace\Enums\MerchantOrderStatuses::PREVIOUS->value)
+                                <div class="col-12">
+                                    <div class="card custom-card shadow-none mb-0">
+                                        <div class="card-header bg-white">
+                                            <h6 class="card-title fw-semibold mb-0">بيانات التحصيل والتوريد</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            @if(!empty($order['settlement_status']))
+                                                <p class="mb-0">
+                                                    <span class="fw-semibold">حالة التوريد:</span>
+                                                    {{ $order['settlement_status'] === 'approved' ? 'معتمد' : ($order['settlement_status'] === 'reviewed' ? 'تمت المراجعة' : 'بانتظار المراجعة') }}
+                                                </p>
+                                            @elseif(!empty($order['collection_config']['enabled_methods']))
+                                                <p class="text-muted">سجّل توريد كامل قيمة الطلب ({{ number_format($order['total_after_vat'] ?? 0, 2) }} SAR). تسجيل التحصيل لا يعني اعتماد التوريد.</p>
+                                                <form wire:submit.prevent="submitSettlement">
+                                                    <div class="row g-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">وسيلة التوريد</label>
+                                                            <select class="form-select" wire:model="settlementMethod">
+                                                                @foreach($order['collection_config']['enabled_methods'] as $method)
+                                                                    <option value="{{ $method }}">{{ ['cash' => 'نقد', 'transfer' => 'تحويل', 'deposit' => 'إيداع'][$method] ?? $method }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                            @error('settlementMethod') <span class="text-danger">{{ $message }}</span> @enderror
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">جهة الاستلام</label>
+                                                            <div class="form-control bg-light">
+                                                                {{ $order['collection_config']['recipient'] === 'merchant' ? 'التاجر' : 'المنصة' }}
+                                                            </div>
+                                                        </div>
+                                                        @if(in_array($settlementMethod, ['transfer', 'deposit'], true))
+                                                            <div class="col-md-6">
+                                                                <label class="form-label">رقم المرجع <span class="text-danger">*</span></label>
+                                                                <input class="form-control" wire:model.defer="settlementReference" maxlength="255" required>
+                                                                @error('settlementReference') <span class="text-danger">{{ $message }}</span> @enderror
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label class="form-label">إثبات التوريد (صورة أو PDF) <span class="text-danger">*</span></label>
+                                                                <input class="form-control" type="file" wire:model="settlementProof" accept=".jpg,.jpeg,.png,.pdf" required>
+                                                                @error('settlementProof') <span class="text-danger">{{ $message }}</span> @enderror
+                                                            </div>
+                                                        @endif
+                                                        <div class="col-12">
+                                                            <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="submitSettlement,settlementProof">
+                                                                تسجيل التحصيل وإرسال التوريد
+                                                            </button>
+                                                            <span wire:loading wire:target="settlementProof" class="text-muted ms-2">جارٍ رفع الإثبات...</span>
+                                                        </div>
+                                                    </div>
+                                                    @php($settlementMethodData = $order['collection_config']['methods'][$settlementMethod] ?? [])
+                                                    @if($settlementMethodData)
+                                                        <div class="alert alert-info mt-3 mb-0">
+                                                            <div><strong>جهة الاستلام:</strong> {{ $settlementMethodData['recipient_name'] ?? '' }}</div>
+                                                            <div>{{ $settlementMethodData['instructions'] ?? '' }}</div>
+                                                            @if(!empty($settlementMethodData['account_data']))
+                                                                <div class="mt-1">{{ $settlementMethodData['account_data'] }}</div>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+                                                </form>
+                                            @else
+                                                <p class="text-danger mb-0">لم تُحفظ وسائل توريد مفعّلة لهذا الطلب؛ يرجى التواصل مع الإدارة.</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
 
                             <div class="col-12">
                                 <div class="card custom-card shadow-none mb-0">

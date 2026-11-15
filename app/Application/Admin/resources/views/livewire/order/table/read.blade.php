@@ -10,6 +10,70 @@
             white-space: normal;
             overflow-wrap: anywhere;
         }
+
+        .order-details-header {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+        }
+
+        .order-details-header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .order-details-title {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-width: 0;
+            margin-bottom: 0;
+        }
+
+        .order-note-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: stretch;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .order-note-row textarea {
+            min-width: 0;
+            min-height: 40px;
+            resize: vertical;
+        }
+
+        .order-note-row .btn {
+            min-width: 88px;
+            height: 40px;
+        }
+
+        .order-user-details .flex-fill {
+            min-width: 0;
+        }
+
+        .order-user-email {
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        @media (max-width: 575.98px) {
+            .order-note-row {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .order-note-row .btn,
+            .order-mark-select {
+                width: 100%;
+            }
+        }
     </style>
 
     @php
@@ -29,49 +93,44 @@
         <div class="row">
             <div class="col-xl-12">
                 <div class="card custom-card">
-                    <div class="card-header d-flex justify-content-between">
-                        <div class="card-title"> @lang('admin::home.Order No') - <span
-                                class="text-primary">#{{ $order->code }}</span>
+                    <div class="card-header order-details-header">
+                        <div class="order-details-header-top">
+                            <div class="card-title order-details-title">
+                                <span>@lang('admin::home.Order No')</span>
+                                <span class="text-primary">#{{ $order->code }}</span>
                             @php
                                 $statusEnum = is_string($order->status) ? (\App\Application\Marketplace\Enums\MerchantOrderStatuses::tryFrom($order->status)) : $order->status;
                             @endphp
-                            <span
-                                class="mx-2 badge {{ $statusEnum?->color() }}">{{ $statusEnum?->trans() }}</span>
-                            <span
-                                class="mx-2 badge bg-info"> {{ __('admin::home.' . $order?->type_service_name()) }}</span>
-
-                        </div>
-                        <div>
+                                <span class="badge {{ $statusEnum?->color() }}">{{ $statusEnum?->trans() }}</span>
+                                <span class="badge bg-info">{{ __('admin::home.' . $order?->type_service_name()) }}</span>
+                            </div>
+                            <div class="order-header-mark">
                             @php
                                 $currentMarkEnum = is_string($mark) ? (\App\Application\Marketplace\Enums\MerchantOrderMarks::tryFrom($mark) ?? \App\Application\Marketplace\Enums\MerchantOrderMarks::WHITE) : $mark;
                             @endphp
-                            <select class="form-control mx-2 badge {{ $currentMarkEnum?->color() }}" wire:change="$emit('updateMark')" wire:model.defer="mark">
-                                @foreach($marks as $value)
-                                @php
-                                    $itemEnum = is_string($value) ? (\App\Application\Marketplace\Enums\MerchantOrderMarks::tryFrom($value) ?? \App\Application\Marketplace\Enums\MerchantOrderMarks::WHITE) : $value;
-                                @endphp
-                                <option value="{{ $itemEnum?->value ?? $value }}" class="mx-2 badge {{ $itemEnum?->color() }}"><span>{{ $itemEnum?->trans() }}</span></option>
-                                @endforeach
-                            </select>
+                                <select class="form-select order-mark-select {{ $currentMarkEnum?->color() }}" wire:change="$emit('updateMark')" wire:model.defer="mark">
+                                    @foreach($marks as $value)
+                                    @php
+                                        $itemEnum = is_string($value) ? (\App\Application\Marketplace\Enums\MerchantOrderMarks::tryFrom($value) ?? \App\Application\Marketplace\Enums\MerchantOrderMarks::WHITE) : $value;
+                                    @endphp
+                                    <option value="{{ $itemEnum?->value ?? $value }}">{{ $itemEnum?->trans() }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
-                        <div class="row col-xl-12">
-                            <div class="col-xl-10">
-                                <!-- <label for="admin_note" class="form-label text-black">{{ __('admin::home.Admin Note') }} </label> -->
-                                <textarea wire:change="$emit('updateNote')" class="form-control text-black bg-gray-200"
-                                    rows="1" placeholder="{{ __('admin::home.Admin Note') }}" wire:model.defer="admin_note"></textarea>
-                            </div>
-                            <div class="col-xl-2">
-                                <button type="button" class="btn btn-success" wire:click="updateNote"
+                        <div class="order-note-row">
+                            <textarea wire:change="$emit('updateNote')" class="form-control text-black bg-gray-200"
+                                rows="1" placeholder="{{ __('admin::home.Admin Note') }}" wire:model.defer="admin_note"></textarea>
+                            <button type="button" class="btn btn-success" wire:click="updateNote"
                                     wire:loading.attr="disabled" wire:target="updateNote">
-                                    <span class="indicator-label" wire:loading.class="d-none" wire:target="updateNote">
-                                        @lang('admin::home.Save')
-                                    </span>
-                                    <span class="d-none" wire:loading.class.remove="d-none" wire:target="updateNote">
-                                        @lang('admin::home.Wait')
-                                        <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
-                                    </span>
-                                </button>
-                            </div>
+                                <span class="indicator-label" wire:loading.class="d-none" wire:target="updateNote">
+                                    @lang('admin::home.Save')
+                                </span>
+                                <span class="d-none" wire:loading.class.remove="d-none" wire:target="updateNote">
+                                    @lang('admin::home.Wait')
+                                    <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                                </span>
+                            </button>
                         </div>
                     </div>
                         <!-- @AdminHasRole(['show invoice_orders'])
@@ -249,13 +308,13 @@
                         <div class="card-title"> @lang('admin::home.User Details')</div>
                     </div>
                     <div class="card-body p-0">
-                        <div class="d-flex align-items-center border-bottom border-block-end-dashed p-3 flex-wrap">
+                        <div class="d-flex align-items-center border-bottom border-block-end-dashed p-3 flex-wrap order-user-details">
                             <div class="me-2"><span class="avatar avatar-lg avatar-rounded bg-primary">
                                     {{ \Str::substr(ucfirst($orderUser->name),0,1) }}
                                 </span></div>
                             <div class="flex-fill">
                                 <p class="mb-0">{{ $orderUser->name }}</p>
-                                <p class="mb-0 text-muted fs-12">{{ $orderUser->email }}</p>
+                                <p class="mb-0 text-muted fs-12 order-user-email">{{ $orderUser->email }}</p>
                                 <p class="mb-0 text-muted fs-12">{{ $orderUser->phone_number }}</p>
                             </div>
                         </div>
@@ -415,20 +474,14 @@
     $payTransactionId = $payment?->payment_id ?: ($order?->code ? '#' . $order->code : '—');
     $orderAmount = $order?->total_after_vat ?: ($order?->total_after_discount ?: ($order?->subtotal ?: 0));
     $paymentMethodKey = strtolower(trim((string) ($order?->payment_method ?? '')));
-    $resolvedPaymentStatus = is_string($payment?->status ?? null) ? strtolower(trim($payment->status)) : null;
-    if ($resolvedPaymentStatus === 'success') {
-        $resolvedPaymentStatus = 'paid';
-    }
     $isCodOrder = in_array($paymentMethodKey, ['cod','cash','cash_on_delivery','cashondelivery'], true);
-    $payStatus = $resolvedPaymentStatus ?: (($payment && (float) ($payment->amount ?? 0) > 0) ? 'paid' : ($order?->payment_status ?: null));
-    if ($isCodOrder && !in_array($payStatus, ['paid', 'pending', 'failed', 'initiated', 'partially_paid', 'partial'], true)) {
-        $payStatus = 'pending';
-    }
+    $payStatus = \App\Domain\MarketPlace\Models\MerchantOrder::resolvePaymentStatus($payment, 'unpaid', $order?->payment_method);
+    $orderStatusValue = $order?->status instanceof \UnitEnum ? $order->status->value : (string) $order?->status;
     $payLabel = match($payStatus) {
                                 'paid' => __('admin::home.Payment Status paid'),
                                 'initiated' => __('admin::home.Payment initiated'),
                                 'failed' => __('admin::home.Payment failed'),
-                                'pending' => __('ecommerce::ecommerce.payment_pending'),
+                                'pending' => \App\Domain\MarketPlace\Models\MerchantOrder::resolvePaymentLabel($payStatus, $order?->payment_method),
                                 'unpaid' => __('ecommerce::ecommerce.unpaid'),
                                 'partially_paid', 'partial' => 'مدفوع جزئياً',
                                 default => ($order?->payment_label ?: ($payStatus ?: __('ecommerce::ecommerce.unpaid'))),
@@ -446,17 +499,84 @@
                         </p>
                         <p class="mb-2 text-muted"><span
                                 class="fw-semibold text-default">@lang('admin::home.Amount Paid')</span>
-                            @if(!empty($payment?->amountFormat))
+                            @if($payStatus === 'paid' && !empty($payment?->amountFormat))
                                 {{ $payment->amountFormat }}
-                            @elseif(!empty($payment?->amount))
-                                {{ number_format($payment->amount, 2) }} @lang('admin::home.SAR')
+                            @elseif($payStatus === 'paid' && !empty($payment?->amount))
+                                {{ number_format($payment->amount / 100, 2) }} @lang('admin::home.SAR')
                             @else
-                                {{ number_format($orderAmount, 2) }} @lang('admin::home.SAR')
+                                {{ number_format(0, 2) }} @lang('admin::home.SAR')
                             @endif
                         </p>
                         <p class="mb-2 text-muted"><span
                                 class="fw-semibold text-default">@lang('admin::home.Payment Status')</span> <span class="badge {{ $payBadgeClass }}">{{ $payLabel }}</span>
                         </p>
+                        @if($isCodOrder && $orderStatusValue === \App\Application\Marketplace\Enums\MerchantOrderStatuses::PREVIOUS->value && $payStatus !== 'paid' && $orderAmount > 0)
+                        <button type="button" class="btn btn-success mb-3"
+                            wire:click="confirmCashCollection"
+                            wire:loading.attr="disabled" wire:target="confirmCashCollection">
+                            @lang('admin::home.confirm_cash_collection')
+                        </button>
+                        @endif
+                        @if($order?->settlement && (
+                            \App\Domain\MarketPlace\Models\CollectionSetting::adminCan('review')
+                            || \App\Domain\MarketPlace\Models\CollectionSetting::adminCan('approve')
+                            || \App\Domain\MarketPlace\Models\CollectionSetting::adminCan('correct')
+                        ))
+                        @php($settlement = $order->settlement)
+                        <div class="border rounded p-3 mb-3">
+                            <h6 class="fw-semibold">توريد السائق</h6>
+                            <p class="mb-1">الجهة: {{ $settlement->recipient === 'merchant' ? 'التاجر' : 'المنصة' }}</p>
+                            <p class="mb-1">الوسيلة: {{ ['cash' => 'نقد', 'transfer' => 'تحويل', 'deposit' => 'إيداع'][$settlement->method] ?? $settlement->method }}</p>
+                            <p class="mb-1">مبلغ التحصيل الكامل: {{ number_format($settlement->amount, 2) }} SAR</p>
+                            <p class="mb-1">حالة التوريد: {{ ['pending_review' => 'بانتظار المراجعة', 'reviewed' => 'تمت المراجعة', 'approved' => 'معتمد'][$settlement->status] ?? $settlement->status }}</p>
+                            <p class="mb-1 text-muted">اعتماد التوريد لا يعني صرف مستحق التاجر.</p>
+                            @if($settlement->reference)
+                                <p class="mb-1">المرجع: {{ $settlement->reference }}</p>
+                            @endif
+                            @if($settlement->proof_path)
+                                <p class="mb-1">
+                                    <a href="{{ route('admin:settlements.proof', $settlement) }}">تنزيل إثبات التوريد</a>
+                                </p>
+                            @endif
+                            <p class="mb-1 text-muted">{{ $settlement->recipient_name }} — {{ $settlement->instructions }}</p>
+                            @if($settlement->account_data)
+                                <p class="mb-1 text-muted">{{ $settlement->account_data }}</p>
+                            @endif
+                            @if($settlement->corrections->isNotEmpty())
+                                <p class="fw-semibold mb-1">التصحيحات المالية المسجلة:</p>
+                                @foreach($settlement->corrections as $correction)
+                                    <p class="mb-1">
+                                        {{ number_format($correction->amount, 2) }} SAR —
+                                        {{ $correction->reason }}
+                                        {{ $correction->admin?->name ? '— ' . $correction->admin->name : '' }}
+                                        <span class="text-muted">({{ $correction->created_at?->format('Y-m-d H:i') }})</span>
+                                    </p>
+                                @endforeach
+                            @endif
+
+                            @if($settlement->status === 'pending_review' && \App\Domain\MarketPlace\Models\CollectionSetting::adminCan('review'))
+                                <button type="button" class="btn btn-outline-primary btn-sm mt-2"
+                                        wire:click="reviewSettlement" wire:loading.attr="disabled">تأكيد المراجعة</button>
+                            @endif
+                            @if($settlement->status === 'reviewed' && \App\Domain\MarketPlace\Models\CollectionSetting::adminCan('approve'))
+                                <button type="button" class="btn btn-success btn-sm mt-2"
+                                        wire:click="approveSettlement" wire:loading.attr="disabled">اعتماد التوريد</button>
+                            @endif
+                            @if($settlement->status === 'approved' && \App\Domain\MarketPlace\Models\CollectionSetting::adminCan('correct'))
+                                <form class="mt-3" wire:submit.prevent="correctSettlement">
+                                    <label class="form-label">التصحيح المالي (+/- SAR)</label>
+                                    <input type="number" step="0.01" min="{{ -$settlement->amount }}"
+                                           max="{{ $settlement->amount }}" class="form-control mb-2"
+                                           wire:model.defer="settlementCorrectionAmount" required>
+                                    @error('settlementCorrectionAmount') <span class="text-danger">{{ $message }}</span> @enderror
+                                    <label class="form-label">سبب التصحيح</label>
+                                    <textarea class="form-control mb-2" wire:model.defer="settlementCorrectionNote" maxlength="1000" required></textarea>
+                                    @error('settlementCorrectionNote') <span class="text-danger">{{ $message }}</span> @enderror
+                                    <button type="submit" class="btn btn-warning btn-sm">حفظ التصحيح</button>
+                                </form>
+                            @endif
+                        </div>
+                        @endif
                         <p class="mb-2 text-muted"><span
                                 class="fw-semibold text-default">@lang('admin::home.RefundpaymentAmountLast')</span> {{ $order?->refundpayment?->sum('amount') }}
                         </p>

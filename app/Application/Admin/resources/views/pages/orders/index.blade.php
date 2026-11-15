@@ -11,9 +11,7 @@
              </div>
 
                 <div class="card-body ">
-                    <div class="table-responsive">
-                        <livewire:admin::order.table.all/>
-                    </div>
+                 <livewire:admin::order.table.all/>
                 </div>
                 <livewire:admin::order.modal.cancel/>
                 <livewire:admin::order.modal.assign/>

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use App\Domain\AppBase\Models\SpecificationProperties;
+use Domain\MarketPlace\Models\Catalog\Category;
 use Illuminate\Http\Request;
 
 class Create extends Component
@@ -19,13 +20,23 @@ class Create extends Component
     public $name;
     public $namePre;
     public $description;
+    public array $category_ids = [];
+    public $categories;
     protected $listeners = ['deletePer'];
+
+    public function mount(): void
+    {
+        $this->categories = Category::orderBy('id')->get();
+    }
+
     protected function rules(): array
     {
         return [
             'name' => 'required',
             'description' => 'nullable',
             'status' => 'required|string|in:active,inactive',
+            'category_ids' => 'required|array|min:1',
+            'category_ids.*' => 'integer|distinct|exists:categories,id',
             'specifications_properties' => 'array|required',
             'specifications_properties.*.name' => 'required|string',
             'specifications_properties.*.status' => 'required|string|in:active,inactive'
@@ -66,7 +77,7 @@ public function deletePer($index): void
         $this->emit('refreshDatatable');
         $this->emit('closeModal', '#createSpecification');
         $this->alert('success', __('admin::home.Specification Created Successfully'));
-        $this->reset('status', 'name','description','specifications_properties');
+        $this->reset('status', 'name', 'description', 'category_ids', 'specifications_properties');
         DB::commit();
     }
 

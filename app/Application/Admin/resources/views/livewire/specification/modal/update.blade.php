@@ -31,6 +31,24 @@
                                                 @error("description") <span
                                                     class="text-danger d-block mt-2">{{ $message }}</span> @enderror
                                             </div>
+                                            <div class="col-xl-12">
+                                                <label for="update-specification-categories" class="form-label text-black">
+                                                {{ __('admin::catalog.specification_categories') }}<span class="text-danger">*</span>
+                                                </label>
+                                                <select id="update-specification-categories" class="form-control @error('category_ids') is-invalid @enderror"
+                                                    wire:model.defer="category_ids" multiple size="4">
+                                                @foreach($categories as $category)
+                                                    <option value="{{ $category->id }}">{{ $category->title }}</option>
+                                                @endforeach
+                                                </select>
+                                                <small class="form-text text-muted">{{ __('admin::catalog.specification_categories_hint') }}</small>
+                                                @error('category_ids')
+                                                <span class="text-danger d-block mt-2">{{ $message }}</span>
+                                                @enderror
+                                                @error('category_ids.*')
+                                                <span class="text-danger d-block mt-2">{{ $message }}</span>
+                                                @enderror
+                                            </div>
                                             <div class="col-xl-6">
                                                 <label for="namePre" class="form-label text-black">{{__('admin::home.Specification')}}<span class="text-danger">*</span></label>
                                                 <div class="input-group">

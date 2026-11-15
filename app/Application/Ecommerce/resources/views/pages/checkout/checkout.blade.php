@@ -87,7 +87,8 @@
                                             <input type="radio" name="address_id" value="{{ $address->id }}" {{ old('address_id', $addresses->firstWhere('is_default', 1)?->id ?? $addresses->first()?->id) == $address->id ? 'checked' : '' }}>
                                             <span class="address-box">
                                                 <strong class="address-title">{{ $address->title }}</strong>
-                                                <span class="address-detail">{{ $address->city?->title }} @if ($address->district) - {{ $address->district?->title }} @endif - {{ $address->address }}</span>
+                                                @php($districtName = $address->district_name ?: $address->distract?->title)
+                                                <span class="address-detail">{{ $address->city?->title }} @if ($districtName) - {{ $districtName }} @endif - {{ $address->address }}</span>
                                             </span>
                                         </label>
                                     @endforeach
@@ -248,11 +249,17 @@
                         </div>
 
                         <div class="sidebar-group">
+                            @php($collectionSettings = \App\Domain\MarketPlace\Models\CollectionSetting::current()?->snapshot())
+                            @php($codCollectionAvailable = (bool) ($collectionSettings['enabled_methods'] ?? []))
+                            @php($selectedPaymentMethod = old('payment_method', $codCollectionAvailable ? \App\Support\Enum\PaymentMethod::COD->value : 'wallet'))
+                            @if(!$codCollectionAvailable && $selectedPaymentMethod === \App\Support\Enum\PaymentMethod::COD->value)
+                                @php($selectedPaymentMethod = 'wallet')
+                            @endif
                             <label class="sidebar-label">@lang('ecommerce::ecommerce.payment_method')</label>
                             <!-- Wallet Card -->
                             <div class="payment-method-card wallet-method" style="margin-bottom:0;">
                                 <input type="radio" name="payment_method" value="wallet"
-                                    {{ old('payment_method', 'wallet') == 'wallet' ? 'checked' : '' }}>
+                                    {{ $selectedPaymentMethod === 'wallet' ? 'checked' : '' }}>
                                 <span class="payment-text">@lang('ecommerce::ecommerce.pay_wallet')</span>
                                 <small class="d-block" style="color: #28a745; font-weight: bold;">
                                     @lang('ecommerce::ecommerce.balance'): {{ \App\Domain\AppBase\Models\Setting\Currency::format(auth()->user()->balance) }}
@@ -267,12 +274,32 @@
                                     </div>
                                 @enderror
                             </div>
-                            <!-- COD Card -->
-                            <div class="payment-method-card cod-method" style="margin-bottom:0;">
-                                <input type="radio" name="payment_method" value="{{ \App\Support\Enum\PaymentMethod::COD->value }}"
-                                    {{ old('payment_method', \App\Support\Enum\PaymentMethod::COD->value) === \App\Support\Enum\PaymentMethod::COD->value ? 'checked' : '' }}>
-                                <span class="payment-text">@lang('ecommerce::ecommerce.cod')</span>
-                            </div>
+                            @if($codCollectionAvailable)
+                                <div class="payment-method-card cod-method" style="margin-bottom:0;">
+                                    <input type="radio" name="payment_method" value="{{ \App\Support\Enum\PaymentMethod::COD->value }}"
+                                        {{ $selectedPaymentMethod === \App\Support\Enum\PaymentMethod::COD->value ? 'checked' : '' }}>
+                                    <span class="payment-text">@lang('ecommerce::ecommerce.cod')</span>
+                                </div>
+                            @else
+                                <div class="alert alert-warning mb-0">@lang('ecommerce::ecommerce.cod_collection_unavailable')</div>
+                            @endif
+                            @if($codCollectionAvailable)
+                                <div class="alert alert-info mt-3 mb-0">
+                                    <div class="fw-semibold">جهة استلام الأموال: {{ $collectionSettings['recipient'] === 'merchant' ? 'التاجر' : 'المنصة' }}</div>
+                                    <div class="small mt-1">التحصيل كامل عند التسليم. وسائل التوريد المتاحة:</div>
+                                    @foreach($collectionSettings['enabled_methods'] as $method)
+                                        @php($methodData = $collectionSettings['methods'][$method] ?? [])
+                                        <div class="small mt-2">
+                                            <strong>{{ ['cash' => 'نقد', 'transfer' => 'تحويل', 'deposit' => 'إيداع'][$method] ?? $method }}</strong>
+                                            — {{ $methodData['recipient_name'] ?? '' }}.
+                                            {{ $methodData['instructions'] ?? '' }}
+                                            @if(!empty($methodData['account_data']))
+                                                <div>{{ $methodData['account_data'] }}</div>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
 
                         <div class="sidebar-group" style="margin-top:20px;">

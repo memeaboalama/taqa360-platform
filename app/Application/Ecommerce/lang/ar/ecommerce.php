@@ -960,6 +960,7 @@ return [
     'unpaid' => 'غير مدفوع',
     'payment_pending' => 'انتظار الدفع',
     'cod_payment_selected' => 'تم اختيار الدفع عند الاستلام',
+    'cod_collection_unavailable' => 'الدفع عند الاستلام غير متاح حاليًا.',
     'payment_failed' => 'فشل الدفع',
     'user_cancelled_reason' => 'تم الإلغاء من قبل العميل عبر الموقع',
     'cancel_reason_placeholder' => 'يرجى ذكر سبب الإلغاء...',

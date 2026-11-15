@@ -3,7 +3,6 @@
 namespace App\Domain\Admin\Actions\Dashboard\Specification;
 
 use App\Domain\AppBase\Repositories\SpecificationRepository;
-use Illuminate\Support\Facades\Log;
 
 class StoreSpecificationAction
 {
@@ -17,8 +16,11 @@ class StoreSpecificationAction
 
     public function handle(array $data = []): ?\Illuminate\Database\Eloquent\Model
     {
-         Log::debug("handle");
+        $categoryIds = $data['category_ids'];
+        unset($data['category_ids']);
+
         $model= $this->specificationRepository->store($data);
+        $model->categories()->sync($categoryIds);
         foreach ($data['specifications_properties'] as $option)
         {
             // $model->specifications_properties()->firstOrCreate( ['name' => $option['name']],

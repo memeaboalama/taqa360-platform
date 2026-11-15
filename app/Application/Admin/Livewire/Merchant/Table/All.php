@@ -48,7 +48,7 @@ class All extends DataTableComponent
     {
         $this->setPrimaryKey('id')->setSearchStatus(false);
         $this->setTableWrapperAttributes([
-            'class' => 'merchant-table-scroll',
+            'class' => 'merchant-table-scroll table-responsive',
             'style' => 'width:100%; max-width:100%; overflow-x:auto; overflow-y:hidden;',
         ]);
         $this->setTableAttributes([

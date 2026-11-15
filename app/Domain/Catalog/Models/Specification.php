@@ -3,6 +3,7 @@
 namespace App\Domain\Catalog\Models;
 
 use App\Support\Enum\StatusEnum;
+use Domain\MarketPlace\Models\Catalog\Category;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Support\Traits\Models\HasStatus;
@@ -38,6 +39,12 @@ class Specification extends Model
     {
         return $this->hasMany(SpecificationProperty::class, 'specification_id', 'id');
     }
+
+    public function categories(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Category::class, 'category_specification', 'specification_id', 'category_id');
+    }
+
     public function item(): BelongsTo
     {
         return $this->belongsTo(Item::class, 'item_id', 'id');

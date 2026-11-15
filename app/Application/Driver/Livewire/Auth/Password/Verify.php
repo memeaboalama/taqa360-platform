@@ -7,7 +7,6 @@ use App\Domain\Otp\Actions\CheckOtpAction;
 use App\Domain\Otp\Actions\InvalidateOldOtpAction;
 use App\Support\Enum\OTPTypes;
 use App\Support\Rules\IsValidPhone;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
@@ -20,7 +19,11 @@ class Verify extends Component
 
     public function mount()
     {
-        $this->phone = Session::get('phone');
+        $this->phone = Session::get('driver_password_reset_phone');
+
+        if (!$this->phone) {
+            return redirect()->route('driver:forgetPassword');
+        }
     }
 
     public function nickNames()
@@ -40,6 +43,13 @@ class Verify extends Component
 
     public function verify(DetectDriverAction $detectDriverAction, CheckOtpAction $checkOtpAction, InvalidateOldOtpAction $invalidateOldOtpAction)
     {
+        $this->phone = Session::get('driver_password_reset_phone');
+
+        if (!$this->phone) {
+            return redirect()->route('driver:forgetPassword');
+        }
+
+        Session::forget('driver_password_reset_verified');
         $data = $this->validate(attributes: $this->nickNames());
         $driver = $detectDriverAction->detectDriverByPhone($data);
         $otpStatus = $checkOtpAction->handle($driver, OTPTypes::USER_RESET_PASS, $this->otp);
@@ -49,6 +59,7 @@ class Verify extends Component
             return $errors->add('otp', __('driver::home.OTP is not valid'));
         }else{
             $invalidateOldOtpAction->handle($driver, OTPTypes::USER_RESET_PASS);
+            Session::put('driver_password_reset_verified', true);
             return redirect()->route('driver:resetPassword');
         }
     }

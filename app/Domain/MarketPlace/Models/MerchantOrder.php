@@ -23,6 +23,8 @@ use Domain\MarketPlace\Models\Merchant;
 use Domain\MarketPlace\Models\MerchantBranch;
 use Domain\MarketPlace\Models\MerchantEmployee;
 use Domain\MarketPlace\Models\MerchantOrderService;
+use App\Domain\MarketPlace\Models\CollectionSetting;
+use App\Domain\MarketPlace\Models\OrderSettlement;
 use Domain\MarketPlace\Models\TempOrder;
 use App\Domain\AppBase\Models\TypeService;
 use Faker\Generator;
@@ -35,6 +37,8 @@ use Illuminate\Support\Facades\Log;
 
 class MerchantOrder extends Model
 {
+    public const COD_COLLECTION_CONFIRMATION_MESSAGE = 'Collection confirmed by admin.';
+
     use HasNewFactory, BelongsToMerchant, MerchantRelation, HasStatus;
     use HasEvents, HasPayment;
 
@@ -96,13 +100,29 @@ class MerchantOrder extends Model
         'admin_note',
         'mark',
         'expired_at',
+        'collection_config',
     ];
 
     protected $casts = [
         'status' => MerchantOrderStatuses::class,
         'mark' => MerchantOrderMarks::class,
+        'collection_config' => 'array',
         // 'addressInOrder' => 'json',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $order): void {
+            if ($order->collection_config === null) {
+                $order->collection_config = CollectionSetting::current()?->snapshot();
+            }
+        });
+    }
+
+    public function settlement(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(OrderSettlement::class, 'order_id');
+    }
 
 
     public function type_service(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -264,8 +284,12 @@ class MerchantOrder extends Model
             : null;
 
         if ($isCashOnDelivery) {
-            if ($status === 'paid' || $status === 'success') {
+            if (($status === 'paid' || $status === 'success')
+                && $payment?->source_message === self::COD_COLLECTION_CONFIRMATION_MESSAGE) {
                 return 'paid';
+            }
+            if ($status === 'failed') {
+                return 'failed';
             }
             return 'pending';
         }
@@ -278,7 +302,20 @@ class MerchantOrder extends Model
             return $status === 'success' ? 'paid' : $status;
         }
 
-        return ((float) ($payment->amount ?? 0)) > 0 ? 'paid' : ($fallback ?? 'unpaid');
+        return $fallback ?? 'unpaid';
+    }
+
+    public static function resolvePaymentLabel(?string $paymentStatus, ?string $paymentMethod): string
+    {
+        return match ($paymentStatus) {
+            'paid' => __('ecommerce::ecommerce.paid'),
+            'pending' => self::isCashOnDeliveryMethod($paymentMethod)
+                ? __('ecommerce::ecommerce.cod_payment_selected')
+                : __('ecommerce::ecommerce.payment_pending'),
+            'unpaid' => __('ecommerce::ecommerce.unpaid'),
+            'failed' => __('ecommerce::ecommerce.payment_failed'),
+            default => $paymentStatus ?: __('ecommerce::ecommerce.unpaid'),
+        };
     }
 
     protected function paymentStatus(): Attribute
@@ -295,14 +332,7 @@ class MerchantOrder extends Model
     protected function paymentLabel(): Attribute
     {
         return new Attribute(
-            get: fn() => match(true) {
-                $this->payment_method && in_array(strtolower(trim($this->payment_method)), ['cod', 'cash', 'cash_on_delivery', 'cashondelivery'], true) => __('ecommerce::ecommerce.cod_payment_selected'),
-                'paid' => __('ecommerce::ecommerce.paid'),
-                'unpaid' => __('ecommerce::ecommerce.unpaid'),
-                'pending' => __('ecommerce::ecommerce.payment_pending'),
-                'failed' => __('ecommerce::ecommerce.payment_failed'),
-                default => $this->payment_status ?: __('ecommerce::ecommerce.unpaid'),
-            }
+            get: fn() => self::resolvePaymentLabel($this->payment_status, $this->payment_method)
         );
     }
 

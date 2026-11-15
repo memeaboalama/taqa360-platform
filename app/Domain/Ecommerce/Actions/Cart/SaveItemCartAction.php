@@ -28,7 +28,11 @@ class SaveItemCartAction
         $cart = [];
 
         // stock guard: an item with a tracked stock cannot be added beyond what is available
-        $item = Item::query()->where('id', $data['item_id'])->first();
+        $item = Item::query()
+            ->where('id', $data['item_id'])
+            ->where('status', 'active')
+            ->availableForStorefront(false)
+            ->first();
         if (!$item) {
             return ['code' => 400, 'message' => __('ecommerce::ecommerce.product_not_available')];
         }

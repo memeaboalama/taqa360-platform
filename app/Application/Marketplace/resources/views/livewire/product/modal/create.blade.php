@@ -59,7 +59,7 @@
                                     <div class="row gx-5">
 <div class="col-xxl-12 col-xl-12 col-lg-12 col-md-6">
                                                 <div class="card custom-card shadow-none mb-0">
-                                                    <div class="card-body p-0" style="overflow: hidden;">
+                                                    <div class="card-body p-3">
                                                     <div class="row gy-3">
                                                         <!-- Product Title -->
                                                         @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
@@ -155,6 +155,9 @@
                                                             @error('sub_category_id')
                                                             <span class="text-danger d-block mt-2">{{ $message }}</span>
                                                             @enderror
+                                                            @if($main_category_id && !$subcategories->count())
+                                                                <small class="form-text text-muted">{{ __('admin::main.fields.no_subcategories_available') }}</small>
+                                                            @endif
                                                         </div>
 
 <div class="col-md-4">
@@ -172,6 +175,9 @@
                                                              @error('child_category_id')
                                                              <span class="text-danger d-block mt-2">{{ $message }}</span>
                                                              @enderror
+                                                             @if($sub_category_id && !$childCategories->count())
+                                                                 <small class="form-text text-muted">{{ __('admin::main.fields.no_child_categories_available') }}</small>
+                                                             @endif
                                                          </div>
 
                                                         @if($main_category_id)
@@ -180,45 +186,72 @@
                                                                     {{ __('admin::main.fields.brand') }}
                                                                 </label>
                                                                 <select id="brand_id" class="form-control @error('brand_id') is-invalid @enderror"
-                                                                    wire:model="brand_id">
-                                                                    <option value="">-- {{ __('admin::main.actions.select') }} --</option>
-                                                                    @foreach($brands as $brand)
-                                                                        <option value="{{ $brand->id }}">{{ $brand->getTranslation('name', app()->getLocale()) }}</option>
-                                                                    @endforeach
+                                                                    wire:model="brand_id" {{ $brands->isEmpty() ? 'disabled' : '' }}>
+                                                                    @if($brands->isEmpty())
+                                                                        <option value="">{{ __('admin::main.fields.no_active_brands') }}</option>
+                                                                    @else
+                                                                        <option value="">-- {{ __('admin::main.actions.select') }} --</option>
+                                                                        @foreach($brands as $brand)
+                                                                            <option value="{{ $brand->id }}">{{ $brand->getTranslation('name', app()->getLocale()) }}</option>
+                                                                        @endforeach
+                                                                    @endif
                                                                 </select>
                                                                 @error('brand_id')
                                                                     <span class="text-danger d-block mt-2">{{ $message }}</span>
                                                                 @enderror
                                                             </div>
 
-                                                            @if($masterSpecifications->isNotEmpty())
-                                                                <div class="col-12">
-                                                                    <label class="form-label text-black">
-                                                                        {{ __('admin::main.fields.specification') }}
-                                                                    </label>
-                                                                    <div class="row gy-2">
-                                                                        @foreach($masterSpecifications as $specification)
-                                                                            <div class="col-md-4">
-                                                                                <label class="d-flex align-items-start gap-2 border rounded p-2 h-100">
-                                                                                    <input type="checkbox" value="{{ $specification->id }}"
-                                                                                        wire:model="master_specification_ids">
-                                                                                    <span>
-                                                                                        <strong>{{ $specification->name }}</strong>
-                                                                                        @if($specification->properties->isNotEmpty())
-                                                                                            <small class="d-block text-muted">
-                                                                                                {{ $specification->properties->pluck('name')->implode('، ') }}
-                                                                                            </small>
-                                                                                        @endif
-                                                                                    </span>
-                                                                                </label>
-                                                                            </div>
-                                                                        @endforeach
+                                                            <div class="col-12">
+                                                                <label class="form-label text-black">
+                                                                    {{ __('admin::main.fields.specification') }}
+                                                                </label>
+                                                                @if($masterSpecifications->isNotEmpty())
+                                                                    <div class="input-group">
+                                                                        <select class="form-control @error('selected_master_specification_id') is-invalid @enderror"
+                                                                            wire:model="selected_master_specification_id">
+                                                                            <option value="">-- {{ __('admin::main.actions.select') }} --</option>
+                                                                            @foreach($masterSpecifications as $specification)
+                                                                                @if(!in_array($specification->id, array_map('intval', $master_specification_ids), true))
+                                                                                    <option value="{{ $specification->id }}">{{ $specification->name }}</option>
+                                                                                @endif
+                                                                            @endforeach
+                                                                        </select>
+                                                                        <button type="button" class="btn btn-primary"
+                                                                            wire:click="addMasterSpecification"
+                                                                            {{ !$selected_master_specification_id ? 'disabled' : '' }}>
+                                                                            {{ __('admin::main.actions.add') }}
+                                                                        </button>
                                                                     </div>
+                                                                    @error('selected_master_specification_id')
+                                                                        <span class="text-danger d-block mt-2">{{ $message }}</span>
+                                                                    @enderror
+                                                                    @if(count($master_specification_ids))
+                                                                        <div class="d-flex flex-column gap-2 mt-3">
+                                                                            @foreach($masterSpecifications->whereIn('id', array_map('intval', $master_specification_ids)) as $specification)
+                                                                                <div class="border rounded p-2">
+                                                                                    <div class="d-flex align-items-center justify-content-between gap-2">
+                                                                                        <strong>{{ $specification->name }}</strong>
+                                                                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                                                            wire:click="removeMasterSpecification({{ $specification->id }})">
+                                                                                            {{ __('admin::main.actions.remove') }}
+                                                                                        </button>
+                                                                                    </div>
+                                                                                    @if($specification->properties->isNotEmpty())
+                                                                                        <small class="d-block text-muted mt-1">
+                                                                                            {{ $specification->properties->pluck('name')->implode('، ') }}
+                                                                                        </small>
+                                                                                    @endif
+                                                                                </div>
+                                                                            @endforeach
+                                                                        </div>
+                                                                    @endif
                                                                     @error('master_specification_ids.*')
                                                                         <span class="text-danger d-block mt-2">{{ $message }}</span>
                                                                     @enderror
-                                                                </div>
-                                                            @endif
+                                                                @else
+                                                                    <p class="form-text text-muted mb-0">{{ __('admin::main.fields.no_specifications_available') }}</p>
+                                                                @endif
+                                                            </div>
                                                         @endif
 
                                                         <!-- Price and Details -->
