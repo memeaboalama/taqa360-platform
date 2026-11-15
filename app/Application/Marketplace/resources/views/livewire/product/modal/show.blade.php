@@ -100,6 +100,11 @@
                                             <input type="text" class="form-control" value="{{ number_format($default_price, 2) }} {{ config('app.currency') }}" disabled>
                                         </div>
 
+                                        <div class="col-xl-6">
+                                            <label class="form-label text-black">{{ __('admin::main.fields.stock') }}</label>
+                                            <input type="text" class="form-control" value="{{ $stock ?? __('admin::main.fields.stock_not_tracked') }}" disabled>
+                                        </div>
+
                                         <!-- <div class="col-xl-4">
                                             <label class="form-label text-black">{{ __('admin::main.fields.calories') }}</label>
                                             <input type="text" class="form-control" value="{{ $calories }}" disabled>
@@ -155,15 +160,15 @@
                                             <thead>
                                                 <tr>
                                                     <th>{{ __('admin::main.home.servicer type') }}</th>
-                                                    <th>{{ __('admin::main.home.Default Price') }}</th>
+                                                    <th>{{ __('marketplace::home.service_price') }}</th>
                                                     <th>{{ __('admin::main.home.status') }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @foreach($item_prices as $item_price)
                                                 <tr>
-                                                    <td>{{ $item_price['type_service_name'] }}</td>
-                                                    <td>{{ $item_price['price'] !== null ? number_format($item_price['price'], 2) . ' ' . config('app.currency') : '-' }}</td>
+                                                    <td>{{ __('admin::home.' . $item_price['type_service_name']) }}</td>
+                                                    <td>{{ $item_price['price'] !== null ? number_format($item_price['price'], 2) . ' ' . config('app.currency') : __('marketplace::home.price_not_set') }}</td>
                                                     <td>
                                                         @if($item_price['status'] == 'active')
                                                         <span class="badge bg-success">{{ __('admin::main.status.active') }}</span>

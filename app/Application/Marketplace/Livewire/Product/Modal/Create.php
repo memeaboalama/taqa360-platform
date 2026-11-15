@@ -3,13 +3,16 @@
 namespace Application\Marketplace\Livewire\Product\Modal;
 
 use App\Domain\MarketPlace\Actions\Dashboard\Item\StoreItemAction;
+use App\Domain\Catalog\Models\Specification;
 use App\Support\Enum\StatusEnum;
+use App\Domain\MarketPlace\Models\Brand;
 use Domain\MarketPlace\Models\Catalog\Category;
 use Domain\MarketPlace\Models\Catalog\Subcategory;
 use Domain\MarketPlace\Models\Catalog\ChildCategory;
 use Domain\MarketPlace\Models\AdditionGroup;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -24,6 +27,8 @@ class Create extends Component
     public $main_category_id;
     public $sub_category_id;
     public $child_category_id;
+    public $brand_id;
+    public $master_specification_ids = [];
     public $description = ['en' => null, 'ar' => null];
     public $default_price;
     public $stock;
@@ -35,6 +40,8 @@ class Create extends Component
     public $categories;
     public $subcategories;
     public $childCategories;
+    public $brands;
+    public $masterSpecifications;
     public $addition_groups;
 
     public $item_prices = [];
@@ -47,6 +54,12 @@ class Create extends Component
         $this->categories = Category::where('is_active', true)->get();
         $this->subcategories = collect();
         $this->childCategories = collect();
+        $this->brands = Brand::where('is_active', true)->orderBy('id')->get();
+        $this->masterSpecifications = Specification::query()
+            ->whereNull('item_id')
+            ->where('status', StatusEnum::ACTIVE->value)
+            ->with(['properties' => fn ($query) => $query->where('status', StatusEnum::ACTIVE->value)])
+            ->get();
         $this->addition_groups = AdditionGroup::where('status', StatusEnum::ACTIVE->value)->get();
         $this->fullItemPrices();
     }
@@ -95,6 +108,14 @@ class Create extends Component
             'main_category_id' => 'required|exists:categories,id',
             'sub_category_id' => 'nullable|exists:sub_categories,id',
             'child_category_id' => 'nullable|exists:child_categories,id',
+            'brand_id' => 'nullable|exists:brands,id',
+            'master_specification_ids' => 'nullable|array',
+            'master_specification_ids.*' => [
+                'integer',
+                Rule::exists('specifications', 'id')->where(function ($query) {
+                    $query->whereNull('item_id')->where('status', StatusEnum::ACTIVE->value);
+                }),
+            ],
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'description' => 'required|array',
             'description.*' => 'required|string|min:10',
@@ -127,6 +148,7 @@ class Create extends Component
             'main_category_id' => __('admin::main.fields.category'),
             'sub_category_id' => __('admin::main.fields.subcategory'),
             'child_category_id' => __('admin::main.fields.child_category'),
+            'brand_id' => __('admin::main.fields.brand'),
             'merchant_id' => __('admin::main.fields.merchant'),
         ];
     }
@@ -138,6 +160,7 @@ class Create extends Component
             ->get();
         $this->sub_category_id = null;
         $this->child_category_id = null;
+        $this->master_specification_ids = [];
     }
 
     public function updatedSubCategoryId($value): void
@@ -164,6 +187,8 @@ class Create extends Component
                 'main_category_id' => $this->main_category_id,
                 'sub_category_id' => $this->sub_category_id,
                 'child_category_id' => $this->child_category_id,
+                'brand_id' => $this->brand_id,
+                'master_specification_ids' => $this->master_specification_ids,
                 'image' => $this->image,
                 'default_price' => $this->default_price,
                 'stock' => $this->stock === '' || $this->stock === null ? null : (int) $this->stock,
@@ -176,7 +201,9 @@ class Create extends Component
                 'item_prices' => $this->item_prices,
             ];
 
-            $action->handle($data);
+            if (!$action->handle($data)) {
+                throw new \RuntimeException('Product creation failed.');
+            }
             $this->emit('closeModal', '#createProduct');
             $this->emit('refreshProducts');
             $this->alert('success', __('admin::main.messages.product_created'));
@@ -193,7 +220,7 @@ class Create extends Component
     {
         $this->reset([
             'title', 'status', 'main_category_id', 'sub_category_id', 'child_category_id',
-            'merchant_id', 'image', 'description', 'default_price', 'stock', 'calories', 'preparing_time', 'addition_group_ids', 'additional_images'
+            'brand_id', 'master_specification_ids', 'merchant_id', 'image', 'description', 'default_price', 'stock', 'calories', 'preparing_time', 'addition_group_ids', 'additional_images'
         ]);
         $this->categories = Category::where('is_active', true)->get();
         $this->subcategories = collect();

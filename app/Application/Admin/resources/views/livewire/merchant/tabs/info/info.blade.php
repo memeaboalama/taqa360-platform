@@ -63,6 +63,19 @@
                            placeholder="{{ __('admin::home.Phone Number') }}">
                     @error('phone') <span class="d-block text-danger">{{ $message }}</span>@enderror
                 </div>
+                <div class="col-xl-4">
+                    <label for="brand_id" class="form-label text-black">Brand</label>
+                    <select class="form-control @error('brand_id') is-invalid @enderror"
+                            wire:model="brand_id">
+                        <option value="">-- Select Brand --</option>
+                        @foreach(config('brand.brands') as $key => $brand)
+                        <option value="{{ $key }}" {{ $brand_id == $key ? 'selected' : '' }}>
+                            {{ isset($brand['name']['en']) ? $brand['name']['en'] : $key }}
+                        </option>
+                        @endforeach
+                    </select>
+                    @error('brand_id') <span class="text-danger d-block mt-2">{{ $message }}</span> @enderror
+                </div>
 
             </div>
             <div class="row gy-3 mt-3">

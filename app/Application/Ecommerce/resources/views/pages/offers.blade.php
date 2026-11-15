@@ -1013,10 +1013,7 @@
                         </a>
                     </h3>
 
-                    {{-- Rating --}}
-                    <div class="card-rating">
-                        ★★★★★ <span>({{ number_format((float) ($product->rating ?? 4.9), 1) }})</span>
-                    </div>
+                    @include('ecommerce::partials.product.rating', ['product' => $product, 'containerClass' => 'card-rating'])
 
                     {{-- Price Area — all values from real DB columns via Item model --}}
                     <div class="card-price-area">

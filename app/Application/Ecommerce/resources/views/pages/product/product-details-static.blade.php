@@ -40,10 +40,6 @@
             <section class="details-card">
                 <div class="details-header">
                     <h1 class="product-name">{{ $product->title }}</h1>
-                    <div class="badge-row">
-                        <span class="badge"><i class="fa fa-check-circle"></i> @lang('ecommerce::ecommerce.trusted_product')</span>
-                        <span class="badge"><i class="fa fa-truck"></i> @lang('ecommerce::ecommerce.fast_shipping')</span>
-                    </div>
                 </div>
 
                 <div class="price-row">
@@ -59,16 +55,10 @@
                     @endif
                 </div>
 
-                <div class="rating-row">
-                    <div class="stars">★★★★★</div>
-                    <span>4.8 @lang('ecommerce::ecommerce.out_of_5')</span>
-                    <span>•</span>
-                    <span>{{ $product->reviews_count ?? 0 }} @lang('ecommerce::ecommerce.reviews')</span>
-                </div>
+                @include('ecommerce::partials.product.rating', ['product' => $product, 'containerClass' => 'rating-row'])
 
                 <ul class="meta-list">
                     <li><span>@lang('ecommerce::ecommerce.color')</span><strong>{{ $product->color ?? __('ecommerce::ecommerce.color_black') }}</strong></li>
-                    <li><span>@lang('ecommerce::ecommerce.brand')</span><strong>{{ $product->merchant->name ?? __('ecommerce::ecommerce.site_name') }}</strong></li>
                     <li><span>@lang('ecommerce::ecommerce.category')</span><strong>{{ $product->mainCategory->title ?? __('ecommerce::ecommerce.generic') }}</strong></li>
                     <li><span>@lang('ecommerce::ecommerce.stock')</span><strong>@if($product->stock === null) @lang('ecommerce::ecommerce.stock_not_tracked') @else {{ (int) $product->stock }} @lang('ecommerce::ecommerce.items') @endif</strong></li>
                 </ul>
@@ -122,36 +112,42 @@
             </div>
             <table>
                 <tbody>
-                    <tr><th>@lang('ecommerce::ecommerce.store_name')</th><td>{{ $product->merchant->name ?? __('ecommerce::ecommerce.site_name') }}</td></tr>
+                    <tr>
+                        <th>@lang('ecommerce::ecommerce.store_name')</th>
+                        <td>
+                            @if($product->merchant)
+                                <a href="{{ route('merchant.show', $product->merchant->id) }}">
+                                    {{ $product->merchant->getTranslation('company_name', app()->getLocale()) ?: $product->merchant->name }}
+                                </a>
+                            @else
+                                {{ __('ecommerce::ecommerce.site_name') }}
+                            @endif
+                        </td>
+                    </tr>
                     <tr><th>@lang('ecommerce::ecommerce.category')</th><td>{{ $product->mainCategory->title ?? __('ecommerce::ecommerce.generic') }}</td></tr>
                     <tr><th>@lang('ecommerce::ecommerce.stock')</th><td>@if($product->stock === null) @lang('ecommerce::ecommerce.stock_not_tracked') @else {{ (int) $product->stock }} @lang('ecommerce::ecommerce.items') @endif</td></tr>
                 </tbody>
             </table>
         </section>
 
-        <section style="margin-top:32px;">
-            <div class="section-head">
-                <h3>@lang('ecommerce::ecommerce.available_services')</h3>
-            </div>
-            <div class="info-grid">
-                <div class="info-card">
-                    <h4>@lang('ecommerce::ecommerce.solar_panel_installation')</h4>
-                    <p>@lang('ecommerce::ecommerce.solar_panel_desc')</p>
+        @if($product->activeItemPrices->isNotEmpty())
+            <section style="margin-top:32px;">
+                <div class="section-head">
+                    <h3>@lang('ecommerce::ecommerce.available_services')</h3>
                 </div>
-                <div class="info-card">
-                    <h4>@lang('ecommerce::ecommerce.periodic_maintenance')</h4>
-                    <p>@lang('ecommerce::ecommerce.periodic_maintenance_desc')</p>
+                <div class="info-grid">
+                    @foreach($product->activeItemPrices as $itemPrice)
+                        <div class="info-card">
+                            <h4>{{ $itemPrice->type_service?->name ?? $itemPrice->type_service_name }}</h4>
+                            <p>
+                                @lang('ecommerce::ecommerce.price'):
+                                {{ \App\Domain\AppBase\Models\Setting\Currency::format($itemPrice->price) }}
+                            </p>
+                        </div>
+                    @endforeach
                 </div>
-                <div class="info-card">
-                    <h4>@lang('ecommerce::ecommerce.system_consultation')</h4>
-                    <p>@lang('ecommerce::ecommerce.system_consultation_desc')</p>
-                </div>
-                <div class="info-card">
-                    <h4>@lang('ecommerce::ecommerce.extended_warranty')</h4>
-                    <p>@lang('ecommerce::ecommerce.extended_warranty_desc')</p>
-                </div>
-            </div>
-        </section>
+            </section>
+        @endif
 
         @if($relatedProducts && $relatedProducts->count())
             @php

@@ -3,6 +3,8 @@
 namespace App\Domain\MarketPlace\Actions\Dashboard\Item;
 
 use App\Support\Services\ImagesServices\ImageService;
+use App\Domain\Catalog\Actions\Specification\AttachMasterSpecificationToItemAction;
+use App\Domain\Catalog\Data\Specification\AttachMasterSpecificationData;
 use App\Domain\MarketPlace\Repositories\Merchant\ItemRepository;
 use App\Domain\MarketPlace\Repositories\Merchant\MerchantCategoryRepository;
 use Illuminate\Support\Facades\Log;
@@ -10,7 +12,11 @@ use Illuminate\Support\Facades\Log;
 class StoreItemAction
 {
 
-    public function __construct(protected ItemRepository $modelR, private ImageService $imageService)
+    public function __construct(
+        protected ItemRepository $modelR,
+        private ImageService $imageService,
+        private AttachMasterSpecificationToItemAction $attachMasterSpecification,
+    )
     {
         $this->modelR = $modelR;
         $this->imageService = $imageService;
@@ -29,7 +35,16 @@ class StoreItemAction
                 $data['image'] = $image['path'];
             }
 
+            $masterSpecificationIds = $data['master_specification_ids'] ?? [];
+            unset($data['master_specification_ids']);
             $model = $this->modelR->store($data);
+
+            foreach ($masterSpecificationIds as $specificationId) {
+                $this->attachMasterSpecification->execute(new AttachMasterSpecificationData(
+                    item_id: $model->id,
+                    master_specification_id: (int) $specificationId,
+                ));
+            }
 
             if (isset($data['addition_group_ids'])) {
                 $model->additionGroups()->sync($data['addition_group_ids']);

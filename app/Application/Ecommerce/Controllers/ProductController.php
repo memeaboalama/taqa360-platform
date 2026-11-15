@@ -120,7 +120,14 @@ class ProductController extends Controller
     {
         return Cache::remember("storefront_product_details_{$itemId}_v2", 3600, function () use ($itemId) {
             $product = Item::query()
-                ->with(['merchant', 'mainCategory', 'subCategory', 'childCategory', 'files'])
+                ->with([
+                    'merchant',
+                    'mainCategory',
+                    'subCategory',
+                    'childCategory',
+                    'files',
+                    'activeItemPrices.type_service',
+                ])
                 ->where('id', $itemId)
                 ->where('status', 'active')
                 ->availableForStorefront()

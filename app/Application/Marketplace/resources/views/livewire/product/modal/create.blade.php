@@ -57,9 +57,9 @@
                                 <div class="tab-pane active show fade p-0 border-0" id="basicProductInfo-tab-pane"
                                     role="tabpanel" aria-labelledby="basicProductInfo-tab" tabindex="0" wire:ignore.self>
                                     <div class="row gx-5">
-                                        <div class="col-xxl-12 col-xl-12 col-lg-12 col-md-6">
-                                            <div class="card custom-card shadow-none mb-0">
-                                                <div class="card-body p-0">
+<div class="col-xxl-12 col-xl-12 col-lg-12 col-md-6">
+                                                <div class="card custom-card shadow-none mb-0">
+                                                    <div class="card-body p-0" style="overflow: hidden;">
                                                     <div class="row gy-3">
                                                         <!-- Product Title -->
                                                         @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
@@ -157,22 +157,69 @@
                                                             @enderror
                                                         </div>
 
-                                                        <div class="col-md-4">
-                                                            <label for="child_category_id" class="form-label text-black">
-                                                                {{ __('admin::main.fields.child_category') }}
-                                                            </label>
-                                                            <select class="form-control @error('child_category_id') is-invalid @enderror"
-                                                                wire:model="child_category_id"
-                                                                {{ !$childCategories->count() ? 'disabled' : '' }}>
-                                                                <option value="">-- {{ __('admin::main.actions.select') }} --</option>
-                                                                @foreach($childCategories as $childCategory)
-                                                                <option value="{{ $childCategory->id }}">{{ $childCategory->title }}</option>
-                                                                @endforeach
-                                                            </select>
-                                                            @error('child_category_id')
-                                                            <span class="text-danger d-block mt-2">{{ $message }}</span>
-                                                            @enderror
-                                                        </div>
+<div class="col-md-4">
+                                                             <label for="child_category_id" class="form-label text-black">
+                                                                 {{ __('admin::main.fields.child_category') }}
+                                                             </label>
+                                                             <select class="form-control @error('child_category_id') is-invalid @enderror"
+                                                                 wire:model="child_category_id"
+                                                                 {{ !$childCategories->count() ? 'disabled' : '' }}>
+                                                                 <option value="">-- {{ __('admin::main.actions.select') }} --</option>
+                                                                 @foreach($childCategories as $childCategory)
+                                                                 <option value="{{ $childCategory->id }}">{{ $childCategory->title }}</option>
+                                                                 @endforeach
+                                                             </select>
+                                                             @error('child_category_id')
+                                                             <span class="text-danger d-block mt-2">{{ $message }}</span>
+                                                             @enderror
+                                                         </div>
+
+                                                        @if($main_category_id)
+                                                            <div class="col-md-4">
+                                                                <label for="brand_id" class="form-label text-black">
+                                                                    {{ __('admin::main.fields.brand') }}
+                                                                </label>
+                                                                <select id="brand_id" class="form-control @error('brand_id') is-invalid @enderror"
+                                                                    wire:model="brand_id">
+                                                                    <option value="">-- {{ __('admin::main.actions.select') }} --</option>
+                                                                    @foreach($brands as $brand)
+                                                                        <option value="{{ $brand->id }}">{{ $brand->getTranslation('name', app()->getLocale()) }}</option>
+                                                                    @endforeach
+                                                                </select>
+                                                                @error('brand_id')
+                                                                    <span class="text-danger d-block mt-2">{{ $message }}</span>
+                                                                @enderror
+                                                            </div>
+
+                                                            @if($masterSpecifications->isNotEmpty())
+                                                                <div class="col-12">
+                                                                    <label class="form-label text-black">
+                                                                        {{ __('admin::main.fields.specification') }}
+                                                                    </label>
+                                                                    <div class="row gy-2">
+                                                                        @foreach($masterSpecifications as $specification)
+                                                                            <div class="col-md-4">
+                                                                                <label class="d-flex align-items-start gap-2 border rounded p-2 h-100">
+                                                                                    <input type="checkbox" value="{{ $specification->id }}"
+                                                                                        wire:model="master_specification_ids">
+                                                                                    <span>
+                                                                                        <strong>{{ $specification->name }}</strong>
+                                                                                        @if($specification->properties->isNotEmpty())
+                                                                                            <small class="d-block text-muted">
+                                                                                                {{ $specification->properties->pluck('name')->implode('، ') }}
+                                                                                            </small>
+                                                                                        @endif
+                                                                                    </span>
+                                                                                </label>
+                                                                            </div>
+                                                                        @endforeach
+                                                                    </div>
+                                                                    @error('master_specification_ids.*')
+                                                                        <span class="text-danger d-block mt-2">{{ $message }}</span>
+                                                                    @enderror
+                                                                </div>
+                                                            @endif
+                                                        @endif
 
                                                         <!-- Price and Details -->
                                                         <div class="col-xl-6">
@@ -327,7 +374,7 @@ wire:model.defer="stock">
                                                 <table class="table">
                                                     <thead>
                                                         <th>{{ __('admin::main.home.servicer type') }}</th>
-                                                        <th>{{ __('admin::main.home.Default Price') }}</th>
+                                                        <th>{{ __('marketplace::home.service_price') }}</th>
                                                         <th>{{ __('admin::main.home.status') }}</th>
                                                     </thead>
                                                     <tbody>
@@ -335,7 +382,7 @@ wire:model.defer="stock">
                                                         <tr>
                                                             <input wire:model.defer="item_prices.{{$index}}.type_service_id" class="form-control" type="hidden" />
                                                             <td>
-                                                                <input value="{{ $item_prices[$index]['type_service_name'] }}" class="form-control" disabled />
+                                                                <input value="{{ __('admin::home.' . $item_prices[$index]['type_service_name']) }}" class="form-control" disabled />
                                                             </td>
                                                             <td>
                                                                 <input wire:model.defer="item_prices.{{$index}}.price" class="form-control" type="number" min="0" step="0.01" />

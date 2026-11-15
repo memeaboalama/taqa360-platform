@@ -43,27 +43,10 @@ class ProductDetailsResource extends JsonResource
             'video' => 'https://www.youtube.com/watch?v=wvtt9WxJSV4',
 
             'brand' => [
-                [
-                    'id' => 1,
-                    'title' => 'Hammar Drill',
-                ],
-                [
-                    'id' => 2,
-                    'title' => 'Orbital Sander',
-                ],
-                [
-                    'id' => 3,
-                    'title' => 'Screwdriver',
-                ],
-                [
-                    'id' => 4,
-                    'title' => 'Drill Machine',
-                ],
-                [
-                    'id' => 5,
-                    'title' => 'accessories',
-                ],
+                'id' => $this->brand_id,
+                'title' => config('brand.brands')[$this->brand_id]['name']['en'] ?? '',
             ],
+            'specification' => $this->specification_name,
 
             'features' => [
                 [

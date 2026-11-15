@@ -279,12 +279,7 @@
                                                             {{ \Illuminate\Support\Str::limit($product->title, 30) }}
                                                         </h6>
                                                     </a>
-                                                    <div class="rating">
-                                                        @for($i = 1; $i <= 5; $i++)
-                                                            <i
-                                                            class="fa fa-star{{ $i <= ($product->rate ?? 4) ? ' active' : '' }}"></i>
-                                                            @endfor
-                                                    </div>
+                                                    @include('ecommerce::partials.product.rating', ['product' => $product])
                                                     <p class="pro-desc product-description-fixed">
                                                         {{ \Illuminate\Support\Str::limit($product->description ?? __('ecommerce::ecommerce.product.no_description'), 100) }}
                                                     </p>
@@ -362,12 +357,7 @@
                                                 </div>
                                             </div>
                                             <div class="product-detail product-detail-fixed">
-                                                <div class="rating">
-                                                    @for($i = 1; $i <= 5; $i++)
-                                                        <i
-                                                        class="fa fa-star{{ $i <= ($product->rate ?? 4) ? ' active' : '' }}"></i>
-                                                        @endfor
-                                                </div>
+                                                @include('ecommerce::partials.product.rating', ['product' => $product])
                                                 <a href="{{ route('product.show', $product->id) }}"
                                                     up-target=".main-body">
                                                     <h6 class="product-title-fixed">

@@ -24,8 +24,8 @@
 @endphp
 <footer>
     <div class="container footer-grid">
-        <div class="footer-col footer-brand"><img class="footer-logo"
-                src="{{ $storeFooterLogo }}" alt="{{ __('ecommerce::ecommerce.site_name') }}" style="filter: brightness(0) invert(1);">
+    <div class="footer-col footer-brand"><img class="footer-logo"
+            src="{{ $storeFooterLogo }}" alt="{{ __('ecommerce::ecommerce.site_name') }}" style="display:block;width:auto;height:auto;max-width:160px;max-height:65px;object-fit:contain;margin:0 auto 8px;filter:brightness(0) invert(1);">
             <p>@lang('ecommerce::ecommerce.footer_description')</p>
         </div>
     </div>

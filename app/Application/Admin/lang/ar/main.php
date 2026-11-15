@@ -50,6 +50,7 @@ return [
         'sub_category' => 'الفئة الفرعية',
         'servicer_type' => 'نوع الخدمة',
         'specification' => 'المواصفة',
+        'brand' => 'الماركة',
         'addition_groups' => 'مجموعات الإضافات',
         'files' => 'الملفات',
         'network_status' => 'حالة الشبكة',

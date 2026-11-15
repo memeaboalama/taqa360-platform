@@ -43,23 +43,14 @@ class StaticPageController extends Controller
 
             $user = Auth::user();
 
-            // ---------------------------------------------------------------------------
-            // [DISABLED - email verification, comment-only] The block below logged the user
-            // out and forced them to /verify whenever email_verified_at was null, which
-            // blocked sign-in for any account that had not confirmed its email. This
-            // handler also ignored config('auth.email_verification.enabled'), so it kept
-            // blocking even when the switch was off.
-            // Kept commented (not deleted) so it can be restored later: uncomment the
-            // block below to re-enforce verification on this login route.
-            // NOTE: the password / credential check (Auth::attempt above) is untouched.
-            // ---------------------------------------------------------------------------
-            // if (!$user->email_verified_at) {
-            //     Auth::guard('web')->logout();
-            //     session()->put('ecommerce_user_id_for_verification', $user->id);
-            //     session()->put('ecommerce_user_email_for_verification', $user->email);
-            //     return redirect()->route('verify')
-            //         ->with('error', __('ecommerce::ecommerce.auth.validation.email_not_verified'));
-            // }
+            if (config('auth.email_verification.enabled', true) && !$user->email_verified_at) {
+                Auth::guard('web')->logout();
+                session()->put('ecommerce_user_id_for_verification', $user->id);
+                session()->put('ecommerce_user_email_for_verification', $user->email);
+
+                return redirect()->route('verify')
+                    ->with('error', __('ecommerce::ecommerce.auth.validation.email_not_verified'));
+            }
 
             $request->session()->regenerate();
 
@@ -129,6 +120,7 @@ class StaticPageController extends Controller
             'subCategory',
             'childCategory',
             'files',
+            'activeItemPrices.type_service',
         ])
             ->where('id', $item_id)
             ->where('status', 'active')

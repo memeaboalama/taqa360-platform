@@ -1046,8 +1046,7 @@
             $title = $localized($product->title ?? null, __('ecommerce::ecommerce.product_label'));
             $productImage = $image($product->image_path ?? $product->image ?? null);
             $price = number_format((float) ($product->default_price ?? $product->price ?? 0), 2);
-            $rate = number_format((float) ($product->rate ?? 4.8), 1);
-            return compact('title', 'productImage', 'price', 'rate');
+            return compact('title', 'productImage', 'price');
         };
     @endphp
 
@@ -1199,7 +1198,7 @@
                                     loading="lazy">@if(!$product->isInStock())<span
                                     class="product-stock-badge">@lang('ecommerce::ecommerce.out_of_stock')</span>@endif</a>
                             <h3><a href="{{ route('product.static', $product->id) }}" style="color:inherit;text-decoration:none">{{ $card['title'] }}</a></h3>
-                            <div class="rating">★★★★★ <span>({{ $card['rate'] }})</span></div>
+                            @include('ecommerce::partials.product.rating', ['product' => $product])
                             <div class="price">{{ \App\Domain\AppBase\Models\Setting\Currency::format($card['price']) }}</div>
                             <form class="add-cart-form" action="{{ route('cart.add') }}" method="POST">@csrf<input type="hidden"
                                     name="item_id" value="{{ $product->id }}"><input type="hidden" name="qty"

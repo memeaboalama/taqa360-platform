@@ -1,53 +1,37 @@
 <div wire:ignore.self>
+    <div class="container-fluid py-3">
+        <h5 class="fw-semibold mb-4">@lang('admin::home.Packages')</h5>
 
-    <div class="mt-4">
-        <div class="row gy-3 mt-3">
-            <!-- Start:: row-2 -->
-            <div class="row justify-content-center mb-5">
-                <div class="col-xxl-8 col-xl-12 col-lg-12 col-md-12 col-sm-12">
-                    <div class="container-lg">
-                        <div class="row justify-content-center">
-                            <div class="col-xl-9">
-                                <h5 class="fw-semibold text-center mb-5"> @lang('admin::home.Packages') </h5>
+        <div class="row g-4">
+            @foreach($packages as $package)
+                @php($isSelected = (int) $package->id === (int) $selected_package)
+                <div class="col-12 col-md-6 col-xl-4" wire:key="merchant-package-{{ $package->id }}">
+                    <div class="card custom-card h-100 border {{ $isSelected ? 'border-primary shadow-sm' : 'border-light' }}">
+                        <div class="card-body d-flex flex-column p-4">
+                            <div class="mb-3">
+                                <h6 class="card-title fw-semibold mb-0">{{ $package->title }}</h6>
                             </div>
-                        </div>
-                        <div class="card custom-card overflow-hidden">
-                            <div class="card-body p-0">
-                                <div class="tab-content" id="myTabContent">
-                                    <div class="row">
-                                        @foreach($packages as $package)
-                                            <br>
-                                            <div class="col-xxl-5 col-xl-5 col-lg-5 col-md-5 col-sm-12 pe-2 border border-primary" style="margin-right: 10px; margin-top: 10px">
-                                                <div class="p-4">
-                                                    <h6 class="text-center " style="font-size: 20px;color:rgb(75, 166, 38) ;font-weight:700;">{{ $package->title }}</h6>
-                                                    <div class="py-4 d-flex align-items-center justify-content-center">
-                                                        <div class="text-center ">
-                                                            <p class="fs-15 mb-0" style="font-weight:700">({{ $package->commission }}%) @lang('admin::home.commission')</p>
-                                                        </div>
-                                                    </div>
-                                                    <p class="fs-12 px-3 pt-3 mb-0 text-center " style="text-justify: inter-character" >{{ $package->description }}</p>
-                                                    <div class="d-grid mt-2">
-                                                        @if($package->id == $selected_package)
-                                                            <button wire:click="$emit('selectPackage',{{ $package->id }})"
-                                                                    class="btn btn-primary btn-wave"> @lang('admin::home.Selected')</button>
-                                                        @else
-                                                            <button wire:click="$emit('selectPackage',{{ $package->id }})"
-                                                                    class="btn btn-primary-light btn-wave"> @lang('admin::home.Select')</button>
-                                                        @endif
 
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endforeach
-
-                                    </div>
-                                </div>
+                            <div class="d-flex align-items-baseline gap-2 mb-3">
+                                <span class="badge rounded-pill bg-primary-transparent text-primary fs-6">
+                                    {{ $package->commission }}%
+                                </span>
+                                <span class="text-muted small">@lang('admin::home.commission')</span>
                             </div>
+
+                            @if($package->description)
+                                <p class="text-muted mb-4">{{ $package->description }}</p>
+                            @endif
+
+                            <button wire:click="$emit('selectPackage', {{ $package->id }})"
+                                    aria-pressed="{{ $isSelected ? 'true' : 'false' }}"
+                                    class="btn {{ $isSelected ? 'btn-primary' : 'btn-outline-primary' }} w-100 mt-auto">
+                                {{ $isSelected ? __('admin::home.Selected') : __('admin::home.Select') }}
+                            </button>
                         </div>
                     </div>
                 </div>
-            </div>
+            @endforeach
         </div>
     </div>
-
 </div>

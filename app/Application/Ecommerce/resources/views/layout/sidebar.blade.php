@@ -50,11 +50,7 @@
                                         alt="{{ $product->title }}">
                                 </a>
                                 <div class="media-body align-self-center" @if($isRTL) style="margin-right: 10px;" @endif>
-                                    <div class="rating">
-                                        @for($i = 0; $i < 5; $i++)
-                                            <i class="fa fa-star{{ $i < ($product->rating ?? 5) ? '' : '-o' }}"></i>
-                                        @endfor
-                                    </div>
+                                    @include('ecommerce::partials.product.rating', ['product' => $product])
                                     <a href="{{ route('product.show', $product->id) }}" up-target=".main-body"
                                         up-preload>
                                         <h6>{{ \Illuminate\Support\Str::limit($product->title, 20) }}</h6>
@@ -86,11 +82,7 @@
                                         alt="{{ $product->title }}">
                                 </a>
                                 <div class="media-body align-self-center" @if($isRTL) style="margin-right: 10px;" @endif>
-                                    <div class="rating">
-                                        @for($i = 0; $i < 5; $i++)
-                                            <i class="fa fa-star{{ $i < ($product->rating ?? 5) ? '' : '-o' }}"></i>
-                                        @endfor
-                                    </div>
+                                    @include('ecommerce::partials.product.rating', ['product' => $product])
                                     <a href="{{ route('product.show', $product->id) }}" up-target=".main-body"
                                         up-preload>
                                         <h6>{{ \Illuminate\Support\Str::limit($product->title, 20) }}</h6>
@@ -147,11 +139,7 @@
                                             alt="{{ $product->title }}">
                                     </a>
                                     <div class="media-body align-self-center" @if($isRTL) style="margin-right: 10px;" @endif>
-                                        <div class="rating">
-                                            @for($i = 0; $i < 5; $i++)
-                                                <i class="fa fa-star{{ $i < ($product->rating ?? 5) ? '' : '-o' }}"></i>
-                                            @endfor
-                                        </div>
+                                        @include('ecommerce::partials.product.rating', ['product' => $product])
                                         <a href="{{ route('product.show', $product->id) }}" up-target=".main-body"
                                             up-preload>
                                             <h6>{{ \Illuminate\Support\Str::limit($product->title, 20) }}</h6>

@@ -16,6 +16,7 @@ class Update extends Component
 
     public array $title = ['en' => null];
     public $merchantId;
+    public ?int $choiceId = null;
 
     protected $listeners = ['updateChoice'];
 
@@ -29,7 +30,7 @@ class Update extends Component
         if ($category) {
             $this->title = $category->getTranslations('title');
             $this->status = $category->status;
-            $this->category_id = $category->id;
+            $this->choiceId = $category->id;
             $this->emit('openModal', '#updateChoice');
         }
     }
@@ -61,7 +62,7 @@ class Update extends Component
     {
         $data = $this->validate(attributes: $this->nickNames());
         DB::beginTransaction();
-        $updateChoiceAction->handle($this->category_id, $data);
+        $updateChoiceAction->handle($this->choiceId, $data);
         $this->emit('closeModal', '#updateChoice');
         $this->emit('refreshDatatable');
         $this->alert('success', __('admin::home.data_updated_successfully'));

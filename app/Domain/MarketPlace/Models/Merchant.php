@@ -53,7 +53,7 @@ class Merchant extends Authenticatable implements Wallet, WalletFloat
 
 
     public array $translatable = ['company_name', 'description'];
-    protected $fillable = [
+protected $fillable = [
         'company_name',
         'user_name',
         'description',
@@ -74,7 +74,7 @@ class Merchant extends Authenticatable implements Wallet, WalletFloat
         'password',
         'main_categories',
         'tax_number',
-
+        'brand_id',
     ];
 
     protected $appends = ['phone_number', 'merchant_id'];
@@ -203,6 +203,11 @@ class Merchant extends Authenticatable implements Wallet, WalletFloat
     public function items(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Item::class, 'merchant_id', 'id');
+    }
+
+    public function brand(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Brand::class, 'brand_id', 'id');
     }
 
     public function categories(): \Illuminate\Database\Eloquent\Relations\BelongsToMany

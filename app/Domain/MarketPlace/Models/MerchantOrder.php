@@ -264,7 +264,10 @@ class MerchantOrder extends Model
             : null;
 
         if ($isCashOnDelivery) {
-            return in_array($status, ['paid', 'success'], true) ? 'paid' : 'pending';
+            if ($status === 'paid' || $status === 'success') {
+                return 'paid';
+            }
+            return 'pending';
         }
 
         if (!$payment) {

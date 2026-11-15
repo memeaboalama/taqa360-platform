@@ -28,13 +28,7 @@
         </div>
     </div>
     <div class="product-detail product-detail-fixed">
-        <div class="rating">
-            <i class="fa fa-star"></i>
-            <i class="fa fa-star"></i>
-            <i class="fa fa-star"></i>
-            <i class="fa fa-star"></i>
-            <i class="fa fa-star"></i>
-        </div>
+        @include('ecommerce::partials.product.rating', ['product' => $product])
         <a href="{{ route('product.show', $product->id) }}"><h6 class="product-title-fixed">{{ Str::limit($product->title, 35) }}</h6></a>
         <p class="product-description-fixed">
             {{ Str::limit($product->description, 80) }}

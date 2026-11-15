@@ -45,7 +45,10 @@
         </div>
 
         <label class="form-label mt-2 text-info">{{ __('marketplace::home.Contact us') }} : </label><br>
-        <label class="form-label mt-2 text-info">{{ __('marketplace::home.Email') }} : <a href="mailto:{{config('mail.from.address')}}" style="color: #0a58ca">{{config('mail.from.address')}}</a> .</label><br>
+        @php($supportEmail = app(\App\Domain\AppBase\Actions\Home\FetchFooterSupportEmailAction::class)->handle())
+        @if($supportEmail)
+            <label class="form-label mt-2 text-info">{{ __('marketplace::home.Email') }} : <a href="mailto:{{ $supportEmail }}" style="color: #0a58ca">{{ $supportEmail }}</a> .</label><br>
+        @endif
         <label class="form-label mt-2 text-info">{{ __('marketplace::home.Phone') }} : <a href="tel:+966 9200 13363" style="color: #0a58ca" dir="ltr">+966 9200 13363</a></label>
 
 
