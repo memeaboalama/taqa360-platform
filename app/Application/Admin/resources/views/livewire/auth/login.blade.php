@@ -1,5 +1,6 @@
 <div>
-    <form method="POST" wire:submit.prevent="store">
+    <form method="POST" action="{{ route('admin.login.submit') }}" wire:submit.prevent="store">
+        @csrf
         <div class="row gy-3">
 
             <div class="col-xl-12">
@@ -7,6 +8,7 @@
                 <input type="email"
                        class="form-control form-control-lg"
                        id="signup-email"
+                       name="email"
                        wire:model.defer="email"
                        placeholder="@lang('admin::lang.Enter your Email Address')">
                 @error('email') <span class="d-block text-danger">{{ $message }}</span>@enderror
@@ -16,6 +18,7 @@
                 <label for="signup-password" class="form-label text-default d-block">@lang('admin::home.Password')<a href="{{ route('admin.forgetPassword') }}" class="float-end text-danger">@lang('admin::home.Forget password ?')</a></label>
                 <div class="input-group">
                     <input type="password" class="form-control form-control-lg" id="signup-password"
+                           name="password"
                            wire:model.defer="password"
                            placeholder="@lang('admin::lang.Enter your Password')">
                     <button class="btn btn-light" onclick="createpassword('signup-password',this)" type="button"

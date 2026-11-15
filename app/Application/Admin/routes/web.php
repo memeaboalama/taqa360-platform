@@ -336,6 +336,9 @@ Route::group(
     Route::get('admin/login', [AuthController::class, 'index'])
         ->middleware(AdminLoginSecurityHeaders::class)
         ->name('admin.login');
+    Route::post('admin/login', [AuthController::class, 'login'])
+        ->middleware(AdminLoginSecurityHeaders::class)
+        ->name('admin.login.submit');
 
     Route::get('admin/forget-password', [PasswordController::class, 'forgetPassword'])
         ->name('admin.forgetPassword');
