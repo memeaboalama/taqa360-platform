@@ -15,7 +15,8 @@ class ProductResource extends JsonResource
             'title' => \Illuminate\Support\Str::of($this->title)->limit(20),
             'default_price' => $this->default_price,
             'image_path' => $this->image_path,
-            'rate' => $this?->rate ?? 1.5,
+            'rate' => $this->rate,
+            'reviews_count' => $this->reviews_count ?? 0,
         ];
 
         return $list;

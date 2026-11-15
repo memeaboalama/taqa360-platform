@@ -11,7 +11,7 @@
                         <div class="row gx-5">
                             <div class="col-xxl-12 col-xl-12 col-lg-12 col-md-6">
                                 <div class="card custom-card shadow-none mb-0">
-                                    <div class="card-body p-0">
+                                    <div class="card-body p-3">
                                         <div class="row gy-3">
                                             @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
                                                 <div class="col-xl-5">

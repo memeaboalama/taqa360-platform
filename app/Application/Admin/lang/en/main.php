@@ -51,6 +51,7 @@ return [
         'child_category' => 'Child Category',
         'servicer_type' => 'Servicer Type',
         'specification' => 'Specification',
+        'brand' => 'Brand',
         'addition_groups' => 'Addition Groups',
         'files' => 'Files',
         'network_status' => 'Network Status',

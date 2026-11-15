@@ -46,12 +46,7 @@
                 </div>
                 <div class="product-detail">
                     <div>
-                        <div class="rating">
-                            @for($i = 1; $i <= 5; $i++)
-                                <i class="fa fa-star{{ $i <= ($product->rating ?? 5) ? '' : '-o' }}"></i>
-                            @endfor
-                            <small class="text-muted">({{ $product->reviews_count ?? 0 }})</small>
-                        </div>
+                        @include('ecommerce::partials.product.rating', ['product' => $product])
                         <a href="{{ route('product.show', $product->id) }}"
                            up-target=".main-content"
                            up-history="true">

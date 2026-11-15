@@ -358,7 +358,7 @@ wire:model.defer="stock">
                                                 <table class="table">
                                                     <thead>
                                                         <th>{{ __('admin::main.home.servicer type') }}</th>
-                                                        <th>{{ __('admin::main.home.Default Price') }}</th>
+                                                        <th>{{ __('marketplace::home.service_price') }}</th>
                                                         <th>{{ __('admin::main.home.status') }}</th>
                                                     </thead>
                                                     <tbody>
@@ -366,7 +366,7 @@ wire:model.defer="stock">
                                                         <tr>
                                                             <input wire:model.defer="item_prices.{{$index}}.type_service_id" class="form-control" type="hidden" />
                                                             <td>
-                                                                <input value="{{ $item_prices[$index]['type_service_name'] }}" class="form-control" disabled />
+                                                                <input value="{{ __('admin::home.' . $item_prices[$index]['type_service_name']) }}" class="form-control" disabled />
                                                             </td>
                                                             <td>
                                                                 <input wire:model.defer="item_prices.{{$index}}.price" class="form-control" type="number" min="0" step="0.01" />

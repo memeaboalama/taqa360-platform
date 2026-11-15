@@ -34,7 +34,8 @@ class Info extends Component
     public $marketplace_category_id = null;
     public $app_logo = "", $app_logo_path, $diskName = 'fileDisk';
     public $main_category_ids = [];
-    public $company_name = ['en' => null,  'ar' => null];
+public  $company_name = ['en' => null,  'ar' => null];
+    public $brand_id;
     public $description = ['en' => null,  'ar' => null];
 
     protected $listeners = [
@@ -99,6 +100,7 @@ class Info extends Component
             'marketplace_category_id' => 'required|numeric|exists:market_place_categories,id',
             'main_category_ids' => 'nullable|array',
             'main_category_ids.*' => 'integer|exists:main_categories,id',
+            'brand_id' => 'nullable|exists:brands,id',
             'app_logo' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ];
     }
@@ -148,6 +150,7 @@ class Info extends Component
         $this->country_id = $merchant?->country_id;
         $this->phone = $merchant?->phone;
         $this->company_name = $merchant->getTranslations('company_name');
+        $this->brand_id = $merchant?->brand_id;
         $this->user_name = $merchant?->user_name;
         $this->description = $merchant?->getTranslations('description');;
         $this->tax_number = $merchant?->tax_number;

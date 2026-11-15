@@ -316,12 +316,7 @@
                                     <h3>{{ \App\Domain\AppBase\Models\Setting\Currency::format($product->default_price) }}</h3>
                                 @endif
 
-                                <div class="rating mb-3">
-                                    @for($i = 1; $i <= 5; $i++)
-                                        <i class="fa fa-star{{ $i <= ($product->rate ?? 4) ? ' active' : '' }}"></i>
-                                    @endfor
-                                    <span class="ms-2">({{ $product->reviews_count ?? 0 }} @lang('ecommerce::ecommerce.reviews'))</span>
-                                </div>
+                                @include('ecommerce::partials.product.rating', ['product' => $product, 'containerClass' => 'rating mb-3'])
 
                                 <div class="product-description border-product">
                                     <h6 class="product-title">@lang('ecommerce::ecommerce.quantity')</h6>
@@ -433,33 +428,12 @@
                                         <p class="merchant-name">
                                             <i class="fa fa-user-circle-o" aria-hidden="true"></i>
                                             <strong>
-                                            <a href="{{ route('merchant.show', $product->merchant->id) }}"
-                                                up-target=".main-body"
-                                                up-preload>
-                                                    {{ $product->merchant->name }}
-                                            </a>
+                                                <a href="{{ route('merchant.show', $product->merchant->id) }}"
+                                                   up-target=".main-body"
+                                                   up-preload>
+                                                    {{ $product->merchant->getTranslation('company_name', app()->getLocale()) ?: $product->merchant->name }}
+                                                </a>
                                             </strong>
-                                            <span class="store-name ms-2">
-                                                <strong>{{ $product->merchant->getTranslation('company_name', app()->getLocale()) ?: $product->merchant->getTranslation('company_name', 'en') }}</strong>
-                                            </span>
-                                            <span class="verified-badge ms-2">
-                                                <i class="fa fa-check-circle text-success"></i>
-                                                <small class="text-muted">@lang('ecommerce::ecommerce.verified_seller')</small>
-                                            </span>
-                                            <span class="merchant-rating ms-2">
-                                                <div class="rating small d-inline">
-                                                    <i class="fa fa-star active"></i>
-                                                    <i class="fa fa-star active"></i>
-                                                    <i class="fa fa-star active"></i>
-                                                    <i class="fa fa-star active"></i>
-                                                    <i class="fa fa-star"></i>
-                                                </div>
-                                                <span class="ms-1 text-muted small">4.5 (120)</span>
-                                            </span>
-                                        </p>
-                                        <p class="branch-location mt-2">
-                                            <i class="fa fa-map-marker" aria-hidden="true"></i>
-                                            @lang('admin::home.Branch Name') : <strong>Main Branch - Riyadh</strong>
                                         </p>
                                     </div>
                                 </div>
@@ -500,14 +474,14 @@
                                         </a>
                                         <div class="material-border"></div>
                                     </li>
-                                    <!-- ===== START: New Services Tab Link ===== -->
-                                    <li class="nav-item">
-                                        <a class="nav-link" id="services-top-tab" data-bs-toggle="tab" href="#top-services" role="tab" aria-selected="false">
-                                            <i class="icofont icofont-tools-alt-2"></i>@lang('ecommerce::ecommerce.available_services')
-                                        </a>
-                                        <div class="material-border"></div>
-                                    </li>
-                                    <!-- ===== END: New Services Tab Link ===== -->
+                                    @if($product->activeItemPrices->isNotEmpty())
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="services-top-tab" data-bs-toggle="tab" href="#top-services" role="tab" aria-selected="false">
+                                                <i class="icofont icofont-tools-alt-2"></i>@lang('ecommerce::ecommerce.available_services')
+                                            </a>
+                                            <div class="material-border"></div>
+                                        </li>
+                                    @endif
                                     <li class="nav-item">
                                         <a class="nav-link" id="contact-top-tab" data-bs-toggle="tab" href="#top-contact" role="tab" aria-selected="false">
                                             <i class="icofont icofont-contacts"></i>@lang('ecommerce::ecommerce.specifications')
@@ -595,41 +569,24 @@
                                         </div>
                                     </div>
 
-                                    <!-- ===== START: New Services Tab Content ===== -->
-                                    <div class="tab-pane fade" id="top-services" role="tabpanel" aria-labelledby="services-top-tab">
-                                        <p>@lang('ecommerce::ecommerce.services_intro')</p>
-                                        <ul class="services-list list-unstyled mt-4">
-                                            <li class="service-item d-flex align-items-center mb-3">
-                                                <i class="fa fa-wrench fa-2x text-primary me-3"></i>
-                                                <div>
-                                                    <h5>@lang('ecommerce::ecommerce.solar_panel_installation')</h5>
-                                                    <p class="mb-0 text-muted">@lang('ecommerce::ecommerce.solar_panel_desc')</p>
-                                                </div>
-                                            </li>
-                                            <li class="service-item d-flex align-items-center mb-3">
-                                                <i class="fa fa-cogs fa-2x text-primary me-3"></i>
-                                                <div>
-                                                    <h5>@lang('ecommerce::ecommerce.periodic_maintenance')</h5>
-                                                    <p class="mb-0 text-muted">@lang('ecommerce::ecommerce.periodic_maintenance_desc')</p>
-                                                </div>
-                                            </li>
-                                            <li class="service-item d-flex align-items-center mb-3">
-                                                <i class="fa fa-leaf fa-2x text-primary me-3"></i>
-                                                <div>
-                                                    <h5>@lang('ecommerce::ecommerce.system_consultation')</h5>
-                                                    <p class="mb-0 text-muted">@lang('ecommerce::ecommerce.system_consultation_desc')</p>
-                                                </div>
-                                            </li>
-                                            <li class="service-item d-flex align-items-center">
-                                                <i class="fa fa-shield fa-2x text-primary me-3"></i>
-                                                <div>
-                                                    <h5>@lang('ecommerce::ecommerce.extended_warranty')</h5>
-                                                    <p class="mb-0 text-muted">@lang('ecommerce::ecommerce.extended_warranty_desc')</p>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <!-- ===== END: New Services Tab Content ===== -->
+                                    @if($product->activeItemPrices->isNotEmpty())
+                                        <div class="tab-pane fade" id="top-services" role="tabpanel" aria-labelledby="services-top-tab">
+                                            <ul class="services-list list-unstyled mt-4">
+                                                @foreach($product->activeItemPrices as $itemPrice)
+                                                    <li class="service-item d-flex align-items-center mb-3">
+                                                        <i class="fa fa-wrench fa-2x text-primary me-3"></i>
+                                                        <div>
+                                                            <h5>{{ $itemPrice->type_service?->name ?? $itemPrice->type_service_name }}</h5>
+                                                            <p class="mb-0 text-muted">
+                                                                @lang('ecommerce::ecommerce.price'):
+                                                                {{ \App\Domain\AppBase\Models\Setting\Currency::format($itemPrice->price) }}
+                                                            </p>
+                                                        </div>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endif
 
 
                                     <div class="tab-pane fade" id="top-contact" role="tabpanel" aria-labelledby="contact-top-tab">
@@ -641,10 +598,6 @@
                                                 <div class="default-specs">
                                                     <table class="table table-bordered">
                                                         <tbody>
-                                                            <tr>
-                                                                <td><strong>@lang('ecommerce::ecommerce.brand')</strong></td>
-                                                                <td>@lang('ecommerce::ecommerce.generic')</td>
-                                                            </tr>
                                                             <tr>
                                                                 <td><strong>@lang('ecommerce::ecommerce.weight')</strong></td>
                                                                 <td>N/A</td>
@@ -833,11 +786,7 @@
                                              onerror="this.src='{{ asset('assets/images/pro/1.jpg') }}'">
                                     </a>
                                     <div class="media-body align-self-center ms-3">
-                                        <div class="rating">
-                                            @for($i = 1; $i <= 5; $i++)
-                                                <i class="fa fa-star{{ $i <= ($relatedProduct->rate ?? 4) ? ' active' : '' }}"></i>
-                                            @endfor
-                                        </div>
+                                        @include('ecommerce::partials.product.rating', ['product' => $relatedProduct])
                                         <a href="{{ route('product.show', $relatedProduct->id) }}" up-target=".main-body" up-preload>
                                             <h6>{{ \Illuminate\Support\Str::limit($relatedProduct->title, 25) }}</h6>
                                         </a>

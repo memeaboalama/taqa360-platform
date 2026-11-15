@@ -680,9 +680,7 @@
                                     alt="{{ $title($product->title) }}" loading="lazy">@if(!$product->isInStock())<span
                                     class="product-stock-badge">@lang('ecommerce::ecommerce.out_of_stock')</span>@endif</a>
                             <h3><a class="product-title-link" href="{{ route('product.static', $product->id) }}">{{ \Illuminate\Support\Str::limit($title($product->title), 38) }}</a></h3>
-                            <div class="rating">★★★★★
-                                <span>({{ number_format((float) ($product->rating ?? 4.8), 1) }})</span>
-                            </div>
+                            @include('ecommerce::partials.product.rating', ['product' => $product])
                             <div class="price">
                                 {{ \App\Domain\AppBase\Models\Setting\Currency::format((float) ($product->default_price ?? 0)) }}
                             </div>

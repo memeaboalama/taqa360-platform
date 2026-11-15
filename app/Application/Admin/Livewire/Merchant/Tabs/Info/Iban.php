@@ -17,6 +17,9 @@ class Iban extends Component
     public $bank_name = "", $beneficiary_full_name = "", $iban = "";
     public $iban_file = "", $iban_file_path, $diskName = 'fileDisk';
     public $merchantIban, $merchantTempIban;
+    public $merchant;
+    public $current_bank_name = "", $current_beneficiary_full_name = "", $current_iban = "";
+    public $current_iban_file_path;
 
     public function mount($merchant_id, FetchSingleMerchantAction $fetchSingleMerchantAction)
     {
@@ -27,13 +30,13 @@ class Iban extends Component
     public function acceptChanges(AcceptIbanChangesAction $acceptIbanChangesAction): void
     {
         $data = $this->validate([
-            'iban' => ['required', 'unique:merchant_ibans,id,' . $this->merchantTempIban?->id],
+            'iban' => ['required', $this->uniqueIbanRule()],
             'bank_name' => 'required|string',
             'beneficiary_full_name' => 'required|string|min:6',
         ]);
         DB::beginTransaction();
         $acceptIbanChangesAction->handle($this->merchant->id ,$data);
-        $this->alert('success', 'Requested Accepted Successfully');
+        $this->alert('success', __('admin::home.data_updated_successfully'));
         $this->fillData();
         DB::commit();
     }
@@ -41,19 +44,19 @@ class Iban extends Component
     public function updateInfo(AcceptIbanChangesAction $acceptIbanChangesAction): void
     {
         $data = $this->validate([
-            'current_iban' => ['required', 'unique:merchant_ibans,id,' . $this->merchantTempIban?->id],
+            'current_iban' => ['required', $this->uniqueIbanRule()],
             'current_bank_name' => 'required|string',
             'current_beneficiary_full_name' => 'required|string|min:6',
-            'iban_file' => 'sometimes|mimes:jpeg,jpg,png,gif,pdf,xls,csv|max:2048',
+            'iban_file' => 'sometimes|mimes:jpeg,jpg,png,gif,pdf,xls,xlsx,csv|max:1024',
         ]);
-        if($this->current_iban_file_path == null && $data['iban_file'] == null)
-        {
+        if (!$this->current_iban_file_path && !$this->iban_file) {
             $this->addError('iban_file', __('admin::messages.IMAGE_REQUIRED'));
             return;
         }
         DB::beginTransaction();
         $acceptIbanChangesAction->update($this->merchant->id ,$data);
-        $this->alert('success', 'Updated Successfully');
+        $this->alert('success', __('admin::home.data_updated_successfully'));
+        $this->reset('iban_file');
         $this->fillData();
         DB::commit();
     }
@@ -70,6 +73,16 @@ class Iban extends Component
         $this->beneficiary_full_name = $this->merchantTempIban?->beneficiary_full_name;
         $this->iban = $this->merchantTempIban?->iban;
         $this->iban_file_path = $this->merchantTempIban?->iban_file_path;
+    }
+
+    private function uniqueIbanRule(): \Illuminate\Validation\Rules\Unique
+    {
+        $existingIbanIds = array_filter([
+            $this->merchantIban?->id,
+            $this->merchantTempIban?->id,
+        ]);
+
+        return Rule::unique('merchant_ibans', 'iban')->whereNotIn('id', $existingIbanIds);
     }
 
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application

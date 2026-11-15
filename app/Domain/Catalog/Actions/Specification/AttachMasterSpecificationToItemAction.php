@@ -17,7 +17,13 @@ class AttachMasterSpecificationToItemAction
      */
     public function execute(AttachMasterSpecificationData $data): Specification
     {
-        $masterSpec = Specification::isMasterOrNotInItem($data->item_id)->with('properties')->findOrFail($data->master_specification_id);
+        $masterSpec = Specification::query()
+            ->whereNull('item_id')
+            ->where('status', StatusEnum::ACTIVE->value)
+            ->with(['properties' => fn ($query) => $query
+                ->whereNull('item_id')
+                ->where('status', StatusEnum::ACTIVE->value)])
+            ->findOrFail($data->master_specification_id);
         $item = Item::findOrFail($data->item_id);
 
         return DB::transaction(function () use ($masterSpec, $item) {

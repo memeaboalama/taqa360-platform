@@ -517,8 +517,7 @@
                                 alt="{{ $title($product->title) }}">@if(!$product->isInStock())<span
                                 class="product-stock-badge">@lang('ecommerce::ecommerce.out_of_stock')</span>@endif</a>
                         <h3><a href="{{ route('product.static', $product->id) }}" style="color:inherit;text-decoration:none">{{ Str::limit($title($product->title), 38) }}</a></h3>
-                        <div class="rating">★★★★★ <span>({{ number_format((float) ($product->rating ?? 4.8), 1) }})</span>
-                        </div>
+                        @include('ecommerce::partials.product.rating', ['product' => $product])
                         <div class="price">
                             {{ \App\Domain\AppBase\Models\Setting\Currency::format((float) ($product->price ?? $product->default_price ?? 0)) }}
                         </div>

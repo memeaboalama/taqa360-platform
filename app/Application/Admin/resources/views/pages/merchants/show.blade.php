@@ -48,6 +48,21 @@
             color: #fff !important;
         }
 
+        #merchant-detail-page #choices-tab-pane .card-header .btn-primary-light {
+            transition: none;
+        }
+
+        #merchant-detail-page #choices-tab-pane .card-header .btn-primary-light:hover,
+        #merchant-detail-page #choices-tab-pane .card-header .btn-primary-light:focus,
+        #merchant-detail-page #choices-tab-pane .card-header .btn-primary-light:active,
+        #merchant-detail-page #choices-tab-pane .card-header .btn-primary-light:hover i,
+        #merchant-detail-page #choices-tab-pane .card-header .btn-primary-light:focus i,
+        #merchant-detail-page #choices-tab-pane .card-header .btn-primary-light:active i {
+            background-color: rgb(var(--primary-rgb)) !important;
+            border-color: rgb(var(--primary-rgb)) !important;
+            color: #fff !important;
+        }
+
         #merchant-detail-page #creatAdditionGroup .modal-header,
         #merchant-detail-page #creatAdditionGroup .modal-body,
         #merchant-detail-page #creatAdditionGroup .modal-footer {
@@ -228,7 +243,7 @@
                                 </div>
 
                                 <div class="tab-pane fade p-0 border-0" id="packages-tab-pane"
-                                     aria-labelledby="iban-tab" wire:ignore.self>
+                                     aria-labelledby="packages-tab" wire:ignore.self>
                                     <livewire:admin::merchant.tabs.info.packages :merchant_id="$id" />
                                     <livewire:admin::merchant.tabs.info.package.select :merchant_id="$id" />
                                 </div>

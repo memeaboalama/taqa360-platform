@@ -38,12 +38,7 @@
                 <h3>{{ \App\Domain\AppBase\Models\Setting\Currency::format($product->default_price) }}</h3>
             @endif
 
-            <div class="rating mb-3">
-                @for($i = 1; $i <= 5; $i++)
-                    <i class="fa fa-star{{ $i <= ($product->rate ?? 4) ? ' active' : '' }}"></i>
-                @endfor
-                <span class="ms-2">({{ $product->reviews_count ?? 0 }} @lang('ecommerce::ecommerce.reviews'))</span>
-            </div>
+            @include('ecommerce::partials.product.rating', ['product' => $product, 'containerClass' => 'rating mb-3'])
 
             <div class="border-product">
                 <h6 class="product-title">@lang('ecommerce::ecommerce.quantity')</h6>

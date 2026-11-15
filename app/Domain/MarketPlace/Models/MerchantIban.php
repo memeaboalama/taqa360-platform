@@ -24,13 +24,7 @@ class MerchantIban extends Model
 
     public function getIbanFilePathAttribute()
     {
-        $file_name = str_replace('upload/file/', '', $this->iban_file);
-        if(in_array(substr($this->iban_file, strpos($this->iban_file, ".") + 1), ['pdf', 'csv', 'xls', 'xlsx']))
-        {
-            return $this->iban_file ? Storage::disk($this->diskName)->url($this->iban_file. '/' . $file_name) : null;
-        }else{
-            return $this->iban_file ? Storage::disk($this->diskName)->url($this->iban_file) : null;
-        }
+        return $this->iban_file ? Storage::disk($this->diskName)->url($this->iban_file) : null;
 //        return ($this->iban_file) ? Storage::disk('s3')->temporaryUrl(
 //            $this?->iban_file,
 //            now()->addMinutes(5)) : "";

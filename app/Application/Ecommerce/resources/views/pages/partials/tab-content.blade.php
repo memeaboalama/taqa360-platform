@@ -47,11 +47,7 @@
                         </div>
                     </div>
                     <div class="product-detail product-detail-fixed">
-                        <div class="rating">
-                            @for($i = 1; $i <= 5; $i++)
-                                <i class="fa fa-star{{ $i <= ($product->rate ?? 4) ? ' active' : '' }}"></i>
-                            @endfor
-                        </div>
+                        @include('ecommerce::partials.product.rating', ['product' => $product])
                         <a href="{{ route('product.show', $product->id) }}"
                            up-target=".main-body"
                            up-preload>
@@ -110,11 +106,7 @@
                         </div>
                     </div>
                     <div class="product-detail product-detail-fixed">
-                        <div class="rating">
-                            @for($i = 1; $i <= 5; $i++)
-                                <i class="fa fa-star{{ $i <= ($product->rate ?? 4) ? ' active' : '' }}"></i>
-                            @endfor
-                        </div>
+                        @include('ecommerce::partials.product.rating', ['product' => $product])
                         <a href="{{ route('product.show', $product->id) }}"
                            up-target=".main-body"
                            up-preload>
@@ -172,11 +164,7 @@
                         </div>
                     </div>
                     <div class="product-detail product-detail-fixed">
-                        <div class="rating">
-                            @for($i = 1; $i <= 5; $i++)
-                                <i class="fa fa-star{{ $i <= ($product->rate ?? 4) ? ' active' : '' }}"></i>
-                            @endfor
-                        </div>
+                        @include('ecommerce::partials.product.rating', ['product' => $product])
                         <a href="{{ route('product.show', $product->id) }}"
                            up-target=".main-body"
                            up-preload>

@@ -12,6 +12,7 @@ use App\Domain\MarketPlace\Models\CartItem;
 use App\Domain\MarketPlace\Models\Favorite;
 use App\Domain\MarketPlace\Models\MerchantOrderItem;
 use App\Domain\MarketPlace\Models\ItemPrices;
+use App\Domain\MarketPlace\Models\Brand;
 use App\Support\Enum\ActiveEnum;
 use App\Support\Traits\Models\BelongsToMerchant;
 use App\Support\Traits\Models\HasStatus;
@@ -41,6 +42,7 @@ class Item extends Model
         'status',
         'merchant_id',
         'category_id',
+        'brand_id',
         'description',
         'default_price',
         'sale_price',
@@ -68,6 +70,11 @@ class Item extends Model
     public function merchant(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Merchant::class, 'merchant_id', 'id');
+    }
+
+    public function brand(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Brand::class, 'brand_id', 'id');
     }
 
     public function files(): \Illuminate\Database\Eloquent\Relations\MorphMany

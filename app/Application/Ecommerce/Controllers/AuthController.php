@@ -79,24 +79,16 @@ class AuthController extends Controller
                     ->with('error', __('ecommerce::ecommerce.auth.validation.credentials_do_not_match'));
             }
 
-            // Enforce email verification before granting access
             $user = Auth::user();
 
-            // ---------------------------------------------------------------------------
-            // [DISABLED - email verification, comment-only] Forced redirect to /verify for
-            // accounts without email_verified_at. Commented out so an unverified user can
-            // sign in and keep using the site without entering a confirmation code.
-            // Kept commented (not deleted): uncomment this block to re-enforce verification
-            // on the legacy login route (POST /login-legacy).
-            // NOTE: password / credential validation above is untouched.
-            // ---------------------------------------------------------------------------
-            // if ($this->emailVerificationEnabled() && !$user->email_verified_at) {
-            //     Auth::guard('web')->logout();
-            //     session()->put('ecommerce_user_id_for_verification', $user->id);
-            //     session()->put('ecommerce_user_email_for_verification', $user->email);
-            //     return redirect()->route('verify')
-            //         ->with('error', __('ecommerce::ecommerce.auth.validation.email_not_verified'));
-            // }
+            if ($this->emailVerificationEnabled() && !$user->email_verified_at) {
+                Auth::guard('web')->logout();
+                session()->put('ecommerce_user_id_for_verification', $user->id);
+                session()->put('ecommerce_user_email_for_verification', $user->email);
+
+                return redirect()->route('verify')
+                    ->with('error', __('ecommerce::ecommerce.auth.validation.email_not_verified'));
+            }
 
             $request->session()->regenerate();
 
@@ -134,46 +126,39 @@ class AuthController extends Controller
                 'last_name' => $validated['last_name'],
             ]);
 
-            // Email verification is temporarily suspended: skip the OTP email,
-            // mark the account as verified right away and sign the user in.
-            // ---------------------------------------------------------------------------
-            // [DISABLED - email verification, comment-only]
-            // 1) The `if (! $this->emailVerificationEnabled())` condition is commented out
-            //    so this branch always runs and no longer depends on the
-            //    EMAIL_VERIFICATION_ENABLED environment variable.
-            // 2) The OTP send + forced redirect to /verify below it is commented out too,
-            //    so registration no longer emails a confirmation code or holds the user
-            //    on the /verify page.
-            // Nothing was deleted: to restore, uncomment `if (...) {` and its matching `}`
-            // and uncomment the OTP block that follows.
-            // ---------------------------------------------------------------------------
-            // if (!$this->emailVerificationEnabled()) {
-                // Re-fetch a clean instance: RegisterUserAction leaves a stray
-                // `msgOffer` attribute in memory, and saving it would fail on the
-                // (non-existent) users.msgOffer column.
-                $user = User::query()->findOrFail($user->id);
+            if ($this->emailVerificationEnabled()) {
+                session()->put([
+                    'ecommerce_user_id_for_verification' => $user->id,
+                    'ecommerce_user_email_for_verification' => $user->email,
+                ]);
 
-                $user->forceFill([
-                    'email_verified_at' => now(),
-                    'status' => 'active',
-                ])->save();
+                try {
+                    $sendOtpAction->handleForMail(
+                        $user,
+                        OTPTypes::USER_VERIFY_EMAIL,
+                        120,
+                        throwOnFailure: true
+                    );
+                } catch (\Throwable $e) {
+                    return redirect()->route('verify')
+                        ->with('error', __('ecommerce::ecommerce.auth.alerts.otp_resend_error'));
+                }
 
-                Auth::guard('web')->login($user);
-                $request->session()->regenerate();
-
-                return redirect()->route('home')
+                return redirect()->route('verify')
                     ->with('success', __('ecommerce::ecommerce.auth.alerts.register_success'));
-            // }
+            }
 
-            // [DISABLED - email verification, comment-only] confirmation code + forced
-            // redirect to the /verify page (kept commented, not deleted).
-            // $code = $sendOtpAction->handleForMail($user, OTPTypes::USER_VERIFY_EMAIL, 120, throwOnFailure: true);
+            $user = User::query()->findOrFail($user->id);
+            $user->forceFill([
+                'email_verified_at' => now(),
+                'status' => 'active',
+            ])->save();
 
-            // session()->put('ecommerce_user_id_for_verification', $user->id);
-            // session()->put('ecommerce_user_email_for_verification', $user->email);
+            Auth::guard('web')->login($user);
+            $request->session()->regenerate();
 
-            // return redirect()->route('verify')
-            //     ->with('success', __('ecommerce::ecommerce.auth.alerts.register_success'));
+            return redirect()->route('home')
+                ->with('success', __('ecommerce::ecommerce.auth.alerts.register_success'));
 
         } catch (ValidationException $e) {
             return back()

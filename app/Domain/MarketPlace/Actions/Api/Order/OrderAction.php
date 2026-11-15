@@ -10,6 +10,7 @@ use App\Domain\AppBase\Models\CashBack;
 use App\Domain\AppBase\Models\GeneralSetting;
 use App\Domain\AppBase\Models\PromocodeMerchantsChoice;
 use App\Domain\AppBase\Models\CashBackMerchantsChoice;
+use App\Domain\MarketPlace\Models\Item;
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use App\Domain\MarketPlace\Repositories\Branch\BranchRepository;
 use App\Domain\MarketPlace\Repositories\Cart\CartRepository;
@@ -63,6 +64,8 @@ class OrderAction
 
 
         if (isset($data["promocode"]) || $cart->promocode) {
+            $generalSetting = GeneralSetting::first();
+            if ($cart->subtotal < $generalSetting?->min_order_price) return ["status" => false, 'message' => 'Error:' . __('admin::home.theorderislessthantheminimumprice'), "data" => $generalSetting?->min_order_price];
             $check = Promocode::query()
                 ->where('status', '=', 'active')
                 ->where('usages_left', '>', 0)
@@ -186,6 +189,15 @@ class OrderAction
                     'merchant_branch_id' => $order->merchant_branch_id,
                     'item_id' => $cartItem->item_id,
                 ]);
+
+                // Deduct stock from item
+                if ($cartItem->item_id) {
+                    $item = Item::find($cartItem->item_id);
+                    if ($item && $item->stock !== null) {
+                        $item->stock = max(0, $item->stock - $cartItem->qty);
+                        $item->save();
+                    }
+                }
 
                 foreach ($cartItem->cartChoices as $choice) {
                     $orderItem->orderChoices()->create([

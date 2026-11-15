@@ -17,6 +17,7 @@ class Show extends Component
     public $sub_category;
     public $child_category;
     public $default_price;
+    public $stock;
     public $calories;
     public $preparing_time;
     public $status;
@@ -38,6 +39,7 @@ class Show extends Component
         $this->title = $product->getTranslations('title');
         $this->description = $product->getTranslations('description');
         $this->default_price = $product->default_price;
+        $this->stock = $product->stock;
         $this->calories = $product->calories;
         $this->preparing_time = $product->preparing_time;
         $this->status = $product->status?->value ?? $product->status;

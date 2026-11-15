@@ -98,7 +98,13 @@
                 </div>
             @endif
 
-            <label class="form-label mt-3 text-info">  {{ __('marketplace::home.iban_message') }} : <a href="mailto:{{config('mail.from.address')}}" style="color: #0a58ca">{{config('mail.from.address')}}</a> . </label>
+            @php($supportEmail = app(\App\Domain\AppBase\Actions\Home\FetchFooterSupportEmailAction::class)->handle())
+            <label class="form-label mt-3 text-info">
+                {{ __('marketplace::home.iban_message') }}
+                @if($supportEmail)
+                    : <a href="mailto:{{ $supportEmail }}" style="color: #0a58ca">{{ $supportEmail }}</a> .
+                @endif
+            </label>
         </form>
     </div>
 
