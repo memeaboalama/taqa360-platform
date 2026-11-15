@@ -16,7 +16,8 @@
             }, 1500);
         </script>
     @else
-    <form method="POST" wire:submit.prevent="store">
+    <form method="POST" action="{{ route('driver:login.submit') }}" wire:submit.prevent="store">
+        @csrf
         <div class="row gy-3">
 
             <div class="col-xl-12">
@@ -24,6 +25,7 @@
                 <input type="email"
                        class="form-control form-control-lg"
                        id="signup-email"
+                       name="email"
                        wire:model.defer="email"
                        placeholder="@lang('driver::home.Email Address')">
                 @error('email') <span class="d-block text-danger">{{ $message }}</span>@enderror
@@ -33,6 +35,7 @@
                 <label for="signup-password" class="form-label text-default d-block fw-bolder">@lang('driver::home.Password')<a href="{{ route('driver:forgetPassword') }}" class="float-end text-danger">@lang('driver::home.Forget password ?')</a></label>
                 <div class="input-group">
                     <input type="password" class="form-control form-control-lg" id="signup-password"
+                           name="password"
                            wire:model.defer="password"
                            placeholder="***********">
                     <button class="btn btn-light" onclick="createpassword('signup-password',this)" type="button"

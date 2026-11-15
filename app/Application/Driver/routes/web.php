@@ -50,6 +50,9 @@ use Application\Driver\Controllers\Finance\Reports\Orders\OrderReportController;
             Route::get('/login', [AuthController::class, 'getLoginPage'])
                 ->middleware('driver.redirect')
                 ->name('login');
+            Route::post('/login', [AuthController::class, 'login'])
+                ->middleware('driver.redirect')
+                ->name('login.submit');
 
             Route::get('/welcome', [WelcomeController::class, 'getWelcomePage'])
                 ->middleware('driver.redirect')
