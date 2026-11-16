@@ -8,6 +8,9 @@ use App\Domain\MarketPlace\Actions\Order\OrderAction;
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use App\Domain\MarketPlace\Models\CollectionSetting;
 use App\Domain\MarketPlace\Models\OrderSettlement;
+use App\Domain\MarketPlace\Models\PaymentCorrectionRequest;
+use App\Domain\MarketPlace\Services\OrderPaymentLedger;
+use App\Domain\MarketPlace\Services\SettlementWorkflow;
 use App\Domain\MarketPlace\Repositories\Order\MerchantOrderRepository;
 use App\Application\Marketplace\Enums\MerchantOrderStatuses;
 use App\Application\Marketplace\Enums\MerchantOrderMarks;
@@ -30,8 +33,9 @@ class Read extends Component
     public $address;
     public $mark = MerchantOrderMarks::WHITE; //'white';
     public $admin_note;
-    public $settlementCorrectionAmount;
-    public $settlementCorrectionNote;
+    public $correctionMovementType;
+    public $correctionMovementId;
+    public $correctionReason;
 
     public $driver;
     public $drivers = [];
@@ -150,17 +154,26 @@ class Read extends Component
             return;
         }
 
-        $payment = $this->order->payment()->latest('id')->first();
-        if (MerchantOrder::resolvePaymentStatus($payment, 'unpaid', $this->order->payment_method) === 'paid') {
-            $this->alert('warning', __('admin::home.Payment Status paid'));
-            return;
-        }
-
         $timestamp = now()->toIso8601String();
         $amountFormat = number_format($amount / 100, 2) . ' SAR';
-        $this->payment = DB::transaction(fn () => $this->order->payment()->updateOrCreate(
-            ['payment_id' => 'COD-' . ($this->order->code ?: $this->order->id)],
-            [
+        $this->payment = DB::transaction(function () use ($amount, $timestamp, $amountFormat) {
+            $lockedOrder = MerchantOrder::whereKey($this->order->id)->lockForUpdate()->firstOrFail();
+            $lockedStatus = $lockedOrder->status instanceof MerchantOrderStatuses
+                ? $lockedOrder->status->value
+                : (string) $lockedOrder->status;
+            if ($lockedStatus !== MerchantOrderStatuses::PREVIOUS->value
+                || !MerchantOrder::isCashOnDeliveryMethod($lockedOrder->payment_method)) {
+                return null;
+            }
+
+            $payment = $lockedOrder->payment()->latest('id')->first();
+            if (MerchantOrder::resolvePaymentStatus($payment, 'unpaid', $lockedOrder->payment_method) === 'paid') {
+                return null;
+            }
+
+            return $lockedOrder->payment()->updateOrCreate(
+                ['payment_id' => 'COD-' . ($lockedOrder->code ?: $lockedOrder->id)],
+                [
                 'status' => 'paid',
                 'amount' => $amount,
                 'currency' => 'SAR',
@@ -170,97 +183,153 @@ class Read extends Component
                 'amountFormat' => $amountFormat,
                 'capturedFormat' => $amountFormat,
                 'source_type' => 'cash',
+                'source_name' => auth('admin')->user()?->name ?: __('ecommerce::ecommerce.admin_collector'),
+                'source_number' => (string) auth('admin')->id(),
                 'source_message' => MerchantOrder::COD_COLLECTION_CONFIRMATION_MESSAGE,
-                'user_id' => $this->order->user_id,
-                'channel' => $this->order->channel,
+                'user_id' => $lockedOrder->user_id,
+                'channel' => $lockedOrder->channel,
                 'createdAt' => $timestamp,
                 'updatedAt' => $timestamp,
-            ]
-        ));
+                ]
+            );
+        });
+
+        if (!$this->payment) {
+            $this->alert('warning', __('admin::home.Payment Status paid'));
+            return;
+        }
 
         $this->emit('refreshDatatable');
         $this->alert('success', __('admin::home.cash_collection_confirmed'));
     }
 
-    public function reviewSettlement(): void
+    public function reviewSettlement(SettlementWorkflow $workflow): void
     {
         if (!CollectionSetting::adminCan('review')) {
             abort(403);
         }
 
         $settlement = $this->order->settlement()->first();
-        if (!$settlement || $settlement->status !== 'pending_review') {
-            $this->alert('error', 'حالة التوريد لا تسمح بالمراجعة.');
+        if (!$settlement) {
+            $this->alert('error', 'لا توجد تسوية مرتبطة بهذا الطلب.');
             return;
         }
 
-        $settlement->update([
-            'status' => 'reviewed',
-            'reviewed_by' => auth('admin')->id(),
-            'reviewed_at' => now(),
-        ]);
+        try {
+            $workflow->review($settlement->id, auth('admin')->user());
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->alert('warning', $exception->errors()['settlement'][0] ?? $exception->getMessage());
+            return;
+        }
         $this->order->load('settlement');
         $this->alert('success', 'تمت مراجعة التوريد.');
     }
 
-    public function approveSettlement(): void
+    public function approveSettlement(SettlementWorkflow $workflow): void
     {
         if (!CollectionSetting::adminCan('approve')) {
             abort(403);
         }
 
         $settlement = $this->order->settlement()->first();
-        if (!$settlement || $settlement->status !== 'reviewed') {
-            $this->alert('error', 'يجب مراجعة التوريد قبل اعتماده.');
+        if (!$settlement) {
+            $this->alert('error', 'لا توجد تسوية مرتبطة بهذا الطلب.');
             return;
         }
 
-        $settlement->update([
-            'status' => 'approved',
-            'approved_by' => auth('admin')->id(),
-            'approved_at' => now(),
-        ]);
+        try {
+            $workflow->approve($settlement->id, auth('admin')->user());
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->alert('warning', $exception->errors()['settlement'][0] ?? $exception->getMessage());
+            return;
+        }
         $this->order->load('settlement');
         $this->alert('success', 'تم اعتماد التوريد.');
     }
 
-    public function correctSettlement(): void
+    public function beginCorrectionRequest(string $movementType, int $movementId): void
     {
         if (!CollectionSetting::adminCan('correct')) {
             abort(403);
         }
 
-        $settlement = $this->order->settlement()->first();
-        if (!$settlement || $settlement->status !== 'approved') {
-            $this->alert('error', 'لا يمكن تصحيح تسوية غير معتمدة.');
+        $this->assertCorrectionMovement($movementType, $movementId);
+        $hasPendingRequest = PaymentCorrectionRequest::query()
+            ->where('order_id', $this->order->id)
+            ->where('movement_type', $movementType)
+            ->where('movement_id', $movementId)
+            ->where('status', 'pending')
+            ->exists();
+        if ($hasPendingRequest) {
+            $this->alert('warning', 'يوجد طلب تصحيح قيد المراجعة لهذه الحركة.');
             return;
         }
 
-        DB::transaction(function () use ($settlement): void {
-            $lockedSettlement = OrderSettlement::whereKey($settlement->id)->lockForUpdate()->firstOrFail();
-            $existingAdjustment = (float) $lockedSettlement->corrections()->sum('amount');
-            $minimum = -(float) $lockedSettlement->amount - $existingAdjustment;
-            $maximum = (float) $lockedSettlement->amount - $existingAdjustment;
-            $validated = $this->validate([
-                'settlementCorrectionAmount' => [
-                    'required',
-                    'numeric',
-                    'between:' . $minimum . ',' . $maximum,
-                ],
-                'settlementCorrectionNote' => ['required', 'string', 'max:1000'],
-            ]);
+        $this->correctionMovementType = $movementType;
+        $this->correctionMovementId = $movementId;
+        $this->correctionReason = null;
+        $this->resetErrorBag('correctionReason');
+    }
 
-            $lockedSettlement->corrections()->create([
-                'corrected_by' => auth('admin')->id(),
-                'amount' => $validated['settlementCorrectionAmount'],
-                'reason' => $validated['settlementCorrectionNote'],
-                'created_at' => now(),
+    public function submitCorrectionRequest(): void
+    {
+        if (!CollectionSetting::adminCan('correct')) {
+            abort(403);
+        }
+
+        $validated = $this->validate([
+            'correctionMovementType' => ['required', 'in:collection,refund'],
+            'correctionMovementId' => ['required', 'integer', 'min:1'],
+            'correctionReason' => ['required', 'string', 'max:1000'],
+        ]);
+        $this->assertCorrectionMovement($validated['correctionMovementType'], (int) $validated['correctionMovementId']);
+
+        $request = PaymentCorrectionRequest::query()
+            ->where('order_id', $this->order->id)
+            ->where('movement_type', $validated['correctionMovementType'])
+            ->where('movement_id', $validated['correctionMovementId'])
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$request) {
+            PaymentCorrectionRequest::create([
+                'order_id' => $this->order->id,
+                'movement_type' => $validated['correctionMovementType'],
+                'movement_id' => $validated['correctionMovementId'],
+                'reason' => $validated['correctionReason'],
+                'requested_by' => auth('admin')->id(),
+                'status' => 'pending',
             ]);
-        });
-        $this->order->load('settlement.corrections');
-        $this->settlementCorrectionAmount = null;
-        $this->settlementCorrectionNote = null;
-        $this->alert('success', 'تم حفظ التصحيح المالي كسجل مستقل دون تغيير مبلغ التحصيل.');
+        }
+
+        $this->correctionMovementType = null;
+        $this->correctionMovementId = null;
+        $this->correctionReason = null;
+        $this->alert($request ? 'warning' : 'success', $request
+            ? 'يوجد طلب تصحيح قيد المراجعة لهذه الحركة.'
+            : 'تم إرسال طلب التصحيح.');
+    }
+
+    private function assertCorrectionMovement(string $movementType, int $movementId): void
+    {
+        if ($movementType === 'collection') {
+            $exists = Payment::query()
+                ->where('payable_id', $this->order->id)
+                ->whereIn('payable_type', [
+                    $this->order->getMorphClass(),
+                    MerchantOrder::class,
+                    'App\\Domain\\MarketPlace\\Models\\MerchantOrder',
+                ])
+                ->whereKey($movementId)
+                ->whereIn('status', ['paid', 'success'])
+                ->exists();
+        } elseif ($movementType === 'refund') {
+            $exists = $this->order->refundpayment()->whereKey($movementId)->exists();
+        } else {
+            abort(404);
+        }
+
+        abort_unless($exists, 404);
     }
 
     public function render()
@@ -270,13 +339,26 @@ class Read extends Component
         }
         $this->marks = collect(MerchantOrderMarks::cases());
 
+        $order = MerchantOrder::with([
+            'settlement.driver',
+            'settlement.corrections.admin',
+            'refundpayment',
+        ])->findOrFail($this->order->id);
+        $paymentLedger = app(OrderPaymentLedger::class)->forOrder($order);
+        $correctionRequests = PaymentCorrectionRequest::with('requestedBy')
+            ->where('order_id', $order->id)
+            ->latest('id')
+            ->get();
+
         return view('admin::livewire.order.table.read', [
-            'order' => $this->order,
+            'order' => $order,
             'orderItems' => $this->orderItems,
             'orderUser' => $this->orderUser,
             'address' => $this->address,
             'driver' => $this->driver,
-            'payment' => $this->payment,
+            'payment' => $paymentLedger['payment'],
+            'paymentLedger' => $paymentLedger,
+            'correctionRequests' => $correctionRequests,
         ]);
     }
     public function updateNote(): void

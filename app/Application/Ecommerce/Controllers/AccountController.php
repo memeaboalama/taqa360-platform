@@ -7,6 +7,7 @@ use App\Application\Marketplace\Enums\MerchantOrderStatuses;
 use App\Application\Educational\Enums\EducationalRequestStatus;
 use Domain\EducationalRequest\Models\EducationalRequest;
 use App\Domain\MarketPlace\Models\MerchantOrder;
+use App\Domain\MarketPlace\Services\OrderPaymentLedger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
@@ -72,15 +73,17 @@ class AccountController extends Controller
     public function order($id)
     {
         $user = Auth::user();
-        $order = $user->orders()->with('orderItems')->findOrFail($id);
+        $order = $user->orders()->with(['orderItems', 'address.city', 'address.country', 'address.distract'])->findOrFail($id);
+        $paymentLedger = app(OrderPaymentLedger::class)->forOrder($order);
 
         if (request()->header('X-Up-Target') == '.dashboard-content') {
-            return view('ecommerce::pages.account._order_details', compact('order'));
+            return view('ecommerce::pages.account._order_details', compact('order', 'paymentLedger'));
         }
         return view('ecommerce::pages.account.account-section-page', [
             'section' => 'order_details',
             'user' => $user,
             'order' => $order,
+            'paymentLedger' => $paymentLedger,
         ]);
     }
 

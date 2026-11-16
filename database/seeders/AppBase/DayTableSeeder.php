@@ -3,9 +3,7 @@
 namespace Database\Seeders\AppBase;
 
 use Domain\MarketPlace\Models\Day;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Schema;
 
 
 class DayTableSeeder extends Seeder
@@ -17,12 +15,6 @@ class DayTableSeeder extends Seeder
      */
     public function run()
     {
-        Schema::disableForeignKeyConstraints();
-        Day::truncate();
-        Schema::enableForeignKeyConstraints();
-
-        Model::unguard();
-
         $data = [
             [
                 'name'  =>  [
@@ -74,7 +66,20 @@ class DayTableSeeder extends Seeder
 
             ],
         ];
-        foreach ($data as $record)
-            Day::updateOrCreate($record);
+        $existingDays = Day::query()->get();
+
+        foreach ($data as $record) {
+            $day = $existingDays->first(
+                fn (Day $day) => $day->getTranslation('name', 'en') === $record['name']['en']
+            );
+
+            if ($day) {
+                $day->setTranslations('name', $record['name']);
+                $day->save();
+                continue;
+            }
+
+            $existingDays->push(Day::create($record));
+        }
     }
 }

@@ -15,6 +15,7 @@ use App\Support\Enum\StatusEnum;
 use Domain\MarketPlace\Models\MarketPlaceCategory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -91,7 +92,12 @@ class Basic extends Component
             'description.ar' => 'nullable|string|min:2|max:200',
             'marketplace_category_id' => 'required|numeric|exists:market_place_categories,id',
             'main_category_ids' => 'nullable|array',
-            'main_category_ids.*' => 'integer|exists:main_categories,id',
+            'main_category_ids.*' => [
+                'integer',
+                Rule::exists('main_categories', 'id')
+                    ->where('type', MainCategoryType::MARKET->value)
+                    ->where('status', StatusEnum::ACTIVE->value),
+            ],
             'app_logo' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ];
     }
@@ -105,6 +111,7 @@ class Basic extends Component
             'company_name.ar' => trans('marketplace::home.Restaurant Name'),
             'tax_number' => trans('marketplace::home.Tax Number'),
             'marketplace_category_id' => trans('marketplace::home.category'),
+            'main_category_ids' => trans('marketplace::home.item_categories'),
             'city_id' => trans('marketplace::home.City'),
             'distract_id' => trans('marketplace::home.District'),
             'description.en' => trans('marketplace::home.Description'),

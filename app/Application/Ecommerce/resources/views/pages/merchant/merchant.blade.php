@@ -165,6 +165,46 @@
             gap: 6px
         }
 
+        .merchant-branches {
+            margin-bottom: 22px;
+            padding: 18px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: var(--shadow)
+        }
+
+        .merchant-branches h2 {
+            margin: 0 0 12px;
+            font-size: 17px;
+            font-weight: 800
+        }
+
+        .branch-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px
+        }
+
+        .branch-card {
+            padding: 12px;
+            border: 1px solid var(--line);
+            border-radius: 8px
+        }
+
+        .branch-card h3 {
+            margin: 0 0 6px;
+            font-size: 14px;
+            font-weight: 700
+        }
+
+        .branch-card p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.7
+        }
+
         /* --- Store attachments --- */
         .attachments {
             background: #fff;
@@ -636,6 +676,31 @@
                     </div>
                 </div>
             </section>
+            @if($branches->isNotEmpty())
+                <section class="merchant-branches" aria-labelledby="merchant-branches-title">
+                    <h2 id="merchant-branches-title">@lang('ecommerce::ecommerce.branches')</h2>
+                    <div class="branch-list">
+                        @foreach($branches as $branch)
+                            @php
+                                $branchAddress = $title($branch->address_name);
+                                $branchLocation = implode('،', array_unique(array_filter([
+                                    $title($branch->city?->title),
+                                    $title($branch->region?->title),
+                                ])));
+                            @endphp
+                            <article class="branch-card">
+                                <h3>{{ $title($branch->title) ?: __('ecommerce::ecommerce.branch') }}</h3>
+                                @if($branchAddress && $branchAddress !== $branchLocation)
+                                    <p>{{ $branchAddress }}</p>
+                                @endif
+                                @if($branchLocation)
+                                    <p>{{ $branchLocation }}</p>
+                                @endif
+                            </article>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
             <div class="layout">
                 <aside class="sidebar">
                     <div class="filter-sidebar">

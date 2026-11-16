@@ -548,15 +548,43 @@
                         </a>
                     </li>
                 @endAdminHasRole
-                @AdminHasRole(['admin', 'show delivery fees_settings', 'edit delivery fees_settings'])
-                    <li class="slide">
-                        <a href="{{ route('admin:collection-settings.index') }}"
-                           class="side-menu__item {{ isActive(route('admin:collection-settings.index')) }}">
+                @if(auth('admin')->user()?->type === 'admin'
+                    || auth('admin')->user()?->hasAnyPermission(['admin', 'show delivery fees_settings', 'edit delivery fees_settings'])
+                    || \App\Domain\MarketPlace\Models\CollectionSetting::adminCan('view'))
+                    <li class="slide has-sub">
+                        <a href="javascript:void(0);" class="side-menu__item">
                             <i class="bx bx-wallet side-menu__icon"></i>
-                            <span class="side-menu__label">التحصيل والتسويات</span>
+                            <span class="side-menu__label">{{ __('admin::home.collection_and_settlements') }}</span>
+                            <i class="fe fe-chevron-right side-menu__angle"></i>
                         </a>
+                        <ul class="slide-menu child1">
+                            @if(auth('admin')->user()?->type === 'admin'
+                                || auth('admin')->user()?->hasAnyPermission(['admin', 'show delivery fees_settings', 'edit delivery fees_settings']))
+                                <li class="slide">
+                                    <a href="{{ route('admin:collection-settings.index') }}"
+                                       class="side-menu__item {{ isActive(route('admin:collection-settings.index')) }}">
+                                        {{ __('admin::home.collection_settings') }}
+                                    </a>
+                                </li>
+                            @endif
+                            <li class="slide">
+                                <a href="{{ route('admin:driver-custody.index') }}"
+                                   class="side-menu__item {{ isActive(route('admin:driver-custody.index')) || request()->routeIs('admin:driver-custody.show') ? 'active' : '' }}">
+                                    {{ __('admin::home.driver_custody') }}
+                                </a>
+                            </li>
+                            @if(\App\Domain\MarketPlace\Models\CollectionSetting::adminCan('review')
+                                || \App\Domain\MarketPlace\Models\CollectionSetting::adminCan('approve'))
+                                <li class="slide">
+                                    <a href="{{ route('admin:driver-settlements.index') }}"
+                                       class="side-menu__item {{ request()->routeIs('admin:driver-settlements.*') ? 'active' : '' }}">
+                                        {{ __('admin::home.driver_settlements') }}
+                                    </a>
+                                </li>
+                            @endif
+                        </ul>
                     </li>
-                @endAdminHasRole
+                @endif
             </ul>
             <div class="slide-right" id="slide-right">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="#7b8191" width="24" height="24" viewBox="0 0 24 24">

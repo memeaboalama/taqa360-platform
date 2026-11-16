@@ -6,6 +6,7 @@ use App\Application\Admin\Controllers\Merchant\MerchantOrdersController;
 use App\Application\Admin\Controllers\ProviderController;
 use App\Application\Admin\Controllers\ServicesController;
 use App\Application\Admin\Controllers\SettlementProofController;
+use App\Application\Admin\Controllers\DriverCustodyController;
 use App\Application\Admin\Controllers\OrderController;
 use App\Application\Admin\Controllers\User\UserController;
 use App\Domain\MarketPlace\Models\MerchantOrder;
@@ -252,8 +253,20 @@ Route::group(
         });
         Route::get('/collection-settings', fn () => view('admin::pages.collection-settings.index'))
             ->name('collection-settings.index');
+        Route::get('/driver-custody', [DriverCustodyController::class, 'index'])
+            ->name('driver-custody.index');
+        Route::get('/driver-custody/{driverId}/statement', [DriverCustodyController::class, 'show'])
+            ->whereNumber('driverId')
+            ->name('driver-custody.show');
+        Route::get('/driver-settlements', [DriverCustodyController::class, 'settlements'])
+            ->name('driver-settlements.index');
+        Route::get('/driver-settlements/{settlementId}', [DriverCustodyController::class, 'settlement'])
+            ->whereNumber('settlementId')
+            ->name('driver-settlements.show');
         Route::get('/settlements/{settlement}/proof', [SettlementProofController::class, 'show'])
             ->name('settlements.proof');
+        Route::get('/settlements/{settlement}/history/{history}/proof', [SettlementProofController::class, 'showHistory'])
+            ->name('settlements.history.proof');
 
         Route::prefix('towing/cities')->as('towing.cities.')->group(function () {
             Route::get('/', [TowingCityController::class, 'index'])->name('index');

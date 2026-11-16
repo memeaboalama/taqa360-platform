@@ -4,6 +4,9 @@ namespace Application\Admin\Livewire\RefundPayment\Modal;
 
 use App\Domain\Admin\Actions\Dashboard\RefundPayment\StoreRefundPaymentAction;
 use App\Domain\MarketPlace\Models\MerchantOrder;
+use App\Domain\MarketPlace\Models\CollectionSetting;
+use App\Domain\MarketPlace\Models\OrderSettlement;
+use App\Domain\MarketPlace\Services\DriverCustodyLedger;
 use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
@@ -28,6 +31,7 @@ class Create extends Component
         $currency = 'SAR',
         $status = '',
         $note = null,
+        $fundedBy = 'platform',
         $user_id = null,
         $user_name = null,
         $refund_payment_amount_last = 0,
@@ -57,6 +61,7 @@ class Create extends Component
             'note' => 'required|string',
             'user_name' => 'required|string',
             'calculated_on' => 'required|string|in:company,store,delivery',
+            'fundedBy' => 'required|string|in:platform,merchant,driver',
         ];
     }
 
@@ -77,11 +82,15 @@ class Create extends Component
         $this->merchant_name = $order?->merchant_name;
         $this->status = $order?->status?->trans();
         $this->refund_payment_amount_last = $order?->refundpayment?->sum('amount');
+        $this->fundedBy = 'platform';
     }
-    public function store(StoreRefundPaymentAction $storeRefundPaymentAction): void
+    public function store(
+        StoreRefundPaymentAction $storeRefundPaymentAction,
+        DriverCustodyLedger $custodyLedger
+    ): void
     {
         $data = $this->validate();
-        $order = MerchantOrder::with(['refPayment', 'refundpayment'])->find($data['order_id']);
+        $order = MerchantOrder::with(['refPayment', 'refundpayment', 'settlement'])->find($data['order_id']);
 
         if (
             !$order
@@ -94,18 +103,52 @@ class Create extends Component
             ]);
         }
 
+        if ($data['fundedBy'] === 'driver' && !CollectionSetting::adminCan('correct')) {
+            abort(403);
+        }
+
         $refundedAmount = (float) ($order->refundpayment?->sum('amount') ?? 0);
         $paymentAmount = (float) $order->refPayment->amount / 100;
         if ($refundedAmount + (float) $data['amount'] <= $paymentAmount) {
             $this->messageFlag = false;
             $this->type = 'toWallet';
             $data['type'] = 'toWallet';
+            $data['funded_by'] = $data['fundedBy'];
             $this->orderNew = $order;
             try {
-                DB::beginTransaction();
-                $walletOrderAction = new WalletOrderAction();
-                $walletOrderAction->add_wallet_refund_payment($this->orderNew, "Wallet Refund Payment", $this->amount);
-                $storeRefundPaymentAction->handle($data);
+                DB::transaction(function () use ($data, $order, $custodyLedger, $storeRefundPaymentAction): void {
+                    if ($data['fundedBy'] === 'driver') {
+                        $settlement = OrderSettlement::query()
+                            ->where('order_id', $order->id)
+                            ->lockForUpdate()
+                            ->first();
+
+                        if (!$settlement || !$settlement->driver_id || $settlement->status === 'approved') {
+                            throw ValidationException::withMessages([
+                                'fundedBy' => 'لا يمكن الخصم من عهدة السائق بعد اعتماد التوريد أو دون تسوية مرتبطة.',
+                            ]);
+                        }
+
+                        $availableCustody = $custodyLedger->balanceForOrder($order->id, $settlement->driver_id);
+                        if ((float) $data['amount'] > $availableCustody) {
+                            throw ValidationException::withMessages([
+                                'amount' => 'مبلغ الاسترداد أكبر من الرصيد المتاح في عهدة السائق لهذا الطلب.',
+                            ]);
+                        }
+
+                        $data['driver_id'] = $settlement->driver_id;
+                    } else {
+                        $data['driver_id'] = null;
+                    }
+
+                    $walletOrderAction = new WalletOrderAction();
+                    $walletOrderAction->add_wallet_refund_payment(
+                        $order,
+                        'Wallet Refund Payment',
+                        $data['amount']
+                    );
+                    $storeRefundPaymentAction->handle($data);
+                });
                 $this->emit('refreshDatatable');
                 $this->emit('closeModal', '#createRefundPayment');
                 $this->alert('success', 'RefundPayment Add Successfully');
@@ -126,11 +169,13 @@ class Create extends Component
                     'status',
                     'merchant_name',
                     'calculated_on',
+                    'fundedBy',
                 );
-                DB::commit();
+            } catch (ValidationException $ex) {
+                throw $ex;
             } catch (\Exception $ex) {
-                DB::rollBack();
                 Log::error($ex);
+                $this->alert('error', 'تعذر حفظ الاسترداد، لم يتم تسجيل أي أثر مالي.');
             }
         } else {
             $this->messageFlag = true;

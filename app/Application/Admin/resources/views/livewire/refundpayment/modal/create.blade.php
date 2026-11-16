@@ -117,6 +117,17 @@
                                                     class="text-danger d-block mt-2">{{ $message }}</span> @enderror
 
                                             </div> 
+                                            <div class="col-xl-6">
+                                                <label for="fundedBy" class="form-label text-black">{{ __('admin::home.refund_funding_source') }}</label>
+                                                <select id="fundedBy" class="form-select" wire:model.defer="fundedBy">
+                                                    <option value="platform">{{ __('admin::home.refund_funded_by_platform') }}</option>
+                                                    <option value="merchant">{{ __('admin::home.refund_funded_by_merchant') }}</option>
+                                                    @if(\App\Domain\MarketPlace\Models\CollectionSetting::adminCan('correct'))
+                                                        <option value="driver">{{ __('admin::home.refund_funded_by_driver') }}</option>
+                                                    @endif
+                                                </select>
+                                                @error('fundedBy') <span class="text-danger d-block mt-2">{{ $message }}</span> @enderror
+                                            </div>
                                             <div class="col-xl-6" >
                                                 <label for="note"
                                                        class="form-label text-black">{{__('admin::home.RefundpaymentNote')}} <span class="text-danger">*</span></label>
@@ -149,6 +160,7 @@
                                 <tr>
                                     <th scope="col">@lang('admin::home.RefundpaymentAmount')</th>
                                     <th scope="col">@lang('admin::home.RefundpaymentNote')</th>
+                                    <th scope="col">@lang('admin::home.refund_funding_source')</th>
                                     <th scope="col">@lang('admin::home.Date')</th>
                                 </tr>
                                 </thead>
@@ -160,6 +172,7 @@
 
                                         <td> {{ number_format($item?->amount, 2) }} @lang('admin::home.SAR')</td>
                                         <td>{{ $item?->note }} </td>
+                                        <td>{{ __('admin::home.refund_funded_by_' . ($item?->funded_by ?: 'platform')) }}</td>
                                         <td>{{ $item?->created_at }} </td>
 
                                     </tr>

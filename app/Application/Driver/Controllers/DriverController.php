@@ -58,6 +58,25 @@ class DriverController extends Controller
         return view('driver::pages.home.index', compact('driver', 'stats', 'recentOrders'));
     }
 
+    public function myCustody()
+    {
+        $driver = Auth::guard('driver')->user();
+        if (!$driver) {
+            return redirect(RouteServiceProvider::DRIVER_LOGIN);
+        }
+
+        return view('driver::pages.custody.index', compact('driver'));
+    }
+
+    public function mySettlements()
+    {
+        if (!Auth::guard('driver')->user()) {
+            return redirect(RouteServiceProvider::DRIVER_LOGIN);
+        }
+
+        return view('driver::pages.settlement.index');
+    }
+
     public function acceptOrder($id)
     {
         $driver = Auth::guard('driver')->user();

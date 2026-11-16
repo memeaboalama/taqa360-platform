@@ -130,9 +130,16 @@ class Update extends Component
 
     public function store(UpdateItemAction $updateItemAction): void
     {
-       // $this->default_price=collect($this->item_prices)->where('type_service_id', 1)[0]["price"]??0;
         $data = $this->validate(attributes: $this->nickNames());
         DB::beginTransaction();
+        
+        foreach ($this->item_prices as &$itemPrice) {
+            if (empty($itemPrice['price']) || $itemPrice['price'] == 0) {
+                $itemPrice['price'] = $this->default_price ?? 0;
+            }
+        }
+        unset($itemPrice);
+        
         DB::table('item_prices')->where(['item_id' => $this->model_id])->delete();
         $updateItemAction->handle($this->model_id, $data);
         $this->emit('closeModal', '#updateItem');

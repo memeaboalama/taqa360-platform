@@ -79,6 +79,10 @@ use Application\Driver\Controllers\Finance\Reports\Orders\OrderReportController;
             Route::group(['middleware' => ['driver:driver']], function () {
                 Route::get('/home', [DriverController::class, 'getHomePage'])
                     ->name('home');
+                Route::get('/my-custody', [DriverController::class, 'myCustody'])
+                    ->name('my-custody');
+                Route::get('/my-settlements', [DriverController::class, 'mySettlements'])
+                    ->name('my-settlements');
                 Route::get('/support', fn () => view('driver::pages.profile.support.send'))
                     ->name('sendMessage');
                 Route::post('/orders/{id}/accept', [DriverController::class, 'acceptOrder'])

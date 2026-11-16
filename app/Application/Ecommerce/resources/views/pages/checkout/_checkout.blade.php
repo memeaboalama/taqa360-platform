@@ -155,9 +155,12 @@
 
                                             <div class="form-field">
                                                 <label>@lang('ecommerce::ecommerce.district')</label>
-                                                <select name="new_address_district_id" class="compact-input {{ $errors->has('new_address_district_id') ? 'is-invalid' : '' }}" id="new-address-district">
-                                                    <option value="">@lang('ecommerce::ecommerce.select_district')</option>
-                                                </select>
+                                                <input type="text" name="new_address_district_name"
+                                                       class="compact-input {{ $errors->has('new_address_district_name') || $errors->has('new_address_district_id') ? 'is-invalid' : '' }}"
+                                                       id="new-address-district"
+                                                       value="{{ old('new_address_district_name', old('new_address_district_id')) }}"
+                                                       placeholder="@lang('ecommerce::ecommerce.district')">
+                                                @error('new_address_district_name') <span class="error-msg">{{ $message }}</span> @enderror
                                                 @error('new_address_district_id') <span class="error-msg">{{ $message }}</span> @enderror
                                             </div>
 

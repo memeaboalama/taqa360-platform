@@ -82,8 +82,11 @@
         return { color: getComputedStyle(icon || btn).color, bg: '' };
     }
 
-    function btnSpinnerHtml(color) {
-        return '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);line-height:0;"><span class="spinner-border" role="status" aria-hidden="true" style="width:0.8rem;height:0.8rem;border-width:0.15rem;color:' + color + ';"></span></span>';
+    function btnSpinnerHtml(color, centered = true) {
+        const wrapperStyle = centered
+            ? 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);line-height:0;'
+            : 'display:inline-flex;line-height:0;';
+        return '<span style="' + wrapperStyle + '"><span class="spinner-border" role="status" aria-hidden="true" style="width:0.8rem;height:0.8rem;border-width:0.15rem;color:' + color + ';"></span></span>';
     }
 
     document.addEventListener('click', function (event) {
@@ -158,7 +161,7 @@
         const originalBorder = link.style.borderColor;
         const c = btnSpinnerColor(link);
 
-        const spinnerHtml = btnSpinnerHtml(c.color);
+        const spinnerHtml = btnSpinnerHtml(c.color, false);
         const icon = link.querySelector('i');
         const originalHtml = icon ? icon.outerHTML : link.innerHTML;
 

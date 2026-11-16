@@ -65,11 +65,15 @@ class Read extends Component
 
     public function render()
     {
+        $paymentLedger = app(\App\Domain\MarketPlace\Services\OrderPaymentLedger::class)
+            ->forOrder($this->order);
+
         return view('marketplace::livewire.order.table.read', [
             'order' => $this->order,
             'orderServices' => $this->orderServices,
             'orderUser' => $this->orderUser,
             'address' => $this->address,
+            'paymentLedger' => $paymentLedger,
         ]);
     }
 }

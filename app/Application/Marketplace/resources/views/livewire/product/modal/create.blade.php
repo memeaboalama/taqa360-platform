@@ -263,7 +263,7 @@
 min="0" step="0.01"
 id="default_price"
 placeholder="{{ __('admin::main.fields.default_price') }}"
-wire:model.defer="default_price">
+wire:model="default_price">
 @error('default_price')
 <span class="text-danger d-block mt-2">{{ $message }}</span>
 @enderror
@@ -401,6 +401,11 @@ wire:model.defer="stock">
                                 <!-- Product Prices Tab -->
                                 <div class="tab-pane fade p-0 border-0" id="productPrices-tab-pane"
                                     role="tabpanel" aria-labelledby="productPrices-tab" tabindex="2" wire:ignore.self>
+                                    <div class="alert alert-info mb-3">
+                                        <strong>{{ __('admin::main.fields.default_price') }}:</strong>
+                                        {{ $default_price !== null && $default_price !== '' ? number_format((float) $default_price, 2) . ' ' . config('app.currency') : __('marketplace::home.price_not_set') }}
+                                        <div>{{ __('marketplace::home.service_price_hint') }}</div>
+                                    </div>
                                     <div class="row gy-3 mt-2">
                                         <div class="col-md-12">
                                             <div class="form-group">

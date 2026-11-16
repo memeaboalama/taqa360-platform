@@ -1,4 +1,8 @@
 <header class="app-header">
+    @php
+        $headerStoreName = resolve('_InitialMerchantCompanyName');
+        $headerAccountName = resolve('_InitialMerchantName');
+    @endphp
 
     <!-- Start::main-header-container -->
     <div class="main-header-container container-fluid">
@@ -77,11 +81,18 @@
                         <div class="me-3 me-0">
                             <span
                                 class="avatar avatar-md bg-secondary">
-                                {{ \Str::substr(resolve('_InitialMerchantName'),0,2) }}
+                                {{ \Str::substr($headerStoreName ?: $headerAccountName, 0, 2) }}
                             </span>
                         </div>
                         <div class="d-sm-block d-none">
-                            <p class="fw-semibold mb-0 lh-1">{{ resolve('_InitialMerchantName') }}</p>
+                            <p class="fw-semibold mb-0 lh-1">
+                                {{ __('marketplace::home.store_name') }}: {{ $headerStoreName ?: $headerAccountName }}
+                            </p>
+                            @if($headerAccountName)
+                                <small class="text-muted">
+                                    {{ __('marketplace::home.account_name') }}: {{ $headerAccountName }}
+                                </small>
+                            @endif
                         </div>
                     </div>
                 </a>

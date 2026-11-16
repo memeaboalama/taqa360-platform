@@ -121,7 +121,7 @@ class MerchantOrder extends Model
 
     public function settlement(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->hasOne(OrderSettlement::class, 'order_id');
+        return $this->hasOne(OrderSettlement::class, 'order_id')->latestOfMany();
     }
 
 

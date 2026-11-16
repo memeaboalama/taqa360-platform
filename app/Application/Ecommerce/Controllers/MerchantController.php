@@ -166,6 +166,11 @@ class MerchantController extends Controller
             ]);
         }
 
+        $data['branches'] = $merchant->branches()
+            ->where('status', 1)
+            ->with(['city', 'region'])
+            ->get();
+
         $data['favoriteIds'] = Auth::check()
             ? Favorite::where('user_id', Auth::id())->pluck('item_id')->flip()->all()
             : [];

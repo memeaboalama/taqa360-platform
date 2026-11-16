@@ -236,5 +236,11 @@
             </div>
         </div>
     </div>
+    <div class="col-12 mt-3">
+        @include('ecommerce::components.order-payment-ledger', [
+            'paymentLedger' => $paymentLedger,
+            'allowCorrection' => false,
+        ])
+    </div>
     <livewire:marketplace::order.modal.cancel />
 </div>

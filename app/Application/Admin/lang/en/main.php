@@ -33,7 +33,7 @@ return [
         'child_category' => 'Child Category',
         'merchant' => 'Merchant',
         'price' => 'Price',
-        'default_price' => 'Default Price',
+        'default_price' => 'Default sale price',
             'stock' => 'Stock Quantity',
             'stock_hint' => 'Leave empty if you do not track stock, or enter 0 when it runs out.',
             'stock_not_tracked' => 'Not tracked',

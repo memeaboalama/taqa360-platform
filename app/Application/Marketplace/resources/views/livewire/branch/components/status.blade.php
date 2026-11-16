@@ -1,7 +1,7 @@
-<div class="prism-toggle">
+<div class="prism-toggle d-flex align-items-center gap-2">
     <label for="active"
-           class="form-label text-success fw-bolder">{{ __('marketplace::home.status') }}</label>
-    <div class="custom-toggle-switch d-flex align-items-center mb-4 mt-3">
+           class="form-label text-success fw-bolder mb-0">{{ __('marketplace::home.status') }}</label>
+    <div class="custom-toggle-switch d-flex align-items-center m-0">
         <input id="active"
                type="checkbox" {{ $status  ? 'checked' : '' }}>
         <label for="active" class="label-success"

@@ -208,16 +208,20 @@ class CheckoutController extends Controller
             DB::beginTransaction();
 
             if ($isNewAddress) {
+                $districtInput = $data['new_address_district_name'] ?? $data['new_address_district_id'] ?? null;
                 $newAddress = UserAddress::create([
                     'user_id' => $user->id,
                     'title' => $data['new_address_title'],
                     'country_id' => $data['new_address_country_id'],
                     'city_id' => $data['new_address_city_id'],
-                    'district_id' => $data['new_address_district_id'] ?? null,
+                    'distract_id' => is_numeric($districtInput) ? (int) $districtInput : null,
+                    'district_name' => $districtInput,
                     'address' => $data['new_address_address'],
                     'latitude' => $data['new_address_latitude'] ?? 0,
                     'longitude' => $data['new_address_longitude'] ?? 0,
                 ]);
+
+                $newAddress->loadMissing(['country', 'city', 'distract']);
 
                 $data['address_id'] = $newAddress->id;
                 $data['address'] = $newAddress;

@@ -19,9 +19,7 @@
                     @endMerchantHasRole
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <livewire:marketplace::branch.table.all/>
-                    </div>
+                    <livewire:marketplace::branch.table.all/>
                 </div>
                 @MerchantHasRole(['create_branches'])
                 <livewire:marketplace::branch.modal.create/>

@@ -114,10 +114,17 @@ class Create extends Component
 
     public function store(StoreItemAction $storeItemAction): void
     {
-        // $this->default_price=collect($this->item_prices)->where('type_service_id', '1')[0]["price"]??0;
         $data = $this->validate(attributes: $this->nickNames());
         \Illuminate\Support\Facades\Log ::debug((array)$data);
         DB::beginTransaction();
+        
+        foreach ($this->item_prices as &$itemPrice) {
+            if (empty($itemPrice['price']) || $itemPrice['price'] == 0) {
+                $itemPrice['price'] = $this->default_price ?? 0;
+            }
+        }
+        unset($itemPrice);
+        
         $storeItemAction->handle($data ,$this->merchantId);
         $this->emit('closeModal', '#createItem');
         $this->alert('success', __('admin::home.data_saved_successfully'));

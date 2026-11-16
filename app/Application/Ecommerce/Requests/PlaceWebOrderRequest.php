@@ -55,6 +55,7 @@ class PlaceWebOrderRequest extends FormRequest
                     ->where('status', 'active'),
             ];
             $rules['new_address_district_id'] = ['nullable'];
+            $rules['new_address_district_name'] = ['nullable', 'string', 'max:255'];
             $rules['new_address_address'] = ['required', 'string', 'max:500'];
             $rules['new_address_latitude'] = ['required', 'numeric', 'between:-90,90'];
             $rules['new_address_longitude'] = ['required', 'numeric', 'between:-180,180'];
@@ -84,6 +85,8 @@ class PlaceWebOrderRequest extends FormRequest
     {
         return [
             'address_id' => __('ecommerce::ecommerce.address'),
+            'new_address_title' => __('ecommerce::ecommerce.address_title'),
+            'new_address_district_name' => __('ecommerce::ecommerce.district'),
         ];
     }
 

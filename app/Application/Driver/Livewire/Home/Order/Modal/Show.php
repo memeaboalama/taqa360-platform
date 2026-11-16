@@ -4,6 +4,7 @@ namespace Application\Driver\Livewire\Home\Order\Modal;
 
 use App\Application\Marketplace\Enums\MerchantOrderStatuses;
 use App\Domain\MarketPlace\Models\OrderSettlement;
+use App\Domain\MarketPlace\Services\SettlementWorkflow;
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -83,6 +84,23 @@ class Show extends Component
             'collection_config' => $order->collection_config ?? [],
             'settlement_status' => $order->settlement?->status,
             'settlement_method' => $order->settlement?->method,
+            'settlement_custody' => $order->settlement ? 'لدى السائق' : null,
+            'settlement_id' => $order->settlement?->id,
+            'settlement_reference' => $order->settlement?->reference,
+            'settlement_amount' => $order->settlement?->amount,
+            'settlement_recipient_name' => $order->settlement?->recipient_name,
+            'settlement_history' => $order->settlement?->histories()
+                ->with('actor')
+                ->get()
+                ->map(fn ($history) => [
+                    'action' => $history->action,
+                    'status_to' => $history->status_to,
+                    'note' => $history->note,
+                    'actor' => $history->actor?->name,
+                    'created_at' => $history->created_at?->format('Y-m-d H:i'),
+                ])
+                ->all() ?? [],
+            'payment_source_name' => $order->payment?->source_name,
             'note' => $order->note,
             'order_type' => $order->type_service_name(),
             'schedulable' => $order->schedulable,
@@ -90,8 +108,9 @@ class Show extends Component
             'from' => $order->from ? Carbon::parse($order->from)->format('H:i') : null,
             'to' => $order->to ? Carbon::parse($order->to)->format('H:i') : null,
         ];
-        $this->settlementMethod = $this->order['collection_config']['enabled_methods'][0] ?? null;
-        $this->settlementReference = null;
+        $this->settlementMethod = $this->order['settlement_method']
+            ?? ($this->order['collection_config']['enabled_methods'][0] ?? null);
+        $this->settlementReference = $this->order['settlement_reference'];
         $this->settlementProof = null;
 
         $this->items = $order->orderItems->map(function ($item) {
@@ -129,9 +148,25 @@ class Show extends Component
         $this->order['payment_label'] = $order->payment_label;
         $this->order['settlement_status'] = $order->settlement?->status;
         $this->order['settlement_method'] = $order->settlement?->method;
+        $this->order['settlement_custody'] = $order->settlement ? 'لدى السائق' : null;
+        $this->order['settlement_reference'] = $order->settlement?->reference;
+        $this->order['settlement_amount'] = $order->settlement?->amount;
+        $this->order['settlement_id'] = $order->settlement?->id;
+        $this->order['settlement_history'] = $order->settlement?->histories()
+            ->with('actor')
+            ->get()
+            ->map(fn ($history) => [
+                'action' => $history->action,
+                'status_to' => $history->status_to,
+                'note' => $history->note,
+                'actor' => $history->actor?->name,
+                'created_at' => $history->created_at?->format('Y-m-d H:i'),
+            ])
+            ->all() ?? [];
+        $this->order['payment_source_name'] = $order->payment?->source_name;
     }
 
-    public function submitSettlement(): void
+    public function submitSettlement(SettlementWorkflow $workflow): void
     {
         $orderId = $this->order['id'] ?? null;
         $driverId = auth()->guard('driver')->id();
@@ -146,8 +181,17 @@ class Show extends Component
             $this->alert('error', 'لا يمكن تسجيل التوريد لهذا الطلب.');
             return;
         }
-        if ($order->settlement()->exists()) {
-            $this->alert('warning', 'تم تسجيل التوريد لهذا الطلب مسبقًا.');
+        $existingSettlement = $order->settlement;
+        $isResubmission = $existingSettlement?->status === 'returned';
+        $isNewAfterRejection = $existingSettlement?->status === 'rejected';
+        if ($existingSettlement && !$isResubmission && !$isNewAfterRejection) {
+            $this->alert('warning', 'لا يمكن إرسال هذه التسوية مرة أخرى في حالتها الحالية.');
+            return;
+        }
+        $existingPayment = $order->payment()->latest('id')->first();
+        if (!$isResubmission && !$isNewAfterRejection
+            && MerchantOrder::resolvePaymentStatus($existingPayment, 'unpaid', $order->payment_method) === 'paid') {
+            $this->alert('warning', 'تم تسجيل التحصيل لهذا الطلب مسبقًا.');
             return;
         }
 
@@ -190,23 +234,52 @@ class Show extends Component
             }
         }
 
-        $recorded = DB::transaction(function () use ($order, $driverId, $config, $methodData, $validated, $proofPath): bool {
+        try {
+            $settlementId = DB::transaction(function () use (
+                $order,
+                $driverId,
+                $config,
+                $methodData,
+                $validated,
+                $proofPath,
+                $workflow
+            ): ?int {
             $lockedOrder = MerchantOrder::where('driver_id', $driverId)
                 ->whereKey($order->id)
                 ->lockForUpdate()
                 ->firstOrFail();
-            if ($lockedOrder->settlement()->exists()
-                || $lockedOrder->status !== MerchantOrderStatuses::PREVIOUS
+            if ($lockedOrder->status !== MerchantOrderStatuses::PREVIOUS
                 || !MerchantOrder::isCashOnDeliveryMethod($lockedOrder->payment_method)) {
-                return false;
+                return null;
+            }
+
+            $settlement = $lockedOrder->settlement()->lockForUpdate()->first();
+            $resubmitting = $settlement?->status === 'returned';
+            $newAfterRejection = $settlement?->status === 'rejected';
+            if ($settlement && !$resubmitting && !$newAfterRejection) {
+                return null;
             }
 
             $amount = round((float) $lockedOrder->total_after_vat, 2);
             if ($amount <= 0) {
-                return false;
+                return null;
             }
 
-            $lockedOrder->settlement()->create([
+            $existingPayment = $lockedOrder->payment()->latest('id')->first();
+            if ($resubmitting || $newAfterRejection) {
+                if ((int) $settlement->driver_id !== (int) $driverId
+                    || MerchantOrder::resolvePaymentStatus($existingPayment, 'unpaid', $lockedOrder->payment_method) !== 'paid') {
+                    return null;
+                }
+            } elseif (MerchantOrder::resolvePaymentStatus($existingPayment, 'unpaid', $lockedOrder->payment_method) === 'paid') {
+                return null;
+            }
+
+            $previousStatus = $resubmitting ? $settlement->status : null;
+            if ($resubmitting && !SettlementWorkflow::canTransition($settlement->status, 'pending_review')) {
+                return null;
+            }
+            $settlementAttributes = [
                 'driver_id' => $driverId,
                 'recipient' => $config['recipient'],
                 'method' => $validated['settlementMethod'],
@@ -217,14 +290,24 @@ class Show extends Component
                 'reference' => $validated['settlementReference'] ?? null,
                 'proof_path' => $proofPath,
                 'status' => 'pending_review',
-            ]);
+                'reviewed_by' => null,
+                'reviewed_at' => null,
+                'approved_by' => null,
+                'approved_at' => null,
+            ];
+            if ($resubmitting) {
+                $settlement->update($settlementAttributes);
+            } else {
+                $settlement = $lockedOrder->settlement()->create($settlementAttributes);
+            }
 
-            $timestamp = now()->toIso8601String();
-            $amountInHalalas = (int) round($amount * 100);
-            $amountFormat = number_format($amount, 2) . ' SAR';
-            $lockedOrder->payment()->updateOrCreate(
-                ['payment_id' => 'COD-' . ($lockedOrder->code ?: $lockedOrder->id)],
-                [
+            if (!$resubmitting && !$newAfterRejection) {
+                $timestamp = now()->toIso8601String();
+                $amountInHalalas = (int) round($amount * 100);
+                $amountFormat = number_format($amount, 2) . ' SAR';
+                $lockedOrder->payment()->updateOrCreate(
+                    ['payment_id' => 'COD-' . ($lockedOrder->code ?: $lockedOrder->id)],
+                    [
                     'status' => 'paid',
                     'amount' => $amountInHalalas,
                     'currency' => 'SAR',
@@ -234,18 +317,44 @@ class Show extends Component
                     'amountFormat' => $amountFormat,
                     'capturedFormat' => $amountFormat,
                     'source_type' => 'cash',
+                    'source_name' => $lockedOrder->driver?->name ?: __('ecommerce::ecommerce.driver'),
+                    'source_number' => (string) $driverId,
                     'source_message' => MerchantOrder::COD_COLLECTION_CONFIRMATION_MESSAGE,
                     'user_id' => $lockedOrder->user_id,
                     'channel' => $lockedOrder->channel,
                     'createdAt' => $timestamp,
                     'updatedAt' => $timestamp,
+                    ]
+                );
+            }
+
+            $workflow->recordSubmission(
+                $settlement,
+                auth('driver')->user(),
+                $resubmitting ? 'resubmitted' : 'submitted',
+                $previousStatus,
+                [
+                    'method' => $settlement->method,
+                    'reference' => $settlement->reference,
+                    'amount' => $settlement->amount,
+                    'recipient' => $settlement->recipient,
+                    'recipient_name' => $settlement->recipient_name,
+                    'instructions' => $settlement->instructions,
+                    'account_data' => $settlement->account_data,
+                    'proof_path' => $settlement->proof_path,
                 ]
             );
 
-            return true;
-        });
+                return $settlement->id;
+            });
+        } catch (\Throwable $exception) {
+            if ($proofPath) {
+                Storage::disk('settlement_proofs')->delete($proofPath);
+            }
+            throw $exception;
+        }
 
-        if (!$recorded) {
+        if (!$settlementId) {
             if ($proofPath) {
                 Storage::disk('settlement_proofs')->delete($proofPath);
             }
@@ -256,7 +365,18 @@ class Show extends Component
         $this->settlementProof = null;
         $this->settlementReference = null;
         $this->order['settlement_status'] = 'pending_review';
+        $this->order['settlement_id'] = $settlementId;
         $this->order['settlement_method'] = $this->settlementMethod;
+        $this->order['settlement_reference'] = $this->settlementReference;
+        $this->order['settlement_amount'] = $this->order['total_after_vat'];
+        $this->order['settlement_custody'] = 'لدى السائق';
+        $this->order['settlement_history'][] = [
+            'action' => $isResubmission ? 'resubmitted' : 'submitted',
+            'status_to' => 'pending_review',
+            'note' => null,
+            'actor' => auth('driver')->user()?->name,
+            'created_at' => now()->format('Y-m-d H:i'),
+        ];
         $this->order['payment_status'] = 'paid';
         $this->order['payment_label'] = MerchantOrder::resolvePaymentLabel('paid', $this->order['payment_method']);
         $this->alert('success', 'تم تسجيل التحصيل وإرسال التوريد للمراجعة.');

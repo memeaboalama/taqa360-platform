@@ -171,12 +171,53 @@
                                         </div>
                                         <div class="card-body">
                                             @if(!empty($order['settlement_status']))
+                                                <p class="mb-1">
+                                                    <span class="fw-semibold">حالة الدفع:</span>
+                                                    <span class="badge bg-success">{{ __('ecommerce::ecommerce.paid') }}</span>
+                                                </p>
+                                                <p class="mb-1">
+                                                    <span class="fw-semibold">مكان المبلغ:</span> {{ $order['settlement_custody'] ?? 'لدى السائق' }}
+                                                    ({{ number_format($order['total_after_vat'] ?? 0, 2) }} SAR)
+                                                </p>
                                                 <p class="mb-0">
                                                     <span class="fw-semibold">حالة التوريد:</span>
-                                                    {{ $order['settlement_status'] === 'approved' ? 'معتمد' : ($order['settlement_status'] === 'reviewed' ? 'تمت المراجعة' : 'بانتظار المراجعة') }}
+                                                    @lang('driver::home.settlement_status_' . $order['settlement_status'])
                                                 </p>
-                                            @elseif(!empty($order['collection_config']['enabled_methods']))
-                                                <p class="text-muted">سجّل توريد كامل قيمة الطلب ({{ number_format($order['total_after_vat'] ?? 0, 2) }} SAR). تسجيل التحصيل لا يعني اعتماد التوريد.</p>
+                                                @if(!empty($order['settlement_id']))
+                                                    <p class="mb-0"><span class="fw-semibold">رقم التسوية:</span> STL-{{ $order['settlement_id'] }}</p>
+                                                @endif
+                                                @foreach($order['settlement_history'] ?? [] as $history)
+                                                    @if($history['note'])
+                                                        <div class="alert alert-warning py-2 mt-2 mb-0">
+                                                            <strong>@lang('driver::home.settlement_action_' . $history['action']):</strong>
+                                                            {{ $history['note'] }}
+                                                        </div>
+                                                    @endif
+                                                @endforeach
+                                            @endif
+                                            @if(($order['payment_status'] ?? null) === 'paid' && empty($order['settlement_status']))
+                                                <p class="mb-1">
+                                                    <span class="fw-semibold">حالة الدفع:</span>
+                                                    <span class="badge bg-success">{{ __('ecommerce::ecommerce.paid') }}</span>
+                                                </p>
+                                                <p class="mb-0">
+                                                    <span class="fw-semibold">مكان المبلغ:</span>
+                                                    {{ $order['payment_source_name'] ?? 'تم تسجيله مسبقًا' }}
+                                                </p>
+                                            @endif
+                                            @if(empty($order['settlement_status']) || in_array($order['settlement_status'], ['returned', 'rejected'], true))
+                                                @if(($order['payment_status'] ?? null) === 'paid' && empty($order['settlement_status']))
+                                                    <p class="text-warning mb-0">تم تسجيل التحصيل مسبقًا ولا يمكن إنشاء توريد جديد من عهدة السائق.</p>
+                                                @elseif(!empty($order['collection_config']['enabled_methods']))
+                                                <p class="text-muted">
+                                                    @if(($order['settlement_status'] ?? null) === 'returned')
+                                                        استكمل ملاحظات الإدارة وأعد إرسال التسوية نفسها (STL-{{ $order['settlement_id'] }}).
+                                                    @elseif(($order['settlement_status'] ?? null) === 'rejected')
+                                                        أُتيحت التحصيلات لطلب توريد جديد؛ سيُحفظ كسجل تسوية جديد دون تكرار التحصيل.
+                                                    @else
+                                                        سجّل توريد كامل قيمة الطلب ({{ number_format($order['total_after_vat'] ?? 0, 2) }} SAR). تسجيل التحصيل لا يعني اعتماد التوريد.
+                                                    @endif
+                                                </p>
                                                 <form wire:submit.prevent="submitSettlement">
                                                     <div class="row g-3">
                                                         <div class="col-md-6">
@@ -194,6 +235,12 @@
                                                                 {{ $order['collection_config']['recipient'] === 'merchant' ? 'التاجر' : 'المنصة' }}
                                                             </div>
                                                         </div>
+                                                        @if(in_array(($order['settlement_status'] ?? null), ['returned', 'rejected'], true) && !in_array($settlementMethod, ['transfer', 'deposit'], true))
+                                                            <div class="col-md-6">
+                                                                <label class="form-label">رقم المرجع</label>
+                                                                <input class="form-control" wire:model.defer="settlementReference" maxlength="255">
+                                                            </div>
+                                                        @endif
                                                         @if(in_array($settlementMethod, ['transfer', 'deposit'], true))
                                                             <div class="col-md-6">
                                                                 <label class="form-label">رقم المرجع <span class="text-danger">*</span></label>
@@ -208,7 +255,7 @@
                                                         @endif
                                                         <div class="col-12">
                                                             <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="submitSettlement,settlementProof">
-                                                                تسجيل التحصيل وإرسال التوريد
+                                                                {{ ($order['settlement_status'] ?? null) === 'returned' ? 'إعادة إرسال التسوية' : 'تسجيل التحصيل وإرسال التوريد' }}
                                                             </button>
                                                             <span wire:loading wire:target="settlementProof" class="text-muted ms-2">جارٍ رفع الإثبات...</span>
                                                         </div>
@@ -224,8 +271,9 @@
                                                         </div>
                                                     @endif
                                                 </form>
-                                            @else
+                                                @else
                                                 <p class="text-danger mb-0">لم تُحفظ وسائل توريد مفعّلة لهذا الطلب؛ يرجى التواصل مع الإدارة.</p>
+                                                @endif
                                             @endif
                                         </div>
                                     </div>

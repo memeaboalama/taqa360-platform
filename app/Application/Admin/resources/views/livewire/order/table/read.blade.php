@@ -280,6 +280,11 @@
                     </div>
 
                 </div>
+                @include('ecommerce::components.order-payment-ledger', [
+                    'paymentLedger' => $paymentLedger,
+                    'allowCorrection' => \App\Domain\MarketPlace\Models\CollectionSetting::adminCan('correct'),
+                    'correctionRequests' => $correctionRequests,
+                ])
             </div>
             @if($order->client_lat??$address?->latitude??$orderAddress?->latitude)
             <div class="col-xl-12">
@@ -471,45 +476,12 @@
                         </p>
                         <br>
 @php
-    $payTransactionId = $payment?->payment_id ?: ($order?->code ? '#' . $order->code : '—');
-    $orderAmount = $order?->total_after_vat ?: ($order?->total_after_discount ?: ($order?->subtotal ?: 0));
+    $orderAmount = $paymentLedger['due'];
     $paymentMethodKey = strtolower(trim((string) ($order?->payment_method ?? '')));
     $isCodOrder = in_array($paymentMethodKey, ['cod','cash','cash_on_delivery','cashondelivery'], true);
-    $payStatus = \App\Domain\MarketPlace\Models\MerchantOrder::resolvePaymentStatus($payment, 'unpaid', $order?->payment_method);
+    $payStatus = $paymentLedger['payment_status'];
     $orderStatusValue = $order?->status instanceof \UnitEnum ? $order->status->value : (string) $order?->status;
-    $payLabel = match($payStatus) {
-                                'paid' => __('admin::home.Payment Status paid'),
-                                'initiated' => __('admin::home.Payment initiated'),
-                                'failed' => __('admin::home.Payment failed'),
-                                'pending' => \App\Domain\MarketPlace\Models\MerchantOrder::resolvePaymentLabel($payStatus, $order?->payment_method),
-                                'unpaid' => __('ecommerce::ecommerce.unpaid'),
-                                'partially_paid', 'partial' => 'مدفوع جزئياً',
-                                default => ($order?->payment_label ?: ($payStatus ?: __('ecommerce::ecommerce.unpaid'))),
-                            };
-                            $payBadgeClass = match($payStatus) {
-                                'paid' => 'bg-success',
-                                'initiated', 'pending' => 'bg-warning',
-                                'failed' => 'bg-danger',
-                                'partially_paid', 'partial' => 'bg-info',
-                                default => 'bg-secondary',
-                            };
                         @endphp
-                        <p class="mb-2 text-muted"><span
-                                class="fw-semibold text-default">@lang('admin::home.Payment Transaction Number')</span> {{ $payTransactionId }}
-                        </p>
-                        <p class="mb-2 text-muted"><span
-                                class="fw-semibold text-default">@lang('admin::home.Amount Paid')</span>
-                            @if($payStatus === 'paid' && !empty($payment?->amountFormat))
-                                {{ $payment->amountFormat }}
-                            @elseif($payStatus === 'paid' && !empty($payment?->amount))
-                                {{ number_format($payment->amount / 100, 2) }} @lang('admin::home.SAR')
-                            @else
-                                {{ number_format(0, 2) }} @lang('admin::home.SAR')
-                            @endif
-                        </p>
-                        <p class="mb-2 text-muted"><span
-                                class="fw-semibold text-default">@lang('admin::home.Payment Status')</span> <span class="badge {{ $payBadgeClass }}">{{ $payLabel }}</span>
-                        </p>
                         @if($isCodOrder && $orderStatusValue === \App\Application\Marketplace\Enums\MerchantOrderStatuses::PREVIOUS->value && $payStatus !== 'paid' && $orderAmount > 0)
                         <button type="button" class="btn btn-success mb-3"
                             wire:click="confirmCashCollection"
@@ -528,7 +500,14 @@
                             <p class="mb-1">الجهة: {{ $settlement->recipient === 'merchant' ? 'التاجر' : 'المنصة' }}</p>
                             <p class="mb-1">الوسيلة: {{ ['cash' => 'نقد', 'transfer' => 'تحويل', 'deposit' => 'إيداع'][$settlement->method] ?? $settlement->method }}</p>
                             <p class="mb-1">مبلغ التحصيل الكامل: {{ number_format($settlement->amount, 2) }} SAR</p>
-                            <p class="mb-1">حالة التوريد: {{ ['pending_review' => 'بانتظار المراجعة', 'reviewed' => 'تمت المراجعة', 'approved' => 'معتمد'][$settlement->status] ?? $settlement->status }}</p>
+                            <p class="mb-1">حالة التوريد: {{ __('admin::home.settlement_status_' . $settlement->status) }}</p>
+                            @if(\App\Domain\MarketPlace\Models\CollectionSetting::adminCan('review')
+                                || \App\Domain\MarketPlace\Models\CollectionSetting::adminCan('approve'))
+                                <a class="btn btn-outline-secondary btn-sm mt-2"
+                                   href="{{ route('admin:driver-settlements.show', $settlement->id) }}">
+                                    @lang('admin::home.settlement_details')
+                                </a>
+                            @endif
                             <p class="mb-1 text-muted">اعتماد التوريد لا يعني صرف مستحق التاجر.</p>
                             @if($settlement->reference)
                                 <p class="mb-1">المرجع: {{ $settlement->reference }}</p>
@@ -562,26 +541,10 @@
                                 <button type="button" class="btn btn-success btn-sm mt-2"
                                         wire:click="approveSettlement" wire:loading.attr="disabled">اعتماد التوريد</button>
                             @endif
-                            @if($settlement->status === 'approved' && \App\Domain\MarketPlace\Models\CollectionSetting::adminCan('correct'))
-                                <form class="mt-3" wire:submit.prevent="correctSettlement">
-                                    <label class="form-label">التصحيح المالي (+/- SAR)</label>
-                                    <input type="number" step="0.01" min="{{ -$settlement->amount }}"
-                                           max="{{ $settlement->amount }}" class="form-control mb-2"
-                                           wire:model.defer="settlementCorrectionAmount" required>
-                                    @error('settlementCorrectionAmount') <span class="text-danger">{{ $message }}</span> @enderror
-                                    <label class="form-label">سبب التصحيح</label>
-                                    <textarea class="form-control mb-2" wire:model.defer="settlementCorrectionNote" maxlength="1000" required></textarea>
-                                    @error('settlementCorrectionNote') <span class="text-danger">{{ $message }}</span> @enderror
-                                    <button type="submit" class="btn btn-warning btn-sm">حفظ التصحيح</button>
-                                </form>
-                            @endif
                         </div>
                         @endif
-                        <p class="mb-2 text-muted"><span
-                                class="fw-semibold text-default">@lang('admin::home.RefundpaymentAmountLast')</span> {{ $order?->refundpayment?->sum('amount') }}
-                        </p>
-                        @if($payment)
-                        <button type="submit" class="btn btn-success" data-bs-toggle="modal"
+                        @if($paymentLedger['payment'])
+                        <button type="button" class="btn btn-success" data-bs-toggle="modal"
                             data-bs-target="#createRefundPayment">
                             <span class="indicator-label" wire:loading.class="d-none">
                                 @lang('admin::home.RefundpaymentType toWallet')

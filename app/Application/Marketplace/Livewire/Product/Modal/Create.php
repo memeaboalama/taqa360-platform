@@ -145,7 +145,7 @@ class Create extends Component
             'addition_group_ids.*' => 'nullable|exists:addition_groups,id',
             'item_prices' => 'array|required',
             'item_prices.*.type_service_id' => 'required',
-            'item_prices.*.price' => 'required|numeric',
+            'item_prices.*.price' => 'required|numeric|min:0',
             'item_prices.*.status' => 'required',
         ];
     }
@@ -237,6 +237,14 @@ class Create extends Component
 
         DB::beginTransaction();
         try {
+            $itemPrices = array_map(function (array $itemPrice): array {
+                if ((float) $itemPrice['price'] === 0.0) {
+                    $itemPrice['price'] = $this->default_price;
+                }
+
+                return $itemPrice;
+            }, $this->item_prices);
+
             $data = [
                 'status' => $this->status,
                 'main_category_id' => $this->main_category_id,
@@ -253,7 +261,7 @@ class Create extends Component
                 'addition_group_ids' => $this->addition_group_ids,
                 'title' => $this->title,
                 'description' => $this->description,
-                'item_prices' => $this->item_prices,
+                'item_prices' => $itemPrices,
             ];
 
             if (!$action->handle($data)) {

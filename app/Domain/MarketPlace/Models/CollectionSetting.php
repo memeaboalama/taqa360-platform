@@ -61,6 +61,11 @@ class CollectionSetting extends Model
 
         $setting = static::current();
         $roleIds = match ($ability) {
+            'view' => array_values(array_unique(array_merge(
+                $setting?->review_role_ids ?? [],
+                $setting?->approval_role_ids ?? [],
+                $setting?->correction_role_ids ?? []
+            ))),
             'review' => $setting?->review_role_ids ?? [],
             'approve' => $setting?->approval_role_ids ?? [],
             'correct' => $setting?->correction_role_ids ?? [],

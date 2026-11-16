@@ -141,15 +141,30 @@
             </div>
             <div class="row gy-3 mt-3">
                 <div class="col-xl-6">
-                    <label for="marketplace_category_id" class="form-label text-black fw-bolder">{{ __('marketplace::home.Choose Main Categories') }} <span class="text-danger">*</span></label>
+                    <label for="marketplace_category_id" class="form-label text-black fw-bolder">{{ __('marketplace::home.store_category') }} <span class="text-danger">*</span></label>
                     <select class="form-control @error('marketplace_category_id') is-invalid @enderror" id="marketplace_category_id" wire:model.defer="marketplace_category_id">
-                        <option value="">-- {{ __('marketplace::home.Choose Main Categories') }} --</option>
+                        <option value="">-- {{ __('marketplace::home.store_category') }} --</option>
                         @foreach($marketplaceCategories as $value)
                             <option value="{{ $value->id }}">{{ $value?->title }}</option>
                         @endforeach
                     </select>
                     @error('marketplace_category_id') <span
                         class="text-danger  d-block">{{ $message }}</span> @enderror
+                </div>
+                <div class="col-xl-6">
+                    <label class="form-label text-black fw-bolder">{{ __('marketplace::home.item_categories') }}</label>
+                    <div class="border rounded p-3">
+                        @foreach($mainCategories as $id => $title)
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="main-category-{{ $id }}"
+                                    wire:model.defer="main_category_ids" value="{{ $id }}">
+                                <label class="form-check-label" for="main-category-{{ $id }}">{{ $title }}</label>
+                            </div>
+                        @endforeach
+                    </div>
+                    <small class="form-text text-muted">{{ __('marketplace::home.item_categories_hint') }}</small>
+                    @error('main_category_ids') <span class="text-danger d-block">{{ $message }}</span> @enderror
+                    @error('main_category_ids.*') <span class="text-danger d-block">{{ $message }}</span> @enderror
                 </div>
 
             </div>

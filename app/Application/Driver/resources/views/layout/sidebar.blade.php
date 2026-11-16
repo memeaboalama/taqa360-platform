@@ -34,6 +34,21 @@
                 </li>
 
                 <li class="slide">
+                    <a href="{{ route('driver:my-custody') }}"
+                       class="side-menu__item {{ isActive(route('driver:my-custody')) }}">
+                        <i class="bx bx-wallet side-menu__icon"></i>
+                        <span class="side-menu__label">{{ __('driver::home.my_custody') }}</span>
+                    </a>
+                </li>
+                <li class="slide">
+                    <a href="{{ route('driver:my-settlements') }}"
+                       class="side-menu__item {{ isActive(route('driver:my-settlements')) }}">
+                        <i class="bx bx-receipt side-menu__icon"></i>
+                        <span class="side-menu__label">{{ __('driver::home.my_settlements') }}</span>
+                    </a>
+                </li>
+
+                <li class="slide">
                     <a href="{{ route('driver:sendMessage') }}"
                         class="side-menu__item {{ isActive(route('driver:sendMessage')) }}">
                         <i class="bx bx-support side-menu__icon"></i>

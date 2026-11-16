@@ -21,6 +21,8 @@ class RefundPayment extends Model
         'user_id',
         'user_name',
         'calculated_on',
+        'funded_by',
+        'driver_id',
     ];
 
     // protected $casts = [

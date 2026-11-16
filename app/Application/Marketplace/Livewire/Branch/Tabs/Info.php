@@ -35,7 +35,7 @@ class Info extends Component
     // protected $listeners = ['updateCountry', 'updateCity', 'updateDistrict', 'set:latitude-longitude' => 'setLatitudeLongitude'];
     // protected $listeners = ['updateCountry', 'updateCity', 'updateDistrict', 'updatedCityId', 'updateDistrictBrn', 'updateStatusRowValue', 'set:latitude-longitude' => 'setLatitudeLongitude'];
     // protected $listeners = ['updateCountry', 'updateRegion','updateCity', 'updateDistrict', 'updateStatusRowValue', 'set:latitude-longitude' => 'setLatitudeLongitude'];
-    protected $listeners = ['updateCountry', 'updateRegion','updateCity', 'updateDistrict', 'updateStatusRow', 'set:latitude-longitude' => 'setLatitudeLongitude', 'enableEditingInfo' => 'enableEditing'];
+    protected $listeners = ['updateCountry', 'updateRegion','updateCity', 'updateDistrict', 'updateStatusRow', 'set:latitude-longitude' => 'setLatitudeLongitude', 'enableEditingInfo' => 'enableEditing', 'cancelEditingInfo' => 'cancelEditing'];
     protected GetDistrictsAction $getDistrictsAction;
     public $accept_multi_requests_at_same_time = false, $auto_accept = false, $has_scheduled_services = false;
     public $branch_id;
@@ -54,6 +54,21 @@ class Info extends Component
     public function enableEditing(): void
     {
         $this->editing = true;
+        $this->emit('branchEditingChanged', true);
+    }
+
+    public function cancelEditing(FetchSingleBranchAction $fetchBranchAction): void
+    {
+        $branch = $fetchBranchAction->handle($this->branch_id, $this->merchant_id);
+        if (!$branch) {
+            abort(404);
+        }
+
+        $this->branch = $branch;
+        $this->fillData($branch);
+        $this->resetValidation();
+        $this->editing = false;
+        $this->emit('branchEditingChanged', false);
     }
     public function setLatitudeLongitude($latitude, $longitude)
     {
@@ -323,9 +338,12 @@ class Info extends Component
         DB::beginTransaction();
         DB::table('merchant_branch_type_services')->where(['merchant_branch_id' => $this->branch_id])->delete();
         $branch = $updateBranchAction->handle($this->branch_id, $data);
+        $this->branch = $branch;
         $this->fillData($branch);
         $this->alert('success', __('marketplace::home.data_updated_successfully'));
         DB::commit();
+        $this->editing = false;
+        $this->emit('branchEditingChanged', false);
     }
 
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application

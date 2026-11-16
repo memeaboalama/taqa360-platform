@@ -21,6 +21,7 @@
         .product-row{display:grid;grid-template-columns:52px minmax(0,1fr) 68px 120px;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid #f0f2f5}.product-row:last-child{border-bottom:none}.product-row img{width:52px;height:52px;border-radius:8px;object-fit:cover;background:#f5f5f5}.product-name{margin:0 0 4px;font-size:15px;color:#222}.product-meta{color:var(--muted);font-size:12px}.product-qty{font-weight:700;color:#626c77}.product-price{font-weight:700;color:#111;text-align:end;direction:ltr;unicode-bidi:isolate}.address-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.address-option{display:block}.address-option input{display:none}.address-box{display:block;padding:14px;border:1px solid #e7ebf0;border-radius:10px;background:#fdfdfd;cursor:pointer;transition:.2s}.address-option input:checked + .address-box{border-color:var(--yellow);background:#f1f6fb;box-shadow:0 0 0 1px rgba(48,111,170,.25)}.address-title{display:block;font-size:14px;font-weight:700;margin-bottom:6px}.address-detail{color:var(--muted);font-size:12px;line-height:1.7}.address-option-new{margin-top:12px}.new-address-form{margin-top:14px;padding:14px;background:#fafbfc;border:1px solid #eef0f3;border-radius:10px}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.form-field{display:flex;flex-direction:column;gap:8px}.form-field-full{grid-column:1/-1}.compact-input{width:100%;padding:11px 12px;border:1px solid #e7ecf2;border-radius:8px;background:#fff;color:#1f2630}.compact-input:focus{outline:none;border-color:var(--yellow);box-shadow:0 0 0 3px rgba(48,111,170,.12)}
         .error-msg{display:block;margin-top:4px;color:#d93025;font-size:12px}.coupon-field{display:flex;gap:8px}.coupon-field input,.coupon-field button,.btn-primary,.btn-secondary{border-radius:8px}.coupon-field input{flex:1;padding:10px 12px;border:1px solid #e7ecf2}.btn-apply,.btn-primary,.btn-secondary{padding:10px 16px;font-weight:700}.btn-apply,.btn-primary{background:var(--yellow);color:#fff}.btn-secondary{background:#f0f2f5;color:#222}.summary-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px dashed #edf0f3}.summary-row:last-child{border-bottom:none}.summary-row.total{font-size:18px;font-weight:800;padding-top:10px}.sidebar-box{background:#fff;border:1px solid #eef0f3;border-radius:12px;padding:22px;box-shadow:var(--shadow)}.sidebar-title{margin:0 0 18px;font-size:20px}.sidebar-group{margin-top:12px}.sidebar-label{display:block;margin-bottom:8px;font-weight:700;color:#2d3742}.applied-coupon-info{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px;background:#fff9e5;border:1px solid #f7e7a9;border-radius:8px}.coupon-code{font-weight:700}.coupon-message{margin-top:10px;font-size:12px}.coupon-success{color:#1b7f45}.alert{padding:12px 14px;border-radius:8px;margin-bottom:16px}.alert-danger{background:#fdecec;color:#b42318;border:1px solid #f5c2c7}.alert-success{background:#eafaf1;color:#1d7a45;border:1px solid #bfe7ca}
         .payment-method-card{background:#fff;border:1px solid #e7ebf0;border-radius:12px;padding:15px;transition:all 0.2s}.payment-method-card:hover{border-color:#c1c7d1}.payment-method-card.wallet-method .payment-text{color:#28a745}.payment-method-card.cod-method .payment-text{color:#e86e5a}.payment-text{font-weight:700;font-size:13px;color:#333;display:inline-block;vertical-align:middle;margin-left:8px}.payment-option input{display:none}.payment-method-card+ .payment-method-card{margin-inline-start:0;margin-top:12px}
+        .cod-availability-notice{margin:12px 0 0}.cod-payment-note{margin:12px 0 0;padding:10px 12px;border:1px solid #dce8f3;border-radius:8px;background:#f4f8fc;color:#245c8e;font-size:12px;line-height:1.6}
         .checkout-location-map{height:320px;width:100%;border:1px solid #e7ecf2;border-radius:8px;z-index:0}.location-coordinates{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid #dce8f3;border-radius:8px;background:#f4f8fc}.location-coordinates-label{font-weight:700;color:#245c8e}.location-coordinates-value{direction:ltr;unicode-bidi:isolate;font-family:monospace;font-size:14px;color:#20252d}.location-map-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.location-map-status{margin:0;color:var(--muted);font-size:12px}.location-map-button{align-self:flex-start;padding:9px 13px;border:1px solid #d6e0ea;border-radius:8px;background:#fff;color:#245c8e;font-weight:700}.location-map-button:hover{background:#f1f6fb}.leaflet-container{font:inherit}
         .wallet-balance-error{display:flex;align-items:flex-start;gap:8px;margin-top:12px;padding:10px 12px;border:1px solid #f5c2c7;border-radius:8px;background:#fff5f5;color:#b42318;font-size:12px;line-height:1.6}.wallet-balance-error i{margin-top:2px;flex-shrink:0}.wallet-balance-error a{display:inline-block;margin-top:4px;color:#245c8e;font-weight:700;text-decoration:underline}
         footer{background:#252b31;color:#fff;padding:24px 0 18px;margin-top:0}.footer-grid{display:flex;justify-content:center}.footer-col{width:100%}.footer-brand{text-align:center}.footer-logo{display:block;width:160px;max-height:80px;object-fit:contain;margin:0 auto 8px}.footer-brand p{margin:0;font-size:14px;line-height:1.8;color:#d7dadd}.copyright{display:flex;align-items:center;justify-content:space-between;gap:20px;border-top:1px solid rgba(255,255,255,0.14);color:#afb4b8;font-size:11px;margin-top:15px;padding-top:10px}.footer-links{display:flex;gap:18px;flex-wrap:wrap}.footer-links a,.socials a{color:#d2d4d6;font-size:10px;text-decoration:none}.socials{display:flex;gap:14px;align-items:center}.socials a{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.06)}
@@ -142,9 +143,12 @@
 
                                     <div class="form-field">
                                         <label>@lang('ecommerce::ecommerce.district')</label>
-                                        <select class="compact-input" name="new_address_district_id" id="new-address-district">
-                                            <option value="">@lang('ecommerce::ecommerce.select_district')</option>
-                                        </select>
+                                        <input type="text" class="compact-input" name="new_address_district_name" id="new-address-district"
+                                               value="{{ old('new_address_district_name', old('new_address_district_id')) }}"
+                                               placeholder="@lang('ecommerce::ecommerce.district')">
+                                        @error('new_address_district_name')
+                                            <span class="error-msg">{{ $message }}</span>
+                                        @enderror
                                         @error('new_address_district_id')
                                             <span class="error-msg">{{ $message }}</span>
                                         @enderror
@@ -280,25 +284,9 @@
                                         {{ $selectedPaymentMethod === \App\Support\Enum\PaymentMethod::COD->value ? 'checked' : '' }}>
                                     <span class="payment-text">@lang('ecommerce::ecommerce.cod')</span>
                                 </div>
+                                <p class="cod-payment-note">@lang('ecommerce::ecommerce.cod_full_payment_at_delivery')</p>
                             @else
-                                <div class="alert alert-warning mb-0">@lang('ecommerce::ecommerce.cod_collection_unavailable')</div>
-                            @endif
-                            @if($codCollectionAvailable)
-                                <div class="alert alert-info mt-3 mb-0">
-                                    <div class="fw-semibold">جهة استلام الأموال: {{ $collectionSettings['recipient'] === 'merchant' ? 'التاجر' : 'المنصة' }}</div>
-                                    <div class="small mt-1">التحصيل كامل عند التسليم. وسائل التوريد المتاحة:</div>
-                                    @foreach($collectionSettings['enabled_methods'] as $method)
-                                        @php($methodData = $collectionSettings['methods'][$method] ?? [])
-                                        <div class="small mt-2">
-                                            <strong>{{ ['cash' => 'نقد', 'transfer' => 'تحويل', 'deposit' => 'إيداع'][$method] ?? $method }}</strong>
-                                            — {{ $methodData['recipient_name'] ?? '' }}.
-                                            {{ $methodData['instructions'] ?? '' }}
-                                            @if(!empty($methodData['account_data']))
-                                                <div>{{ $methodData['account_data'] }}</div>
-                                            @endif
-                                        </div>
-                                    @endforeach
-                                </div>
+                                <div class="alert alert-warning cod-availability-notice">@lang('ecommerce::ecommerce.cod_collection_unavailable')</div>
                             @endif
                         </div>
 

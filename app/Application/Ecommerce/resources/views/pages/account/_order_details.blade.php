@@ -280,21 +280,48 @@
                     </div>
 
                     @php
+                        $savedAddress = $order->address;
                         $addrRaw = $order->addressInOrder;
-                        $addr = is_string($addrRaw) ? json_decode($addrRaw, true) : $addrRaw;
+                        $addr = is_string($addrRaw) ? json_decode($addrRaw, true) : (is_array($addrRaw) ? $addrRaw : []);
+
+                        $countryName = $savedAddress?->country?->title
+                            ?? ($addr['country_name'] ?? null)
+                            ?? (isset($addr['country_id']) ? \App\Domain\AppBase\Models\Location\Country::find($addr['country_id'])?->title : null);
+
+                        $cityName = $savedAddress?->city?->title
+                            ?? ($addr['city_name'] ?? null)
+                            ?? (isset($addr['city_id']) ? \App\Domain\AppBase\Models\Location\City::find($addr['city_id'])?->title : null);
+
+                        $districtName = $savedAddress?->district_name
+                            ?: ($savedAddress?->distract?->title
+                            ?? ($addr['district_name'] ?? null)
+                            ?? (isset($addr['distract_id']) ? \App\Domain\AppBase\Models\Location\Distract::find($addr['distract_id'])?->title : null));
+
+                        $streetAddress = $savedAddress?->address ?? ($addr['address'] ?? null);
+
+                        $addressTitle = is_array($savedAddress?->title)
+                            ? ($savedAddress->title[app()->getLocale()] ?? reset($savedAddress->title))
+                            : ($savedAddress?->title ?? (is_array($addr['title'] ?? null) ? ($addr['title'][app()->getLocale()] ?? reset($addr['title'])) : ($addr['title'] ?? null)));
+
+                        $hasAddressInfo = $savedAddress || !empty($addr) || $countryName || $cityName || $streetAddress;
                     @endphp
 
-                    @if($addr && is_array($addr))
+                    @if($hasAddressInfo)
                         <div class="address-box">
-                            <span class="addr-title">{{ $order->client_name ?? $order->user->name ?? 'User' }}</span>
-                            <span class="addr-phone">
-                                <i class="ti-mobile"></i> {{ $order->client_phone ?? $order->user->phone ?? '' }}
-                            </span>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="addr-title">{{ $order->client_name ?? $order->user?->name ?? 'User' }}</span>
+                                @if($addressTitle)
+                                    <span class="badge bg-light text-dark border">{{ $addressTitle }}</span>
+                                @endif
+                            </div>
+                            @if($order->client_phone ?? $order->user?->phone)
+                                <span class="addr-phone">
+                                    <i class="ti-mobile"></i> {{ $order->client_phone ?? $order->user?->phone }}
+                                </span>
+                            @endif
                             <div class="address-details mt-2">
                                 <i class="ti-location-pin text-muted"></i>
-                                {{ $addr['city_name'] ?? '' }}
-                                @if(isset($addr['district_name'])) - {{ $addr['district_name'] }} @endif
-                                , {{ $addr['address'] ?? '' }}
+                                {{ implode(' - ', array_filter([$countryName, $cityName, $districtName, $streetAddress])) }}
                             </div>
                         </div>
                     @else
@@ -432,6 +459,11 @@
                         <span class="fw-bold text-dark">{{ $order->payment_method }}</span>
                     </div>
                 </div>
+
+                @include('ecommerce::components.order-payment-ledger', [
+                    'paymentLedger' => $paymentLedger,
+                    'allowCorrection' => false,
+                ])
 
             </div>
 

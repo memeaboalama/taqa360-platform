@@ -39,6 +39,7 @@ class Payment extends Model
       'source_transaction_url',
       'source_gateway_id',
       'source_reference_number',
+      'settlement_id',
       'user_id',
       'channel',
 

@@ -5,7 +5,7 @@
     <div class="modal-body">
         <div class="row gx-5">
             <div class="col-xxl-12 col-xl-12 col-lg-12 col-md-6">
-                <div class="card custom-card shadow-none mb-0">
+                <div class="card custom-card shadow-none border-0 mb-0">
                     <div class="card-body p-0">
                         <div class="row gy-3">
                             @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
@@ -22,19 +22,20 @@
                             <div class="col-xl-3">
                                 <label for="branch-menu"
                                     class="form-label text-black ">@lang('marketplace::home.Menu Name')</label>
-
-                                    <div wire:ignore>
                                     <select class="form-control"
                                         wire:model.defer="merchant_service_id"
-                                        id="merchant_service_id">
-                                        <option
-                                            value="">@lang('marketplace::home.Select') @lang('marketplace::home.Menu Name')</option>
-                                        @foreach($menus as $menu)
-                                        <option
-                                            value="{{ $menu->id }}" {{ $menu->id == $merchant_service_id ? 'selected' : '' }}>{{ \Illuminate\Support\Str::of($menu->title)->limit(30) }}</option>
-                                        @endforeach
+                                        id="merchant_service_id"
+                                        {{ $menus->isEmpty() ? 'disabled' : '' }}>
+                                        @if($menus->isEmpty())
+                                            <option value="">@lang('marketplace::home.No Menus Available')</option>
+                                        @else
+                                            <option value="">@lang('marketplace::home.Select') @lang('marketplace::home.Menu Name')</option>
+                                            @foreach($menus as $menu)
+                                                <option value="{{ $menu->id }}">{{ \Illuminate\Support\Str::of($menu->title)->limit(30) }}</option>
+                                            @endforeach
+                                        @endif
                                     </select>
-                                </div>
+                                    <small class="form-text text-muted">@lang('marketplace::home.Menu Name Help')</small>
                                 @error('merchant_service_id') <span
                                     class="d-inline-block text-danger">{{ $message }}</span> @enderror
                             </div>
@@ -53,6 +54,7 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                <small class="form-text text-muted">@lang('marketplace::home.Branch Manager Help')</small>
                                 @error('manager_id') <span
                                     class="d-inline-block text-danger">{{ $message }}</span> @enderror
                             </div>
