@@ -70,47 +70,8 @@
     </div>
 
     @if($canCorrect)
-        <div class="card custom-card mb-3">
-            <div class="card-header"><h6 class="mb-0">@lang('admin::home.add_custody_correction')</h6></div>
-            <div class="card-body">
-                <form class="row g-2 align-items-end" wire:submit.prevent="addCorrection">
-                    <div class="col-md-3">
-                        <label class="form-label">@lang('admin::home.custody_settlement')</label>
-                        <select class="form-select" wire:model.defer="correctionSettlementId" required>
-                            <option value="">@lang('admin::home.custody_choose_settlement')</option>
-                            @foreach($correctionSettlements as $settlement)
-                                <option value="{{ $settlement->id }}">
-                                    STL-{{ $settlement->id }} — #{{ $settlement->order?->code }} — {{ number_format($settlement->amount, 2) }} SAR
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('correctionSettlementId') <span class="text-danger small">{{ $message }}</span> @enderror
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">@lang('admin::home.custody_adjustment_direction')</label>
-                        <select class="form-select" wire:model.defer="correctionDirection">
-                            <option value="debit">@lang('admin::home.custody_deduct')</option>
-                            <option value="credit">@lang('admin::home.custody_credit')</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">@lang('admin::home.custody_amount')</label>
-                        <input type="number" min="0.01" step="0.01" class="form-control"
-                               wire:model.defer="correctionAmount" required>
-                        @error('correctionAmount') <span class="text-danger small">{{ $message }}</span> @enderror
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@lang('admin::home.custody_correction_reason')</label>
-                        <input class="form-control" wire:model.defer="correctionReason" maxlength="1000" required>
-                        @error('correctionReason') <span class="text-danger small">{{ $message }}</span> @enderror
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-warning w-100" type="submit" wire:loading.attr="disabled"
-                                wire:target="addCorrection">@lang('admin::home.custody_post_correction')</button>
-                    </div>
-                </form>
-                <small class="text-muted d-block mt-2">@lang('admin::home.custody_correction_approved_on_save')</small>
-            </div>
+        <div class="alert alert-info">
+            @lang('admin::home.custody_correction_from_movement')
         </div>
     @endif
 
@@ -136,9 +97,15 @@
                             <tr>
                                 <td>
                                     @if(auth('admin')->check())
-                                        <a href="{{ route('admin:merchant.orders.showOrder', $movement->order_id) }}">
-                                            {{ $movement->movement_number ?: $movement->record_id }}
-                                        </a>
+                                        @if($movement->source_movement_type === 'settlement')
+                                            <a href="{{ route('admin:driver-settlements.show', $movement->source_movement_id) }}">
+                                                {{ $movement->movement_number ?: $movement->record_id }}
+                                            </a>
+                                        @else
+                                            <a href="{{ route('admin:merchant.orders.showOrder', $movement->order_id) }}">
+                                                {{ $movement->movement_number ?: $movement->record_id }}
+                                            </a>
+                                        @endif
                                     @else
                                         <button type="button" class="btn btn-link p-0"
                                                 onclick="Livewire.emit('showOrderDetails', {{ $movement->order_id }})">
@@ -166,7 +133,15 @@
                                         #{{ $movement->order_code }}
                                     @endif
                                 </td>
-                                <td>{{ $movement->settlement_id ? 'STL-' . $movement->settlement_id : '—' }}</td>
+                                <td>
+                                    @if(auth('admin')->check() && $movement->settlement_id)
+                                        <a href="{{ route('admin:driver-settlements.show', $movement->settlement_id) }}">
+                                            STL-{{ $movement->settlement_id }}
+                                        </a>
+                                    @else
+                                        {{ $movement->settlement_id ? 'STL-' . $movement->settlement_id : '—' }}
+                                    @endif
+                                </td>
                                 <td>
                                     {{ $movement->settlement_status
                                         ? __('admin::home.settlement_' . $movement->settlement_status)

@@ -1,6 +1,5 @@
 <div class="row">
-    <div class="col-xl-1"></div>
-    <div class="col-xl-7">
+    <div class="col-xl-8">
         <div class="row">
             <div class="col-xl-12">
                 <div class="card custom-card">
@@ -89,7 +88,7 @@
 
 <tr>
     <td colspan="2"></td>
-    <td colspan="2">
+    <td>
         <div class="fw-semibold">@lang('marketplace::home.Total Items') :</div>
     </td>
     <td>
@@ -98,27 +97,27 @@
 </tr>
                                 <tr>
                                     <td colspan="2"></td>
-                                    <td colspan="2">
+                                    <td>
                                         <div class="fw-semibold">@lang('marketplace::home.Sub Total') :</div>
                                     </td>
                                     <td>
-                                        {{ number_format($order->subtotal, 2) }}
+                                        {{ number_format($order->subtotal, 2) }} @lang('marketplace::home.SAR')
                                     </td>
                                 </tr>
 
 <tr>
     <td colspan="2"></td>
-    <td colspan="2">
+    <td>
         <div class="fw-semibold">@lang('marketplace::home.VAT') :</div>
     </td>
     <td>
-        {{ number_format($order->vat, 2) }}
+        {{ number_format($order->vat, 2) }} @lang('marketplace::home.SAR')
     </td>
 </tr>
 
 <tr>
     <td colspan="2"></td>
-    <td colspan="2">
+    <td>
         <div class="fw-semibold">الخصم :</div>
     </td>
     <td>
@@ -129,12 +128,12 @@
 
 <tr>
     <td colspan="2"></td>
-    <td colspan="2">
+    <td>
         <div class="fw-semibold">@lang('marketplace::home.Total Price') :</div>
     </td>
     <td>
         <span
-            class="fs-16 fw-semibold text-primary">{{ number_format($order->total_after_vat, 2) }}</span>
+            class="fs-16 fw-semibold text-primary">{{ number_format($order->total_after_vat, 2) }} @lang('marketplace::home.SAR')</span>
     </td>
 </tr>
                                 </tbody>
@@ -147,7 +146,7 @@
         </div>
     </div>
 
-    <div class="col-xl-3">
+    <div class="col-xl-4">
         <div class="row">
             <div class="col-xl-12">
                 <div class="card custom-card">

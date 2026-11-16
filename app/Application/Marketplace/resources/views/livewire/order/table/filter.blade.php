@@ -152,7 +152,7 @@
                     <div class="row gy-3">
                         <div class="col-xl-12 mt-2">
                             <label for="city-filter" class="form-label">{{ __('marketplace::home.City') }}</label>
-                            <select class="form-control" id="city-filter" wire:model.defer="city_id">
+                            <select class="form-control" id="city-filter" wire:model="city_id">
                                 <option selected value="">-- {{ __('marketplace::home.Select') }} --</option>
                                 @foreach($cities as $city)
                                     <option value="{{ $city->id }}">{{ $city->title }}</option>
@@ -191,7 +191,7 @@
                     <div class="row gy-3">
                         <div class="col-xl-12 mt-2">
                             <label for="district-filter" class="form-label">{{ __('marketplace::home.District') }}</label>
-                            <select class="form-control" id="district-filter" wire:model.defer="district_id">
+                            <select class="form-control" id="district-filter" wire:model.defer="district_id" {{ $city_id ? '' : 'disabled' }}>
                                 <option selected value="">-- {{ __('marketplace::home.Select') }} --</option>
                                 @foreach($districts as $district)
                                     <option value="{{ $district->id }}">{{ $district->title }}</option>

@@ -9,6 +9,7 @@ use App\Domain\MarketPlace\Models\MerchantOrder;
 use App\Domain\MarketPlace\Models\CollectionSetting;
 use App\Domain\MarketPlace\Models\OrderSettlement;
 use App\Domain\MarketPlace\Models\PaymentCorrectionRequest;
+use App\Domain\MarketPlace\Services\FinancialMovementCorrectionWorkflow;
 use App\Domain\MarketPlace\Services\OrderPaymentLedger;
 use App\Domain\MarketPlace\Services\SettlementWorkflow;
 use App\Domain\MarketPlace\Repositories\Order\MerchantOrderRepository;
@@ -36,6 +37,7 @@ class Read extends Component
     public $correctionMovementType;
     public $correctionMovementId;
     public $correctionReason;
+    public $correctionAmount;
 
     public $driver;
     public $drivers = [];
@@ -247,67 +249,85 @@ class Read extends Component
         $this->alert('success', 'تم اعتماد التوريد.');
     }
 
-    public function beginCorrectionRequest(string $movementType, int $movementId): void
+    public function beginCorrectionRequest(
+        FinancialMovementCorrectionWorkflow $workflow,
+        string $movementType,
+        int $movementId
+    ): void
     {
         if (!CollectionSetting::adminCan('correct')) {
             abort(403);
         }
 
         $this->assertCorrectionMovement($movementType, $movementId);
-        $hasPendingRequest = PaymentCorrectionRequest::query()
-            ->where('order_id', $this->order->id)
-            ->where('movement_type', $movementType)
-            ->where('movement_id', $movementId)
-            ->where('status', 'pending')
-            ->exists();
-        if ($hasPendingRequest) {
-            $this->alert('warning', 'يوجد طلب تصحيح قيد المراجعة لهذه الحركة.');
-            return;
-        }
-
+        $preview = $workflow->preview($this->order->id, $movementType, $movementId);
         $this->correctionMovementType = $movementType;
         $this->correctionMovementId = $movementId;
         $this->correctionReason = null;
+        $this->correctionAmount = number_format($preview['original_amount'], 2, '.', '');
         $this->resetErrorBag('correctionReason');
     }
 
-    public function submitCorrectionRequest(): void
+    public function submitCorrectionRequest(FinancialMovementCorrectionWorkflow $workflow): void
     {
         if (!CollectionSetting::adminCan('correct')) {
             abort(403);
         }
 
         $validated = $this->validate([
-            'correctionMovementType' => ['required', 'in:collection,refund'],
+            'correctionMovementType' => ['required', 'in:collection'],
             'correctionMovementId' => ['required', 'integer', 'min:1'],
+            'correctionAmount' => ['required', 'numeric', 'min:0', 'max:99999999.99', 'regex:/^\d+(\.\d{1,2})?$/'],
             'correctionReason' => ['required', 'string', 'max:1000'],
         ]);
         $this->assertCorrectionMovement($validated['correctionMovementType'], (int) $validated['correctionMovementId']);
 
-        $request = PaymentCorrectionRequest::query()
-            ->where('order_id', $this->order->id)
-            ->where('movement_type', $validated['correctionMovementType'])
-            ->where('movement_id', $validated['correctionMovementId'])
-            ->where('status', 'pending')
-            ->first();
-
-        if (!$request) {
-            PaymentCorrectionRequest::create([
-                'order_id' => $this->order->id,
-                'movement_type' => $validated['correctionMovementType'],
-                'movement_id' => $validated['correctionMovementId'],
-                'reason' => $validated['correctionReason'],
-                'requested_by' => auth('admin')->id(),
-                'status' => 'pending',
-            ]);
-        }
+        $workflow->request(
+            $this->order->id,
+            $validated['correctionMovementType'],
+            (int) $validated['correctionMovementId'],
+            (string) $validated['correctionAmount'],
+            $validated['correctionReason'],
+            auth('admin')->user()
+        );
 
         $this->correctionMovementType = null;
         $this->correctionMovementId = null;
         $this->correctionReason = null;
-        $this->alert($request ? 'warning' : 'success', $request
-            ? 'يوجد طلب تصحيح قيد المراجعة لهذه الحركة.'
-            : 'تم إرسال طلب التصحيح.');
+        $this->correctionAmount = null;
+        $this->alert('success', 'تم إرسال طلب التصحيح للمراجعة.');
+    }
+
+    public function approveCorrectionRequest(
+        FinancialMovementCorrectionWorkflow $workflow,
+        int $requestId
+    ): void {
+        if (!CollectionSetting::adminCan('correct')) {
+            abort(403);
+        }
+
+        PaymentCorrectionRequest::query()
+            ->where('order_id', $this->order->id)
+            ->whereKey($requestId)
+            ->firstOrFail();
+        $workflow->approve($requestId, auth('admin')->user());
+        $this->alert('success', 'تم اعتماد التصحيح وتحديث الأرصدة.');
+    }
+
+    public function cancelCorrectionRequest(
+        FinancialMovementCorrectionWorkflow $workflow,
+        int $requestId
+    ): void {
+        if (!CollectionSetting::adminCan('correct')) {
+            abort(403);
+        }
+
+        PaymentCorrectionRequest::query()
+            ->where('order_id', $this->order->id)
+            ->whereKey($requestId)
+            ->firstOrFail();
+        $workflow->cancel($requestId, auth('admin')->user());
+        $this->alert('success', 'تم إلغاء طلب التصحيح دون تعديل الحركة.');
     }
 
     private function assertCorrectionMovement(string $movementType, int $movementId): void
@@ -323,8 +343,6 @@ class Read extends Component
                 ->whereKey($movementId)
                 ->whereIn('status', ['paid', 'success'])
                 ->exists();
-        } elseif ($movementType === 'refund') {
-            $exists = $this->order->refundpayment()->whereKey($movementId)->exists();
         } else {
             abort(404);
         }
@@ -345,10 +363,19 @@ class Read extends Component
             'refundpayment',
         ])->findOrFail($this->order->id);
         $paymentLedger = app(OrderPaymentLedger::class)->forOrder($order);
-        $correctionRequests = PaymentCorrectionRequest::with('requestedBy')
+        $correctionRequests = PaymentCorrectionRequest::with(['requestedBy', 'approvedBy', 'cancelledBy', 'settlement'])
             ->where('order_id', $order->id)
+            ->where('movement_type', 'collection')
             ->latest('id')
             ->get();
+        $correctionPreview = $this->correctionMovementType && $this->correctionMovementId
+            ? app(FinancialMovementCorrectionWorkflow::class)->preview(
+                $order->id,
+                $this->correctionMovementType,
+                (int) $this->correctionMovementId,
+                $this->correctionAmount
+            )
+            : null;
 
         return view('admin::livewire.order.table.read', [
             'order' => $order,
@@ -359,6 +386,7 @@ class Read extends Component
             'payment' => $paymentLedger['payment'],
             'paymentLedger' => $paymentLedger,
             'correctionRequests' => $correctionRequests,
+            'correctionPreview' => $correctionPreview,
         ]);
     }
     public function updateNote(): void

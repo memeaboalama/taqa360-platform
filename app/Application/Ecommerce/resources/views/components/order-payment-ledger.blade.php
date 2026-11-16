@@ -4,6 +4,10 @@
     </div>
     <div class="card-body">
 
+    @error('correction')
+        <div class="alert alert-warning">{{ $message }}</div>
+    @enderror
+
     @php
         $paymentStatusClass = match($paymentLedger['payment_status']) {
             'paid' => 'bg-success',
@@ -77,7 +81,7 @@
                 @forelse($paymentLedger['movements'] as $movement)
                     <tr>
                         <td>{{ $movement['number'] ?: '—' }}</td>
-                        <td class="{{ $movement['type'] === 'refund' ? 'text-danger' : 'text-success' }}">
+                        <td class="{{ $movement['type'] === 'refund' || (float) $movement['amount'] < 0 ? 'text-danger' : 'text-success' }}">
                             {{ number_format($movement['amount'], 2) }} SAR
                         </td>
                         <td>{{ $movement['method'] }}</td>
@@ -95,13 +99,17 @@
                             <details>
                                 <summary class="text-primary" style="cursor:pointer">@lang('ecommerce::ecommerce.view_movement')</summary>
                                 <div class="small mt-2 text-wrap">
-                                    <div>@lang('ecommerce::ecommerce.movement_type'): {{ $movement['type'] === 'refund' ? __('ecommerce::ecommerce.refund') : __('ecommerce::ecommerce.collection') }}</div>
+                                    <div>@lang('ecommerce::ecommerce.movement_type'):
+                                        @lang('ecommerce::ecommerce.' . ($movement['type'] === 'correction' ? 'financial_correction' : ($movement['type'] === 'refund' ? 'refund' : 'collection')))
+                                    </div>
                                     @if($movement['details'])
                                         <div>@lang('ecommerce::ecommerce.movement_details'): {{ $movement['details'] }}</div>
                                     @endif
                                 </div>
                             </details>
-                            @if(!empty($allowCorrection))
+                            @if(!empty($allowCorrection)
+                                && $movement['type'] === 'collection'
+                                && !$correctionRequests->contains(fn ($request) => $request->movement_id === $movement['record_id'] && $request->status === 'pending'))
                                 <button type="button" class="btn btn-link btn-sm p-0 mt-2"
                                         wire:click="beginCorrectionRequest('{{ $movement['type'] }}', {{ $movement['record_id'] }})">
                                     @lang('ecommerce::ecommerce.request_correction')
@@ -109,6 +117,18 @@
                                 @if(($correctionMovementType ?? null) === $movement['type']
                                     && (int) ($correctionMovementId ?? 0) === (int) $movement['record_id'])
                                     <form class="mt-2" wire:submit.prevent="submitCorrectionRequest">
+                                        <label class="form-label small">@lang('ecommerce::ecommerce.corrected_amount')</label>
+                                        <input type="number" min="0" step="0.01"
+                                               class="form-control form-control-sm mb-2"
+                                               wire:model="correctionAmount" required>
+                                        @error('correctionAmount') <span class="text-danger small">{{ $message }}</span> @enderror
+                                        @if(!empty($correctionPreview))
+                                            <div class="small border rounded p-2 mb-2">
+                                                <div>@lang('ecommerce::ecommerce.current_amount'): {{ number_format($correctionPreview['original_amount'], 2) }} SAR</div>
+                                                <div>@lang('ecommerce::ecommerce.correction_balance_before'): {{ number_format($correctionPreview['balance_before'], 2) }} SAR</div>
+                                                <div>@lang('ecommerce::ecommerce.correction_balance_after'): {{ number_format($correctionPreview['balance_after'], 2) }} SAR</div>
+                                            </div>
+                                        @endif
                                         <textarea class="form-control form-control-sm mb-2"
                                                   wire:model.defer="correctionReason"
                                                   maxlength="1000"
@@ -141,8 +161,11 @@
                     <tr>
                         <th>@lang('ecommerce::ecommerce.movement_number')</th>
                         <th>@lang('ecommerce::ecommerce.correction_reason')</th>
+                        <th>@lang('ecommerce::ecommerce.current_amount')</th>
+                        <th>@lang('ecommerce::ecommerce.corrected_amount')</th>
                         <th>@lang('ecommerce::ecommerce.requested_by')</th>
                         <th>@lang('ecommerce::ecommerce.request_status')</th>
+                        <th>@lang('ecommerce::ecommerce.movement_actions')</th>
                         <th>@lang('ecommerce::ecommerce.movement_time')</th>
                     </tr>
                 </thead>
@@ -151,8 +174,38 @@
                         <tr>
                             <td>{{ strtoupper($request->movement_type) }}-{{ $request->movement_id }}</td>
                             <td>{{ $request->reason }}</td>
+                            <td>{{ number_format($request->original_amount ?? 0, 2) }} SAR</td>
+                            <td>{{ number_format($request->corrected_amount ?? 0, 2) }} SAR</td>
                             <td>{{ $request->requestedBy?->name ?? '—' }}</td>
-                            <td>@lang('ecommerce::ecommerce.correction_request_' . $request->status)</td>
+                            <td>
+                                @lang('ecommerce::ecommerce.correction_request_' . $request->status)
+                                @if($request->status === 'pending' && $request->corrected_amount === null)
+                                    <div class="small text-warning">@lang('ecommerce::ecommerce.correction_request_amount_required')</div>
+                                @endif
+                                @if($request->status === 'approved')
+                                    <div class="small text-muted">
+                                        {{ $request->approvedBy?->name ?? '—' }} · {{ $request->approved_at?->format('Y-m-d H:i') ?? '—' }}
+                                    </div>
+                                @elseif($request->status === 'cancelled')
+                                    <div class="small text-muted">
+                                        {{ $request->cancelledBy?->name ?? '—' }} · {{ $request->cancelled_at?->format('Y-m-d H:i') ?? '—' }}
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="text-nowrap">
+                                @if($request->status === 'pending')
+                                    @if($request->corrected_amount !== null)
+                                        <button type="button" class="btn btn-success btn-sm"
+                                                wire:click="approveCorrectionRequest({{ $request->id }})" wire:loading.attr="disabled">
+                                            @lang('ecommerce::ecommerce.approve_correction')
+                                        </button>
+                                    @endif
+                                    <button type="button" class="btn btn-outline-danger btn-sm"
+                                            wire:click="cancelCorrectionRequest({{ $request->id }})" wire:loading.attr="disabled">
+                                        @lang('ecommerce::ecommerce.cancel_correction')
+                                    </button>
+                                @endif
+                            </td>
                             <td>{{ $request->created_at?->format('Y-m-d H:i') ?? '—' }}</td>
                         </tr>
                     @endforeach

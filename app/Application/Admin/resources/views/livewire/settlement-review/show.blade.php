@@ -126,7 +126,105 @@
                     </div>
                 @endif
             </div>
+            @if($canCorrect && $settlement->status === 'approved')
+                <div class="card custom-card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">@lang('admin::home.financial_correction')</h6>
+                        @if(!$showCorrectionForm)
+                            <button type="button" class="btn btn-warning btn-sm" wire:click="beginCorrectionRequest">
+                                @lang('admin::home.request_correction')
+                            </button>
+                        @endif
+                    </div>
+                    @if($showCorrectionForm)
+                        <div class="card-body">
+                            <div class="alert alert-light border">
+                                <div><strong>@lang('admin::home.original_movement'):</strong> STL-{{ $settlement->id }}</div>
+                                <div><strong>@lang('admin::home.original_amount'):</strong> {{ number_format($correctionPreview['original_amount'] ?? $settlement->amount, 2) }} SAR</div>
+                            </div>
+                            <form wire:submit.prevent="submitCorrectionRequest">
+                                <label class="form-label">@lang('admin::home.corrected_amount')</label>
+                                <input type="number" min="0" step="0.01" class="form-control mb-2"
+                                       wire:model="correctionAmount" required>
+                                @error('correctionAmount') <span class="text-danger">{{ $message }}</span> @enderror
+                                @if($correctionPreview)
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-md-6">
+                                            <div class="border rounded p-2">
+                                                @lang('admin::home.balance_before_correction'):
+                                                <strong>{{ number_format($correctionPreview['balance_before'], 2) }} SAR</strong>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="border rounded p-2">
+                                                @lang('admin::home.balance_after_correction'):
+                                                <strong>{{ number_format($correctionPreview['balance_after'], 2) }} SAR</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                                <label class="form-label">@lang('admin::home.correction_reason')</label>
+                                <textarea class="form-control mb-2" wire:model.defer="correctionReason" maxlength="1000" required></textarea>
+                                @error('correctionReason') <span class="text-danger">{{ $message }}</span> @enderror
+                                <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
+                                    @lang('admin::home.submit_correction_request')
+                                </button>
+                                <button type="button" class="btn btn-light" wire:click="$set('showCorrectionForm', false)">
+                                    @lang('admin::home.cancel')
+                                </button>
+                            </form>
+                        </div>
+                    @endif
+                </div>
+            @endif
             @error('settlement') <div class="alert alert-warning mt-2">{{ $message }}</div> @enderror
+            @error('correction') <div class="alert alert-warning mt-2">{{ $message }}</div> @enderror
+            @if($canCorrect && $correctionRequests->isNotEmpty())
+                <div class="card custom-card mt-3">
+                    <div class="card-header"><h6 class="mb-0">@lang('admin::home.correction_history')</h6></div>
+                    <div class="card-body">
+                        @foreach($correctionRequests as $request)
+                            <div class="border rounded p-3 mb-2">
+                                <div class="d-flex justify-content-between flex-wrap gap-2">
+                                    <strong>@lang('admin::home.correction_request_status_' . $request->status)</strong>
+                                    <span>STL-{{ $request->movement_id }}</span>
+                                </div>
+                                <div class="small text-muted mt-1">
+                                    @lang('admin::home.correction_requester'): {{ $request->requestedBy?->name ?? '—' }} ·
+                                    {{ $request->created_at?->format('Y-m-d H:i') ?? '—' }}
+                                </div>
+                                <div>@lang('admin::home.original_amount'): {{ number_format($request->original_amount ?? 0, 2) }} SAR</div>
+                                <div>@lang('admin::home.corrected_amount'): {{ number_format($request->corrected_amount ?? 0, 2) }} SAR</div>
+                                <div>@lang('admin::home.correction_reason'): {{ $request->reason }}</div>
+                                @if($request->status === 'approved')
+                                    <div class="small text-muted">
+                                        @lang('admin::home.correction_approver'): {{ $request->approvedBy?->name ?? '—' }} ·
+                                        {{ $request->approved_at?->format('Y-m-d H:i') ?? '—' }}
+                                    </div>
+                                @elseif($request->status === 'cancelled')
+                                    <div class="small text-muted">
+                                        @lang('admin::home.correction_canceller'): {{ $request->cancelledBy?->name ?? '—' }} ·
+                                        {{ $request->cancelled_at?->format('Y-m-d H:i') ?? '—' }}
+                                    </div>
+                                @elseif($request->status === 'pending')
+                                    <div class="mt-2 d-flex gap-2">
+                                        @if($request->corrected_amount !== null)
+                                            <button type="button" class="btn btn-success btn-sm"
+                                                    wire:click="approveCorrectionRequest({{ $request->id }})" wire:loading.attr="disabled">
+                                                @lang('admin::home.approve_correction')
+                                            </button>
+                                        @endif
+                                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                                wire:click="cancelCorrectionRequest({{ $request->id }})" wire:loading.attr="disabled">
+                                            @lang('admin::home.cancel_correction')
+                                        </button>
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
             @if($canApprove && in_array($settlement->status, ['pending_review', 'reviewed'], true))
                 <div id="approveSettlementForm" class="collapse card custom-card mt-3">
                     <div class="card-body">

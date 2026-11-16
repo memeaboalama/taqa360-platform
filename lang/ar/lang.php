@@ -11,7 +11,7 @@ return [
         'expired' => 'منتهي صلاحية',
         'cancelled' => 'تم الغاء الطلب',
         'on_way' => 'في الطريق',
-        'ready' => 'جاهز',
+        'ready' => 'جاهز للتوصيل',
         'will-be-late' => 'متأخر',
         'accepted' => 'Accepted',
         'timeout' => 'Timeout',

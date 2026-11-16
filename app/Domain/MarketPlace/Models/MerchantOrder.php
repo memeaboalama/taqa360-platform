@@ -124,6 +124,11 @@ class MerchantOrder extends Model
         return $this->hasOne(OrderSettlement::class, 'order_id')->latestOfMany();
     }
 
+    public function collectionFailureReports(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DriverCollectionFailureReport::class, 'order_id')->latest('id');
+    }
+
 
     public function type_service(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
@@ -313,6 +318,7 @@ class MerchantOrder extends Model
                 ? __('ecommerce::ecommerce.cod_payment_selected')
                 : __('ecommerce::ecommerce.payment_pending'),
             'unpaid' => __('ecommerce::ecommerce.unpaid'),
+            'partially_paid' => __('ecommerce::ecommerce.payment_status_values.partially_paid'),
             'failed' => __('ecommerce::ecommerce.payment_failed'),
             default => $paymentStatus ?: __('ecommerce::ecommerce.unpaid'),
         };

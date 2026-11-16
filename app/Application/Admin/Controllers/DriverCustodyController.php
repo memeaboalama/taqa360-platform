@@ -43,7 +43,9 @@ class DriverCustodyController extends Controller
     {
         abort_unless(
             auth('admin')->check()
-                && (CollectionSetting::adminCan('review') || CollectionSetting::adminCan('approve')),
+                && (CollectionSetting::adminCan('review')
+                    || CollectionSetting::adminCan('approve')
+                    || CollectionSetting::adminCan('correct')),
             403
         );
     }

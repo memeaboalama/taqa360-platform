@@ -4,6 +4,7 @@ namespace App\Domain\MarketPlace\Services;
 
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use App\Domain\MarketPlace\Models\OrderSettlement;
+use App\Domain\MarketPlace\Models\PaymentCorrectionRequest;
 use Carbon\Carbon;
 use Domain\AppBase\Models\Payment;
 
@@ -22,21 +23,30 @@ class OrderPaymentLedger
             ->get();
         $settlement = $order->settlement()->with('driver')->first();
         $refunds = $order->refundpayment()->orderBy('id')->get();
+        $corrections = PaymentCorrectionRequest::query()
+            ->with(['approvedBy', 'settlement'])
+            ->where('order_id', $order->id)
+            ->where('movement_type', 'collection')
+            ->where('status', 'approved')
+            ->orderBy('id')
+            ->get();
         $confirmedPayments = $payments->filter(
             fn (Payment $record): bool => self::isConfirmedPayment($order, $record)
         );
         $payment = $confirmedPayments->last() ?? $payments->last();
-        $isPaid = $confirmedPayments->isNotEmpty();
-        $paymentStatus = $isPaid
-            ? 'paid'
-            : MerchantOrder::resolvePaymentStatus($payment, 'unpaid', $order->payment_method);
-        $collected = $confirmedPayments->sum(
+        $hasConfirmedPayment = $confirmedPayments->isNotEmpty();
+        $rawCollected = $confirmedPayments->sum(
             fn (Payment $record): float => $this->halalasToSar($record->captured ?: $record->amount)
         );
-        $refunded = (float) $refunds->sum('amount');
         $due = (float) ($order->total_after_discount > 0
             ? $order->total_after_discount
             : $order->total_after_vat);
+        $collected = $rawCollected + (float) $corrections->sum('adjustment_amount');
+        $paymentStatus = $hasConfirmedPayment
+            ? self::paymentStatusForCollection($due, $collected)
+            : MerchantOrder::resolvePaymentStatus($payment, 'unpaid', $order->payment_method);
+        $isPaid = $paymentStatus === 'paid';
+        $refunded = (float) $refunds->sum('amount');
 
         $movements = [];
         foreach ($confirmedPayments as $confirmedPayment) {
@@ -73,8 +83,25 @@ class OrderPaymentLedger
             ];
         }
 
+        foreach ($corrections as $correction) {
+            $movements[] = [
+                'type' => 'correction',
+                'record_id' => $correction->id,
+                'number' => 'COR-' . $correction->id,
+                'amount' => (float) $correction->adjustment_amount,
+                'method' => $this->paymentMethodLabel($order, $payment),
+                'collector' => $correction->approvedBy?->name ?: __('ecommerce::ecommerce.admin_collector'),
+                'occurred_at' => $this->dateLabel($correction->approved_at),
+                'settlement_number' => $correction->settlement_id
+                    ? 'STL-' . $correction->settlement_id
+                    : null,
+                'settlement_status' => $correction->settlement?->status,
+                'details' => $correction->reason,
+            ];
+        }
+
         $custody = '—';
-        if ($isPaid && MerchantOrder::isCashOnDeliveryMethod($order->payment_method)) {
+        if ($collected > 0 && MerchantOrder::isCashOnDeliveryMethod($order->payment_method)) {
             if ($settlement?->status === 'approved') {
                 $custody = $settlement->recipient === 'merchant'
                     ? __('ecommerce::ecommerce.merchant')
@@ -86,7 +113,7 @@ class OrderPaymentLedger
                 $custody = $payment->source_name
                     ?: __('ecommerce::ecommerce.admin_collector');
             }
-        } elseif ($isPaid) {
+        } elseif ($collected > 0) {
             $custody = $payment->source_company
                 ?: $payment->source_type
                 ?: __('ecommerce::ecommerce.payment_provider');
@@ -117,6 +144,15 @@ class OrderPaymentLedger
     public static function isConfirmedPayment(MerchantOrder $order, Payment $payment): bool
     {
         return MerchantOrder::resolvePaymentStatus($payment, 'unpaid', $order->payment_method) === 'paid';
+    }
+
+    public static function paymentStatusForCollection(float $due, float $collected): string
+    {
+        if ($collected <= 0) {
+            return 'unpaid';
+        }
+
+        return $collected + 0.009 >= $due ? 'paid' : 'partially_paid';
     }
 
     private function halalasToSar(mixed $value): float

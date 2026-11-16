@@ -149,7 +149,7 @@ class DriverCustodyLedger
     private function baseMovements(?int $driverId = null): Builder
     {
         $collection = DB::table('payments as p')
-            ->join('order_settlements as s', function ($join) {
+            ->leftJoin('order_settlements as s', function ($join) {
                 $join->on('s.order_id', '=', 'p.payable_id')
                     ->where(function ($query) {
                         $query->on('s.id', '=', 'p.settlement_id')
@@ -167,7 +167,7 @@ class DriverCustodyLedger
             ])
             ->whereIn('p.status', ['paid', 'success'])
             ->where('p.source_message', MerchantOrder::COD_COLLECTION_CONFIRMATION_MESSAGE)
-            ->whereNotNull('s.driver_id')
+            ->whereRaw('COALESCE(s.driver_id, o.driver_id) IS NOT NULL')
             ->whereRaw('COALESCE(NULLIF(p.captured, 0), p.amount) > 0')
             ->whereNotExists(function ($query) {
                 $query->selectRaw('1')
@@ -181,7 +181,7 @@ class DriverCustodyLedger
             })
             ->when($driverId, fn ($query) => $query->where('s.driver_id', $driverId))
             ->selectRaw("
-                s.driver_id,
+                COALESCE(s.driver_id, o.driver_id) as driver_id,
                 p.id as record_id,
                 p.payment_id as movement_number,
                 p.created_at as occurred_at,
@@ -191,7 +191,9 @@ class DriverCustodyLedger
                 o.code as order_code,
                 s.id as settlement_id,
                 s.status as settlement_status,
-                COALESCE(p.description, p.source_message) as details
+                COALESCE(p.description, p.source_message) as details,
+                'collection' as source_movement_type,
+                p.id as source_movement_id
             ");
 
         $settlements = DB::table('order_settlements as s')
@@ -210,7 +212,9 @@ class DriverCustodyLedger
                 o.code as order_code,
                 s.id as settlement_id,
                 s.status as settlement_status,
-                CONCAT('توريد معتمد: ', s.recipient_name) as details
+                CONCAT('توريد معتمد: ', s.recipient_name) as details,
+                'settlement' as source_movement_type,
+                s.id as source_movement_id
             ");
 
         $corrections = DB::table('order_settlement_corrections as c')
@@ -230,7 +234,36 @@ class DriverCustodyLedger
                 o.code as order_code,
                 s.id as settlement_id,
                 s.status as settlement_status,
-                CONCAT(c.reason, ' — ', COALESCE(a.name, '')) as details
+                CONCAT(c.reason, ' — ', COALESCE(a.name, '')) as details,
+                'settlement' as source_movement_type,
+                s.id as source_movement_id
+            ");
+
+        $movementCorrections = DB::table('payment_correction_requests as c')
+            ->join('merchant_orders as o', 'o.id', '=', 'c.order_id')
+            ->leftJoin('order_settlements as s', 's.id', '=', 'c.settlement_id')
+            ->leftJoin('admins as a', 'a.id', '=', 'c.approved_by')
+            ->where('c.status', 'approved')
+            ->whereIn('c.movement_type', ['collection', 'settlement'])
+            ->whereRaw('COALESCE(s.driver_id, o.driver_id) IS NOT NULL')
+            ->when($driverId, fn ($query) => $query->whereRaw('COALESCE(s.driver_id, o.driver_id) = ?', [$driverId]))
+            ->selectRaw("
+                COALESCE(s.driver_id, o.driver_id) as driver_id,
+                c.id as record_id,
+                CONCAT('COR-', c.id) as movement_number,
+                c.approved_at as occurred_at,
+                'correction' as movement_type,
+                CAST(CASE WHEN c.movement_type = 'settlement'
+                    THEN -c.adjustment_amount
+                    ELSE c.adjustment_amount
+                END AS DECIMAL(12,2)) as amount,
+                o.id as order_id,
+                o.code as order_code,
+                c.settlement_id as settlement_id,
+                s.status as settlement_status,
+                CONCAT(c.reason, ' — ', COALESCE(a.name, '')) as details,
+                c.movement_type as source_movement_type,
+                c.movement_id as source_movement_id
             ");
 
         $refunds = DB::table('refund_payments as r')
@@ -249,12 +282,15 @@ class DriverCustodyLedger
                 o.code as order_code,
                 (SELECT s.id FROM order_settlements s WHERE s.order_id = o.id LIMIT 1) as settlement_id,
                 (SELECT s.status FROM order_settlements s WHERE s.order_id = o.id LIMIT 1) as settlement_status,
-                r.note as details
+                r.note as details,
+                'refund' as source_movement_type,
+                r.id as source_movement_id
             ");
 
         return $collection
             ->unionAll($settlements)
             ->unionAll($corrections)
+            ->unionAll($movementCorrections)
             ->unionAll($refunds);
     }
 

@@ -284,6 +284,7 @@
                     'paymentLedger' => $paymentLedger,
                     'allowCorrection' => \App\Domain\MarketPlace\Models\CollectionSetting::adminCan('correct'),
                     'correctionRequests' => $correctionRequests,
+                    'correctionPreview' => $correctionPreview,
                 ])
             </div>
             @if($order->client_lat??$address?->latitude??$orderAddress?->latitude)

@@ -4,9 +4,9 @@ namespace Application\Marketplace\Livewire\Order\Table;
 
 use App\Application\Marketplace\Enums\MerchantOrderStatuses;
 use App\Domain\Admin\Actions\Dashboard\City\FetchSingleCityAction;
-use App\Domain\Admin\Actions\Dashboard\District\FetchDistrictAction;
 use App\Domain\Admin\Actions\Dashboard\District\FetchSingleDistrictAction;
 use App\Domain\AppBase\Actions\Location\FetchCitiesAction;
+use App\Domain\AppBase\Models\Location\Distract;
 use App\Domain\MarketPlace\Actions\Dashboard\Branch\FetchBranchAction;
 use App\Domain\MarketPlace\Actions\Dashboard\Branch\FetchSingleBranchAction;
 use App\Domain\MarketPlace\Actions\Dashboard\Employee\FetchEmployessAction;
@@ -14,6 +14,7 @@ use App\Domain\MarketPlace\Actions\Dashboard\Employee\FetchSingleEmployeeAction;
 use Domain\Admin\Actions\Dashboard\Merchant\FetchMerchants;
 use Illuminate\Support\Collection;
 use Livewire\Component;
+use App\Support\Enum\StatusEnum;
 
 class Filter extends Component
 {
@@ -48,7 +49,6 @@ class Filter extends Component
         'getBetweenDates'];
 
     public function mount(
-        FetchDistrictAction $fetchDistrictAction,
         FetchCitiesAction $fetchCitiesAction, FetchBranchAction $fetchBranchAction)
     {
         $this->date_condition = "equal";
@@ -56,7 +56,20 @@ class Filter extends Component
         $this->branches = $fetchBranchAction->handle(resolve('_InitialMerchant'));
         $this->employees = collect();
         $this->cities = $fetchCitiesAction->handle();
-        $this->districts = $fetchDistrictAction->all();
+        $this->districts = collect();
+    }
+
+    public function updatedCityId($cityId): void
+    {
+        $this->district_id = null;
+        $this->district_name = null;
+        $this->filters['district_id'] = null;
+        $this->districts = $cityId
+            ? Distract::query()
+                ->where('city_id', $cityId)
+                ->where('status', StatusEnum::ACTIVE)
+                ->get(['id', 'title'])
+            : collect();
     }
 
     public function resetSearch(): void
@@ -140,7 +153,11 @@ class Filter extends Component
         $this->statuses = collect(MerchantOrderStatuses::cases());
         $this->city_id = null;
         $this->city_name = null;
+        $this->district_id = null;
+        $this->district_name = null;
+        $this->districts = collect();
         $this->filters['city_id'] = null;
+        $this->filters['district_id'] = null;
         $this->emit('refreshOrders', $this->filters);
     }
 

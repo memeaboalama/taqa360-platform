@@ -6,6 +6,7 @@ use App\Domain\MarketPlace\Models\CollectionSetting;
 use App\Domain\MarketPlace\Models\OrderSettlement;
 use App\Domain\MarketPlace\Services\OrderPaymentLedger;
 use App\Domain\MarketPlace\Services\DriverCustodyLedger;
+use App\Domain\MarketPlace\Services\CollectionFailureWorkflow;
 use App\Domain\MarketPlace\Services\SettlementWorkflow;
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use Domain\AppBase\Models\Payment;
@@ -68,6 +69,20 @@ class CollectionSettingTest extends TestCase
         $this->assertSame(25.0, $summary['refunded']);
     }
 
+    public function test_corrected_collection_changes_payment_status_without_recording_a_refund(): void
+    {
+        $this->assertSame('paid', OrderPaymentLedger::paymentStatusForCollection(100, 100));
+        $this->assertSame('partially_paid', OrderPaymentLedger::paymentStatusForCollection(100, 80));
+        $this->assertSame('unpaid', OrderPaymentLedger::paymentStatusForCollection(100, 0));
+    }
+
+    public function test_correction_to_a_settled_collection_does_not_repeat_the_settlement_deduction(): void
+    {
+        $balance = DriverCustodyLedger::calculateBalance(136.80, 136.80, -16.80, 0);
+
+        $this->assertSame(-16.8, $balance);
+    }
+
     public function test_cod_payment_requires_driver_collection_confirmation(): void
     {
         $order = new MerchantOrder(['payment_method' => 'cod']);
@@ -109,5 +124,18 @@ class CollectionSettingTest extends TestCase
         $this->assertFalse(SettlementWorkflow::amountsMatch(13680, 13680, 13679, 13680));
         $this->assertFalse(SettlementWorkflow::amountsMatch(13680, 13680, 13680, 5000));
         $this->assertFalse(SettlementWorkflow::amountsMatch(0, 0, 0, 0));
+    }
+
+    public function test_collection_failure_report_requires_driver_confirmation_to_close(): void
+    {
+        $this->assertTrue(CollectionFailureWorkflow::canTransition(null, 'open'));
+        $this->assertTrue(CollectionFailureWorkflow::canTransition('open', 'retry_requested'));
+        $this->assertTrue(CollectionFailureWorkflow::canTransition('open', 'return_requested'));
+        $this->assertTrue(CollectionFailureWorkflow::canTransition('retry_requested', 'collection_succeeded'));
+        $this->assertTrue(CollectionFailureWorkflow::canTransition('retry_requested', 'open'));
+        $this->assertTrue(CollectionFailureWorkflow::canTransition('return_requested', 'return_completed'));
+        $this->assertFalse(CollectionFailureWorkflow::canTransition('open', 'collection_succeeded'));
+        $this->assertFalse(CollectionFailureWorkflow::canTransition('return_requested', 'collection_succeeded'));
+        $this->assertFalse(CollectionFailureWorkflow::canTransition('return_completed', 'open'));
     }
 }

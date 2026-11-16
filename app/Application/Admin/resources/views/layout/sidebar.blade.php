@@ -581,6 +581,12 @@
                                         {{ __('admin::home.driver_settlements') }}
                                     </a>
                                 </li>
+                                <li class="slide">
+                                    <a href="{{ route('admin:collection-failure-reports.index') }}"
+                                       class="side-menu__item {{ request()->routeIs('admin:collection-failure-reports.*') ? 'active' : '' }}">
+                                        {{ __('admin::home.collection_failure_reports') }}
+                                    </a>
+                                </li>
                             @endif
                         </ul>
                     </li>

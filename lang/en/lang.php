@@ -9,7 +9,7 @@ return [
         'expired' => 'Expired',
         'cancelled' => 'Cancelled',
         'on_way' => 'On Way',
-        'ready' => 'Ready',
+        'ready' => 'Ready for delivery',
         'will-be-late' => 'Will be late',
         'accepted' => 'Accepted',
         'timeout' => 'Timeout',

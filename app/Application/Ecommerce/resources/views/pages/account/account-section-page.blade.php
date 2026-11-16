@@ -280,14 +280,26 @@
         }
 
         .order-details-link {
-            color: #245C8E;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 7px 16px;
+            border: 1px solid #306FAA;
+            border-radius: 6px;
+            background: #fff;
+            color: #306FAA;
+            font-size: 13px;
             font-weight: 700;
-            white-space: nowrap
+            white-space: nowrap;
+            text-decoration: none !important;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
 
         .order-details-link:hover {
-            color: #604400;
-            text-decoration: underline
+            background: #306FAA;
+            color: #fff;
+            border-color: #306FAA;
         }
 
         .order-detail-heading {
@@ -429,8 +441,25 @@
         }
 
         .order-detail-back {
-            color: #245C8E;
-            font-weight: 700
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: 1px solid #306FAA;
+            border-radius: 6px;
+            background: #fff;
+            color: #306FAA;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none !important;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .order-detail-back:hover {
+            background: #306FAA;
+            color: #fff;
+            border-color: #306FAA;
         }
 
         .order-detail-date {
@@ -848,8 +877,41 @@
                         @endif
                     @elseif($section === 'order_details')
                         @php
+                            $savedAddress = $order->address;
                             $addressRaw = $order->addressInOrder;
-                            $address = is_string($addressRaw) ? json_decode($addressRaw, true) : $addressRaw;
+                            $address = is_string($addressRaw) ? json_decode($addressRaw, true) : (is_array($addressRaw) ? $addressRaw : []);
+
+                            $resolveTitle = function($obj) {
+                                if (is_string($obj)) return $obj;
+                                if (is_array($obj)) {
+                                    return $obj[app()->getLocale()] ?? reset($obj);
+                                }
+                                return null;
+                            };
+
+                            $countryName = $savedAddress?->country?->title
+                                ?? (isset($address['country']['title']) ? $resolveTitle($address['country']['title']) : null)
+                                ?? ($address['country_name'] ?? null)
+                                ?? (isset($address['country_id']) ? \App\Domain\AppBase\Models\Location\Country::find($address['country_id'])?->title : null);
+
+                            $cityName = $savedAddress?->city?->title
+                                ?? (isset($address['city']['title']) ? $resolveTitle($address['city']['title']) : null)
+                                ?? ($address['city_name'] ?? null)
+                                ?? (isset($address['city_id']) ? \App\Domain\AppBase\Models\Location\City::find($address['city_id'])?->title : null);
+
+                            $districtName = $savedAddress?->district_name
+                                ?: ($savedAddress?->distract?->title
+                                ?? ($address['district_name'] ?? null)
+                                ?? (isset($address['distract_id']) ? \App\Domain\AppBase\Models\Location\Distract::find($address['distract_id'])?->title : null));
+
+                            $streetAddress = $savedAddress?->address ?? ($address['address'] ?? null);
+
+                            $addressTitle = is_array($savedAddress?->title)
+                                ? ($savedAddress->title[app()->getLocale()] ?? reset($savedAddress->title))
+                                : ($savedAddress?->title ?? (is_array($address['title'] ?? null) ? ($address['title'][app()->getLocale()] ?? reset($address['title'])) : ($address['title'] ?? null)));
+
+                            $hasAddressInfo = $savedAddress || !empty($address) || $countryName || $cityName || $streetAddress;
+
                             $statusValue = $order->status instanceof \BackedEnum ? $order->status->value : $order->status;
                             $promoValue = $order->getAttribute('promocode');
                             $promoCode = is_array($promoValue) ? ($promoValue['code'] ?? '') : ($promoValue ?: '');
@@ -893,14 +955,21 @@
 
                                 <section class="order-detail-panel">
                                     <h3>@lang('ecommerce::ecommerce.shipping_details')</h3>
-                                    @if($address && is_array($address))
+                                    @if($hasAddressInfo)
                                         <div class="order-detail-body">
-                                            <strong>{{ $order->client_name ?? $order->user?->name ?? '-' }}</strong>
+                                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                                <strong>{{ $order->client_name ?? $order->user?->name ?? '-' }}</strong>
+                                                @if($addressTitle)
+                                                    <span class="order-detail-badge secondary" style="font-size:11px;">{{ $addressTitle }}</span>
+                                                @endif
+                                            </div>
                                             @if($order->client_phone ?? $order->user?->phone)
                                                 <span>{{ $order->client_phone ?? $order->user?->phone }}</span><br>
                                             @endif
-                                            <span>{{ $address['city_name'] ?? '' }}@if(!empty($address['district_name']))، {{ $address['district_name'] }}@endif</span>
-                                            @if(!empty($address['address']))<br><span>{{ $address['address'] }}</span>@endif
+                                            <span style="display:inline-block; margin-top:4px;">
+                                                <i class="ti-location-pin text-muted"></i>
+                                                {{ implode(' - ', array_filter([$countryName, $cityName, $districtName, $streetAddress])) }}
+                                            </span>
                                         </div>
                                     @else
                                         <div class="order-detail-body">@lang('ecommerce::ecommerce.no_address_found')</div>

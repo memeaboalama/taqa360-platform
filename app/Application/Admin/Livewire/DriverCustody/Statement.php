@@ -3,10 +3,8 @@
 namespace Application\Admin\Livewire\DriverCustody;
 
 use App\Domain\MarketPlace\Models\CollectionSetting;
-use App\Domain\MarketPlace\Models\OrderSettlement;
 use App\Domain\MarketPlace\Services\DriverCustodyLedger;
 use Domain\Driver\Models\Driver;
-use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -23,11 +21,6 @@ class Statement extends Component
     public string $movementType = '';
     public string $orderSearch = '';
     public string $settlementSearch = '';
-    public string $correctionSettlementId = '';
-    public string $correctionDirection = 'debit';
-    public string $correctionAmount = '';
-    public string $correctionReason = '';
-
     protected $paginationTheme = 'bootstrap';
 
     public function mount(Driver $driver): void
@@ -72,45 +65,6 @@ class Statement extends Component
         $this->resetPage();
     }
 
-    public function addCorrection(): void
-    {
-        if (!CollectionSetting::adminCan('correct')) {
-            abort(403);
-        }
-
-        $data = $this->validate([
-            'correctionSettlementId' => [
-                'required',
-                'integer',
-                'exists:order_settlements,id',
-            ],
-            'correctionDirection' => ['required', 'in:credit,debit'],
-            'correctionAmount' => ['required', 'numeric', 'gt:0', 'max:10000000'],
-            'correctionReason' => ['required', 'string', 'max:1000'],
-        ]);
-
-        DB::transaction(function () use ($data): void {
-            $settlement = OrderSettlement::query()
-                ->where('driver_id', $this->driverId)
-                ->whereKey($data['correctionSettlementId'])
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $amount = round((float) $data['correctionAmount'], 2);
-            $settlement->corrections()->create([
-                'corrected_by' => auth('admin')->id(),
-                'amount' => $data['correctionDirection'] === 'debit' ? -$amount : $amount,
-                'reason' => $data['correctionReason'],
-                'created_at' => now(),
-            ]);
-        });
-
-        $this->reset('correctionSettlementId', 'correctionAmount', 'correctionReason');
-        $this->correctionDirection = 'debit';
-        $this->resetPage();
-        $this->alert('success', __('admin::home.correction_saved'));
-    }
-
     public function render(): \Illuminate\Contracts\View\View
     {
         if (auth('driver')->check()) {
@@ -139,13 +93,6 @@ class Statement extends Component
                 'order' => $this->orderSearch,
                 'settlement' => $this->settlementSearch,
             ]),
-            'correctionSettlements' => $canCorrect
-                ? OrderSettlement::query()
-                    ->with('order')
-                    ->where('driver_id', $driver->id)
-                    ->latest('id')
-                    ->get()
-                : collect(),
             'canCorrect' => $canCorrect,
         ]);
     }

@@ -5,6 +5,8 @@ namespace Application\Admin\Livewire\SettlementReview;
 use App\Domain\MarketPlace\Models\CollectionSetting;
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use App\Domain\MarketPlace\Models\OrderSettlement;
+use App\Domain\MarketPlace\Models\PaymentCorrectionRequest;
+use App\Domain\MarketPlace\Services\FinancialMovementCorrectionWorkflow;
 use App\Domain\MarketPlace\Services\SettlementWorkflow;
 use Domain\AppBase\Models\Payment;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
@@ -20,6 +22,9 @@ class Show extends Component
     public string $receivedAt = '';
     public string $receivedBy = '';
     public bool $receiptConfirmed = false;
+    public bool $showCorrectionForm = false;
+    public string $correctionAmount = '';
+    public string $correctionReason = '';
 
     public function mount(OrderSettlement $settlement): void
     {
@@ -88,6 +93,69 @@ class Show extends Component
         $this->alert('success', 'تم اعتماد التوريد.');
     }
 
+    public function beginCorrectionRequest(FinancialMovementCorrectionWorkflow $workflow): void
+    {
+        if (!CollectionSetting::adminCan('correct')) {
+            abort(403);
+        }
+
+        $preview = $workflow->preview($this->settlementOrderId(), 'settlement', $this->settlementId);
+        $this->correctionAmount = number_format($preview['original_amount'], 2, '.', '');
+        $this->correctionReason = '';
+        $this->showCorrectionForm = true;
+        $this->resetErrorBag();
+    }
+
+    public function submitCorrectionRequest(FinancialMovementCorrectionWorkflow $workflow): void
+    {
+        if (!CollectionSetting::adminCan('correct')) {
+            abort(403);
+        }
+
+        $data = $this->validate([
+            'correctionAmount' => ['required', 'numeric', 'min:0', 'max:99999999.99', 'regex:/^\d+(\.\d{1,2})?$/'],
+            'correctionReason' => ['required', 'string', 'max:1000'],
+        ]);
+        $workflow->request(
+            $this->settlementOrderId(),
+            'settlement',
+            $this->settlementId,
+            $data['correctionAmount'],
+            $data['correctionReason'],
+            auth('admin')->user()
+        );
+        $this->showCorrectionForm = false;
+        $this->correctionAmount = '';
+        $this->correctionReason = '';
+        $this->alert('success', 'تم إرسال طلب تصحيح التسوية للمراجعة.');
+    }
+
+    public function approveCorrectionRequest(
+        FinancialMovementCorrectionWorkflow $workflow,
+        int $requestId
+    ): void {
+        if (!CollectionSetting::adminCan('correct')) {
+            abort(403);
+        }
+
+        $this->correctionRequestQuery()->whereKey($requestId)->firstOrFail();
+        $workflow->approve($requestId, auth('admin')->user());
+        $this->alert('success', 'تم اعتماد التصحيح وتحديث عهدة السائق.');
+    }
+
+    public function cancelCorrectionRequest(
+        FinancialMovementCorrectionWorkflow $workflow,
+        int $requestId
+    ): void {
+        if (!CollectionSetting::adminCan('correct')) {
+            abort(403);
+        }
+
+        $this->correctionRequestQuery()->whereKey($requestId)->firstOrFail();
+        $workflow->cancel($requestId, auth('admin')->user());
+        $this->alert('success', 'تم إلغاء طلب التصحيح دون تعديل التسوية.');
+    }
+
     public function getListeners(): array
     {
         return ['refreshSettlement' => '$refresh'];
@@ -115,6 +183,18 @@ class Show extends Component
                 ->map(fn ($records) => $records->last())
                 ->values()
             : collect();
+        $correctionRequests = $this->correctionRequestQuery()
+            ->with(['requestedBy', 'approvedBy', 'cancelledBy'])
+            ->latest('id')
+            ->get();
+        $correctionPreview = $this->showCorrectionForm
+            ? app(FinancialMovementCorrectionWorkflow::class)->preview(
+                $settlement->order_id,
+                'settlement',
+                $settlement->id,
+                $this->correctionAmount
+            )
+            : null;
 
         return view('admin::livewire.settlement-review.show', [
             'settlement' => $settlement,
@@ -125,14 +205,32 @@ class Show extends Component
             ), 2),
             'canReview' => CollectionSetting::adminCan('review'),
             'canApprove' => CollectionSetting::adminCan('approve'),
+            'canCorrect' => CollectionSetting::adminCan('correct'),
+            'correctionRequests' => $correctionRequests,
+            'correctionPreview' => $correctionPreview,
         ]);
+    }
+
+    private function correctionRequestQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return PaymentCorrectionRequest::query()
+            ->where('order_id', $this->settlementOrderId())
+            ->where('movement_type', 'settlement')
+            ->where('movement_id', $this->settlementId);
+    }
+
+    private function settlementOrderId(): int
+    {
+        return (int) OrderSettlement::query()->whereKey($this->settlementId)->value('order_id');
     }
 
     private function authorizeAccess(): void
     {
         abort_unless(
             auth('admin')->check()
-                && (CollectionSetting::adminCan('review') || CollectionSetting::adminCan('approve')),
+                && (CollectionSetting::adminCan('review')
+                    || CollectionSetting::adminCan('approve')
+                    || CollectionSetting::adminCan('correct')),
             403
         );
     }

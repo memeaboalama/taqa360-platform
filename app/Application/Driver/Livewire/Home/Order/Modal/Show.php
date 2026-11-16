@@ -4,6 +4,7 @@ namespace Application\Driver\Livewire\Home\Order\Modal;
 
 use App\Application\Marketplace\Enums\MerchantOrderStatuses;
 use App\Domain\MarketPlace\Models\OrderSettlement;
+use App\Domain\MarketPlace\Services\CollectionFailureWorkflow;
 use App\Domain\MarketPlace\Services\SettlementWorkflow;
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use Carbon\Carbon;
@@ -25,6 +26,9 @@ class Show extends Component
     public $settlementMethod;
     public $settlementReference;
     public $settlementProof;
+    public string $collectionFailureReason = '';
+    public string $collectionFailureNote = '';
+    public string $retryFailureNote = '';
 
     public function showOrderDetails($orderId): void
     {
@@ -89,6 +93,8 @@ class Show extends Component
             'settlement_reference' => $order->settlement?->reference,
             'settlement_amount' => $order->settlement?->amount,
             'settlement_recipient_name' => $order->settlement?->recipient_name,
+            'driver_cod_collection' => $order->payment?->source_message === MerchantOrder::COD_COLLECTION_CONFIRMATION_MESSAGE
+                && MerchantOrder::resolvePaymentStatus($order->payment, 'unpaid', $order->payment_method) === 'paid',
             'settlement_history' => $order->settlement?->histories()
                 ->with('actor')
                 ->get()
@@ -100,6 +106,7 @@ class Show extends Component
                     'created_at' => $history->created_at?->format('Y-m-d H:i'),
                 ])
                 ->all() ?? [],
+            'collection_failure_report' => $order->collectionFailureReports()->with('histories.actor')->first()?->toArray(),
             'payment_source_name' => $order->payment?->source_name,
             'note' => $order->note,
             'order_type' => $order->type_service_name(),
@@ -164,6 +171,83 @@ class Show extends Component
             ])
             ->all() ?? [];
         $this->order['payment_source_name'] = $order->payment?->source_name;
+        $this->order['driver_cod_collection'] = $order->payment?->source_message === MerchantOrder::COD_COLLECTION_CONFIRMATION_MESSAGE
+            && MerchantOrder::resolvePaymentStatus($order->payment, 'unpaid', $order->payment_method) === 'paid';
+        $this->order['collection_failure_report'] = $order->collectionFailureReports()
+            ->with('histories.actor')
+            ->first()?->toArray();
+    }
+
+    public function reportCollectionFailure(CollectionFailureWorkflow $workflow): void
+    {
+        $driver = auth('driver')->user();
+        if (!$driver || empty($this->order['id'])) {
+            abort(403);
+        }
+
+        $data = $this->validate([
+            'collectionFailureReason' => ['required', 'string', 'max:1000'],
+            'collectionFailureNote' => ['nullable', 'string', 'max:2000'],
+        ]);
+        $report = $workflow->report(
+            (int) $this->order['id'],
+            (int) $driver->id,
+            $data['collectionFailureReason'],
+            $data['collectionFailureNote'] ?: null,
+            $driver
+        );
+        $report->load('histories.actor');
+        $this->collectionFailureReason = '';
+        $this->collectionFailureNote = '';
+        $this->order['collection_failure_report'] = $report->toArray();
+        $this->alert('success', 'تم إرسال بلاغ تعذر التحصيل للإدارة.');
+    }
+
+    public function confirmRetryCollection(CollectionFailureWorkflow $workflow): void
+    {
+        $driver = auth('driver')->user();
+        $reportId = $this->order['collection_failure_report']['id'] ?? null;
+        if (!$driver || !$reportId) {
+            abort(403);
+        }
+
+        $report = $workflow->confirmCollection((int) $reportId, (int) $driver->id, $driver);
+        $report->load('histories.actor');
+        $this->refreshPaymentStatus();
+        $this->order['collection_failure_report'] = $report->toArray();
+        $this->alert('success', 'تم تأكيد التحصيل وإغلاق البلاغ. أرسل التوريد للمراجعة من نموذج التسوية.');
+    }
+
+    public function reportRetryFailure(CollectionFailureWorkflow $workflow): void
+    {
+        $driver = auth('driver')->user();
+        $reportId = $this->order['collection_failure_report']['id'] ?? null;
+        if (!$driver || !$reportId) {
+            abort(403);
+        }
+
+        $data = $this->validate([
+            'retryFailureNote' => ['required', 'string', 'max:2000'],
+        ]);
+        $report = $workflow->retryFailed((int) $reportId, (int) $driver->id, $data['retryFailureNote'], $driver);
+        $this->retryFailureNote = '';
+        $report->load('histories.actor');
+        $this->order['collection_failure_report'] = $report->toArray();
+        $this->alert('success', 'تم تحديث البلاغ وإعادته للإدارة مع ملاحظتك.');
+    }
+
+    public function confirmReturnCompleted(CollectionFailureWorkflow $workflow): void
+    {
+        $driver = auth('driver')->user();
+        $reportId = $this->order['collection_failure_report']['id'] ?? null;
+        if (!$driver || !$reportId) {
+            abort(403);
+        }
+
+        $report = $workflow->confirmReturn((int) $reportId, (int) $driver->id, $driver);
+        $report->load('histories.actor');
+        $this->order['collection_failure_report'] = $report->toArray();
+        $this->alert('success', 'تم توثيق اكتمال إرجاع الطلب وإغلاق البلاغ دون إنشاء استرداد مالي.');
     }
 
     public function submitSettlement(SettlementWorkflow $workflow): void
@@ -189,13 +273,23 @@ class Show extends Component
             return;
         }
         $existingPayment = $order->payment()->latest('id')->first();
-        if (!$isResubmission && !$isNewAfterRejection
+        $latestFailureReport = $order->collectionFailureReports()->first();
+        if (in_array($latestFailureReport?->status, ['open', 'retry_requested', 'return_requested', 'return_completed'], true)) {
+            $this->alert('warning', 'أكمل معالجة بلاغ تعذر التحصيل قبل إرسال التسوية.');
+            return;
+        }
+        $existingDriverCollection = $existingPayment
+            && $existingPayment->source_message === MerchantOrder::COD_COLLECTION_CONFIRMATION_MESSAGE
+            && MerchantOrder::resolvePaymentStatus($existingPayment, 'unpaid', $order->payment_method) === 'paid';
+        if (!$isResubmission && !$isNewAfterRejection && !$existingDriverCollection
             && MerchantOrder::resolvePaymentStatus($existingPayment, 'unpaid', $order->payment_method) === 'paid') {
             $this->alert('warning', 'تم تسجيل التحصيل لهذا الطلب مسبقًا.');
             return;
         }
 
-        $amount = round((float) $order->total_after_vat, 2);
+        $amount = round((float) ($order->total_after_discount > 0
+            ? $order->total_after_discount
+            : $order->total_after_vat), 2);
         if ($amount <= 0) {
             $this->alert('error', 'لا يمكن تسجيل توريد لطلب بقيمة صفرية.');
             return;
@@ -254,24 +348,36 @@ class Show extends Component
             }
 
             $settlement = $lockedOrder->settlement()->lockForUpdate()->first();
+            $latestFailureReport = $lockedOrder->collectionFailureReports()
+                ->lockForUpdate()
+                ->first();
+            if (in_array($latestFailureReport?->status, ['open', 'retry_requested', 'return_requested', 'return_completed'], true)) {
+                return null;
+            }
             $resubmitting = $settlement?->status === 'returned';
             $newAfterRejection = $settlement?->status === 'rejected';
             if ($settlement && !$resubmitting && !$newAfterRejection) {
                 return null;
             }
 
-            $amount = round((float) $lockedOrder->total_after_vat, 2);
+            $amount = round((float) ($lockedOrder->total_after_discount > 0
+                ? $lockedOrder->total_after_discount
+                : $lockedOrder->total_after_vat), 2);
             if ($amount <= 0) {
                 return null;
             }
 
             $existingPayment = $lockedOrder->payment()->latest('id')->first();
+            $existingDriverCollection = $existingPayment
+                && $existingPayment->source_message === MerchantOrder::COD_COLLECTION_CONFIRMATION_MESSAGE
+                && MerchantOrder::resolvePaymentStatus($existingPayment, 'unpaid', $lockedOrder->payment_method) === 'paid';
             if ($resubmitting || $newAfterRejection) {
                 if ((int) $settlement->driver_id !== (int) $driverId
                     || MerchantOrder::resolvePaymentStatus($existingPayment, 'unpaid', $lockedOrder->payment_method) !== 'paid') {
                     return null;
                 }
-            } elseif (MerchantOrder::resolvePaymentStatus($existingPayment, 'unpaid', $lockedOrder->payment_method) === 'paid') {
+            } elseif (!$existingDriverCollection
+                && MerchantOrder::resolvePaymentStatus($existingPayment, 'unpaid', $lockedOrder->payment_method) === 'paid') {
                 return null;
             }
 
@@ -301,7 +407,7 @@ class Show extends Component
                 $settlement = $lockedOrder->settlement()->create($settlementAttributes);
             }
 
-            if (!$resubmitting && !$newAfterRejection) {
+            if (!$resubmitting && !$newAfterRejection && !$existingDriverCollection) {
                 $timestamp = now()->toIso8601String();
                 $amountInHalalas = (int) round($amount * 100);
                 $amountFormat = number_format($amount, 2) . ' SAR';
@@ -368,7 +474,7 @@ class Show extends Component
         $this->order['settlement_id'] = $settlementId;
         $this->order['settlement_method'] = $this->settlementMethod;
         $this->order['settlement_reference'] = $this->settlementReference;
-        $this->order['settlement_amount'] = $this->order['total_after_vat'];
+        $this->order['settlement_amount'] = $amount;
         $this->order['settlement_custody'] = 'لدى السائق';
         $this->order['settlement_history'][] = [
             'action' => $isResubmission ? 'resubmitted' : 'submitted',
@@ -379,6 +485,7 @@ class Show extends Component
         ];
         $this->order['payment_status'] = 'paid';
         $this->order['payment_label'] = MerchantOrder::resolvePaymentLabel('paid', $this->order['payment_method']);
+        $this->order['driver_cod_collection'] = true;
         $this->alert('success', 'تم تسجيل التحصيل وإرسال التوريد للمراجعة.');
     }
 

@@ -7,6 +7,7 @@ use App\Application\Admin\Controllers\ProviderController;
 use App\Application\Admin\Controllers\ServicesController;
 use App\Application\Admin\Controllers\SettlementProofController;
 use App\Application\Admin\Controllers\DriverCustodyController;
+use App\Application\Admin\Controllers\CollectionFailureReportController;
 use App\Application\Admin\Controllers\OrderController;
 use App\Application\Admin\Controllers\User\UserController;
 use App\Domain\MarketPlace\Models\MerchantOrder;
@@ -263,6 +264,11 @@ Route::group(
         Route::get('/driver-settlements/{settlementId}', [DriverCustodyController::class, 'settlement'])
             ->whereNumber('settlementId')
             ->name('driver-settlements.show');
+        Route::get('/collection-failure-reports', [CollectionFailureReportController::class, 'index'])
+            ->name('collection-failure-reports.index');
+        Route::get('/collection-failure-reports/{reportId}', [CollectionFailureReportController::class, 'show'])
+            ->whereNumber('reportId')
+            ->name('collection-failure-reports.show');
         Route::get('/settlements/{settlement}/proof', [SettlementProofController::class, 'show'])
             ->name('settlements.proof');
         Route::get('/settlements/{settlement}/history/{history}/proof', [SettlementProofController::class, 'showHistory'])

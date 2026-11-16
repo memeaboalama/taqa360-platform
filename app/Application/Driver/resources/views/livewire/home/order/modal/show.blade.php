@@ -170,6 +170,62 @@
                                             <h6 class="card-title fw-semibold mb-0">بيانات التحصيل والتوريد</h6>
                                         </div>
                                         <div class="card-body">
+                                            @php($failureReport = $order['collection_failure_report'] ?? null)
+                                            @php($collectionDue = ($order['total_after_discount'] ?? 0) > 0 ? $order['total_after_discount'] : ($order['total_after_vat'] ?? 0))
+                                            @if($failureReport)
+                                                <div class="alert alert-info">
+                                                    <strong>@lang('driver::home.collection_failure_report')</strong>
+                                                    <div>@lang('driver::home.collection_failure_status'): @lang('driver::home.collection_failure_status_' . $failureReport['status'])</div>
+                                                    <div>@lang('driver::home.collection_failure_reason'): {{ $failureReport['reason'] }}</div>
+                                                    @if($failureReport['admin_instructions'])
+                                                        <div class="mt-1"><strong>@lang('driver::home.collection_failure_instructions'):</strong> {{ $failureReport['admin_instructions'] }}</div>
+                                                    @endif
+                                                    @foreach($failureReport['histories'] ?? [] as $history)
+                                                        <small class="d-block text-muted">
+                                                            @lang('driver::home.collection_failure_action_' . $history['action'])
+                                                            · {{ $history['actor']['name'] ?? '—' }} · {{ $history['created_at'] ?? '' }}
+                                                        </small>
+                                                        @if($history['note'])
+                                                            <small class="d-block">{{ $history['note'] }}</small>
+                                                        @endif
+                                                    @endforeach
+                                                    @if($failureReport['status'] === 'retry_requested')
+                                                        <button type="button" class="btn btn-success btn-sm mt-2"
+                                                                wire:click="confirmRetryCollection" wire:loading.attr="disabled">
+                                                            @lang('driver::home.confirm_collection_retry')
+                                                        </button>
+                                                        <div class="mt-2">
+                                                            <textarea class="form-control mb-2" wire:model.defer="retryFailureNote"
+                                                                      maxlength="2000" placeholder="@lang('driver::home.retry_failure_note')"></textarea>
+                                                            @error('retryFailureNote') <span class="text-danger">{{ $message }}</span> @enderror
+                                                            <button type="button" class="btn btn-outline-warning btn-sm"
+                                                                    wire:click="reportRetryFailure" wire:loading.attr="disabled">
+                                                                @lang('driver::home.report_retry_failed')
+                                                            </button>
+                                                        </div>
+                                                    @elseif($failureReport['status'] === 'return_requested')
+                                                        <button type="button" class="btn btn-warning btn-sm mt-2"
+                                                                wire:click="confirmReturnCompleted" wire:loading.attr="disabled">
+                                                            @lang('driver::home.confirm_return_completed')
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            @endif
+                                            @if((empty($failureReport) || !in_array($failureReport['status'], ['open', 'retry_requested', 'return_requested', 'return_completed'], true))
+                                                && ($order['payment_status'] ?? null) !== 'paid')
+                                                <form class="border rounded p-3 mb-3" wire:submit.prevent="reportCollectionFailure">
+                                                    <h6>@lang('driver::home.report_collection_failure')</h6>
+                                                    <label class="form-label">@lang('driver::home.collection_failure_reason')</label>
+                                                    <input class="form-control mb-2" wire:model.defer="collectionFailureReason" maxlength="1000" required>
+                                                    @error('collectionFailureReason') <span class="text-danger">{{ $message }}</span> @enderror
+                                                    <label class="form-label">@lang('driver::home.collection_failure_note')</label>
+                                                    <textarea class="form-control mb-2" wire:model.defer="collectionFailureNote" maxlength="2000"></textarea>
+                                                    @error('collectionFailureNote') <span class="text-danger">{{ $message }}</span> @enderror
+                                                    <button type="submit" class="btn btn-outline-warning" wire:loading.attr="disabled">
+                                                        @lang('driver::home.submit_collection_failure_report')
+                                                    </button>
+                                                </form>
+                                            @endif
                                             @if(!empty($order['settlement_status']))
                                                 <p class="mb-1">
                                                     <span class="fw-semibold">حالة الدفع:</span>
@@ -177,7 +233,7 @@
                                                 </p>
                                                 <p class="mb-1">
                                                     <span class="fw-semibold">مكان المبلغ:</span> {{ $order['settlement_custody'] ?? 'لدى السائق' }}
-                                                    ({{ number_format($order['total_after_vat'] ?? 0, 2) }} SAR)
+                                                    ({{ number_format($collectionDue, 2) }} SAR)
                                                 </p>
                                                 <p class="mb-0">
                                                     <span class="fw-semibold">حالة التوريد:</span>
@@ -205,8 +261,9 @@
                                                     {{ $order['payment_source_name'] ?? 'تم تسجيله مسبقًا' }}
                                                 </p>
                                             @endif
-                                            @if(empty($order['settlement_status']) || in_array($order['settlement_status'], ['returned', 'rejected'], true))
-                                                @if(($order['payment_status'] ?? null) === 'paid' && empty($order['settlement_status']))
+                                            @if((empty($order['settlement_status']) || in_array($order['settlement_status'], ['returned', 'rejected'], true))
+                                                && (empty($failureReport) || in_array($failureReport['status'], ['collection_succeeded'], true) || in_array($order['settlement_status'] ?? null, ['returned', 'rejected'], true)))
+                                                @if(($order['payment_status'] ?? null) === 'paid' && empty($order['settlement_status']) && empty($order['driver_cod_collection']))
                                                     <p class="text-warning mb-0">تم تسجيل التحصيل مسبقًا ولا يمكن إنشاء توريد جديد من عهدة السائق.</p>
                                                 @elseif(!empty($order['collection_config']['enabled_methods']))
                                                 <p class="text-muted">
@@ -215,7 +272,7 @@
                                                     @elseif(($order['settlement_status'] ?? null) === 'rejected')
                                                         أُتيحت التحصيلات لطلب توريد جديد؛ سيُحفظ كسجل تسوية جديد دون تكرار التحصيل.
                                                     @else
-                                                        سجّل توريد كامل قيمة الطلب ({{ number_format($order['total_after_vat'] ?? 0, 2) }} SAR). تسجيل التحصيل لا يعني اعتماد التوريد.
+                                                        سجّل توريد كامل قيمة الطلب ({{ number_format($collectionDue, 2) }} SAR). تسجيل التحصيل لا يعني اعتماد التوريد.
                                                     @endif
                                                 </p>
                                                 <form wire:submit.prevent="submitSettlement">
