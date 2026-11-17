@@ -107,43 +107,72 @@ class CollectionFailureWorkflow
             $this->assertOrderCanBeReported($order);
             $this->assertNoConfirmedCollection($order);
 
-            $amount = round((float) ($order->total_after_discount > 0
-                ? $order->total_after_discount
-                : $order->total_after_vat), 2);
-            if ($amount <= 0) {
-                throw ValidationException::withMessages(['report' => 'لا يمكن تسجيل تحصيل لطلب بقيمة صفرية.']);
-            }
-
-            $timestamp = now()->toIso8601String();
-            $amountInHalalas = (int) round($amount * 100);
-            $amountFormat = number_format($amount, 2) . ' SAR';
-            $order->payment()->updateOrCreate(
-                ['payment_id' => 'COD-' . ($order->code ?: $order->id)],
-                [
-                    'status' => 'paid',
-                    'amount' => $amountInHalalas,
-                    'currency' => 'SAR',
-                    'captured' => $amountInHalalas,
-                    'capturedAt' => $timestamp,
-                    'description' => 'Cash collection confirmed by driver after retry.',
-                    'amountFormat' => $amountFormat,
-                    'capturedFormat' => $amountFormat,
-                    'source_type' => 'cash',
-                    'source_name' => $driver->name,
-                    'source_number' => (string) $driverId,
-                    'source_message' => MerchantOrder::COD_COLLECTION_CONFIRMATION_MESSAGE,
-                    'user_id' => $order->user_id,
-                    'channel' => $order->channel,
-                    'createdAt' => $timestamp,
-                    'updatedAt' => $timestamp,
-                ]
-            );
+            $this->recordCollection($order, $driverId, $driver, 'Cash collection confirmed by driver after retry.');
 
             $previous = $report->status;
             $report->update(['status' => 'collection_succeeded', 'resolved_at' => now()]);
             $this->record($report, $driver, 'collection_succeeded', $previous, 'collection_succeeded', $report->admin_instructions);
 
             return $report->fresh(['order', 'driver']);
+        });
+    }
+
+    public function confirmOrderCollection(int $orderId, int $driverId, Model $driver): Payment
+    {
+        return DB::transaction(function () use ($orderId, $driverId, $driver): Payment {
+            $order = MerchantOrder::query()
+                ->whereKey($orderId)
+                ->where('driver_id', $driverId)
+                ->lockForUpdate()
+                ->firstOrFail();
+            $status = $order->status instanceof MerchantOrderStatuses
+                ? $order->status
+                : MerchantOrderStatuses::tryFrom((string) $order->status);
+
+            if ($status !== MerchantOrderStatuses::PREVIOUS
+                || !MerchantOrder::isCashOnDeliveryMethod($order->payment_method)) {
+                throw ValidationException::withMessages([
+                    'collection' => 'يقبل تأكيد التحصيل لطلب دفع عند الاستلام مكتمل فقط.',
+                ]);
+            }
+
+            if ($order->collectionFailureReports()
+                ->whereIn('status', ['open', 'retry_requested', 'return_requested', 'return_completed'])
+                ->exists()) {
+                throw ValidationException::withMessages([
+                    'collection' => 'أكمل معالجة بلاغ تعذر التحصيل قبل تأكيد الاستلام.',
+                ]);
+            }
+
+            $existingCollection = Payment::query()
+                ->where('payable_id', $order->id)
+                ->whereIn('payable_type', [
+                    $order->getMorphClass(),
+                    MerchantOrder::class,
+                    'App\\Domain\\MarketPlace\\Models\\MerchantOrder',
+                ])
+                ->where('source_message', MerchantOrder::COD_COLLECTION_CONFIRMATION_MESSAGE)
+                ->whereIn('status', ['paid', 'success'])
+                ->latest('id')
+                ->first();
+
+            if ($existingCollection) {
+                if (app(\App\Domain\MarketPlace\Services\OrderPaymentLedger::class)
+                    ->forOrder($order)['payment_status'] !== 'paid') {
+                    throw ValidationException::withMessages([
+                        'collection' => 'قيمة التحصيل لا تطابق المستحق الحالي؛ اطلب مراجعة الإدارة.',
+                    ]);
+                }
+
+                return $existingCollection;
+            }
+
+            return $this->recordCollection(
+                $order,
+                $driverId,
+                $driver,
+                'Cash collection confirmed by driver after delivery.'
+            );
         });
     }
 
@@ -237,6 +266,48 @@ class CollectionFailureWorkflow
         if ($exists) {
             throw ValidationException::withMessages(['report' => 'الطلب مسجل كمحصّل بالفعل.']);
         }
+    }
+
+    private function recordCollection(
+        MerchantOrder $order,
+        int $driverId,
+        Model $driver,
+        string $description
+    ): Payment {
+        $amount = round((float) ($order->total_after_discount > 0
+            ? $order->total_after_discount
+            : $order->total_after_vat), 2);
+        if ($amount <= 0) {
+            throw ValidationException::withMessages([
+                'collection' => 'لا يمكن تسجيل تحصيل لطلب بقيمة صفرية.',
+            ]);
+        }
+
+        $timestamp = now()->toIso8601String();
+        $amountInHalalas = (int) round($amount * 100);
+        $amountFormat = number_format($amount, 2) . ' SAR';
+
+        return $order->payment()->updateOrCreate(
+            ['payment_id' => 'COD-' . ($order->code ?: $order->id)],
+            [
+                'status' => 'paid',
+                'amount' => $amountInHalalas,
+                'currency' => 'SAR',
+                'captured' => $amountInHalalas,
+                'capturedAt' => $timestamp,
+                'description' => $description,
+                'amountFormat' => $amountFormat,
+                'capturedFormat' => $amountFormat,
+                'source_type' => 'cash',
+                'source_name' => $driver->name,
+                'source_number' => (string) $driverId,
+                'source_message' => MerchantOrder::COD_COLLECTION_CONFIRMATION_MESSAGE,
+                'user_id' => $order->user_id,
+                'channel' => $order->channel,
+                'createdAt' => $timestamp,
+                'updatedAt' => $timestamp,
+            ]
+        );
     }
 
     private function record(

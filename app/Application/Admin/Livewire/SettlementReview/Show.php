@@ -188,6 +188,8 @@ class Show extends Component
             ->latest('id')
             ->get();
         $correctionPreview = $this->showCorrectionForm
+            && preg_match('/^\d+(\.\d{1,2})?$/', $this->correctionAmount) === 1
+            && (float) $this->correctionAmount <= 99999999.99
             ? app(FinancialMovementCorrectionWorkflow::class)->preview(
                 $settlement->order_id,
                 'settlement',

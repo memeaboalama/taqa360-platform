@@ -25,7 +25,7 @@ class LoginRequest extends FormRequest
         return [
             'email'    =>  ['required','email','exists:merchant_employees,email'],
             'password'    =>  ['required','string'],
-            'device_token'    =>  ['nullable'],
+            'device_token'    =>  ['nullable', 'string', 'max:4096'],
             'platform'    =>  ['nullable','in:web,ios,android'],
         ];
     }

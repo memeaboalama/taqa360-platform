@@ -5,6 +5,7 @@ namespace App\Domain\MarketPlace\Services;
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use App\Domain\MarketPlace\Models\OrderSettlement;
 use App\Domain\MarketPlace\Models\OrderSettlementHistory;
+use App\Domain\MarketPlace\Models\PaymentCorrectionRequest;
 use Domain\AppBase\Models\Payment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -66,8 +67,15 @@ class SettlementWorkflow
 
             $collectedMinor = (int) $payments->sum(
                 fn (Payment $payment): int => (int) ($payment->captured ?: $payment->amount)
-            );
-            $expectedMinor = (int) round((float) $order->total_after_vat * 100);
+            ) + (int) round((float) PaymentCorrectionRequest::query()
+                ->where('order_id', $order->id)
+                ->where('movement_type', 'collection')
+                ->where('status', 'approved')
+                ->sum('adjustment_amount') * 100);
+            $orderDue = $order->total_after_discount > 0
+                ? $order->total_after_discount
+                : $order->total_after_vat;
+            $expectedMinor = (int) round((float) $orderDue * 100);
             $settlementMinor = (int) round((float) $settlement->amount * 100);
             $receivedMinor = (int) round((float) $receipt['received_amount'] * 100);
 
@@ -101,6 +109,11 @@ class SettlementWorkflow
             ]);
             Payment::query()
                 ->whereIn('id', $payments->pluck('id'))
+                ->update(['settlement_id' => $settlement->id]);
+            PaymentCorrectionRequest::query()
+                ->where('order_id', $order->id)
+                ->where('movement_type', 'collection')
+                ->whereNull('settlement_id')
                 ->update(['settlement_id' => $settlement->id]);
             $this->record(
                 $settlement,

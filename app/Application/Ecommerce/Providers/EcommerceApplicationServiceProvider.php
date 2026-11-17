@@ -32,6 +32,14 @@ class EcommerceApplicationServiceProvider extends ServiceProvider
             ['ecommerce::layout.header', 'ecommerce::layout.layout'],
             \App\Http\View\Composers\HeaderComposer::class
         );
+        \Illuminate\Support\Facades\View::composer(
+            'ecommerce::layout.header',
+            \App\Http\View\Composers\NotificationFeedComposer::class
+        );
+        \Illuminate\Support\Facades\View::composer(
+            'ecommerce::partials.store-header',
+            \App\Http\View\Composers\NotificationFeedComposer::class
+        );
 
     }
 

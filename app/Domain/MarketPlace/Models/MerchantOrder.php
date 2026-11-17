@@ -25,12 +25,15 @@ use Domain\MarketPlace\Models\MerchantEmployee;
 use Domain\MarketPlace\Models\MerchantOrderService;
 use App\Domain\MarketPlace\Models\CollectionSetting;
 use App\Domain\MarketPlace\Models\OrderSettlement;
+use App\Domain\MarketPlace\Models\PaymentCorrectionRequest;
+use App\Domain\MarketPlace\Services\OrderPaymentLedger;
 use Domain\MarketPlace\Models\TempOrder;
 use App\Domain\AppBase\Models\TypeService;
 use Faker\Generator;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasEvents;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use tiagomichaelsousa\LaravelFilters\Traits\Filterable;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -220,6 +223,16 @@ class MerchantOrder extends Model
         return $this->belongsTo(MerchantBranch::class, 'merchant_branch_id', 'id');
     }
 
+    public function scopeForMerchantEmployee(Builder $query, MerchantEmployee $employee): Builder
+    {
+        return $query
+            ->where('merchant_id', $employee->merchant_id)
+            ->whereHas('branch', function (Builder $branchQuery) use ($employee): void {
+                $branchQuery->where('manager_id', $employee->id)
+                    ->orWhereHas('employees', fn (Builder $employeeQuery) => $employeeQuery->whereKey($employee->id));
+            });
+    }
+
     public function orderChoices(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(MerchantChoice::class, 'order_id', 'id');
@@ -331,7 +344,18 @@ class MerchantOrder extends Model
             ->latest()->first();
 
         return new Attribute(
-            get: fn() => self::resolvePaymentStatus($pay, 'unpaid', $this->payment_method)
+            get: function () use ($pay) {
+                $status = self::resolvePaymentStatus($pay, 'unpaid', $this->payment_method);
+                $hasApprovedCorrection = PaymentCorrectionRequest::query()
+                    ->where('order_id', $this->id)
+                    ->where('movement_type', 'collection')
+                    ->where('status', 'approved')
+                    ->exists();
+
+                return $hasApprovedCorrection
+                    ? app(OrderPaymentLedger::class)->forOrder($this)['payment_status']
+                    : $status;
+            }
         );
     }
 
@@ -474,6 +498,10 @@ class MerchantOrder extends Model
         $refundpaymentWithStore = 0;
         if ($this->refundpayment) {
             $refundpaymentWithStore = RefundPayment::where('order_id', $this->id)
+                ->where(function ($query) {
+                    $query->where('status', 'executed')
+                        ->orWhereNull('status');
+                })
                 ->sum('amount');
         }
         return new Attribute(
@@ -502,6 +530,10 @@ class MerchantOrder extends Model
         if ($this->refundpayment) {
             $refundpaymentWithStore = RefundPayment::where('order_id', $this->id)
                 ->where('calculated_on', 'store')
+                ->where(function ($query) {
+                    $query->where('status', 'executed')
+                        ->orWhereNull('status');
+                })
                 ->sum('amount');
         }
         return new Attribute(

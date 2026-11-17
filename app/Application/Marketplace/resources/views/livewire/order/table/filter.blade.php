@@ -142,7 +142,7 @@
             @endif
 
 
-            <button class="btn btn-outline-primary rounded-pill btn-wave waves-effect waves-light dropdown-toggle" type="button" id="dropdownMenu2"
+            <button class="btn btn-outline-primary rounded-pill btn-wave waves-effect waves-light dropdown-toggle" type="button" id="city-filter-toggle"
                     data-bs-toggle="dropdown" aria-expanded="false">
                 {{ __('marketplace::home.City') }}
             </button>
@@ -152,7 +152,7 @@
                     <div class="row gy-3">
                         <div class="col-xl-12 mt-2">
                             <label for="city-filter" class="form-label">{{ __('marketplace::home.City') }}</label>
-                            <select class="form-control" id="city-filter" wire:model="city_id">
+                            <select class="form-control" id="city-filter" wire:change="selectCity($event.target.value)">
                                 <option selected value="">-- {{ __('marketplace::home.Select') }} --</option>
                                 @foreach($cities as $city)
                                     <option value="{{ $city->id }}">{{ $city->title }}</option>
@@ -181,43 +181,45 @@
                 </a>
             @endif
 
-            <button class="btn btn-outline-primary rounded-pill btn-wave waves-effect waves-light dropdown-toggle" type="button" id="dropdownMenu2"
-                    data-bs-toggle="dropdown" aria-expanded="false">
-                {{ __('marketplace::home.District') }}
-            </button>
+            @if($city_id)
+                <button wire:key="district-filter-toggle" class="btn btn-outline-primary rounded-pill btn-wave waves-effect waves-light dropdown-toggle" type="button" id="district-filter-toggle"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    {{ __('marketplace::home.District') }}
+                </button>
 
-            <div class="dropdown-menu" wire:ignore.self>
-                <form class="px-4 py-3" wire:submit.prevent="filterDistrict">
-                    <div class="row gy-3">
-                        <div class="col-xl-12 mt-2">
-                            <label for="district-filter" class="form-label">{{ __('marketplace::home.District') }}</label>
-                            <select class="form-control" id="district-filter" wire:model.defer="district_id" {{ $city_id ? '' : 'disabled' }}>
-                                <option selected value="">-- {{ __('marketplace::home.Select') }} --</option>
-                                @foreach($districts as $district)
-                                    <option value="{{ $district->id }}">{{ $district->title }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                <div wire:key="district-filter-menu" class="dropdown-menu" wire:ignore.self>
+                    <form class="px-4 py-3" wire:submit.prevent="filterDistrict">
+                        <div class="row gy-3">
+                            <div class="col-xl-12 mt-2">
+                                <label for="district-filter" class="form-label">{{ __('marketplace::home.District') }}</label>
+                                <select class="form-control" id="district-filter" wire:model.defer="district_id">
+                                    <option selected value="">-- {{ __('marketplace::home.Select') }} --</option>
+                                    @foreach($districts as $district)
+                                        <option value="{{ $district->id }}">{{ $district->title }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                        <button type="submit" class="col-md-12 mt-2 btn btn-primary">
+                            <button type="submit" class="col-md-12 mt-2 btn btn-primary">
                                     <span class="indicator-label" wire:loading.class="d-none">
                                         {{ __('marketplace::home.filter') }}
                                     </span>
-                            <span class="d-none" wire:loading.class.remove="d-none">
+                                <span class="d-none" wire:loading.class.remove="d-none">
                                         {{ __('marketplace::home.Wait') }} <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
                                     </span>
-                        </button>
-                    </div>
-                </form>
-                <div class="dropdown-divider"></div>
-            </div>
+                            </button>
+                        </div>
+                    </form>
+                    <div class="dropdown-divider"></div>
+                </div>
 
-            @if($district_name != null)
-                <a
-                    class="btn btn-sm btn-outline-success rounded-pill btn-wave waves-effect waves-light"
-                    wire:click="$emit('removeDistrictFilter')">
-                    {{ __('marketplace::home.District') }} | {{ $district_name }} <span><i class="ri-close-circle-line"></i></span>
-                </a>
+                @if($district_name != null)
+                    <a
+                        class="btn btn-sm btn-outline-success rounded-pill btn-wave waves-effect waves-light"
+                        wire:click="$emit('removeDistrictFilter')">
+                        {{ __('marketplace::home.District') }} | {{ $district_name }} <span><i class="ri-close-circle-line"></i></span>
+                    </a>
+                @endif
             @endif
         </div>
     </div>

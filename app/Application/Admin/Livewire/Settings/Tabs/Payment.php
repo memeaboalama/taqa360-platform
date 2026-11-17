@@ -12,9 +12,20 @@ class Payment extends Component
 {
     use LivewireAlert;
     public $visa_commission, $master_commission, $mada_commission, $apple_commission, $stc_commission;
+    public $moyasar_key, $moyasar_secret, $moyasar_url;
+
     public function mount(FetchGeneralSettingsAction $fetchGeneralSettingsAction)
     {
-        $this->fillData($fetchGeneralSettingsAction->handle(['visa_commission','master_commission','mada_commission','apple_commission','stc_commission']));
+        $this->fillData($fetchGeneralSettingsAction->handle([
+            'visa_commission',
+            'master_commission',
+            'mada_commission',
+            'apple_commission',
+            'stc_commission',
+            'moyasar_key',
+            'moyasar_secret',
+            'moyasar_url',
+        ]));
     }
 
     protected function rules(): array
@@ -25,6 +36,9 @@ class Payment extends Component
             'mada_commission' => 'required|numeric|min:0|max:100',
             'apple_commission' => 'nullable|numeric|min:0|max:100',
             'stc_commission' => 'nullable|numeric|min:0|max:100',
+            'moyasar_key' => 'nullable|string',
+            'moyasar_secret' => 'nullable|string',
+            'moyasar_url' => 'nullable|string',
         ];
     }
 
@@ -36,6 +50,9 @@ class Payment extends Component
             'mada_commission' => trans('admin::home.Mada'),
             'apple_commission' => trans('admin::home.Apple Pay'),
             'stc_commission' => trans('admin::home.STC Pay'),
+            'moyasar_key' => trans('admin::home.moyasar_key'),
+            'moyasar_secret' => trans('admin::home.moyasar_secret'),
+            'moyasar_url' => trans('admin::home.moyasar_url'),
         ];
     }
 
@@ -54,6 +71,9 @@ class Payment extends Component
         $this->mada_commission = $settings?->mada_commission;
         $this->apple_commission = $settings?->apple_commission;
         $this->stc_commission = $settings?->stc_commission;
+        $this->moyasar_key = $settings?->moyasar_key;
+        $this->moyasar_secret = $settings?->moyasar_secret;
+        $this->moyasar_url = $settings?->moyasar_url ?? 'https://api.moyasar.com';
     }
 
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application

@@ -12,9 +12,7 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <livewire:admin::merchant.table.pending.merchant.all/>
-                    </div>
+                    <livewire:admin::merchant.table.pending.merchant.all/>
                 </div>
                 <livewire:admin::merchant.modal.activate/>
                 <livewire:admin::merchant.modal.deactivate/>

@@ -71,6 +71,29 @@
                     @error('stc_commission') <span class="d-block text-danger">{{ $message }}</span>@enderror
                 </div>
             </div>
+
+            <hr class="my-4">
+            <h5 class="fw-bold mb-3">{{ __('admin::home.moyasar_settings') }}</h5>
+            <div class="row gy-3">
+                <div class="col-xl-6">
+                    <label for="moyasar_key" class="form-label text-default">{{ __('admin::home.moyasar_key') }}</label>
+                    <input type="text"
+                           class="form-control form-control-lg @error('moyasar_key') is-invalid @enderror"
+                           id="moyasar_key"
+                           wire:model.defer="moyasar_key"
+                           placeholder="pk_test_... / pk_live_...">
+                    @error('moyasar_key') <span class="d-block text-danger">{{ $message }}</span>@enderror
+                </div>
+                <div class="col-xl-6">
+                    <label for="moyasar_secret" class="form-label text-default">{{ __('admin::home.moyasar_secret') }}</label>
+                    <input type="text"
+                           class="form-control form-control-lg @error('moyasar_secret') is-invalid @enderror"
+                           id="moyasar_secret"
+                           wire:model.defer="moyasar_secret"
+                           placeholder="sk_test_... / sk_live_...">
+                    @error('moyasar_secret') <span class="d-block text-danger">{{ $message }}</span>@enderror
+                </div>
+            </div>
             @AdminHasRole(['edit delivery fees_settings'])
             <div class="row gy-3 mt-3">
                 <div class="d-flex justify-content-center mt-4">

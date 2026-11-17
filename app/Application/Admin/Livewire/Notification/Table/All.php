@@ -56,7 +56,11 @@ class All extends DataTableComponent
                 ->sortable()
                 ->searchable(),
 
-
+            Column::make(__('admin::home.notification_push_status'), 'delivery_status')
+                ->format(function ($value) {
+                    return __('admin::home.notification_statuses.' . $value);
+                })
+                ->sortable(),
 
             Column::make(__('admin::home.Date'), 'created_at')
                 ->format(function ($value, $row, Column $column) {

@@ -25,7 +25,7 @@ class RegisterRequest extends FormRequest
     {
         return [
             'phone'    =>  ['required','numeric','digits_between:9,10',new isValidPhone, Rule::unique('users', 'phone')],
-            'device_token'    =>  ['nullable'],
+            'device_token'    =>  ['nullable', 'string', 'max:4096'],
             'name'    =>  ['required'],
             'platform'    =>  ['nullable','in:web,ios,android'],
         ];

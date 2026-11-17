@@ -70,6 +70,13 @@
             </div>
             <!-- End::header-element -->
 
+            <div class="header-element notification-header-element">
+                @include('shared.notification-dropdown', [
+                    'notifications' => $notificationFeed,
+                    'notificationVariant' => 'dashboard',
+                ])
+            </div>
+
 
 
             <!-- Start::header-element -->

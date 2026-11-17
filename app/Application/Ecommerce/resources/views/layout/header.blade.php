@@ -308,6 +308,12 @@
                         </div>
                     </li>
 
+                    @auth
+                    <li>
+                        @include('shared.notification-dropdown', ['notifications' => $notificationFeed])
+                    </li>
+                    @endauth
+
                     {{-- <li>
                         <a href="#" id="dropdownMenuButton1" data-bs-toggle="dropdown">
                             @lang('ecommerce::ecommerce.currencies.usd')

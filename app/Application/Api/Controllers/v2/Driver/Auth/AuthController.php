@@ -63,9 +63,6 @@ class AuthController extends Controller
 
 
         if (isset($request->validated()["device_token"])) {
-            if ($driver->device_tokens() && $driver->device_tokens()->exists())
-                $driver->device_tokens()->delete();
-
             $deviceTokenToDB->handle($driver, $request->validated());
         }
         if ($driver->tokens() && $driver->tokens()->exists())

@@ -30,6 +30,11 @@ class DriverApplicationServiceProvider extends ServiceProvider
         // lang
         $this->loadTranslationsFrom(app_path('Application/Driver/lang'), 'driver');
 
+        \Illuminate\Support\Facades\View::composer(
+            'driver::layout.header',
+            \App\Http\View\Composers\NotificationFeedComposer::class
+        );
+
         $this->registerLivewireComponents(app_path('Application/Driver/Livewire'));
 
     }

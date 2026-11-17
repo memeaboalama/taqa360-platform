@@ -8,12 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasColumn('payment_correction_requests', 'original_amount')) {
-            Schema::table('payment_correction_requests', function (Blueprint $table) {
-                $table->decimal('original_amount', 10, 2)->nullable();
-                $table->decimal('corrected_amount', 10, 2)->nullable();
-                $table->decimal('adjustment_amount', 10, 2)->nullable();
-            });
+        foreach (['original_amount', 'corrected_amount', 'adjustment_amount'] as $column) {
+            if (!Schema::hasColumn('payment_correction_requests', $column)) {
+                Schema::table('payment_correction_requests', fn (Blueprint $table) => $table->decimal($column, 10, 2)->nullable());
+            }
         }
 
         if (!Schema::hasColumn('payment_correction_requests', 'settlement_id')) {

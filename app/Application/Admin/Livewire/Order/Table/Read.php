@@ -350,6 +350,12 @@ class Read extends Component
         abort_unless($exists, 404);
     }
 
+    private function hasValidCorrectionAmount(): bool
+    {
+        return preg_match('/^\d+(\.\d{1,2})?$/', (string) $this->correctionAmount) === 1
+            && (float) $this->correctionAmount <= 99999999.99;
+    }
+
     public function render()
     {
         if (is_string($this->mark)) {
@@ -368,7 +374,9 @@ class Read extends Component
             ->where('movement_type', 'collection')
             ->latest('id')
             ->get();
-        $correctionPreview = $this->correctionMovementType && $this->correctionMovementId
+        $correctionPreview = $this->correctionMovementType
+            && $this->correctionMovementId
+            && $this->hasValidCorrectionAmount()
             ? app(FinancialMovementCorrectionWorkflow::class)->preview(
                 $order->id,
                 $this->correctionMovementType,

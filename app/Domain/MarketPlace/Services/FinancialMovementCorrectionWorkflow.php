@@ -26,14 +26,26 @@ class FinancialMovementCorrectionWorkflow
         if ($movementType === 'collection') {
             $due = $this->orderDue($order);
             $currentCollected = $this->effectiveCollectedAmount($order);
-            $balanceBefore = max($due - $currentCollected, 0);
-            $balanceAfter = max($due - ($currentCollected + $newAmount - $currentAmount), 0);
-            $balanceLabel = 'customer_due';
+            $customerDueBefore = max($due - $currentCollected, 0);
+            $customerDueAfter = max($due - ($currentCollected + $newAmount - $currentAmount), 0);
+            if ($origin['settlement_id'] && MerchantOrder::isCashOnDeliveryMethod($order->payment_method)) {
+                $custodyBefore = app(DriverCustodyLedger::class)
+                    ->balanceForOrder($order->id, (int) $origin['driver_id']);
+                $balanceBefore = $custodyBefore;
+                $balanceAfter = $custodyBefore + $newAmount - $currentAmount;
+                $balanceLabel = 'driver_custody';
+            } else {
+                $balanceBefore = $customerDueBefore;
+                $balanceAfter = $customerDueAfter;
+                $balanceLabel = 'customer_due';
+            }
         } else {
             $balanceBefore = app(DriverCustodyLedger::class)
                 ->balanceForOrder($order->id, (int) $origin['model']->driver_id);
             $balanceAfter = $balanceBefore + $currentAmount - $newAmount;
             $balanceLabel = 'driver_custody';
+            $customerDueBefore = null;
+            $customerDueAfter = null;
         }
 
         return [
@@ -45,6 +57,8 @@ class FinancialMovementCorrectionWorkflow
             'balance_label' => $balanceLabel,
             'balance_before' => round($balanceBefore, 2),
             'balance_after' => round($balanceAfter, 2),
+            'customer_due_before' => isset($customerDueBefore) ? round($customerDueBefore, 2) : null,
+            'customer_due_after' => isset($customerDueAfter) ? round($customerDueAfter, 2) : null,
             'settlement_id' => $origin['settlement_id'],
         ];
     }
@@ -65,6 +79,12 @@ class FinancialMovementCorrectionWorkflow
                 'reason' => ['required', 'string', 'max:1000'],
             ]
         )->validate();
+        $validated['reason'] = trim($validated['reason']);
+        if ($validated['reason'] === '') {
+            throw ValidationException::withMessages([
+                'reason' => 'سبب التصحيح مطلوب.',
+            ]);
+        }
 
         return DB::transaction(function () use ($orderId, $movementType, $movementId, $validated, $admin) {
             $order = MerchantOrder::query()->lockForUpdate()->findOrFail($orderId);
@@ -113,6 +133,13 @@ class FinancialMovementCorrectionWorkflow
             if ($request->status !== 'pending') {
                 throw ValidationException::withMessages([
                     'correction' => 'لا يمكن اعتماد هذا الطلب في حالته الحالية.',
+                ]);
+            }
+            if ($request->original_amount === null
+                || $request->corrected_amount === null
+                || trim((string) $request->reason) === '') {
+                throw ValidationException::withMessages([
+                    'correction' => 'بيانات طلب التصحيح غير مكتملة؛ ألغِ الطلب وقدّم طلبًا جديدًا.',
                 ]);
             }
 
@@ -180,6 +207,15 @@ class FinancialMovementCorrectionWorkflow
                     MerchantOrder::class,
                     'App\\Domain\\MarketPlace\\Models\\MerchantOrder',
                 ])
+                ->whereNotExists(function ($query) {
+                    $query->selectRaw('1')
+                        ->from('payments as duplicate')
+                        ->whereColumn('duplicate.payable_id', 'payments.payable_id')
+                        ->whereColumn('duplicate.payable_type', 'payments.payable_type')
+                        ->whereColumn('duplicate.payment_id', 'payments.payment_id')
+                        ->whereColumn('duplicate.id', '>', 'payments.id')
+                        ->whereIn('duplicate.status', ['paid', 'success']);
+                })
                 ->whereKey($movementId)
                 ->whereIn('status', ['paid', 'success']);
             if ($lock) {
@@ -203,6 +239,9 @@ class FinancialMovementCorrectionWorkflow
                 'model' => $payment,
                 'amount' => round((float) ($payment->captured ?: $payment->amount) / 100, 2),
                 'settlement_id' => $settlementId ? (int) $settlementId : null,
+                'driver_id' => $settlementId
+                    ? (int) (OrderSettlement::query()->whereKey($settlementId)->value('driver_id') ?: $order->driver_id)
+                    : (int) $order->driver_id,
             ];
         }
 
@@ -221,6 +260,7 @@ class FinancialMovementCorrectionWorkflow
                 'model' => $settlement,
                 'amount' => (float) $settlement->amount,
                 'settlement_id' => $settlement->id,
+                'driver_id' => (int) $settlement->driver_id,
             ];
         }
 
@@ -252,6 +292,9 @@ class FinancialMovementCorrectionWorkflow
             ->whereIn('status', ['paid', 'success'])
             ->get()
             ->filter(fn (Payment $payment): bool => OrderPaymentLedger::isConfirmedPayment($order, $payment));
+        $payments = $payments->groupBy('payment_id')
+            ->map(fn ($records) => $records->last())
+            ->values();
 
         $baseAmount = $payments->sum(
             fn (Payment $payment): float => round((float) ($payment->captured ?: $payment->amount) / 100, 2)
@@ -274,7 +317,12 @@ class FinancialMovementCorrectionWorkflow
 
     private function validatedAmount(string $value): float
     {
-        return round((float) $value, 2);
+        $validated = Validator::make(
+            ['amount' => $value],
+            ['amount' => ['required', 'numeric', 'min:0', 'max:99999999.99', 'regex:/^\d+(\.\d{1,2})?$/']]
+        )->validate();
+
+        return round((float) $validated['amount'], 2);
     }
 
     private function toMinor(float $amount): int

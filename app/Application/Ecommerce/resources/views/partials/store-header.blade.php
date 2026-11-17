@@ -15,13 +15,27 @@
             <form class="search" id="store-search" method="get" action="{{ $storeSearchAction }}"><button type="submit"
                     aria-label="{{ __('ecommerce::ecommerce.search') }}">⌕</button><input name="q" type="search"
                     placeholder="{{ $storeSearchPlaceholder }}" aria-label="{{ __('ecommerce::ecommerce.search') }}"></form>
-            <div class="top-actions"><button type="button" class="service" data-bs-toggle="modal"
-                    data-bs-target="{{ auth()->check() ? '#serviceRequestModal' : '#loginRequiredModal' }}"><i
-                        class="fa fa-plus-circle"></i>
-                    @lang('ecommerce::ecommerce.request_service')</button>@if($storeShowLanguage)@include('ecommerce::partials.language-switcher')@endif<a
-                    class="action" href="{{ route('account.index') }}"
-                    aria-label="@lang('ecommerce::ecommerce.my_account')"><i
-                        class="fa fa-user-o"></i></a>@include('ecommerce::partials.wishlist-widget')@include('ecommerce::partials.cart-widget')
+            <div class="top-actions">
+                <button type="button" class="service" data-bs-toggle="modal"
+                    data-bs-target="{{ auth()->check() ? '#serviceRequestModal' : '#loginRequiredModal' }}">
+                    <i class="fa fa-plus-circle"></i>
+                    @lang('ecommerce::ecommerce.request_service')
+                </button>
+                @if($storeShowLanguage)
+                    @include('ecommerce::partials.language-switcher')
+                @endif
+                <a class="action" href="{{ route('account.index') }}"
+                   aria-label="@lang('ecommerce::ecommerce.my_account')">
+                    <i class="fa fa-user-o"></i>
+                </a>
+                @auth
+                    @include('shared.notification-dropdown', [
+                        'notifications' => $notificationFeed,
+                        'notificationVariant' => 'store',
+                    ])
+                @endauth
+                @include('ecommerce::partials.wishlist-widget')
+                @include('ecommerce::partials.cart-widget')
                 <button type="button" class="action mobile-search-toggle" aria-label="@lang('ecommerce::ecommerce.search')"
                     aria-controls="store-search" aria-expanded="false" data-mobile-search-toggle>⌕</button>
                 <button type="button" class="action mobile-menu-toggle" aria-label="@lang('ecommerce::ecommerce.menu')"

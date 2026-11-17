@@ -172,6 +172,19 @@
                                         <div class="card-body">
                                             @php($failureReport = $order['collection_failure_report'] ?? null)
                                             @php($collectionDue = ($order['total_after_discount'] ?? 0) > 0 ? $order['total_after_discount'] : ($order['total_after_vat'] ?? 0))
+                                            @if(empty($order['has_driver_cod_collection'])
+                                                && ($order['payment_status'] ?? null) !== 'paid'
+                                                && empty($failureReport))
+                                                <div class="alert alert-warning">
+                                                    <div class="fw-semibold">لم يُسجل تحصيل المبلغ بعد.</div>
+                                                    <div class="mb-2">أكد استلام {{ number_format($collectionDue, 2) }} SAR من العميل أولًا. تأكيد التحصيل مستقل عن إرسال التوريد.</div>
+                                                    <button type="button" class="btn btn-success btn-sm"
+                                                            wire:click="confirmCashCollection" wire:loading.attr="disabled"
+                                                            wire:target="confirmCashCollection">
+                                                        تأكيد استلام المبلغ
+                                                    </button>
+                                                </div>
+                                            @endif
                                             @if($failureReport)
                                                 <div class="alert alert-info">
                                                     <strong>@lang('driver::home.collection_failure_report')</strong>
@@ -211,7 +224,8 @@
                                                     @endif
                                                 </div>
                                             @endif
-                                            @if((empty($failureReport) || !in_array($failureReport['status'], ['open', 'retry_requested', 'return_requested', 'return_completed'], true))
+                                            @if(empty($order['has_driver_cod_collection'])
+                                                && (empty($failureReport) || !in_array($failureReport['status'], ['open', 'retry_requested', 'return_requested', 'return_completed'], true))
                                                 && ($order['payment_status'] ?? null) !== 'paid')
                                                 <form class="border rounded p-3 mb-3" wire:submit.prevent="reportCollectionFailure">
                                                     <h6>@lang('driver::home.report_collection_failure')</h6>
@@ -229,7 +243,9 @@
                                             @if(!empty($order['settlement_status']))
                                                 <p class="mb-1">
                                                     <span class="fw-semibold">حالة الدفع:</span>
-                                                    <span class="badge bg-success">{{ __('ecommerce::ecommerce.paid') }}</span>
+                                                    <span class="badge {{ ($order['payment_status'] ?? null) === 'paid' ? 'bg-success' : 'bg-warning' }}">
+                                                        {{ $order['payment_label'] ?? __('ecommerce::ecommerce.pending') }}
+                                                    </span>
                                                 </p>
                                                 <p class="mb-1">
                                                     <span class="fw-semibold">مكان المبلغ:</span> {{ $order['settlement_custody'] ?? 'لدى السائق' }}
@@ -261,7 +277,12 @@
                                                     {{ $order['payment_source_name'] ?? 'تم تسجيله مسبقًا' }}
                                                 </p>
                                             @endif
+                                            @if(!empty($order['has_driver_cod_collection'])
+                                                && ($order['payment_status'] ?? null) !== 'paid')
+                                                <p class="text-warning mb-0">تم تعديل قيمة التحصيل؛ أوقف التوريد حتى مراجعة التصحيح ومطابقة الرصيد.</p>
+                                            @endif
                                             @if((empty($order['settlement_status']) || in_array($order['settlement_status'], ['returned', 'rejected'], true))
+                                                && (empty($order['has_driver_cod_collection']) || ($order['payment_status'] ?? null) === 'paid')
                                                 && (empty($failureReport) || in_array($failureReport['status'], ['collection_succeeded'], true) || in_array($order['settlement_status'] ?? null, ['returned', 'rejected'], true)))
                                                 @if(($order['payment_status'] ?? null) === 'paid' && empty($order['settlement_status']) && empty($order['driver_cod_collection']))
                                                     <p class="text-warning mb-0">تم تسجيل التحصيل مسبقًا ولا يمكن إنشاء توريد جديد من عهدة السائق.</p>
@@ -312,7 +333,7 @@
                                                         @endif
                                                         <div class="col-12">
                                                             <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="submitSettlement,settlementProof">
-                                                                {{ ($order['settlement_status'] ?? null) === 'returned' ? 'إعادة إرسال التسوية' : 'تسجيل التحصيل وإرسال التوريد' }}
+                                                                {{ ($order['settlement_status'] ?? null) === 'returned' ? 'إعادة إرسال التسوية' : 'إرسال التوريد للمراجعة' }}
                                                             </button>
                                                             <span wire:loading wire:target="settlementProof" class="text-muted ms-2">جارٍ رفع الإثبات...</span>
                                                         </div>

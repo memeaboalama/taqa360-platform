@@ -31,7 +31,7 @@ class LoginRequest extends FormRequest
             'location' => ['nullable'],
             'location.latitude' => ['nullable', new LatitudeRule()],
             'location.longitude' => ['nullable', new LongitudeRule()],
-            'device_token'    =>  ['nullable'],
+            'device_token'    =>  ['nullable', 'string', 'max:4096'],
             'platform'    =>  ['nullable','in:web,ios,android'],
         ];
     }

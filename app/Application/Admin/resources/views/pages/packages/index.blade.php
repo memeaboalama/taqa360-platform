@@ -18,9 +18,7 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <livewire:admin::package.table.all/>
-                    </div>
+                    <livewire:admin::package.table.all/>
                 </div>
 
                 <livewire:admin::package.modal.create/>

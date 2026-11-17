@@ -59,14 +59,16 @@ class Filter extends Component
         $this->districts = collect();
     }
 
-    public function updatedCityId($cityId): void
+    public function selectCity($cityId): void
     {
+        $this->statuses = collect(MerchantOrderStatuses::cases());
+        $this->city_id = $cityId ?: null;
         $this->district_id = null;
         $this->district_name = null;
         $this->filters['district_id'] = null;
-        $this->districts = $cityId
+        $this->districts = $this->city_id
             ? Distract::query()
-                ->where('city_id', $cityId)
+                ->where('city_id', $this->city_id)
                 ->where('status', StatusEnum::ACTIVE)
                 ->get(['id', 'title'])
             : collect();

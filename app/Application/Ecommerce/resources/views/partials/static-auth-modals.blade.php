@@ -1,6 +1,7 @@
 <style>nav.nav{display:block}.product-img-wrap{position:relative;display:block}.product-stock-badge{position:absolute;left:0;right:0;bottom:0;background:rgba(192,57,43,.92);color:#fff;font-size:11px;font-weight:700;text-align:center;padding:4px 6px;z-index:2}.hululi-stock{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;line-height:1.6;color:#15803d;background:#ecfdf3;border:1px solid #bbf7d0;border-radius:20px;padding:3px 10px}.hululi-stock.out{color:#b91c1c;background:#fef2f2;border-color:#fecaca}.hululi-cart-item-out{display:block;color:#c0392b;font-size:10px;font-weight:700;margin-top:2px}</style>
 @include('ecommerce::partials.service-request-modal')
 @include('ecommerce::partials.login-required-modal')
+<script src="{{ asset('assets/ecommerce/js/popper.min.js') }}"></script>
 <script src="{{ asset('assets/ecommerce/js/bootstrap.min.js') }}"></script>
 <script>
     if (typeof window.showNotification !== 'function') {
