@@ -19,7 +19,7 @@
         : null;
     $widgetItems   = $widgetCart?->cartItems ?? collect();
     $widgetCount   = (int) ($widgetItems->sum('qty') ?? 0);
-    $widgetTotal   = number_format((float) ($widgetCart?->total ?? 0), 2);
+    $widgetTotal   = (float) ($widgetCart?->total ?? 0);
 
     $widgetTitleOf = static function ($value) use ($widgetLocale) {
         $fallback = __('ecommerce::ecommerce.product_label');
@@ -165,7 +165,8 @@ if (!window.__hululiCartWidgetInit) {
             });
         }
         function money(v) {
-            return esc((parseFloat(v) || 0).toFixed(2));
+            var amount = parseFloat(String(v).replace(/,/g, '')) || 0;
+            return esc(amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
         }
         function toast(message, type) {
             var el = document.getElementById('hululi-cart-toast');
