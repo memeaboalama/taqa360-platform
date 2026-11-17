@@ -2,19 +2,27 @@
 
 namespace App\Domain\Notification\Actions;
 
-
-use App\Support\Enum\FileTypesEnum;
-use App\Support\Services\ImagesServices\ImageService;
+use Illuminate\Database\Eloquent\Model;
+use InvalidArgumentException;
 
 class SendIDeviceTokenToDB
 {
-
-
-    public function handle($user, array $data)
+    public function handle(Model $user, array $data)
     {
+        $token = trim((string) ($data['device_token'] ?? ''));
+        $platform = $data['platform'] ?? 'ios';
+
+        if ($token === '') {
+            throw new InvalidArgumentException('A non-empty device token is required.');
+        }
+
+        if (! in_array($platform, ['ios', 'android', 'web'], true)) {
+            throw new InvalidArgumentException('Unsupported device platform.');
+        }
+
         return $user->device_tokens()->updateOrCreate(
-            ['token' => $data["device_token"]],
-            ['token' => $data["device_token"], 'platform' => $data["platform"] ?? 'ios']
+            ['token' => $token],
+            ['platform' => $platform]
         );
     }
 }

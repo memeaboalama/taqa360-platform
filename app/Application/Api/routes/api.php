@@ -20,7 +20,6 @@ use App\Application\Api\Controllers\CashBacksController;
 use App\Application\Api\Controllers\LanguageController;
 use App\Application\Api\Controllers\NationalityController;
 use App\Application\Api\Controllers\UserPoliciesController;
-use App\Application\Api\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -43,8 +42,6 @@ Route::group(['prefix' => 'v1'],function (){
     Route::get('/cash-backs/{id}',[CashBacksController::class,'getCashBacksByMerchantId']);
     Route::get('/cash-backs/{id}/{type_service_id}',[CashBacksController::class,'getCashBacksByMerchantIdAndTypeServiceId']);
     Route::get('/cars-types',[CarsTypesController::class,'fetch']);
-    Route::get('/send-notification',[NotificationController::class,'sendPushNotification']);
-
 });
 
 

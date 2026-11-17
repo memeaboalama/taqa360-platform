@@ -1,29 +1,33 @@
-.table-responsive,
-.merchant-table-scroll {
+:is(.table-responsive, .merchant-table-scroll, .overflow-x-auto) {
     overflow-x: auto;
     scrollbar-color: #5b6573 #e4e7eb;
     scrollbar-width: auto;
 }
 
-.table-responsive::-webkit-scrollbar:horizontal,
-.merchant-table-scroll::-webkit-scrollbar:horizontal {
+:is(.table-responsive, .merchant-table-scroll):has(> [wire\:id] .table-responsive) {
+    overflow: visible;
+}
+
+.table.type-service-table {
+    margin: 0 0 8px;
+    margin-inline-end: 0;
+}
+
+:is(.table-responsive, .merchant-table-scroll, .overflow-x-auto)::-webkit-scrollbar:horizontal {
     height: 12px;
 }
 
-.table-responsive::-webkit-scrollbar-track:horizontal,
-.merchant-table-scroll::-webkit-scrollbar-track:horizontal {
+:is(.table-responsive, .merchant-table-scroll, .overflow-x-auto)::-webkit-scrollbar-track:horizontal {
     background: #e4e7eb;
     border-radius: 6px;
 }
 
-.table-responsive::-webkit-scrollbar-thumb:horizontal,
-.merchant-table-scroll::-webkit-scrollbar-thumb:horizontal {
+:is(.table-responsive, .merchant-table-scroll, .overflow-x-auto)::-webkit-scrollbar-thumb:horizontal {
     background-color: #5b6573;
     border: 2px solid #e4e7eb;
     border-radius: 6px;
 }
 
-.table-responsive::-webkit-scrollbar-thumb:horizontal:hover,
-.merchant-table-scroll::-webkit-scrollbar-thumb:horizontal:hover {
+:is(.table-responsive, .merchant-table-scroll, .overflow-x-auto)::-webkit-scrollbar-thumb:horizontal:hover {
     background-color: #424b55;
 }

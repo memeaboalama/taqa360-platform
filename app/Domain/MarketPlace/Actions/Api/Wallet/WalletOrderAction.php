@@ -120,7 +120,12 @@ class WalletOrderAction
         return  ["status" => true, "message" => "Error:Branchisnotfoundpleaseemptycart!", "data" => null];
     }
 
-    public function add_wallet_refund_payment(MerchantOrder $order, string $type, $amount, bool $confirmed = true): void
+    public function add_wallet_refund_payment(
+        MerchantOrder $order,
+        string $type,
+        $amount,
+        bool $confirmed = true
+    ): WalletTransaction
     {
         $userWallet = 'UID_' . $order->user_id . '_Main';
         $user = User::where('id', $order->user_id)->first();
@@ -138,10 +143,10 @@ class WalletOrderAction
             'source' => [
                 'order_code' => $order->code,
                 'merchant_id' => $order->merchant_id,
-                'merchant_name' => $order->merchant->company_name,
+                'merchant_name' => $order->merchant?->company_name,
             ],
         ], confirmed: $confirmed);
-        WalletTransaction::create([
+        return WalletTransaction::create([
             'user_id' => $order->user_id,
             'type' => 'deposit',
             'amount' => $amount,
@@ -154,7 +159,7 @@ class WalletOrderAction
                 'type' => $type,
                 'order_code' => $order->code,
                 'merchant_id' => $order->merchant_id,
-                'merchant_name' => $order->merchant->company_name,
+                'merchant_name' => $order->merchant?->company_name,
                 'transaction' => $mainWallet->id,
             ]
         ]);

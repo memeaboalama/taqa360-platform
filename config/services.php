@@ -36,6 +36,9 @@ return [
     'google_maps_tracking' => [
         'api_key' => env('GOOGLE_MAPS_TRACKING_API_KEY'),
     ],
+    'firebase' => [
+        'credentials' => env('FIREBASE_CREDENTIALS', config_path('firebase_credentials.json')),
+    ],
 
     'moyasar' => [
         'key' => env('MOYASAR_API_PUBLIC'),

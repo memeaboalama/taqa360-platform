@@ -30,6 +30,11 @@ class MarketplaceApplicationServiceProvider extends ServiceProvider
         // lang
         $this->loadTranslationsFrom(app_path('Application/Marketplace/lang'), 'marketplace');
 
+        \Illuminate\Support\Facades\View::composer(
+            'marketplace::layout.header',
+            \App\Http\View\Composers\NotificationFeedComposer::class
+        );
+
         $this->registerLivewireComponents(app_path('Application/Marketplace/Livewire'));
 
     }

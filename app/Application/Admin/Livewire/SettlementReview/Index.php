@@ -83,7 +83,9 @@ class Index extends Component
     {
         abort_unless(
             auth('admin')->check()
-                && (CollectionSetting::adminCan('review') || CollectionSetting::adminCan('approve')),
+                && (CollectionSetting::adminCan('review')
+                    || CollectionSetting::adminCan('approve')
+                    || CollectionSetting::adminCan('correct')),
             403
         );
     }

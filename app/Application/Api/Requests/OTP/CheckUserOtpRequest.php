@@ -27,7 +27,7 @@ class CheckUserOtpRequest extends FormRequest
         return [
             'phone'     =>  ['required','numeric','digits_between:9,10','exists:users,phone',new isValidPhone],
             'otp'       =>  ['required' , 'string' ,'min:4','max:6'],
-            'device_token'    =>  ['nullable'],
+            'device_token'    =>  ['nullable', 'string', 'max:4096'],
             'platform'    =>  ['nullable','in:web,ios,android'],
         ];
     }

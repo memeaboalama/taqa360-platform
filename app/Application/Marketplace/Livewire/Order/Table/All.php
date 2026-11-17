@@ -54,7 +54,12 @@ class All extends DataTableComponent
     public function builder(): Builder
     {
         $this->filters['merchant_id'] = $this->merchantId;
-        return $this->orderRepository->filterOrders($this->filters, ['user']);
+        $query = $this->orderRepository->filterOrders($this->filters, ['user']);
+        if (auth('merchant_employee')->check()) {
+            $query->forMerchantEmployee(auth('merchant_employee')->user());
+        }
+
+        return $query;
     }
 
     public function columns(): array

@@ -51,6 +51,9 @@ class All extends DataTableComponent
     {
         $this->merchantId = $this->getMerchantId();
         $this->filters['merchant_id'] = $this->merchantId;
+        if (request()->filled('code')) {
+            $this->filters['code'] = request()->query('code');
+        }
         $this->emit('prepareMerchantOrderExportMark', $this->filters);
         $this->emit('prepareMerchantOrderPdf', $this->filters);
     }
@@ -79,9 +82,14 @@ class All extends DataTableComponent
     {
         $this->merchantId = $this->getMerchantId();
         $this->filters['merchant_id'] = $this->merchantId;
-        return $this->orderRepository->filterOrders($this->filters,
+        $query = $this->orderRepository->filterOrders($this->filters,
             ['user', 'merchant', 'branch', 'payment', 'merchant.packages'],
             ['*']);
+        if (\Illuminate\Support\Facades\Auth::guard('merchant_employee')->check()) {
+            $query->forMerchantEmployee(\Illuminate\Support\Facades\Auth::guard('merchant_employee')->user());
+        }
+
+        return $query;
     }
 
     public function columns(): array

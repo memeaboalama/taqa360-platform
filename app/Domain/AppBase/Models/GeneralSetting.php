@@ -34,6 +34,9 @@ class GeneralSetting extends Model
         'mada_commission',
         'apple_commission',
         'stc_commission',
+        'moyasar_key',
+        'moyasar_secret',
+        'moyasar_url',
     ];
 
     public function getAuthPageImagePathAttribute()

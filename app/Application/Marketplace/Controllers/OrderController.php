@@ -3,6 +3,7 @@
 namespace Application\Marketplace\Controllers;
 
 use App\Domain\MarketPlace\Actions\Dashboard\Order\FetchSingleOrderAction;
+use App\Domain\MarketPlace\Models\MerchantOrder;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -17,6 +18,13 @@ class OrderController extends Controller
     {
         $order = $fetchSingleOrderAction
             ->handle($orderId, resolve('_InitialMerchant'));
+        if ($order && auth('merchant_employee')->check()) {
+            $isAuthorizedBranch = MerchantOrder::query()
+                ->forMerchantEmployee(auth('merchant_employee')->user())
+                ->whereKey($order->id)
+                ->exists();
+            abort_unless($isAuthorizedBranch, 404);
+        }
         if ($order)
         {
             $orderServices = $order->services;

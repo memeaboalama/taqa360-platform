@@ -20,6 +20,12 @@
     <div class="row g-3 mb-4">
         <div class="col-sm-6 col-lg-4">
             <div class="border rounded p-3 h-100">
+                <small class="text-muted d-block">@lang('ecommerce::ecommerce.delivery_status')</small>
+                <strong>{{ $paymentLedger['delivery_status_label'] ?: '—' }}</strong>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-4">
+            <div class="border rounded p-3 h-100">
                 <small class="text-muted d-block">@lang('ecommerce::ecommerce.payment_method')</small>
                 <strong>{{ $paymentLedger['payment_method'] }}</strong>
             </div>
@@ -54,15 +60,39 @@
                 <strong>{{ number_format($paymentLedger['refunded'], 2) }} SAR</strong>
             </div>
         </div>
+        <div class="col-sm-6 col-lg-4">
+            <div class="border rounded p-3 h-100">
+                <small class="text-muted d-block">@lang('ecommerce::ecommerce.collection_date')</small>
+                <strong>{{ $paymentLedger['collection_date'] ?: '—' }}</strong>
+            </div>
+        </div>
         <div class="col-12">
             <div class="border rounded p-3">
                 <small class="text-muted d-block">@lang('ecommerce::ecommerce.money_location')</small>
                 <strong>{{ $paymentLedger['custody'] }}</strong>
             </div>
         </div>
+        <div class="col-sm-6 col-lg-4">
+            <div class="border rounded p-3 h-100">
+                <small class="text-muted d-block">@lang('ecommerce::ecommerce.remittance_status')</small>
+                <strong>@lang('ecommerce::ecommerce.remittance_' . $paymentLedger['settlement_status'])</strong>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-4">
+            <div class="border rounded p-3 h-100">
+                <small class="text-muted d-block">@lang('ecommerce::ecommerce.settlement_number')</small>
+                <strong>{{ $paymentLedger['settlement_number'] ?: '—' }}</strong>
+            </div>
+        </div>
+        <div class="col-12 d-flex flex-wrap gap-3">
+            <a href="#payment-movements">@lang('ecommerce::ecommerce.collection_details')</a>
+            @if(!empty($financialReportUrl))
+                <a href="{{ $financialReportUrl }}">@lang('ecommerce::ecommerce.related_financial_report')</a>
+            @endif
+        </div>
     </div>
 
-    <h6 class="fw-semibold">@lang('ecommerce::ecommerce.payment_movements')</h6>
+    <h6 class="fw-semibold" id="payment-movements">@lang('ecommerce::ecommerce.payment_movements')</h6>
     <div class="table-responsive">
         <table class="table table-bordered align-middle mb-0">
             <thead>
@@ -82,7 +112,14 @@
                     <tr>
                         <td>{{ $movement['number'] ?: '—' }}</td>
                         <td class="{{ $movement['type'] === 'refund' || (float) $movement['amount'] < 0 ? 'text-danger' : 'text-success' }}">
-                            {{ number_format($movement['amount'], 2) }} SAR
+                            @if($movement['type'] === 'refund' && ($movement['refund_status'] ?? null) === 'pending')
+                                {{ number_format($movement['requested_amount'], 2) }} SAR
+                                <span class="badge bg-warning text-dark d-block mt-1">
+                                    @lang('ecommerce::ecommerce.refund_status_pending')
+                                </span>
+                            @else
+                                {{ number_format($movement['amount'], 2) }} SAR
+                            @endif
                         </td>
                         <td>{{ $movement['method'] }}</td>
                         <td>{{ $movement['collector'] }}</td>
@@ -102,6 +139,11 @@
                                     <div>@lang('ecommerce::ecommerce.movement_type'):
                                         @lang('ecommerce::ecommerce.' . ($movement['type'] === 'correction' ? 'financial_correction' : ($movement['type'] === 'refund' ? 'refund' : 'collection')))
                                     </div>
+                                    @if($movement['type'] === 'refund')
+                                        <div>@lang('ecommerce::ecommerce.refund_status'):
+                                            @lang('ecommerce::ecommerce.refund_status_' . ($movement['refund_status'] ?? 'executed'))
+                                        </div>
+                                    @endif
                                     @if($movement['details'])
                                         <div>@lang('ecommerce::ecommerce.movement_details'): {{ $movement['details'] }}</div>
                                     @endif
@@ -125,8 +167,14 @@
                                         @if(!empty($correctionPreview))
                                             <div class="small border rounded p-2 mb-2">
                                                 <div>@lang('ecommerce::ecommerce.current_amount'): {{ number_format($correctionPreview['original_amount'], 2) }} SAR</div>
-                                                <div>@lang('ecommerce::ecommerce.correction_balance_before'): {{ number_format($correctionPreview['balance_before'], 2) }} SAR</div>
-                                                <div>@lang('ecommerce::ecommerce.correction_balance_after'): {{ number_format($correctionPreview['balance_after'], 2) }} SAR</div>
+                                                <div>@lang('ecommerce::ecommerce.' . ($correctionPreview['balance_label'] === 'driver_custody' ? 'driver_custody_balance' : 'customer_due_balance')):
+                                                    {{ number_format($correctionPreview['balance_before'], 2) }} → {{ number_format($correctionPreview['balance_after'], 2) }} SAR
+                                                </div>
+                                                @if($correctionPreview['customer_due_before'] !== null)
+                                                    <div>@lang('ecommerce::ecommerce.customer_due_balance'):
+                                                        {{ number_format($correctionPreview['customer_due_before'], 2) }} → {{ number_format($correctionPreview['customer_due_after'], 2) }} SAR
+                                                    </div>
+                                                @endif
                                             </div>
                                         @endif
                                         <textarea class="form-control form-control-sm mb-2"

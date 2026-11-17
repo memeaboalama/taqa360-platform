@@ -4,6 +4,7 @@ namespace Application\Marketplace\Livewire\Finance\Reports\Order\Components;
 
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use App\Domain\MarketPlace\Repositories\Order\MerchantOrderRepository;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Mpdf\Mpdf;
@@ -44,7 +45,19 @@ class Pdf extends Component
     {
         $this->merchantId = $this->getMerchantId();
         $this->filters['merchant_id'] = $this->merchantId;
+        if (request()->filled('code')) {
+            $this->filters['code'] = request()->query('code');
+        }
         $this->checkHasRecords();
+    }
+
+    private function scopeToAuthorizedBranches(Builder $query): Builder
+    {
+        if (Auth::guard('merchant_employee')->check()) {
+            $query->forMerchantEmployee(Auth::guard('merchant_employee')->user());
+        }
+
+        return $query;
     }
 
     public function checkHasRecords()
@@ -52,7 +65,9 @@ class Pdf extends Component
         $this->merchantId = $this->getMerchantId();
         $this->filters['merchant_id'] = $this->merchantId;
         $this->orderRepository = new MerchantOrderRepository(new MerchantOrder());
-        $count = $this->orderRepository->filterOrders($this->filters, [], ['id'])->count();
+        $count = $this->scopeToAuthorizedBranches(
+            $this->orderRepository->filterOrders($this->filters, [], ['id'])
+        )->count();
         $this->hasRecords = $count > 0;
     }
 
@@ -65,6 +80,7 @@ class Pdf extends Component
         $ordersQuery = $this->orderRepository->filterOrders($this->filters,
             ['user', 'merchant', 'branch', 'payment', 'merchant.packages'],
             ['*']);
+        $this->scopeToAuthorizedBranches($ordersQuery);
 
         if ($ordersQuery->count() === 0) {
             $this->hasRecords = false;

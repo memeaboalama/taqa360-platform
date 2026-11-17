@@ -2,17 +2,10 @@
 
 namespace Application\Admin\Livewire\RefundPayment\Modal;
 
-use App\Domain\Admin\Actions\Dashboard\RefundPayment\StoreRefundPaymentAction;
 use App\Domain\MarketPlace\Models\MerchantOrder;
-use App\Domain\MarketPlace\Models\CollectionSetting;
-use App\Domain\MarketPlace\Models\OrderSettlement;
-use App\Domain\MarketPlace\Services\DriverCustodyLedger;
-use Illuminate\Support\Facades\DB;
+use App\Domain\MarketPlace\Services\RefundExecutionWorkflow;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
-use App\Domain\MarketPlace\Actions\Api\Wallet\WalletOrderAction;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
 
 class Create extends Component
 {
@@ -35,13 +28,15 @@ class Create extends Component
         $user_id = null,
         $user_name = null,
         $refund_payment_amount_last = 0,
+        $availableRefundAmount = 0,
+        $pendingRefundAmount = 0,
         $calculated_on = 'company',
-        $merchant_name = '';
+        $merchant_name = '',
+        $collectionPaymentRecordId = null,
+        $availableCollections = [];
     public  $refundpayment;
     public MerchantOrder  $orderNew;
     public $messageFlag = false;
-
-    protected StoreRefundPaymentAction $storeRefundPaymentAction;
 
     public function mount(MerchantOrder $order)
     {
@@ -55,7 +50,7 @@ class Create extends Component
             'order_id' => 'required|integer',
             'payment_id' => 'required',
             'user_id' => 'required|integer',
-            'refund_payment_id' => '',
+            'collectionPaymentRecordId' => 'required|integer|min:1',
             'amount' => 'required|numeric|gt:0',
             'currency' => 'required',
             'note' => 'required|string',
@@ -65,121 +60,113 @@ class Create extends Component
         ];
     }
 
-
-
-
     public function refreshOrderData(MerchantOrder $order)
     {
         $this->orderNew = $order;
         $this->order_id = $order->id;
         $this->order_code = $order->code;
         $this->user_id = $order->user_id;
-        $this->user_name = $order->client_name;
-        $this->payment = $order?->refPayment;
-        $this->payment_id = $order?->refPayment?->payment_id;
-        $this->payment_amount = $order?->refPayment?->amount / 100;
-        $this->refundpayment = $order?->refundpayment;
+        $this->user_name = $order->client_name ?: $order->user?->name;
+        $this->refundpayment = $order->refundpayment()
+            ->with(['collectionPayment', 'settlement', 'requestedBy', 'executedBy'])
+            ->latest('id')
+            ->get();
         $this->merchant_name = $order?->merchant_name;
-        $this->status = $order?->status?->trans();
-        $this->refund_payment_amount_last = $order?->refundpayment?->sum('amount');
+        $this->status = $order->status instanceof \BackedEnum
+            ? $order->status->value
+            : (string) $order->status;
+        $this->availableCollections = app(RefundExecutionWorkflow::class)
+            ->confirmedCollections($order)
+            ->map(fn ($payment) => [
+                'id' => $payment->id,
+                'payment_id' => $payment->payment_id,
+                'amount' => round((float) ($payment->captured ?: $payment->amount) / 100, 2),
+            ])
+            ->all();
+        $latestCollection = collect($this->availableCollections)->last();
+        $this->collectionPaymentRecordId = $latestCollection['id'] ?? null;
         $this->fundedBy = 'platform';
+        $this->refreshRefundAvailability();
     }
-    public function store(
-        StoreRefundPaymentAction $storeRefundPaymentAction,
-        DriverCustodyLedger $custodyLedger
-    ): void
+
+    public function updatedCollectionPaymentRecordId(): void
+    {
+        $this->refreshRefundAvailability();
+    }
+
+    public function store(RefundExecutionWorkflow $workflow): void
     {
         $data = $this->validate();
-        $order = MerchantOrder::with(['refPayment', 'refundpayment', 'settlement'])->find($data['order_id']);
+        $admin = auth('admin')->user();
+        abort_unless($admin, 403);
 
-        if (
-            !$order
-            || !$order->refPayment
-            || (int) $order->user_id !== (int) $data['user_id']
-            || (string) $order->refPayment->payment_id !== (string) $data['payment_id']
-        ) {
-            throw ValidationException::withMessages([
-                'order_id' => __('validation.exists', ['attribute' => __('admin::home.Order')]),
-            ]);
+        $refund = $workflow->request(
+            (int) $data['order_id'],
+            (int) $data['collectionPaymentRecordId'],
+            (string) $data['amount'],
+            (string) $data['note'],
+            (string) $data['fundedBy'],
+            (string) $data['calculated_on'],
+            $admin
+        );
+
+        $this->amount = 0;
+        $this->note = null;
+        $this->messageFlag = false;
+        $this->refreshOrderData(MerchantOrder::query()->findOrFail($refund->order_id));
+        $this->emit('refreshDatatable');
+        $this->emit('closeModal', '#createRefundPayment');
+        $this->alert('success', __('admin::home.refund_request_created_pending'));
+    }
+
+    public function executeRefund(int $refundId, RefundExecutionWorkflow $workflow): void
+    {
+        $admin = auth('admin')->user();
+        abort_unless($admin && $this->order_id, 403);
+
+        $refund = \App\Domain\AppBase\Models\RefundPayment::query()
+            ->where('order_id', $this->order_id)
+            ->whereKey($refundId)
+            ->firstOrFail();
+        $workflow->execute($refund->id, $admin);
+
+        $this->refreshOrderData(MerchantOrder::query()->findOrFail($this->order_id));
+        $this->emit('refreshDatatable');
+        $this->alert('success', __('admin::home.refund_executed_successfully'));
+    }
+
+    private function refreshRefundAvailability(): void
+    {
+        $payment = collect($this->availableCollections)
+            ->firstWhere('id', (int) $this->collectionPaymentRecordId);
+        if (!$payment || !$this->order_id) {
+            $this->payment_id = null;
+            $this->payment_amount = 0;
+            $this->refund_payment_amount_last = 0;
+            $this->availableRefundAmount = 0;
+            $this->pendingRefundAmount = 0;
+            return;
         }
 
-        if ($data['fundedBy'] === 'driver' && !CollectionSetting::adminCan('correct')) {
-            abort(403);
+        $order = MerchantOrder::query()->findOrFail($this->order_id);
+        $collection = app(RefundExecutionWorkflow::class)
+            ->confirmedCollections($order)
+            ->firstWhere('id', (int) $this->collectionPaymentRecordId);
+        if (!$collection) {
+            $this->payment_id = null;
+            $this->payment_amount = 0;
+            $this->refund_payment_amount_last = 0;
+            $this->availableRefundAmount = 0;
+            $this->pendingRefundAmount = 0;
+            return;
         }
 
-        $refundedAmount = (float) ($order->refundpayment?->sum('amount') ?? 0);
-        $paymentAmount = (float) $order->refPayment->amount / 100;
-        if ($refundedAmount + (float) $data['amount'] <= $paymentAmount) {
-            $this->messageFlag = false;
-            $this->type = 'toWallet';
-            $data['type'] = 'toWallet';
-            $data['funded_by'] = $data['fundedBy'];
-            $this->orderNew = $order;
-            try {
-                DB::transaction(function () use ($data, $order, $custodyLedger, $storeRefundPaymentAction): void {
-                    if ($data['fundedBy'] === 'driver') {
-                        $settlement = OrderSettlement::query()
-                            ->where('order_id', $order->id)
-                            ->lockForUpdate()
-                            ->first();
-
-                        if (!$settlement || !$settlement->driver_id || $settlement->status === 'approved') {
-                            throw ValidationException::withMessages([
-                                'fundedBy' => 'لا يمكن الخصم من عهدة السائق بعد اعتماد التوريد أو دون تسوية مرتبطة.',
-                            ]);
-                        }
-
-                        $availableCustody = $custodyLedger->balanceForOrder($order->id, $settlement->driver_id);
-                        if ((float) $data['amount'] > $availableCustody) {
-                            throw ValidationException::withMessages([
-                                'amount' => 'مبلغ الاسترداد أكبر من الرصيد المتاح في عهدة السائق لهذا الطلب.',
-                            ]);
-                        }
-
-                        $data['driver_id'] = $settlement->driver_id;
-                    } else {
-                        $data['driver_id'] = null;
-                    }
-
-                    $walletOrderAction = new WalletOrderAction();
-                    $walletOrderAction->add_wallet_refund_payment(
-                        $order,
-                        'Wallet Refund Payment',
-                        $data['amount']
-                    );
-                    $storeRefundPaymentAction->handle($data);
-                });
-                $this->emit('refreshDatatable');
-                $this->emit('closeModal', '#createRefundPayment');
-                $this->alert('success', 'RefundPayment Add Successfully');
-                $this->reset(
-                    'type',
-                    'order_id',
-                    'order_code',
-                    'payment_id',
-                    'user_id',
-                    'refund_payment_id',
-                    'amount',
-                    'payment_amount',
-                    'currency',
-                    'note',
-                    'user_name',
-                    'refund_payment_amount_last',
-                    'refundpayment',
-                    'status',
-                    'merchant_name',
-                    'calculated_on',
-                    'fundedBy',
-                );
-            } catch (ValidationException $ex) {
-                throw $ex;
-            } catch (\Exception $ex) {
-                Log::error($ex);
-                $this->alert('error', 'تعذر حفظ الاسترداد، لم يتم تسجيل أي أثر مالي.');
-            }
-        } else {
-            $this->messageFlag = true;
-        }
+        $amounts = app(RefundExecutionWorkflow::class)->availableForCollection($order, $collection);
+        $this->payment_id = $collection->payment_id;
+        $this->payment_amount = $amounts['collection_amount'];
+        $this->refund_payment_amount_last = $amounts['refunded_amount'];
+        $this->availableRefundAmount = $amounts['available_amount'];
+        $this->pendingRefundAmount = $amounts['pending_amount'];
     }
 
 

@@ -43,6 +43,10 @@ class Filter extends Component
         FetchCitiesAction $fetchCitiesAction)
     {
         $this->date_condition = "equal";
+        $this->code = request()->query('code');
+        if ($this->code) {
+            $this->filters['code'] = $this->code;
+        }
         $this->statuses = collect(MerchantOrderStatuses::cases());
         $this->cities = $fetchCitiesAction->handle();
         $this->districts = $fetchDistrictAction->all();

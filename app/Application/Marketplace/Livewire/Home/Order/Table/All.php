@@ -29,7 +29,13 @@ class All extends DataTableComponent
 
     public function builder(): Builder
     {
-        return MerchantOrder::with(['services','user'])->where('merchant_id', resolve('_InitialMerchant'))->take(10);
+        $query = MerchantOrder::with(['services', 'user'])
+            ->where('merchant_id', resolve('_InitialMerchant'));
+        if (auth('merchant_employee')->check()) {
+            $query->forMerchantEmployee(auth('merchant_employee')->user());
+        }
+
+        return $query->take(10);
     }
 
     public function columns(): array

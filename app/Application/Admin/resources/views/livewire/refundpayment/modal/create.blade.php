@@ -47,6 +47,21 @@
                                                 @error('payment_id') <span
                                                     class="text-danger  d-block">{{ $message }}</span> @enderror
                                             </div>
+                                            <div class="col-xl-6">
+                                                <label for="collectionPaymentRecordId" class="form-label text-black">
+                                                    {{ __('admin::home.original_collection') }}
+                                                </label>
+                                                <select id="collectionPaymentRecordId" class="form-select"
+                                                        wire:model="collectionPaymentRecordId" required>
+                                                    <option value="">{{ __('admin::home.select_original_collection') }}</option>
+                                                    @foreach($availableCollections as $collection)
+                                                        <option value="{{ $collection['id'] }}">
+                                                            {{ $collection['payment_id'] }} — {{ number_format($collection['amount'], 2) }} SAR
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                @error('collectionPaymentRecordId') <span class="text-danger d-block">{{ $message }}</span> @enderror
+                                            </div>
                                             <div class="col-xl-6" hidden>
                                                 <label for="user_id"
                                                        class="form-label text-black">{{__('admin::home.Customer No')}}</label>
@@ -102,7 +117,18 @@
                                                        placeholder="0.00" disabled>
                                                 @error('refund_payment_amount_last') <span
                                                     class="text-danger  d-block">{{ $message }}</span> @enderror
-                                            </div> 
+                                            </div>
+                                            <div class="col-xl-6">
+                                                <label class="form-label text-black">{{ __('admin::home.available_refund_amount') }}</label>
+                                                <input type="number" class="form-control" value="{{ number_format((float) $availableRefundAmount, 2, '.', '') }}" disabled>
+                                            </div>
+                                            <div class="col-xl-6">
+                                                <label class="form-label text-black">{{ __('admin::home.pending_refund_amount') }}</label>
+                                                <input type="number" class="form-control" value="{{ number_format((float) $pendingRefundAmount, 2, '.', '') }}" disabled>
+                                            </div>
+                                            <div class="alert alert-info py-2 mb-3">
+                                                {{ __('admin::home.refund_request_execution_notice') }}
+                                            </div>
                                             <div class="row"> 
                                             <div class="col-xl-6">
                                                 <label for="calculated_on" class="form-label text-black">{{__('admin::home.calculated on')}}</label>
@@ -127,6 +153,10 @@
                                                     @endif
                                                 </select>
                                                 @error('fundedBy') <span class="text-danger d-block mt-2">{{ $message }}</span> @enderror
+                                            </div>
+                                            <div class="col-xl-6">
+                                                <label class="form-label text-black">{{ __('admin::home.refund_method') }}</label>
+                                                <input type="text" class="form-control" value="{{ __('admin::home.refund_method_wallet') }}" disabled>
                                             </div>
                                             <div class="col-xl-6" >
                                                 <label for="note"
@@ -160,21 +190,46 @@
                                 <tr>
                                     <th scope="col">@lang('admin::home.RefundpaymentAmount')</th>
                                     <th scope="col">@lang('admin::home.RefundpaymentNote')</th>
+                                    <th scope="col">@lang('admin::home.refund_status')</th>
                                     <th scope="col">@lang('admin::home.refund_funding_source')</th>
+                                    <th scope="col">@lang('admin::home.original_collection')</th>
+                                    <th scope="col">@lang('admin::home.settlement_number')</th>
+                                    <th scope="col">@lang('admin::home.refund_execution_reference')</th>
                                     <th scope="col">@lang('admin::home.Date')</th>
+                                    <th scope="col">@lang('admin::home.actions')</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 @foreach($refundpayment as $item)
 
                                     <tr>
-
-
-                                        <td> {{ number_format($item?->amount, 2) }} @lang('admin::home.SAR')</td>
+                                        <td>{{ number_format($item?->amount, 2) }} @lang('admin::home.SAR')</td>
                                         <td>{{ $item?->note }} </td>
+                                        <td>
+                                            @lang('admin::home.refund_status_' . ($item?->status ?: 'executed'))
+                                            @if($item?->executed_at)
+                                                <small class="d-block text-muted">{{ $item->executedBy?->name }} · {{ $item->executed_at->format('Y-m-d H:i') }}</small>
+                                            @elseif($item?->requested_at)
+                                                <small class="d-block text-muted">{{ $item->requestedBy?->name }} · {{ $item->requested_at->format('Y-m-d H:i') }}</small>
+                                            @endif
+                                        </td>
                                         <td>{{ __('admin::home.refund_funded_by_' . ($item?->funded_by ?: 'platform')) }}</td>
-                                        <td>{{ $item?->created_at }} </td>
-
+                                        <td>{{ $item?->collectionPayment?->payment_id ?: $item?->payment_id }}</td>
+                                        <td>{{ $item?->settlement_id ? 'STL-' . $item->settlement_id : '—' }}</td>
+                                        <td>{{ $item?->reference ?: '—' }}</td>
+                                        <td>{{ $item?->executed_at ?: $item?->created_at }}</td>
+                                        <td>
+                                            @if($item?->status === 'pending')
+                                                <button type="button" class="btn btn-success btn-sm"
+                                                        wire:click="executeRefund({{ $item->id }})"
+                                                        wire:loading.attr="disabled"
+                                                        wire:target="executeRefund({{ $item->id }})">
+                                                    {{ __('admin::home.confirm_refund_execution') }}
+                                                </button>
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
                                     </tr>
 
                                 @endforeach
@@ -193,9 +248,10 @@
                         <button type="button" class="btn btn-outline-danger"data-bs-dismiss="modal">
                             @lang('admin::home.Close')
                         </button>
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="btn btn-success"
+                                wire:loading.attr="disabled" wire:target="store">
                                 <span class="indicator-label" wire:loading.class="d-none">
-                                    @lang('admin::home.RefundpaymentType toWallet')
+                                    @lang('admin::home.create_refund_request')
                                 </span>
                                 <span class="d-none" wire:loading.class.remove="d-none">
                                         @lang('admin::home.Wait') 

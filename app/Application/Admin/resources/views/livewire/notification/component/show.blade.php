@@ -35,6 +35,14 @@
                                 <label class="form-label text-black fw-bold">{{ __('admin::home.Date') }}</label>
                                 <p class="mb-0 text-black">{{ \Carbon\Carbon::parse($notification->created_at)->format('j F Y') }}</p>
                             </div>
+                            <div class="col-xl-6">
+                                <label class="form-label text-black fw-bold">{{ __('admin::home.notification_push_status') }}</label>
+                                <p class="mb-0 text-black">{{ __('admin::home.notification_statuses.' . $notification->delivery_status) }}</p>
+                            </div>
+                            <div class="col-xl-6">
+                                <label class="form-label text-black fw-bold">{{ __('admin::home.notification_push_counts') }}</label>
+                                <p class="mb-0 text-black">{{ __('admin::home.notification_sent_count', ['count' => $notification->sent_count]) }} / {{ __('admin::home.notification_failed_count', ['count' => $notification->failed_count]) }}</p>
+                            </div>
                             <div class="col-xl-12">
                                 <label class="form-label text-black fw-bold">{{ __('admin::home.message') }}</label>
                                 <p class="mb-0 text-black">{{ $notification->body }}</p>

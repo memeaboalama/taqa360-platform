@@ -13,9 +13,7 @@
               
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
                     <livewire:admin::type-service.modal.create/>
-                    </div>
                 </div>
 
                

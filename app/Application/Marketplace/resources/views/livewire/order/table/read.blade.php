@@ -239,6 +239,7 @@
         @include('ecommerce::components.order-payment-ledger', [
             'paymentLedger' => $paymentLedger,
             'allowCorrection' => false,
+            'financialReportUrl' => route('marketplace:finance.reports.orders.index', ['code' => $order->code]),
         ])
     </div>
     <livewire:marketplace::order.modal.cancel />

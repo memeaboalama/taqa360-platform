@@ -159,7 +159,7 @@ class DriverCustodyLedger
                             });
                     });
             })
-            ->join('merchant_orders as o', 'o.id', '=', 's.order_id')
+            ->join('merchant_orders as o', 'o.id', '=', 'p.payable_id')
             ->whereIn('p.payable_type', [
                 (new MerchantOrder())->getMorphClass(),
                 MerchantOrder::class,
@@ -179,7 +179,7 @@ class DriverCustodyLedger
                     ->whereIn('duplicate.status', ['paid', 'success'])
                     ->where('duplicate.source_message', MerchantOrder::COD_COLLECTION_CONFIRMATION_MESSAGE);
             })
-            ->when($driverId, fn ($query) => $query->where('s.driver_id', $driverId))
+            ->when($driverId, fn ($query) => $query->whereRaw('COALESCE(s.driver_id, o.driver_id) = ?', [$driverId]))
             ->selectRaw("
                 COALESCE(s.driver_id, o.driver_id) as driver_id,
                 p.id as record_id,
@@ -234,7 +234,7 @@ class DriverCustodyLedger
                 o.code as order_code,
                 s.id as settlement_id,
                 s.status as settlement_status,
-                CONCAT(c.reason, ' — ', COALESCE(a.name, '')) as details,
+                CONCAT('تصحيح STL-', s.id, ': ', c.reason, ' — ', COALESCE(a.name, '')) as details,
                 'settlement' as source_movement_type,
                 s.id as source_movement_id
             ");
@@ -242,9 +242,21 @@ class DriverCustodyLedger
         $movementCorrections = DB::table('payment_correction_requests as c')
             ->join('merchant_orders as o', 'o.id', '=', 'c.order_id')
             ->leftJoin('order_settlements as s', 's.id', '=', 'c.settlement_id')
+            ->leftJoin('payments as p', function ($join) {
+                $join->on('p.id', '=', 'c.movement_id')
+                    ->on('p.payable_id', '=', 'c.order_id')
+                    ->where('c.movement_type', 'collection');
+            })
             ->leftJoin('admins as a', 'a.id', '=', 'c.approved_by')
             ->where('c.status', 'approved')
             ->whereIn('c.movement_type', ['collection', 'settlement'])
+            ->where(function ($query) {
+                $query->where('c.movement_type', 'settlement')
+                    ->orWhere(function ($query) {
+                        $query->where('c.movement_type', 'collection')
+                            ->where('p.source_message', MerchantOrder::COD_COLLECTION_CONFIRMATION_MESSAGE);
+                    });
+            })
             ->whereRaw('COALESCE(s.driver_id, o.driver_id) IS NOT NULL')
             ->when($driverId, fn ($query) => $query->whereRaw('COALESCE(s.driver_id, o.driver_id) = ?', [$driverId]))
             ->selectRaw("
@@ -261,7 +273,7 @@ class DriverCustodyLedger
                 o.code as order_code,
                 c.settlement_id as settlement_id,
                 s.status as settlement_status,
-                CONCAT(c.reason, ' — ', COALESCE(a.name, '')) as details,
+                CONCAT('تصحيح ', c.movement_type, '-', c.movement_id, ': ', c.reason, ' — ', COALESCE(a.name, '')) as details,
                 c.movement_type as source_movement_type,
                 c.movement_id as source_movement_id
             ");
@@ -269,19 +281,23 @@ class DriverCustodyLedger
         $refunds = DB::table('refund_payments as r')
             ->join('merchant_orders as o', 'o.id', '=', 'r.order_id')
             ->where('r.funded_by', 'driver')
+            ->where(function ($query) {
+                $query->where('r.status', 'executed')
+                    ->orWhereNull('r.status');
+            })
             ->whereNotNull('r.driver_id')
             ->when($driverId, fn ($query) => $query->where('r.driver_id', $driverId))
             ->selectRaw("
                 r.driver_id,
                 r.id as record_id,
                 r.refund_payment_id as movement_number,
-                r.created_at as occurred_at,
+                COALESCE(r.executed_at, r.created_at) as occurred_at,
                 'refund' as movement_type,
                 -r.amount as amount,
                 o.id as order_id,
                 o.code as order_code,
-                (SELECT s.id FROM order_settlements s WHERE s.order_id = o.id LIMIT 1) as settlement_id,
-                (SELECT s.status FROM order_settlements s WHERE s.order_id = o.id LIMIT 1) as settlement_status,
+                r.settlement_id as settlement_id,
+                (SELECT s.status FROM order_settlements s WHERE s.id = r.settlement_id) as settlement_status,
                 r.note as details,
                 'refund' as source_movement_type,
                 r.id as source_movement_id
