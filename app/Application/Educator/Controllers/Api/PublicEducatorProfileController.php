@@ -18,7 +18,9 @@ class PublicEducatorProfileController extends Controller
         }
 
         $educator->load([
-            'profile',
+            'profile.nationality',
+            'profile.country',
+            'profile.city',
             'bios',
             'academicMajors.approvedMajor',
             'achievements',
@@ -40,11 +42,18 @@ class PublicEducatorProfileController extends Controller
                 'phone' => $educator->profile?->is_phone_public ? $educator->phone : null,
                 'identityType' => $educator->profile?->is_identity_id_public ? $educator->profile?->identity_type : null,
                 'identityNumber' => $educator->profile?->is_identity_id_public ? $educator->profile?->identity_id : null,
+                'nationality' => $educator->profile?->is_nationality_public ? $educator->profile?->nationality?->title : null,
+                'gender' => $educator->profile?->is_gender_public ? $educator->profile?->gender : null,
+                'country' => $educator->profile?->is_country_public ? $educator->profile?->country?->title : null,
+                'city' => $educator->profile?->is_city_public ? $educator->profile?->city?->title : null,
                 'headline' => $educator->discipline ?? $educator->profile?->specialization,
                 'bioTitle' => $educator->bios?->title,
                 'bio' => $educator->bios?->description,
                 'educationLevel' => $educator->profile?->education_level,
-                'experienceYears' => $educator->profile?->experience_years === null
+                'experienceLevel' => $educator->profile?->is_experience_level_public
+                    ? $educator->profile?->experience_level
+                    : null,
+                'experienceYears' => !$educator->profile?->is_experience_level_public || $educator->profile?->experience_years === null
                     ? null
                     : (int) $educator->profile->experience_years,
                 'academicMajors' => $educator->academicMajors->map(fn ($major) => [
