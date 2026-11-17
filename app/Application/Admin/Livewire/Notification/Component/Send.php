@@ -33,7 +33,7 @@ class Send extends Component
     {
         return [
             'title' => 'required|string|min:2|max:120',
-            'body' => 'required|string|min:2|max:120',
+            'body' => 'required|string|min:2|max:500',
             'device_type' => [
                 'required',
                 'string',
@@ -50,8 +50,9 @@ class Send extends Component
             403
         );
 
+        $data = $this->validate();
+
         try {
-            $data = $this->validate();
             $notification = $sendNotificationAction->handle($data + [
                 'admin_id' => $admin->id,
             ]);

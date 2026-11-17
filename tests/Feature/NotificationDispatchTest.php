@@ -8,9 +8,12 @@ use App\Domain\Notification\Actions\FetchNotificationFeedAction;
 use App\Domain\Notification\Actions\SendBroadcastPushNotificationAction;
 use App\Domain\Notification\Actions\SendIDeviceTokenToDB;
 use App\Domain\User\Models\User;
+use Application\Admin\Livewire\Notification\Component\Send;
+use Domain\Admin\Models\Admin;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Livewire;
 use Mockery;
 use RuntimeException;
 use Tests\TestCase;
@@ -31,7 +34,7 @@ class NotificationDispatchTest extends TestCase
         Schema::create('notification_news', function (Blueprint $table): void {
             $table->id();
             $table->string('title', 120);
-            $table->string('body', 120);
+            $table->string('body', 500);
             $table->string('channel');
             $table->string('device_type');
             $table->unsignedBigInteger('admin_id');
@@ -74,6 +77,38 @@ class NotificationDispatchTest extends TestCase
         $this->assertSame(NotificationNew::DELIVERY_PARTIAL, $notification->delivery_status);
         $this->assertSame(2, $notification->sent_count);
         $this->assertSame(1, $notification->failed_count);
+    }
+
+    public function test_admin_broadcast_accepts_500_character_body_and_rejects_longer_messages(): void
+    {
+        $admin = new Admin;
+        $admin->setAttribute('id', 1);
+        $admin->setAttribute('type', 'admin');
+        $this->actingAs($admin, 'admin');
+
+        $push = Mockery::mock(SendBroadcastPushNotificationAction::class);
+        $push->shouldReceive('handle')->once()->andReturn([
+            'attempted' => 1,
+            'sent' => 1,
+            'failed' => 0,
+        ]);
+        $this->app->instance(SendBroadcastPushNotificationAction::class, $push);
+
+        Livewire::test(Send::class)
+            ->set('title', 'Service update')
+            ->set('body', str_repeat('a', 500))
+            ->set('device_type', User::class)
+            ->call('send')
+            ->assertHasNoErrors();
+
+        $this->assertSame(500, strlen(DB::table('notification_news')->value('body')));
+
+        Livewire::test(Send::class)
+            ->set('title', 'Service update')
+            ->set('body', str_repeat('a', 501))
+            ->set('device_type', User::class)
+            ->call('send')
+            ->assertHasErrors(['body' => 'max']);
     }
 
     public function test_notification_without_device_tokens_is_not_marked_as_sent(): void

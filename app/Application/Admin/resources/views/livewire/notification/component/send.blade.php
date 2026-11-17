@@ -37,7 +37,7 @@
                             <div class="col-xl-12">
                                 <label for="body" class="form-label text-black">{{ __('admin::home.message') }} <span class="text-danger">*</span></label>
                                 <textarea id="body" class="form-control @error("body") is-invalid @enderror text-black"
-                                          rows="7" placeholder="{{ __('admin::home.message') }}" wire:model.defer="body"></textarea>
+                                          rows="7" maxlength="500" placeholder="{{ __('admin::home.message') }}" wire:model.defer="body"></textarea>
                                 @error("body")
                                 <span class="text-danger d-block mt-2">{{ $message }}</span>
                                 @enderror

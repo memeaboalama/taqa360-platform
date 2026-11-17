@@ -45,10 +45,6 @@ class All extends DataTableComponent
                 ->sortable()
                 ->searchable(),
 
-            Column::make(__('admin::home.message'), 'body')
-                ->sortable()
-                ->searchable(),
-
             Column::make(__('admin::home.Send Name'), 'id')
             ->format(function ($value, $row, Column $column) {
                 echo $row?->admin?->name;

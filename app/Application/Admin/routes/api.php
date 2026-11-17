@@ -35,4 +35,5 @@ Route::group(['prefix' => 'v1/admin/','middleware' => 'auth:admin-api'],function
     require __DIR__ . '/Modules/Admin/edu.php';
     require __DIR__ . '/Modules/Admin/educator.php';
     require __DIR__ . '/Modules/Admin/user.php';
+    require __DIR__ . '/Modules/Admin/notification.php';
 });
