@@ -21,6 +21,9 @@ class EducatorProfile extends Model
         'identity_id',
         'identity_type',
         'identity_status',
+        'is_email_public',
+        'is_phone_public',
+        'is_identity_id_public',
         'rejection_reason',
         'gender',
         'birth_date',
@@ -40,6 +43,9 @@ class EducatorProfile extends Model
         'birth_date' => 'date',
         'completion_step' => 'integer',
         'is_complete' => 'boolean',
+        'is_email_public' => 'boolean',
+        'is_phone_public' => 'boolean',
+        'is_identity_id_public' => 'boolean',
         'identity_status' => DocumentStatusEnum::class,
     ];
 
