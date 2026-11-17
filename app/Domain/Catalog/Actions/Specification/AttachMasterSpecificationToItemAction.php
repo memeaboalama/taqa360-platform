@@ -15,7 +15,7 @@ class AttachMasterSpecificationToItemAction
     /**
      * Attaches a master specification to an item by creating a deep copy.
      */
-    public function execute(AttachMasterSpecificationData $data): Specification
+    public function execute(AttachMasterSpecificationData $data, array $propertyValues = []): Specification
     {
         $masterSpec = Specification::query()
             ->whereNull('item_id')
@@ -26,7 +26,7 @@ class AttachMasterSpecificationToItemAction
             ->findOrFail($data->master_specification_id);
         $item = Item::findOrFail($data->item_id);
 
-        return DB::transaction(function () use ($masterSpec, $item) {
+        return DB::transaction(function () use ($masterSpec, $item, $propertyValues) {
             // 1. Replicate the Specification itself
             $itemSpecification = $masterSpec->replicate(['item_id']);
             $itemSpecification->item_id = $item->id;
@@ -46,6 +46,10 @@ class AttachMasterSpecificationToItemAction
                 // Replicate each property, removing original IDs
                 $newProperty = $property->replicate(['specification_id', 'item_id']);
                 $newProperty->item_id = $item->id;
+                if (array_key_exists($property->id, $propertyValues)) {
+                    $value = $propertyValues[$property->id];
+                    $newProperty->value = $value === '' ? null : $value;
+                }
                 $property_meta = [...($property->meta ?? [])];
                 $property_meta['merchant_id'] = $item->merchant_id;
                 if ($masterSpec->isMaster) {

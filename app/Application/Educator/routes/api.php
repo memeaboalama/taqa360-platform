@@ -8,6 +8,7 @@ use App\Application\Project\Controllers\Api\BidModificationController;
 use App\Application\Educator\Controllers\Api\DashboardController;
 use App\Application\Educator\Controllers\Api\FileController;
 use App\Application\Educator\Controllers\Api\OpportunityController;
+use App\Application\Educator\Controllers\Api\PublicEducatorProfileController;
 use App\Application\Educator\Controllers\Api\Profile\AcademicMajorController;
 use App\Application\Educator\Controllers\Api\Profile\AchievementController;
 use App\Application\Educator\Controllers\Api\Profile\BankInfoController;
@@ -27,6 +28,7 @@ Route::group(['prefix' => 'v1/admin/','middleware' => 'auth:admin-api'],function
     require __DIR__ . '/Modules/Admin/api.php';
 });
 
+Route::get('/v1/public/educators/{educator}', [PublicEducatorProfileController::class, 'show']);
 
 
 Route::group(['prefix' => 'v1/educator'],function () {

@@ -115,10 +115,12 @@ class StaticPageController extends Controller
     public function productPage($item_id)
     {
         $product = Item::with([
-            'merchant',
+            'merchant.brand',
             'mainCategory',
             'subCategory',
             'childCategory',
+            'catalogSpecifications.properties' => fn ($query) => $query
+                ->where('specification_properties.status', 'active'),
             'files',
             'activeItemPrices.type_service',
         ])

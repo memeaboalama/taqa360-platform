@@ -9,6 +9,7 @@ use App\Domain\AppBase\Models\Location\Region;
 use App\Domain\AppBase\Models\PromocodeMerchantsChoice;
 use App\Domain\AppBase\Repositories\DaysRepository;
 use App\Domain\MarketPlace\Models\Favorite;
+use App\Domain\MarketPlace\Models\Brand;
 use App\Domain\MarketPlace\Models\MerchantIban;
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use App\Domain\MarketPlace\Models\MerchantOrderHistory;

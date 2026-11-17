@@ -402,6 +402,8 @@ class DashboardController extends Controller
 
         if ($overdueCount > 0) {
             $notifications[] = [
+                'code' => 'overdue_tasks',
+                'count' => $overdueCount,
                 'type' => 'warning',
                 'title' => 'Overdue Tasks',
                 'message' => "You have {$overdueCount} overdue task(s) that need attention",
@@ -413,6 +415,8 @@ class DashboardController extends Controller
 
         if ($pendingInvitations > 0) {
             $notifications[] = [
+                'code' => 'pending_invitations',
+                'count' => $pendingInvitations,
                 'type' => 'info',
                 'title' => 'Pending Invitations',
                 'message' => "You have {$pendingInvitations} pending invitation(s) to review",
@@ -424,6 +428,8 @@ class DashboardController extends Controller
 
         if ($upcomingDeadlines > 0) {
             $notifications[] = [
+                'code' => 'upcoming_deadlines',
+                'count' => $upcomingDeadlines,
                 'type' => 'success',
                 'title' => 'Upcoming Deadlines',
                 'message' => "You have {$upcomingDeadlines} task(s) due in the next 3 days",

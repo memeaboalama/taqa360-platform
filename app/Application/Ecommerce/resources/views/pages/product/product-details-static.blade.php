@@ -124,8 +124,24 @@
                             @endif
                         </td>
                     </tr>
+                    @if($product->merchant?->brand)
+                        <tr>
+                            <th>@lang('ecommerce::ecommerce.brand')</th>
+                            <td>{{ $product->merchant->brand->getTranslation('name', app()->getLocale()) }}</td>
+                        </tr>
+                    @endif
                     <tr><th>@lang('ecommerce::ecommerce.category')</th><td>{{ $product->mainCategory->title ?? __('ecommerce::ecommerce.generic') }}</td></tr>
                     <tr><th>@lang('ecommerce::ecommerce.stock')</th><td>@if($product->stock === null) @lang('ecommerce::ecommerce.stock_not_tracked') @else {{ (int) $product->stock }} @lang('ecommerce::ecommerce.items') @endif</td></tr>
+                    @foreach($product->catalogSpecifications as $specification)
+                        @foreach($specification->properties as $property)
+                            @if(filled($property->value))
+                                <tr>
+                                    <th>{{ $property->name }}</th>
+                                    <td>{{ $property->value }}</td>
+                                </tr>
+                            @endif
+                        @endforeach
+                    @endforeach
                 </tbody>
             </table>
         </section>
@@ -137,8 +153,17 @@
                 </div>
                 <div class="info-grid">
                     @foreach($product->activeItemPrices as $itemPrice)
+                        @php
+                            $typeServiceName = $itemPrice->type_service?->name;
+                            $typeServiceLabel = match ($typeServiceName) {
+                                'default', 'with_delivery' => __('admin::home.with_delivery'),
+                                'without_delivery' => __('admin::home.without_delivery'),
+                                null => '-',
+                                default => $typeServiceName,
+                            };
+                        @endphp
                         <div class="info-card">
-                            <h4>{{ $itemPrice->type_service?->name ?? $itemPrice->type_service_name }}</h4>
+                            <h4>{{ $typeServiceLabel }}</h4>
                             <p>
                                 @lang('ecommerce::ecommerce.price'):
                                 {{ \App\Domain\AppBase\Models\Setting\Currency::format($itemPrice->price) }}
@@ -308,7 +333,7 @@
         var available = form.getAttribute('data-available') === '1';
         var badge = document.createElement('div');
         badge.className = 'hululi-stock' + (available ? '' : ' out');
-        badge.style.margin = '0 0 12px';
+        badge.style.margin = '12px 0';
         badge.textContent = available ? '@lang('ecommerce::ecommerce.in_stock')' : '@lang('ecommerce::ecommerce.out_of_stock')';
         form.parentNode.insertBefore(badge, form);
         if (!available) {

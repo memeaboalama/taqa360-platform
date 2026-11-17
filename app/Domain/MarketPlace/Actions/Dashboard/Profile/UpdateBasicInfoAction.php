@@ -5,6 +5,7 @@ namespace App\Domain\MarketPlace\Actions\Dashboard\Profile;
 use App\Domain\MarketPlace\Repositories\Merchant\MerchantRepository;
 use App\Support\Services\ImagesServices\ImageService;
 use Domain\MarketPlace\Models\Merchant;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
 
 class UpdateBasicInfoAction
@@ -26,7 +27,13 @@ class UpdateBasicInfoAction
 
 
         $merchant = $this->merchantRepository->findByCols(['id'=>$merchantId]);
+        $previousBrandId = $merchant->brand_id;
         $merchant->update($data);
+        if ((string) $previousBrandId !== (string) $merchant->brand_id) {
+            foreach ($merchant->items()->pluck('id') as $itemId) {
+                Cache::forget("storefront_product_details_{$itemId}_v4");
+            }
+        }
         $merchant->categories()->detach();
         $merchant->categories()->attach($data['marketplace_category_id']);
 

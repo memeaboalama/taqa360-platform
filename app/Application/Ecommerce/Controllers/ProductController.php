@@ -118,14 +118,13 @@ class ProductController extends Controller
 
     private function getProductWithDetails($itemId)
     {
-        return Cache::remember("storefront_product_details_{$itemId}_v3", 3600, function () use ($itemId) {
+        return Cache::remember("storefront_product_details_{$itemId}_v4", 3600, function () use ($itemId) {
             $product = Item::query()
                 ->with([
-                    'merchant',
+                    'merchant.brand',
                     'mainCategory',
                     'subCategory',
                     'childCategory',
-                    'brand',
                     'catalogSpecifications.properties' => fn ($query) => $query
                         ->where('specification_properties.status', 'active'),
                     'files',

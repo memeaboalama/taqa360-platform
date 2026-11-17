@@ -8,6 +8,7 @@ use App\Domain\AppBase\Models\Location\City;
 use App\Domain\AppBase\Models\Location\Country;
 use App\Domain\AppBase\Models\Location\Distract;
 use App\Domain\AppBase\Models\Location\Region;
+use App\Domain\MarketPlace\Models\Brand;
 use App\Domain\MarketPlace\Actions\Dashboard\Profile\UpdateBasicInfoAction;
 use App\Support\Enum\MainCategoryType;
 use App\Support\Enum\StatusEnum;
@@ -30,6 +31,7 @@ class Info extends Component
     public int $country_id;
     public $city_id = 1, $region_id =1 ,$distract_id = null;
     public  $merchant, $marketplaceCategories, $mainCategories;
+    public $brands = [];
     public mixed $counties = [],$regions = [] , $districts = [], $cities = [], $cropImageInfo = [];
     public $marketplace_category_id = null;
     public $app_logo = "", $app_logo_path, $diskName = 'fileDisk';
@@ -55,6 +57,7 @@ public  $company_name = ['en' => null,  'ar' => null];
             ->where('type', MainCategoryType::MARKET->value)
             ->pluck('title', 'id')
             ->toArray();
+        $this->brands = Brand::query()->orderBy('id')->get();
     }
 
     public function imageCropped($image_64, $fileInfo)

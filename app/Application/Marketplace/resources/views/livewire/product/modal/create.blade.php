@@ -237,9 +237,22 @@
                                                                                         </button>
                                                                                     </div>
                                                                                     @if($specification->properties->isNotEmpty())
-                                                                                        <small class="d-block text-muted mt-1">
-                                                                                            {{ $specification->properties->pluck('name')->implode('، ') }}
-                                                                                        </small>
+                                                                                        <div class="row gy-2 mt-1">
+                                                                                            @foreach($specification->properties as $property)
+                                                                                                <div class="col-md-6" wire:key="create-specification-property-{{ $property->id }}">
+                                                                                                    <label for="create-specification-value-{{ $property->id }}" class="form-label">
+                                                                                                        {{ $property->name }}
+                                                                                                    </label>
+                                                                                                    <input type="text"
+                                                                                                        id="create-specification-value-{{ $property->id }}"
+                                                                                                        class="form-control @error('specification_values.' . $property->id) is-invalid @enderror"
+                                                                                                        wire:model.defer="specification_values.{{ $property->id }}">
+                                                                                                    @error('specification_values.' . $property->id)
+                                                                                                        <span class="text-danger d-block mt-2">{{ $message }}</span>
+                                                                                                    @enderror
+                                                                                                </div>
+                                                                                            @endforeach
+                                                                                        </div>
                                                                                     @endif
                                                                                 </div>
                                                                             @endforeach
@@ -393,6 +406,23 @@ wire:model.defer="stock">
                                                 </div>
                                             </div>
                                             @endif
+
+                                            <div class="mt-4">
+                                                <label for="specification_file" class="form-label">
+                                                    {{ __('admin::main.home.specification_file') }}
+                                                </label>
+                                                <input type="file"
+                                                    id="specification_file"
+                                                    class="form-control @error('specification_file') is-invalid @enderror"
+                                                    wire:model="specification_file"
+                                                    accept=".pdf,application/pdf">
+                                                @error('specification_file')
+                                                    <span class="text-danger d-block mt-2">{{ $message }}</span>
+                                                @enderror
+                                                @if($specification_file)
+                                                    <small class="d-block text-muted mt-2">{{ $specification_file->getClientOriginalName() }}</small>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

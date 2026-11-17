@@ -39,6 +39,14 @@
                                                         {{ __('admin::main.home.Item Prices') }}
                                                     </button>
                                                 </li>
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link" id="showSpecifications-tab" data-bs-toggle="tab"
+                                                        data-bs-target="#showSpecifications-tab-pane" type="button" role="tab" tabindex="-1"
+                                                        aria-controls="showSpecifications-tab-pane" aria-selected="false">
+                                                        <i class="ri-list-check me-1 align-middle d-inline-block"></i>
+                                                        {{ __('admin::main.home.technical_specifications') }}
+                                                    </button>
+                                                </li>
                                             </ul>
                                         </div>
                                     </div>
@@ -181,6 +189,38 @@
                                             </tbody>
                                         </table>
                                     </div>
+                                </div>
+
+                                <div class="tab-pane fade p-0 border-0" id="showSpecifications-tab-pane"
+                                    role="tabpanel" aria-labelledby="showSpecifications-tab" tabindex="3">
+                                    @if($specification_file)
+                                        <div class="mb-3">
+                                            <strong>{{ __('admin::main.home.specification_file') }}:</strong>
+                                            <a href="{{ $specification_file['url'] }}" target="_blank" rel="noopener">
+                                                {{ $specification_file['original_name'] }}
+                                            </a>
+                                        </div>
+                                    @endif
+
+                                    @forelse($technical_specifications as $specification)
+                                        <div class="mb-3">
+                                            <h6>{{ $specification['name'] }}</h6>
+                                            <table class="table table-bordered">
+                                                <tbody>
+                                                    @foreach($specification['properties'] as $property)
+                                                        <tr>
+                                                            <th>{{ $property['name'] }}</th>
+                                                            <td>{{ $property['value'] }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    @empty
+                                        @unless($specification_file)
+                                            <p class="text-muted">{{ __('admin::main.home.no_technical_specifications') }}</p>
+                                        @endunless
+                                    @endforelse
                                 </div>
                             </div>
                         </div>

@@ -591,13 +591,13 @@
 
                                     <div class="tab-pane fade" id="top-contact" role="tabpanel" aria-labelledby="contact-top-tab">
                                         <div class="specifications">
-                                            @if($product->brand || $product->catalogSpecifications->isNotEmpty())
+                                            @if($product->merchant?->brand || $product->catalogSpecifications->isNotEmpty())
                                                 <table class="table table-bordered">
                                                     <tbody>
-                                                        @if($product->brand)
+                                                        @if($product->merchant?->brand)
                                                             <tr>
                                                                 <th>@lang('ecommerce::ecommerce.brand')</th>
-                                                                <td>{{ $product->brand->getTranslation('name', app()->getLocale()) }}</td>
+                                                                <td>{{ $product->merchant->brand->getTranslation('name', app()->getLocale()) }}</td>
                                                             </tr>
                                                         @endif
                                                         @foreach($product->catalogSpecifications as $specification)

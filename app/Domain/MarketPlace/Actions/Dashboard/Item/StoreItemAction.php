@@ -8,6 +8,7 @@ use App\Domain\Catalog\Data\Specification\AttachMasterSpecificationData;
 use App\Domain\MarketPlace\Repositories\Merchant\ItemRepository;
 use App\Domain\MarketPlace\Repositories\Merchant\MerchantCategoryRepository;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class StoreItemAction
 {
@@ -36,14 +37,21 @@ class StoreItemAction
             }
 
             $masterSpecificationIds = $data['master_specification_ids'] ?? [];
+            $specificationValues = $data['specification_values'] ?? [];
+            $specificationFile = $data['specification_file'] ?? null;
             unset($data['master_specification_ids']);
+            unset($data['specification_values'], $data['specification_file']);
             $model = $this->modelR->store($data);
 
             foreach ($masterSpecificationIds as $specificationId) {
                 $this->attachMasterSpecification->execute(new AttachMasterSpecificationData(
                     item_id: $model->id,
                     master_specification_id: (int) $specificationId,
-                ));
+                ), $specificationValues);
+            }
+
+            if ($specificationFile) {
+                $this->storeSpecificationFile($model, $specificationFile);
             }
 
             if (isset($data['addition_group_ids'])) {
@@ -98,6 +106,27 @@ class StoreItemAction
                 continue;
             }
         }
+    }
+
+    private function storeSpecificationFile($model, $file): void
+    {
+        $path = $file->store('upload/products/specifications', 'fileDisk');
+        if (!$path) {
+            throw new \RuntimeException('Unable to store the product specification file.');
+        }
+
+        $disk = Storage::disk('fileDisk');
+        $model->files()->create([
+            'file_name' => basename($path),
+            'original_name' => $file->getClientOriginalName(),
+            'mime_type' => $file->getMimeType() ?: 'application/pdf',
+            'collection_name' => 'item_specification',
+            'type' => 'technical_specification',
+            'url' => $disk->url($path),
+            'path' => $path,
+            'size' => $file->getSize(),
+            'storage' => 'fileDisk',
+        ]);
     }
 
     private function handleSpecifications($model, $data): void

@@ -169,6 +169,65 @@
                                                             @enderror
                                                         </div>
 
+                                                        @if($main_category_id)
+                                                            <div class="col-12">
+                                                                <label class="form-label text-black">
+                                                                    {{ __('admin::main.fields.specification') }}
+                                                                </label>
+                                                                @if($masterSpecifications->isNotEmpty())
+                                                                    <div class="input-group">
+                                                                        <select class="form-control @error('selected_master_specification_id') is-invalid @enderror"
+                                                                            wire:model="selected_master_specification_id">
+                                                                            <option value="">-- {{ __('admin::main.actions.select') }} --</option>
+                                                                            @foreach($masterSpecifications as $specification)
+                                                                                @if(!in_array($specification->id, array_map('intval', $master_specification_ids), true))
+                                                                                    <option value="{{ $specification->id }}">{{ $specification->name }}</option>
+                                                                                @endif
+                                                                            @endforeach
+                                                                        </select>
+                                                                        <button type="button" class="btn btn-primary"
+                                                                            wire:click="addMasterSpecification"
+                                                                            {{ !$selected_master_specification_id ? 'disabled' : '' }}>
+                                                                            {{ __('admin::main.actions.add') }}
+                                                                        </button>
+                                                                    </div>
+                                                                    @error('selected_master_specification_id')
+                                                                        <span class="text-danger d-block mt-2">{{ $message }}</span>
+                                                                    @enderror
+
+                                                                    @foreach($masterSpecifications->whereIn('id', array_map('intval', $master_specification_ids)) as $specification)
+                                                                        <div class="border rounded p-2 mt-3" wire:key="update-master-specification-{{ $specification->id }}">
+                                                                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                                                                <strong>{{ $specification->name }}</strong>
+                                                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                                                    wire:click="removeMasterSpecification({{ $specification->id }})">
+                                                                                    {{ __('admin::main.actions.remove') }}
+                                                                                </button>
+                                                                            </div>
+                                                                            <div class="row gy-2 mt-1">
+                                                                                @foreach($specification->properties as $property)
+                                                                                    <div class="col-md-6" wire:key="update-specification-property-{{ $property->id }}">
+                                                                                        <label for="update-specification-value-{{ $property->id }}" class="form-label">
+                                                                                            {{ $property->name }}
+                                                                                        </label>
+                                                                                        <input type="text"
+                                                                                            id="update-specification-value-{{ $property->id }}"
+                                                                                            class="form-control @error('specification_values.' . $property->id) is-invalid @enderror"
+                                                                                            wire:model.defer="specification_values.{{ $property->id }}">
+                                                                                        @error('specification_values.' . $property->id)
+                                                                                            <span class="text-danger d-block mt-2">{{ $message }}</span>
+                                                                                        @enderror
+                                                                                    </div>
+                                                                                @endforeach
+                                                                            </div>
+                                                                        </div>
+                                                                    @endforeach
+                                                                @else
+                                                                    <p class="form-text text-muted mb-0">{{ __('admin::main.fields.no_specifications_available') }}</p>
+                                                                @endif
+                                                            </div>
+                                                        @endif
+
                                                         <div class="col-xl-6">
                                                             <label for="default_price" class="form-label text-black">
                                                                 {{ __('admin::main.fields.default_price') }} <span class="text-danger">*</span>
@@ -346,6 +405,34 @@ wire:model.defer="stock">
                                                 @endforeach
                                             </div>
                                             @endif
+
+                                            <div class="mt-4">
+                                                <label for="update_specification_file" class="form-label">
+                                                    {{ __('admin::main.home.specification_file') }}
+                                                </label>
+                                                @if($existing_specification_file)
+                                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                                        <a href="{{ $existing_specification_file['url'] }}" target="_blank" rel="noopener">
+                                                            {{ $existing_specification_file['original_name'] }}
+                                                        </a>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                            wire:click="removeSpecificationFile">
+                                                            {{ __('admin::main.actions.delete') }}
+                                                        </button>
+                                                    </div>
+                                                @endif
+                                                <input type="file"
+                                                    id="update_specification_file"
+                                                    class="form-control @error('specification_file') is-invalid @enderror"
+                                                    wire:model="specification_file"
+                                                    accept=".pdf,application/pdf">
+                                                @error('specification_file')
+                                                    <span class="text-danger d-block mt-2">{{ $message }}</span>
+                                                @enderror
+                                                @if($specification_file)
+                                                    <small class="d-block text-muted mt-2">{{ $specification_file->getClientOriginalName() }}</small>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

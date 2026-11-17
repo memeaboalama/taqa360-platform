@@ -68,9 +68,9 @@
                     <select class="form-control @error('brand_id') is-invalid @enderror"
                             wire:model="brand_id">
                         <option value="">-- Select Brand --</option>
-                        @foreach(config('brand.brands') as $key => $brand)
-                        <option value="{{ $key }}" {{ $brand_id == $key ? 'selected' : '' }}>
-                            {{ isset($brand['name']['en']) ? $brand['name']['en'] : $key }}
+                        @foreach($brands as $brand)
+                        <option value="{{ $brand->id }}">
+                            {{ $brand->getTranslation('name', app()->getLocale()) }}
                         </option>
                         @endforeach
                     </select>

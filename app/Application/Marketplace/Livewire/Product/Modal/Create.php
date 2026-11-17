@@ -30,6 +30,8 @@ class Create extends Component
     public $brand_id;
     public $master_specification_ids = [];
     public $selected_master_specification_id;
+    public $specification_values = [];
+    public $specification_file;
     public $description = ['en' => null, 'ar' => null];
     public $default_price;
     public $stock;
@@ -132,6 +134,9 @@ class Create extends Component
                 }),
                 Rule::exists('category_specification', 'specification_id')->where('category_id', $this->main_category_id),
             ],
+            'specification_values' => 'nullable|array',
+            'specification_values.*' => 'nullable|string|max:5000',
+            'specification_file' => 'nullable|file|mimes:pdf|max:10240',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'description' => 'required|array',
             'description.*' => 'required|string|min:10',
@@ -190,6 +195,7 @@ class Create extends Component
         $this->brand_id = null;
         $this->master_specification_ids = [];
         $this->selected_master_specification_id = null;
+        $this->specification_values = [];
         $this->sub_category_id = null;
         $this->child_category_id = null;
         $this->childCategories = collect();
@@ -252,6 +258,8 @@ class Create extends Component
                 'child_category_id' => $this->child_category_id,
                 'brand_id' => $this->brand_id,
                 'master_specification_ids' => $this->master_specification_ids,
+                'specification_values' => $this->specification_values,
+                'specification_file' => $this->specification_file,
                 'image' => $this->image,
                 'default_price' => $this->default_price,
                 'stock' => $this->stock === '' || $this->stock === null ? null : (int) $this->stock,
@@ -283,7 +291,9 @@ class Create extends Component
     {
         $this->reset([
             'title', 'status', 'main_category_id', 'sub_category_id', 'child_category_id',
-            'brand_id', 'master_specification_ids', 'merchant_id', 'image', 'description', 'default_price', 'stock', 'calories', 'preparing_time', 'addition_group_ids', 'additional_images'
+            'brand_id', 'master_specification_ids', 'selected_master_specification_id',
+            'specification_values', 'specification_file', 'merchant_id', 'image', 'description',
+            'default_price', 'stock', 'calories', 'preparing_time', 'addition_group_ids', 'additional_images'
         ]);
         $this->categories = Category::where('is_active', true)->get();
         $this->subcategories = collect();

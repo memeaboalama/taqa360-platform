@@ -24,6 +24,8 @@ class Show extends Component
     public $image_path;
     public $existing_files = [];
     public $item_prices = [];
+    public $technical_specifications = [];
+    public $specification_file;
 
     protected $listeners = ['viewProduct'];
 
@@ -35,6 +37,7 @@ class Show extends Component
             return;
         }
 
+        $product->load(['catalogSpecifications.properties', 'files']);
         $this->productId = $product->id;
         $this->title = $product->getTranslations('title');
         $this->description = $product->getTranslations('description');
@@ -58,6 +61,7 @@ class Show extends Component
 
         $this->loadItemPrices($product);
         $this->loadExistingFiles($product);
+        $this->loadTechnicalSpecifications($product);
 
         $this->emit('openModal', '#showProduct');
     }
@@ -80,12 +84,41 @@ class Show extends Component
 
     private function loadExistingFiles($product): void
     {
-        $this->existing_files = $product->files->map(function ($file) {
+        $this->existing_files = $product->files
+            ->where('collection_name', 'item_additional_image')
+            ->map(function ($file) {
             return [
                 'url' => $file->url,
                 'original_name' => $file->original_name,
             ];
         })->toArray();
+    }
+
+    private function loadTechnicalSpecifications($product): void
+    {
+        $this->technical_specifications = $product->catalogSpecifications
+            ->map(function ($specification) {
+                return [
+                    'name' => $specification->name,
+                    'properties' => $specification->properties
+                        ->filter(fn ($property) => filled($property->value))
+                        ->map(fn ($property) => [
+                            'name' => $property->name,
+                            'value' => $property->value,
+                        ])
+                        ->values()
+                        ->all(),
+                ];
+            })
+            ->filter(fn ($specification) => !empty($specification['properties']))
+            ->values()
+            ->all();
+
+        $file = $product->files->firstWhere('collection_name', 'item_specification');
+        $this->specification_file = $file ? [
+            'url' => $file->url,
+            'original_name' => $file->original_name,
+        ] : null;
     }
 
     public function render()
