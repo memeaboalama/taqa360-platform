@@ -24,6 +24,11 @@ class EducatorProfile extends Model
         'is_email_public',
         'is_phone_public',
         'is_identity_id_public',
+        'is_nationality_public',
+        'is_gender_public',
+        'is_country_public',
+        'is_city_public',
+        'is_experience_level_public',
         'rejection_reason',
         'gender',
         'birth_date',
@@ -46,6 +51,11 @@ class EducatorProfile extends Model
         'is_email_public' => 'boolean',
         'is_phone_public' => 'boolean',
         'is_identity_id_public' => 'boolean',
+        'is_nationality_public' => 'boolean',
+        'is_gender_public' => 'boolean',
+        'is_country_public' => 'boolean',
+        'is_city_public' => 'boolean',
+        'is_experience_level_public' => 'boolean',
         'identity_status' => DocumentStatusEnum::class,
     ];
 
