@@ -35,12 +35,12 @@ class FetchHomeDataAction
             Cache::forget('home_page_data_ar');
             Cache::forget('home_page_data_en');
             Cache::forget('home_page_data_' . app()->getLocale());
-            Cache::forget('home_page_data_storefront_v2_ar');
-            Cache::forget('home_page_data_storefront_v2_en');
-            Cache::forget('home_page_data_storefront_v2_' . app()->getLocale());
+            Cache::forget('home_page_data_storefront_v3_ar');
+            Cache::forget('home_page_data_storefront_v3_en');
+            Cache::forget('home_page_data_storefront_v3_' . app()->getLocale());
         }
 
-        $data = Cache::remember('home_page_data_storefront_v2_' . app()->getLocale(), 1800, function() {
+        $data = Cache::remember('home_page_data_storefront_v3_' . app()->getLocale(), 1800, function() {
             $page = AdPage::where('key', 'home')->first();
 
             if (!$page) {
@@ -171,17 +171,18 @@ class FetchHomeDataAction
             return $data;
         }
 
-        $availableIds = Item::query()
+        $freshProductsById = Item::query()
             ->whereIn('id', $productIds)
             ->where('status', ActiveEnum::ACTIVE->value)
             ->availableForStorefront()
-            ->pluck('id')
-            ->flip();
+            ->get()
+            ->keyBy('id');
 
         foreach ($productKeys as $key) {
             if (($data[$key] ?? null) instanceof \Illuminate\Support\Collection) {
                 $data[$key] = $data[$key]
-                    ->filter(fn ($product) => $availableIds->has($product->id))
+                    ->map(fn ($product) => $freshProductsById->get($product->id))
+                    ->filter()
                     ->values();
             }
         }
@@ -189,7 +190,8 @@ class FetchHomeDataAction
         foreach ($data['tabGroups'] ?? [] as $key => $groupProducts) {
             if ($groupProducts instanceof \Illuminate\Support\Collection) {
                 $data['tabGroups'][$key] = $groupProducts
-                    ->filter(fn ($product) => $availableIds->has($product->id))
+                    ->map(fn ($product) => $freshProductsById->get($product->id))
+                    ->filter()
                     ->values();
             }
         }

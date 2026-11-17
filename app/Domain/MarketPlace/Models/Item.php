@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Translatable\HasTranslations;
@@ -35,6 +36,19 @@ class Item extends Model
 {
     use HasFactory, HasTranslations, BelongsToMerchant, MerchantRelation, HasStatus, SoftDeletes;
     use Filterable;
+
+    protected static function booted(): void
+    {
+        static::updated(static function (Item $item): void {
+            if (! $item->wasChanged(['default_price', 'sale_price', 'is_on_sale', 'sale_expires_at'])) {
+                return;
+            }
+
+            foreach (array_unique(['ar', 'en', app()->getLocale()]) as $locale) {
+                Cache::forget('home_page_data_storefront_v3_' . $locale);
+            }
+        });
+    }
 
     protected $translatable = ['title', 'description'];
 
