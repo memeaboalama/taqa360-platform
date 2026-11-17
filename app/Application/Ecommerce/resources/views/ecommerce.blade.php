@@ -14,8 +14,8 @@
 @section('page-styles')
     <style>
         /* ======================================================
-           HERO SLIDER — Database banners
-           ====================================================== */
+               HERO SLIDER — Database banners
+               ====================================================== */
         .hero {
             margin-top: 18px;
             border-radius: 18px;
@@ -37,7 +37,10 @@
             gap: 24px;
             min-height: 310px;
         }
-        .hero-slide.active { display: flex; }
+
+        .hero-slide.active {
+            display: flex;
+        }
 
         html[dir="ltr"] .hero-slide {
             direction: ltr;
@@ -63,7 +66,10 @@
             color: #17212f;
         }
 
-        .hero h1 span { color: #17212f; display: block; }
+        .hero h1 span {
+            color: #17212f;
+            display: block;
+        }
 
         .hero p {
             color: #555f6d;
@@ -91,6 +97,7 @@
             box-shadow: 0 4px 14px rgba(48, 111, 170, .28);
             transition: background .22s ease, transform .18s ease, box-shadow .22s ease;
         }
+
         .hero-cta:hover {
             background: var(--yellow-deep);
             transform: translateY(-2px);
@@ -98,7 +105,10 @@
             color: #fff;
             text-decoration: none !important;
         }
-        .hero-cta svg { flex: 0 0 auto; }
+
+        .hero-cta svg {
+            flex: 0 0 auto;
+        }
 
         /* ---- Three-image banner composition ---- */
         .hero-images {
@@ -139,8 +149,13 @@
             transition: transform .28s ease, opacity .28s ease;
         }
 
-        .hero-gallery-card:nth-child(2) { transform: scale(.82); }
-        .hero-gallery-card:nth-child(3) { transform: scale(.68); }
+        .hero-gallery-card:nth-child(2) {
+            transform: scale(.82);
+        }
+
+        .hero-gallery-card:nth-child(3) {
+            transform: scale(.68);
+        }
 
         .hero-gallery-card img {
             display: block;
@@ -183,13 +198,17 @@
             height: 7px;
             width: 7px;
         }
+
         .hero-dot.active {
             width: 22px;
             background: var(--yellow);
         }
 
         /* legacy .dot kept for backward compat */
-        .dot { display: none; }
+        .dot {
+            display: none;
+        }
+
         .primary-btn {
             border-radius: 22px;
             padding: 11px 23px;
@@ -253,11 +272,30 @@
             color: #EA993E
         }
 
-        .category:nth-child(5n + 1) .category-icon { background: #f1efff; color: #7665d8 }
-        .category:nth-child(5n + 2) .category-icon { background: #eaf7f1; color: #45a986 }
-        .category:nth-child(5n + 3) .category-icon { background: #fff0ef; color: #e97872 }
-        .category:nth-child(5n + 4) .category-icon { background: #eaf7f1; color: #45a986 }
-        .category:nth-child(5n) .category-icon { background: #f3efff; color: #7665d8 }
+        .category:nth-child(5n + 1) .category-icon {
+            background: #f1efff;
+            color: #7665d8
+        }
+
+        .category:nth-child(5n + 2) .category-icon {
+            background: #eaf7f1;
+            color: #45a986
+        }
+
+        .category:nth-child(5n + 3) .category-icon {
+            background: #fff0ef;
+            color: #e97872
+        }
+
+        .category:nth-child(5n + 4) .category-icon {
+            background: #eaf7f1;
+            color: #45a986
+        }
+
+        .category:nth-child(5n) .category-icon {
+            background: #f3efff;
+            color: #7665d8
+        }
 
         .category .category-icon.has-image {
             border-radius: 0;
@@ -844,16 +882,52 @@
         }
 
         @media(max-width:992px) {
-            .hero { min-height: 280px; }
-            .hero-slide { padding: 20px 22px; gap: 18px; min-height: 280px; }
-            .hero-content { width: 34%; }
-            .hero h1 { font-size: 21px; }
-            .hero p { font-size: 12px; margin: 8px 0 16px; }
-            .hero-images { height: 225px; gap: 8px; }
-            .hero-gallery { height: 205px; gap: 8px; }
-            .hero-gallery-card { flex-basis: 185px; width: 185px; height: 185px; }
-            .hero-gallery-card img { border-radius: 14px; }
-            .hero-gallery--single .hero-gallery-card { height: 185px; }
+            .hero {
+                min-height: 280px;
+            }
+
+            .hero-slide {
+                padding: 20px 22px;
+                gap: 18px;
+                min-height: 280px;
+            }
+
+            .hero-content {
+                width: 34%;
+            }
+
+            .hero h1 {
+                font-size: 21px;
+            }
+
+            .hero p {
+                font-size: 12px;
+                margin: 8px 0 16px;
+            }
+
+            .hero-images {
+                height: 225px;
+                gap: 8px;
+            }
+
+            .hero-gallery {
+                height: 205px;
+                gap: 8px;
+            }
+
+            .hero-gallery-card {
+                flex-basis: 185px;
+                width: 185px;
+                height: 185px;
+            }
+
+            .hero-gallery-card img {
+                border-radius: 14px;
+            }
+
+            .hero-gallery--single .hero-gallery-card {
+                height: 185px;
+            }
         }
 
         @media(max-width:768px) {
@@ -863,12 +937,37 @@
                 padding: 18px 14px 22px;
                 gap: 12px;
             }
-            .hero-content { width: 100%; text-align: center; }
-            .hero h1 { font-size: 19px; }
-            .hero p { margin-right: auto; margin-left: auto; font-size: 12px; }
-            .hero-images { width: 100%; height: 170px; gap: 6px; }
-            .hero-gallery { height: 145px; gap: 0; }
-            .hero-gallery-card { display: none; }
+
+            .hero-content {
+                width: 100%;
+                text-align: center;
+            }
+
+            .hero h1 {
+                font-size: 19px;
+            }
+
+            .hero p {
+                margin-right: auto;
+                margin-left: auto;
+                font-size: 12px;
+            }
+
+            .hero-images {
+                width: 100%;
+                height: 170px;
+                gap: 6px;
+            }
+
+            .hero-gallery {
+                height: 145px;
+                gap: 0;
+            }
+
+            .hero-gallery-card {
+                display: none;
+            }
+
             .hero-gallery-card.is-current {
                 display: block;
                 flex: 0 1 48%;
@@ -876,7 +975,10 @@
                 height: 145px;
                 transform: none;
             }
-            .hero-gallery--single .hero-gallery-card { height: 145px; }
+
+            .hero-gallery--single .hero-gallery-card {
+                height: 145px;
+            }
         }
 
         @media(max-width:800px) {
@@ -1032,20 +1134,23 @@
 @section('content')
     @php
         $localized = static function ($value, $fallback = '') use ($currentLocale) {
-            if (is_array($value))
-                return $value[$currentLocale] ?? $value['en'] ?? reset($value) ?? $fallback;
+            if (is_array($value)) {
+                return $value[$currentLocale] ?? ($value['en'] ?? (reset($value) ?? $fallback));
+            }
             return $value ?: $fallback;
         };
         $image = static function ($value, $fallback = 'assets/ecommerce/images/slider/4.webp') {
             return $value ?: asset($fallback);
         };
         $products = static function ($items, $limit = 6) {
-            return collect($items ?? [])->filter()->take($limit);
+            return collect($items ?? [])
+                ->filter()
+                ->take($limit);
         };
         $renderProduct = static function ($product) use ($image, $localized) {
             $title = $localized($product->title ?? null, __('ecommerce::ecommerce.product_label'));
-            $productImage = $image($product->image_path ?? $product->image ?? null);
-            $price = number_format((float) ($product->default_price ?? $product->price ?? 0), 2);
+            $productImage = $image($product->image_path ?? ($product->image ?? null));
+            $price = (float) ($product->default_price ?? ($product->price ?? 0));
             return compact('title', 'productImage', 'price');
         };
     @endphp
@@ -1058,14 +1163,18 @@
                         $slide = (object) $slide;
                     }
                     $defaultImg = asset('assets/ecommerce/images/slider/4.webp');
-                    $img = $slide->desktop_image_url
-                        ?? $slide->tablet_image_url
-                        ?? $slide->mobile_image_url
-                        ?? ($slide->image_desktop ?? null)
-                        ?? ($slide->image ?? null)
-                        ?? null;
+                    $img =
+                        $slide->desktop_image_url ??
+                        ($slide->tablet_image_url ??
+                            ($slide->mobile_image_url ??
+                                ($slide->image_desktop ?? null ?? ($slide->image ?? null ?? null))));
 
-                    if ($img && !filter_var($img, FILTER_VALIDATE_URL) && !str_starts_with($img, '/') && file_exists(public_path($img))) {
+                    if (
+                        $img &&
+                        !filter_var($img, FILTER_VALIDATE_URL) &&
+                        !str_starts_with($img, '/') &&
+                        file_exists(public_path($img))
+                    ) {
                         $img = asset($img);
                     }
 
@@ -1086,62 +1195,56 @@
             }
         @endphp
 
-        @if($heroSlides->isNotEmpty())
+        @if ($heroSlides->isNotEmpty())
             <section class="hero" id="hero-slider" aria-label="@lang('ecommerce::ecommerce.home_hero_aria')"
-                @if(!empty($mainSliderBackground)) style="background-image: url('{{ $mainSliderBackground }}'); background-size: cover; background-position: center;" @endif>
-                @foreach($heroSlides as $idx => $slide)
+                @if (!empty($mainSliderBackground)) style="background-image: url('{{ $mainSliderBackground }}'); background-size: cover; background-position: center;" @endif>
+                @foreach ($heroSlides as $idx => $slide)
                     @php
                         $slideCount = $heroSlides->count();
-                        $galleryIndexes = array_values(array_unique([
-                            $idx,
-                            ($idx + 1) % $slideCount,
-                            ($idx + 2) % $slideCount,
-                        ]));
+                        $galleryIndexes = array_values(
+                            array_unique([$idx, ($idx + 1) % $slideCount, ($idx + 2) % $slideCount]),
+                        );
                     @endphp
                     <div class="hero-slide {{ $idx === 0 ? 'active' : '' }}" data-slide="{{ $idx }}">
                         <div class="hero-content">
-                            <h1>{{ $slide->localized_title ?: __('ecommerce::ecommerce.home_hero_title', [], $currentLocale) }}</h1>
-                            <p>{{ $slide->localized_subtitle ?: __('ecommerce::ecommerce.home_hero_subtitle', [], $currentLocale) }}</p>
+                            <h1>{{ $slide->localized_title ?: __('ecommerce::ecommerce.home_hero_title', [], $currentLocale) }}
+                            </h1>
+                            <p>{{ $slide->localized_subtitle ?: __('ecommerce::ecommerce.home_hero_subtitle', [], $currentLocale) }}
+                            </p>
                             <a class="hero-cta" href="{{ $slide->click_url ?: '#products' }}">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2.2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="4"/>
-                                    <line x1="12" y1="2" x2="12" y2="5"/>
-                                    <line x1="12" y1="19" x2="12" y2="22"/>
-                                    <line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/>
-                                    <line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/>
-                                    <line x1="2" y1="12" x2="5" y2="12"/>
-                                    <line x1="19" y1="12" x2="22" y2="12"/>
-                                    <line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/>
-                                    <line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="4" />
+                                    <line x1="12" y1="2" x2="12" y2="5" />
+                                    <line x1="12" y1="19" x2="12" y2="22" />
+                                    <line x1="4.22" y1="4.22" x2="6.34" y2="6.34" />
+                                    <line x1="17.66" y1="17.66" x2="19.78" y2="19.78" />
+                                    <line x1="2" y1="12" x2="5" y2="12" />
+                                    <line x1="19" y1="12" x2="22" y2="12" />
+                                    <line x1="4.22" y1="19.78" x2="6.34" y2="17.66" />
+                                    <line x1="17.66" y1="6.34" x2="19.78" y2="4.22" />
                                 </svg>
                                 @lang('ecommerce::ecommerce.shop_now')
                             </a>
                         </div>
                         <div class="hero-images">
                             <div class="hero-gallery {{ $slideCount === 1 ? 'hero-gallery--single' : '' }}">
-                                @foreach($galleryIndexes as $galleryIndex)
+                                @foreach ($galleryIndexes as $galleryIndex)
                                     @php $gallerySlide = $heroSlides[$galleryIndex]; @endphp
                                     <button class="hero-gallery-card {{ $galleryIndex === $idx ? 'is-current' : '' }}"
-                                            type="button"
-                                            data-index="{{ $galleryIndex }}"
-                                            aria-label="{{ (is_object($gallerySlide) && !empty($gallerySlide->localized_title)) ? $gallerySlide->localized_title : __('ecommerce::ecommerce.home_hero_title', [], $currentLocale) }}">
-                                        <img
-                                            src="{{ $gallerySlide->resolved_image ?? asset('assets/ecommerce/images/slider/4.webp') }}"
-                                            alt="{{ (is_object($gallerySlide) && method_exists($gallerySlide, 'getAltText')) ? $gallerySlide->getAltText($currentLocale) : ($gallerySlide->localized_title ?? '') }}"
+                                        type="button" data-index="{{ $galleryIndex }}"
+                                        aria-label="{{ is_object($gallerySlide) && !empty($gallerySlide->localized_title) ? $gallerySlide->localized_title : __('ecommerce::ecommerce.home_hero_title', [], $currentLocale) }}">
+                                        <img src="{{ $gallerySlide->resolved_image ?? asset('assets/ecommerce/images/slider/4.webp') }}"
+                                            alt="{{ is_object($gallerySlide) && method_exists($gallerySlide, 'getAltText') ? $gallerySlide->getAltText($currentLocale) : $gallerySlide->localized_title ?? '' }}"
                                             loading="{{ $galleryIndex === $idx ? 'eager' : 'lazy' }}">
                                     </button>
                                 @endforeach
                             </div>
                             <div class="hero-pagination" role="tablist" aria-label="Slides">
-                                @foreach($heroSlides as $dotIdx => $banner)
-                                    <button class="hero-dot {{ $idx === $dotIdx ? 'active' : '' }}"
-                                            type="button"
-                                            role="tab"
-                                            aria-selected="{{ $idx === $dotIdx ? 'true' : 'false' }}"
-                                            aria-label="Slide {{ $dotIdx + 1 }}"
-                                            data-index="{{ $dotIdx }}"></button>
+                                @foreach ($heroSlides as $dotIdx => $banner)
+                                    <button class="hero-dot {{ $idx === $dotIdx ? 'active' : '' }}" type="button"
+                                        role="tab" aria-selected="{{ $idx === $dotIdx ? 'true' : 'false' }}"
+                                        aria-label="Slide {{ $dotIdx + 1 }}" data-index="{{ $dotIdx }}"></button>
                                 @endforeach
                             </div>
                         </div>
@@ -1150,360 +1253,444 @@
             </section>
         @endif
         <section id="categories" class="categories">
-            @foreach(collect($categories ?? []) as $category)<a class="category"
-                href="{{ route('categories.index', ['main_category' => $category->id]) }}"><i class="category-icon {{ $category->image ? 'has-image' : '' }}">
-                    @if($category->image)
-                        <img src="{{ $category->image }}" alt="" loading="lazy">
-                    @else
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" />
-                        </svg>
-                    @endif
-                </i><span>{{ $localized($category->title ?? $category->name ?? null, __('ecommerce::ecommerce.home_category_fallback')) }}</span></a>@endforeach
+            @foreach (collect($categories ?? []) as $category)
+                <a class="category" href="{{ route('categories.index', ['main_category' => $category->id]) }}"><i
+                        class="category-icon {{ $category->image ? 'has-image' : '' }}">
+                        @if ($category->image)
+                            <img src="{{ $category->image }}" alt="" loading="lazy">
+                        @else
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" />
+                            </svg>
+                        @endif
+                    </i><span>{{ $localized($category->title ?? ($category->name ?? null), __('ecommerce::ecommerce.home_category_fallback')) }}</span></a>
+            @endforeach
         </section>
-        <section id="offers" class="promo-grid">@foreach(collect($productBanners ?? [])->take(3) as $banner)
-            <article class="promo"
-                style="background-image:url('{{ $image($banner->desktop_image_url ?? $banner->image_desktop ?? null) }}')">
-                <div class="promo-content">
-                    <h3>{{ $localized($banner->localized_title ?? $banner->title ?? null, __('ecommerce::ecommerce.home_banner_fallback')) }}</h3>
-                    <p>{{ $localized($banner->localized_subtitle ?? $banner->subtitle ?? null) }}</p><a class="small-btn"
-                        href="{{ $banner->click_url ?? '#products' }}">@lang('ecommerce::ecommerce.shop_now')</a>
-                </div>
-        </article>@endforeach
+        <section id="offers" class="promo-grid">
+            @foreach (collect($productBanners ?? [])->take(3) as $banner)
+                <article class="promo"
+                    style="background-image:url('{{ $image($banner->desktop_image_url ?? ($banner->image_desktop ?? null)) }}')">
+                    <div class="promo-content">
+                        <h3>{{ $localized($banner->localized_title ?? ($banner->title ?? null), __('ecommerce::ecommerce.home_banner_fallback')) }}
+                        </h3>
+                        <p>{{ $localized($banner->localized_subtitle ?? ($banner->subtitle ?? null)) }}</p><a
+                            class="small-btn" href="{{ $banner->click_url ?? '#products' }}">@lang('ecommerce::ecommerce.shop_now')</a>
+                    </div>
+                </article>
+            @endforeach
         </section>
         @php
             $productSections = collect([
-                ['products' => $bestSellers ?? [], 'title' => __('ecommerce::ecommerce.best_sellers'), 'id' => 'best-sellers'],
-                ['products' => $featuredProducts ?? [], 'title' => __('ecommerce::ecommerce.featured_products'), 'id' => 'featured-products'],
-                ['products' => $newProducts ?? [], 'title' => __('ecommerce::ecommerce.new_products'), 'id' => 'new-products'],
-                ['products' => $exclusiveProducts ?? [], 'title' => __('ecommerce::ecommerce.exclusive_collections'), 'id' => 'exclusive-products'],
-            ])->filter(fn ($section) => collect($section['products'])->isNotEmpty())->values();
+                [
+                    'products' => $bestSellers ?? [],
+                    'title' => __('ecommerce::ecommerce.best_sellers'),
+                    'id' => 'best-sellers',
+                ],
+                [
+                    'products' => $featuredProducts ?? [],
+                    'title' => __('ecommerce::ecommerce.featured_products'),
+                    'id' => 'featured-products',
+                ],
+                [
+                    'products' => $newProducts ?? [],
+                    'title' => __('ecommerce::ecommerce.new_products'),
+                    'id' => 'new-products',
+                ],
+                [
+                    'products' => $exclusiveProducts ?? [],
+                    'title' => __('ecommerce::ecommerce.exclusive_collections'),
+                    'id' => 'exclusive-products',
+                ],
+            ])
+                ->filter(fn($section) => collect($section['products'])->isNotEmpty())
+                ->values();
             $midProductBanner = collect($largeBanner ?? [])->first();
             $bannerAfterSection = min(2, $productSections->count());
         @endphp
-        @foreach($productSections as $section)
-            <section id="{{ $section['id'] }}" class="extra-section product-section{{ $loop->odd ? ' product-section--soft' : '' }}{{ in_array($loop->index, [0, 2, 4], true) ? ' product-section--watermark product-section--watermark-' . (intdiv($loop->index, 2) % 2 === 0 ? 'left' : 'right') : '' }}">
+        @foreach ($productSections as $section)
+            <section id="{{ $section['id'] }}"
+                class="extra-section product-section{{ $loop->odd ? ' product-section--soft' : '' }}{{ in_array($loop->index, [0, 2, 4], true) ? ' product-section--watermark product-section--watermark-' . (intdiv($loop->index, 2) % 2 === 0 ? 'left' : 'right') : '' }}">
                 <div class="section-head">
-                    <h2>{{ $section['title'] }}</h2><a class="view-all" href="{{ route('categories.index') }}">@lang('ecommerce::ecommerce.view_all')
+                    <h2>{{ $section['title'] }}</h2><a class="view-all"
+                        href="{{ route('categories.index') }}">@lang('ecommerce::ecommerce.view_all')
                         ></a>
                 </div>
                 <div class="products">
-                    @foreach($products($section['products'], 8) as $product)
+                    @foreach ($products($section['products'], 8) as $product)
                         @php $card = $renderProduct($product); @endphp
-                        <article class="product"><button type="button" data-product-id="{{ $product->id }}" class="favorite{{ isset($favoriteIds[$product->id]) ? ' is-favorite' : '' }}"
+                        <article class="product"><button type="button" data-product-id="{{ $product->id }}"
+                                class="favorite{{ isset($favoriteIds[$product->id]) ? ' is-favorite' : '' }}"
                                 aria-label="@lang('ecommerce::ecommerce.add_to_wishlist')"><i
                                     class="{{ isset($favoriteIds[$product->id]) ? 'fa fa-heart' : 'ti-heart' }}"></i></button><a
                                 class="product-img-wrap" href="{{ route('product.static', $product->id) }}"><img
                                     class="product-image" src="{{ $card['productImage'] }}" alt="{{ $card['title'] }}"
-                                    loading="lazy">@if(!$product->isInStock())<span
-                                    class="product-stock-badge">@lang('ecommerce::ecommerce.out_of_stock')</span>@endif</a>
-                            <h3><a href="{{ route('product.static', $product->id) }}" style="color:inherit;text-decoration:none">{{ $card['title'] }}</a></h3>
+                                    loading="lazy">
+                                @if (!$product->isInStock())
+                                    <span class="product-stock-badge">@lang('ecommerce::ecommerce.out_of_stock')</span>
+                                @endif
+                            </a>
+                            <h3><a href="{{ route('product.static', $product->id) }}"
+                                    style="color:inherit;text-decoration:none">{{ $card['title'] }}</a></h3>
                             @include('ecommerce::partials.product.rating', ['product' => $product])
-                            <div class="price">{{ \App\Domain\AppBase\Models\Setting\Currency::format($card['price']) }}</div>
-                            <form class="add-cart-form" action="{{ route('cart.add') }}" method="POST">@csrf<input type="hidden"
-                                    name="item_id" value="{{ $product->id }}"><input type="hidden" name="qty"
-                                    value="1">@if(!$product->isInStock())<button class="add-cart" type="button" disabled
+                            <div class="price">{{ \App\Domain\AppBase\Models\Setting\Currency::format($card['price']) }}
+                            </div>
+                            <form class="add-cart-form" action="{{ route('cart.add') }}" method="POST">@csrf<input
+                                    type="hidden" name="item_id" value="{{ $product->id }}"><input type="hidden"
+                                    name="qty" value="1">
+                                @if (!$product->isInStock())
+                                    <button class="add-cart" type="button" disabled
                                     style="background:#e5e7eb !important;color:#9ca3af !important;cursor:not-allowed">@lang('ecommerce::ecommerce.out_of_stock')</button>@else<button
-                                    class="add-cart" type="submit"><i class="ti-shopping-cart"></i> @lang('ecommerce::ecommerce.add_to_cart')</button>@endif
+                                        class="add-cart" type="submit"><i class="ti-shopping-cart"></i>
+                                        @lang('ecommerce::ecommerce.add_to_cart')</button>
+                                @endif
                             </form>
                         </article>
                     @endforeach
                 </div>
             </section>
-            @if($midProductBanner && $loop->iteration === $bannerAfterSection)
+            @if ($midProductBanner && $loop->iteration === $bannerAfterSection)
                 <section class="wide-banner"
-                    style="background-image:url('{{ $image($midProductBanner->desktop_image_url ?? $midProductBanner->image_desktop ?? null) }}')">
+                    style="background-image:url('{{ $image($midProductBanner->desktop_image_url ?? ($midProductBanner->image_desktop ?? null)) }}')">
                     <div class="wide-banner-content">
-                        <p>{{ $localized($midProductBanner->localized_subtitle ?? $midProductBanner->subtitle ?? null) }}</p>
-                        <h2>{{ $localized($midProductBanner->localized_title ?? $midProductBanner->title ?? null, __('ecommerce::ecommerce.home_banner2_fallback')) }}</h2>
-                        <a class="primary-btn" href="{{ $midProductBanner->click_url ?? '#products' }}">@lang('ecommerce::ecommerce.shop_now') <span class="arrow-end" aria-hidden="true">→</span></a>
+                        <p>{{ $localized($midProductBanner->localized_subtitle ?? ($midProductBanner->subtitle ?? null)) }}
+                        </p>
+                        <h2>{{ $localized($midProductBanner->localized_title ?? ($midProductBanner->title ?? null), __('ecommerce::ecommerce.home_banner2_fallback')) }}
+                        </h2>
+                        <a class="primary-btn" href="{{ $midProductBanner->click_url ?? '#products' }}">@lang('ecommerce::ecommerce.shop_now')
+                            <span class="arrow-end" aria-hidden="true">→</span></a>
                     </div>
                 </section>
             @endif
         @endforeach
+    </div>
+    <section class="benefits">
+        <div class="container" style="display:contents">
+            <div class="benefit"><i class="benefit-icon">♧</i>
+                <div><strong>@lang('ecommerce::ecommerce.home_feature_fast_title')</strong><span>@lang('ecommerce::ecommerce.home_feature_fast_desc')</span></div>
+            </div>
+            <div class="benefit"><i class="benefit-icon">♢</i>
+                <div><strong>@lang('ecommerce::ecommerce.home_feature_secure_title')</strong><span>@lang('ecommerce::ecommerce.home_feature_secure_desc')</span></div>
+            </div>
+            <div class="benefit"><i class="benefit-icon">⚙</i>
+                <div><strong>@lang('ecommerce::ecommerce.home_feature_quality_title')</strong><span>@lang('ecommerce::ecommerce.home_feature_quality_desc')</span></div>
+            </div>
+            <div class="benefit"><i class="benefit-icon">♧</i>
+                <div><strong>@lang('ecommerce::ecommerce.home_feature_support_title')</strong><span>@lang('ecommerce::ecommerce.home_feature_support_desc')</span></div>
+            </div>
         </div>
-        <section class="benefits">
-            <div class="container" style="display:contents">
-                <div class="benefit"><i class="benefit-icon">♧</i>
-                    <div><strong>@lang('ecommerce::ecommerce.home_feature_fast_title')</strong><span>@lang('ecommerce::ecommerce.home_feature_fast_desc')</span></div>
+    </section>
+    @if (collect($merchantSlider ?? [])->isNotEmpty())
+        <section id="stores" class="stores-section">
+            <div class="container">
+                <div class="stores-heading">
+                    <h2>@lang('ecommerce::ecommerce.merchants')</h2><a href="{{ route('merchants.index') }}">@lang('ecommerce::ecommerce.view_all') ></a>
                 </div>
-                <div class="benefit"><i class="benefit-icon">♢</i>
-                    <div><strong>@lang('ecommerce::ecommerce.home_feature_secure_title')</strong><span>@lang('ecommerce::ecommerce.home_feature_secure_desc')</span></div>
-                </div>
-                <div class="benefit"><i class="benefit-icon">⚙</i>
-                    <div><strong>@lang('ecommerce::ecommerce.home_feature_quality_title')</strong><span>@lang('ecommerce::ecommerce.home_feature_quality_desc')</span></div>
-                </div>
-                <div class="benefit"><i class="benefit-icon">♧</i>
-                    <div><strong>@lang('ecommerce::ecommerce.home_feature_support_title')</strong><span>@lang('ecommerce::ecommerce.home_feature_support_desc')</span></div>
+                <div class="stores-grid">
+                    @foreach ($merchantSlider as $merchant)
+                        @php
+                            $merchantName = $localized(
+                                $merchant->company_name ?? ($merchant->name ?? null),
+                                __('ecommerce::ecommerce.home_merchant_fallback'),
+                            );
+                            $branch = collect($merchant->branches ?? [])->first();
+                            $cover = $branch->cover ?? ($branch->cover_image ?? null);
+                        @endphp
+                        <article class="store-card">
+                            <div class="store-cover" style="background-image:url('{{ $image($cover) }}')">
+                                @if (($merchant->status ?? null) === 'active')
+                                    <span class="trusted-badge">@lang('ecommerce::ecommerce.verified_seller')
+                                        ✓</span>
+                                @endif
+                            </div>
+                            <div class="store-info">
+                                <div class="store-title-row">
+                                    <h3>{{ $merchantName }}</h3>
+                                    <div class="store-rating">{{ number_format((float) ($merchant->rate ?? 1), 1) }} ★
+                                        <span>({{ $merchant->reviews_count ?? 0 }})</span>
+                                    </div>
+                                </div>
+                                <div class="store-tags">
+                                    @foreach (collect($merchant->productCategories ?? [])->take(3) as $category)
+                                        <span>#
+                                            {{ $localized($category->title ?? ($category->name ?? null)) }}</span>
+                                    @endforeach
+                                </div>
+                                <div class="store-stats"><span><i class="fa fa-building-o"></i>
+                                        {{ $merchant->branches_count ?? 0 }} @lang('ecommerce::ecommerce.branches')</span><span><i
+                                            class="fa fa-cube"></i>
+                                        {{ $merchant->items_count ?? 0 }} @lang('ecommerce::ecommerce.items_label')</span></div><a
+                                    class="store-link"
+                                    href="{{ route('merchant.show', ['merchant' => $merchant->id]) }}">@lang('ecommerce::ecommerce.visit_store')
+                                    ></a>
+                            </div>
+                        </article>
+                    @endforeach
                 </div>
             </div>
         </section>
-        @if(collect($merchantSlider ?? [])->isNotEmpty())
-            <section id="stores" class="stores-section">
-                <div class="container">
-                    <div class="stores-heading">
-                        <h2>@lang('ecommerce::ecommerce.merchants')</h2><a href="{{ route('merchants.index') }}">@lang('ecommerce::ecommerce.view_all') ></a>
-                    </div>
-                    <div class="stores-grid">
-                        @foreach($merchantSlider as $merchant)
-                            @php
-                                $merchantName = $localized($merchant->company_name ?? $merchant->name ?? null, __('ecommerce::ecommerce.home_merchant_fallback'));
-                                $branch = collect($merchant->branches ?? [])->first();
-                                $cover = $branch->cover ?? $branch->cover_image ?? null;
-                            @endphp
-                            <article class="store-card">
-                                <div class="store-cover" style="background-image:url('{{ $image($cover) }}')">
-                                    @if(($merchant->status ?? null) === 'active')<span class="trusted-badge">@lang('ecommerce::ecommerce.verified_seller')
-                                    ✓</span>@endif
-                                </div>
-                                <div class="store-info">
-                                    <div class="store-title-row">
-                                        <h3>{{ $merchantName }}</h3>
-                                        <div class="store-rating">{{ number_format((float) ($merchant->rate ?? 1), 1) }} ★
-                                            <span>({{ $merchant->reviews_count ?? 0 }})</span>
-                                        </div>
-                                    </div>
-                                    <div class="store-tags">
-                                        @foreach(collect($merchant->productCategories ?? [])->take(3) as $category)<span>#
-                                        {{ $localized($category->title ?? $category->name ?? null) }}</span>@endforeach
-                                    </div>
-                                    <div class="store-stats"><span><i class="fa fa-building-o"></i>
-                                            {{ $merchant->branches_count ?? 0 }} @lang('ecommerce::ecommerce.branches')</span><span><i class="fa fa-cube"></i>
-                                            {{ $merchant->items_count ?? 0 }} @lang('ecommerce::ecommerce.items_label')</span></div><a class="store-link"
-                                        href="{{ route('merchant.show', ['merchant' => $merchant->id]) }}">@lang('ecommerce::ecommerce.visit_store') ></a>
-                                </div>
-                            </article>
-                        @endforeach
-                    </div>
+    @endif
+    @if (collect($recentNews ?? [])->isNotEmpty())
+        <section class="extra-section">
+            <div class="container">
+                <div class="section-head">
+                    <h2>{{ __('ecommerce::ecommerce.recent_news') }}</h2>
                 </div>
-            </section>
-        @endif
-        @if(collect($recentNews ?? [])->isNotEmpty())
-            <section class="extra-section">
-                <div class="container">
-                    <div class="section-head">
-                        <h2>{{ __('ecommerce::ecommerce.recent_news') }}</h2>
-                    </div>
-                    <div class="news-grid">
-                        @foreach(collect($recentNews)->take(3) as $news)
-                            @php
-                                $newsTitle = $localized($news->localized_title ?? $news->title ?? null, '');
-                                $newsSubtitle = $localized($news->localized_subtitle ?? $news->subtitle ?? null, '');
-                                $newsImage = $news->desktop_image_url ?? null;
-                                $newsHref = $news->click_url ?? '#';
-                            @endphp
-                            <a class="news-card" href="{{ $newsHref }}">
-                                @if($newsImage)
-                                    <img class="news-card-img" src="{{ $newsImage }}" alt="{{ $newsTitle }}" loading="lazy">
-                                @else
-                                    <img class="news-card-img" src="{{ asset('assets/ecommerce/images/slider/4.webp') }}" alt="{{ $newsTitle }}" loading="lazy">
-                                @endif
-                                <div class="news-card-body">
-                                    <h3>{{ $newsTitle }}</h3>
-                                    @if($newsSubtitle)
-                                        <p>{{ $newsSubtitle }}</p>
-                                    @endif
-                                </div>
-                            </a>
-                        @endforeach
-                    </div>
-                </div>
-            </section>
-        @endif
-        @if(collect($clientBrands ?? [])->isNotEmpty())
-            <section class="extra-section">
-                <div class="container">
-                    <div class="section-head">
-                        <h2>{{ __('ecommerce::ecommerce.our_brands') }}</h2>
-                    </div>
-                    <div class="brands-grid">
-                        @foreach(collect($clientBrands)->take(5) as $brand)
-                            @php
-                                $brandTitle = $localized($brand->localized_title ?? $brand->title ?? null, '');
-                                $brandLogo = $brand->desktop_image_url ?? null;
-                            @endphp
-                            <div class="brand-card" title="{{ $brandTitle }}">
-                                @if($brandLogo)
-                                    <img src="{{ $brandLogo }}" alt="{{ $brandTitle }}" loading="lazy">
-                                @else
-                                    <span style="font-size:14px;font-weight:700;color:#343a42">{{ $brandTitle }}</span>
+                <div class="news-grid">
+                    @foreach (collect($recentNews)->take(3) as $news)
+                        @php
+                            $newsTitle = $localized($news->localized_title ?? ($news->title ?? null), '');
+                            $newsSubtitle = $localized($news->localized_subtitle ?? ($news->subtitle ?? null), '');
+                            $newsImage = $news->desktop_image_url ?? null;
+                            $newsHref = $news->click_url ?? '#';
+                        @endphp
+                        <a class="news-card" href="{{ $newsHref }}">
+                            @if ($newsImage)
+                                <img class="news-card-img" src="{{ $newsImage }}" alt="{{ $newsTitle }}"
+                                    loading="lazy">
+                            @else
+                                <img class="news-card-img" src="{{ asset('assets/ecommerce/images/slider/4.webp') }}"
+                                    alt="{{ $newsTitle }}" loading="lazy">
+                            @endif
+                            <div class="news-card-body">
+                                <h3>{{ $newsTitle }}</h3>
+                                @if ($newsSubtitle)
+                                    <p>{{ $newsSubtitle }}</p>
                                 @endif
                             </div>
-                        @endforeach
-                    </div>
+                        </a>
+                    @endforeach
                 </div>
-            </section>
-        @endif
-        @if(collect($testimonials ?? [])->isNotEmpty())
-            <section class="extra-section">
-                <div class="container">
-                    <div class="section-head">
-                        <h2>{{ __('ecommerce::ecommerce.testimonials') }}</h2>
-                    </div>
-                    <div class="testimonials-grid">
-                        @foreach(collect($testimonials)->take(3) as $testimonial)
-                            <article class="testimonial-card">
-                                <h3>{{ $testimonial['name'] ?? '' }}</h3>
-                                <div class="testimonial-position">{{ $testimonial['position'] ?? '' }}</div>
-                                <p>{{ $testimonial['content'] ?? '' }}</p>
-                            </article>
-                        @endforeach
-                    </div>
+            </div>
+        </section>
+    @endif
+    @if (collect($clientBrands ?? [])->isNotEmpty())
+        <section class="extra-section">
+            <div class="container">
+                <div class="section-head">
+                    <h2>{{ __('ecommerce::ecommerce.our_brands') }}</h2>
                 </div>
-            </section>
-        @endif
+                <div class="brands-grid">
+                    @foreach (collect($clientBrands)->take(5) as $brand)
+                        @php
+                            $brandTitle = $localized($brand->localized_title ?? ($brand->title ?? null), '');
+                            $brandLogo = $brand->desktop_image_url ?? null;
+                        @endphp
+                        <div class="brand-card" title="{{ $brandTitle }}">
+                            @if ($brandLogo)
+                                <img src="{{ $brandLogo }}" alt="{{ $brandTitle }}" loading="lazy">
+                            @else
+                                <span style="font-size:14px;font-weight:700;color:#343a42">{{ $brandTitle }}</span>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
+    @if (collect($testimonials ?? [])->isNotEmpty())
+        <section class="extra-section">
+            <div class="container">
+                <div class="section-head">
+                    <h2>{{ __('ecommerce::ecommerce.testimonials') }}</h2>
+                </div>
+                <div class="testimonials-grid">
+                    @foreach (collect($testimonials)->take(3) as $testimonial)
+                        <article class="testimonial-card">
+                            <h3>{{ $testimonial['name'] ?? '' }}</h3>
+                            <div class="testimonial-position">{{ $testimonial['position'] ?? '' }}</div>
+                            <p>{{ $testimonial['content'] ?? '' }}</p>
+                        </article>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
 @endsection
 
-    @section('scripts')
-        <script>
-            /* ── Hero Slider ─────────────────────────────────────────────── */
-            (function () {
-                const slider    = document.getElementById('hero-slider');
-                if (!slider) return;
+@section('scripts')
+    <script>
+        /* ── Hero Slider ─────────────────────────────────────────────── */
+        (function() {
+            const slider = document.getElementById('hero-slider');
+            if (!slider) return;
 
-                const slides    = [...slider.querySelectorAll('.hero-slide')];
-                const allDots   = [...slider.querySelectorAll('.hero-dot')];
-                const galleryCards = [...slider.querySelectorAll('.hero-gallery-card')];
-                let   current   = 0;
-                let   autoTimer = null;
-                let   touchStartX = null;
+            const slides = [...slider.querySelectorAll('.hero-slide')];
+            const allDots = [...slider.querySelectorAll('.hero-dot')];
+            const galleryCards = [...slider.querySelectorAll('.hero-gallery-card')];
+            let current = 0;
+            let autoTimer = null;
+            let touchStartX = null;
 
-                function goTo(index) {
-                    if (!slides.length) return;
-                    slides[current].classList.remove('active');
+            function goTo(index) {
+                if (!slides.length) return;
+                slides[current].classList.remove('active');
 
-                    current = (index + slides.length) % slides.length;
+                current = (index + slides.length) % slides.length;
 
-                    slides[current].classList.add('active');
-                    slider.querySelectorAll('.hero-dot').forEach(function (dot) {
-                        const isCurrent = parseInt(dot.getAttribute('data-index'), 10) === current;
-                        dot.classList.toggle('active', isCurrent);
-                        dot.setAttribute('aria-selected', isCurrent ? 'true' : 'false');
-                    });
-                }
-
-                function startAuto() {
-                    stopAuto();
-                    autoTimer = setInterval(function () { goTo(current + 1); }, 4800);
-                }
-                function stopAuto() { clearInterval(autoTimer); }
-
-                /* Pagination dot clicks */
-                allDots.forEach(function (dot) {
-                    dot.addEventListener('click', function (e) {
-                        e.stopPropagation();
-                        const targetIdx = parseInt(this.getAttribute('data-index'), 10);
-                        goTo(targetIdx);
-                        startAuto();
-                    });
+                slides[current].classList.add('active');
+                slider.querySelectorAll('.hero-dot').forEach(function(dot) {
+                    const isCurrent = parseInt(dot.getAttribute('data-index'), 10) === current;
+                    dot.classList.toggle('active', isCurrent);
+                    dot.setAttribute('aria-selected', isCurrent ? 'true' : 'false');
                 });
+            }
 
-                galleryCards.forEach(function (card) {
-                    card.addEventListener('click', function (e) {
-                        e.stopPropagation();
-                        const targetIdx = parseInt(this.getAttribute('data-index'), 10);
-                        if (Number.isNaN(targetIdx) || targetIdx === current) return;
-                        goTo(targetIdx);
-                        startAuto();
-                    });
+            function startAuto() {
+                stopAuto();
+                autoTimer = setInterval(function() {
+                    goTo(current + 1);
+                }, 4800);
+            }
+
+            function stopAuto() {
+                clearInterval(autoTimer);
+            }
+
+            /* Pagination dot clicks */
+            allDots.forEach(function(dot) {
+                dot.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const targetIdx = parseInt(this.getAttribute('data-index'), 10);
+                    goTo(targetIdx);
+                    startAuto();
                 });
+            });
 
-                /* Touch / swipe support */
-                slider.addEventListener('touchstart', function (e) {
-                    touchStartX = e.touches[0].clientX;
-                }, { passive: true });
-
-                slider.addEventListener('touchend', function (e) {
-                    if (touchStartX === null) return;
-                    const diff = touchStartX - e.changedTouches[0].clientX;
-                    if (Math.abs(diff) > 40) { goTo(diff > 0 ? current + 1 : current - 1); startAuto(); }
-                    touchStartX = null;
-                }, { passive: true });
-
-                /* Mouse drag support (desktop) */
-                let mouseStartX = null;
-                slider.addEventListener('mousedown', function (e) { mouseStartX = e.clientX; });
-                slider.addEventListener('mouseup',   function (e) {
-                    if (mouseStartX === null) return;
-                    const diff = mouseStartX - e.clientX;
-                    if (Math.abs(diff) > 50) { goTo(diff > 0 ? current + 1 : current - 1); startAuto(); }
-                    mouseStartX = null;
+            galleryCards.forEach(function(card) {
+                card.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const targetIdx = parseInt(this.getAttribute('data-index'), 10);
+                    if (Number.isNaN(targetIdx) || targetIdx === current) return;
+                    goTo(targetIdx);
+                    startAuto();
                 });
+            });
 
-                /* Pause on hover */
-                slider.addEventListener('mouseenter', stopAuto);
-                slider.addEventListener('mouseleave', startAuto);
+            /* Touch / swipe support */
+            slider.addEventListener('touchstart', function(e) {
+                touchStartX = e.touches[0].clientX;
+            }, {
+                passive: true
+            });
 
-                startAuto();
-            })();
-
-            const unavailableMessages = [
-                @json(__('ecommerce::ecommerce.product_not_available')),
-                @json(__('ecommerce::ecommerce.product_out_of_stock'))
-            ];
-            const search = document.querySelector('.search input'); search?.addEventListener('input', event => { const query = event.target.value.trim().toLowerCase(); document.querySelectorAll('.product').forEach(card => card.hidden = query && !card.textContent.toLowerCase().includes(query)) });
-            document.querySelectorAll('.add-cart-form').forEach(form => form.addEventListener('submit', async event => {
-                event.preventDefault();
-                const button = form.querySelector('button[type="submit"]');
-                const originalText = button ? button.innerHTML : '';
-                if (button) { button.disabled = true; button.textContent = @json(__('ecommerce::ecommerce.product.adding')); }
-
-                try {
-                    if (!window.submitCartForm) throw new Error(@json(__('ecommerce::ecommerce.cart_service_unavailable')));
-                    const result = await window.submitCartForm(form, {});
-                    if (result && (result.login || result.cancelled)) return;
-                    if (button) { button.textContent = @json(__('ecommerce::ecommerce.added')); button.classList.add('added'); }
-                } catch (error) {
-                    const message = error && error.message ? error.message : @json(__('ecommerce::ecommerce.cart.add_error'));
-                    if (unavailableMessages.includes(message)) {
-                        form.closest('.product')?.remove();
-                    }
-                    if (typeof window.showNotification === 'function') {
-                        window.showNotification(message, 'danger');
-                    } else {
-                        window.alert(message);
-                    }
-                } finally {
-                    if (button && !button.classList.contains('added')) {
-                        button.disabled = false;
-                        button.innerHTML = originalText;
-                    }
+            slider.addEventListener('touchend', function(e) {
+                if (touchStartX === null) return;
+                const diff = touchStartX - e.changedTouches[0].clientX;
+                if (Math.abs(diff) > 40) {
+                    goTo(diff > 0 ? current + 1 : current - 1);
+                    startAuto();
                 }
-            }));
-            document.addEventListener('click', async function (event) {
-                const favorite = event.target.closest('.favorite');
-                if (!favorite) return;
-                event.preventDefault();
-                event.stopPropagation();
-                const form = favorite.closest('.product')?.querySelector('form.add-cart-form');
-                const itemId = favorite.dataset.productId;
-                const token = form?.querySelector('input[name="_token"]')?.value;
-                if (!itemId || !token || favorite.dataset.loading === '1') return;
-                favorite.dataset.loading = '1';
-                try {
-                    const body = new FormData();
-                    body.append('_token', token);
-                    body.append('product_id', itemId);
-                    const response = await fetch('{{ route('wishlist.add') }}', {
-                        method: 'POST',
-                        credentials: 'same-origin',
-                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
-                        body: body
-                    });
-                    const data = await response.json().catch(function () { return null; });
-                    if ((!data && response.url.includes('/login')) || (data && data.login)) {
-                        window.location.href = data && data.redirect ? data.redirect : response.url;
-                        return;
-                    }
-                    const isFavorite = data && data.status === 'added';
-                    favorite.classList.toggle('is-favorite', isFavorite);
-                    favorite.innerHTML = isFavorite ? '<i class="fa fa-heart"></i>' : '<i class="ti-heart"></i>';
-                    if (typeof window.updateWishlistBadge === 'function' && data && typeof data.count !== 'undefined') {
-                        window.updateWishlistBadge(data.count);
-                    }
-                } finally {
-                    delete favorite.dataset.loading;
+                touchStartX = null;
+            }, {
+                passive: true
+            });
+
+            /* Mouse drag support (desktop) */
+            let mouseStartX = null;
+            slider.addEventListener('mousedown', function(e) {
+                mouseStartX = e.clientX;
+            });
+            slider.addEventListener('mouseup', function(e) {
+                if (mouseStartX === null) return;
+                const diff = mouseStartX - e.clientX;
+                if (Math.abs(diff) > 50) {
+                    goTo(diff > 0 ? current + 1 : current - 1);
+                    startAuto();
                 }
-            }, true);
-        </script>
-    @endsection
+                mouseStartX = null;
+            });
+
+            /* Pause on hover */
+            slider.addEventListener('mouseenter', stopAuto);
+            slider.addEventListener('mouseleave', startAuto);
+
+            startAuto();
+        })();
+
+        const unavailableMessages = [
+            @json(__('ecommerce::ecommerce.product_not_available')),
+            @json(__('ecommerce::ecommerce.product_out_of_stock'))
+        ];
+        const search = document.querySelector('.search input');
+        search?.addEventListener('input', event => {
+            const query = event.target.value.trim().toLowerCase();
+            document.querySelectorAll('.product').forEach(card => card.hidden = query && !card.textContent
+                .toLowerCase().includes(query))
+        });
+        document.querySelectorAll('.add-cart-form').forEach(form => form.addEventListener('submit', async event => {
+            event.preventDefault();
+            const button = form.querySelector('button[type="submit"]');
+            const originalText = button ? button.innerHTML : '';
+            if (button) {
+                button.disabled = true;
+                button.textContent = @json(__('ecommerce::ecommerce.product.adding'));
+            }
+
+            try {
+                if (!window.submitCartForm) throw new Error(@json(__('ecommerce::ecommerce.cart_service_unavailable')));
+                const result = await window.submitCartForm(form, {});
+                if (result && (result.login || result.cancelled)) return;
+                if (button) {
+                    button.textContent = @json(__('ecommerce::ecommerce.added'));
+                    button.classList.add('added');
+                }
+            } catch (error) {
+                const message = error && error.message ? error.message : @json(__('ecommerce::ecommerce.cart.add_error'));
+                if (unavailableMessages.includes(message)) {
+                    form.closest('.product')?.remove();
+                }
+                if (typeof window.showNotification === 'function') {
+                    window.showNotification(message, 'danger');
+                } else {
+                    window.alert(message);
+                }
+            } finally {
+                if (button && !button.classList.contains('added')) {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }
+            }
+        }));
+        document.addEventListener('click', async function(event) {
+            const favorite = event.target.closest('.favorite');
+            if (!favorite) return;
+            event.preventDefault();
+            event.stopPropagation();
+            const form = favorite.closest('.product')?.querySelector('form.add-cart-form');
+            const itemId = favorite.dataset.productId;
+            const token = form?.querySelector('input[name="_token"]')?.value;
+            if (!itemId || !token || favorite.dataset.loading === '1') return;
+            favorite.dataset.loading = '1';
+            try {
+                const body = new FormData();
+                body.append('_token', token);
+                body.append('product_id', itemId);
+                const response = await fetch('{{ route('wishlist.add') }}', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: body
+                });
+                const data = await response.json().catch(function() {
+                    return null;
+                });
+                if ((!data && response.url.includes('/login')) || (data && data.login)) {
+                    window.location.href = data && data.redirect ? data.redirect : response.url;
+                    return;
+                }
+                const isFavorite = data && data.status === 'added';
+                favorite.classList.toggle('is-favorite', isFavorite);
+                favorite.innerHTML = isFavorite ? '<i class="fa fa-heart"></i>' : '<i class="ti-heart"></i>';
+                if (typeof window.updateWishlistBadge === 'function' && data && typeof data.count !==
+                    'undefined') {
+                    window.updateWishlistBadge(data.count);
+                }
+            } finally {
+                delete favorite.dataset.loading;
+            }
+        }, true);
+    </script>
+@endsection

@@ -45,7 +45,7 @@ class Item extends Model
             }
 
             foreach (array_unique(['ar', 'en', app()->getLocale()]) as $locale) {
-                Cache::forget('home_page_data_storefront_v3_' . $locale);
+                Cache::forget('home_page_data_storefront_v4_' . $locale);
             }
         });
     }

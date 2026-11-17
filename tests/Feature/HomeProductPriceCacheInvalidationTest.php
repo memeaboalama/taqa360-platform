@@ -46,10 +46,10 @@ class HomeProductPriceCacheInvalidationTest extends TestCase
     {
         Cache::shouldReceive('forget')
             ->once()
-            ->with('home_page_data_storefront_v3_ar');
+            ->with('home_page_data_storefront_v4_ar');
         Cache::shouldReceive('forget')
             ->once()
-            ->with('home_page_data_storefront_v3_en');
+            ->with('home_page_data_storefront_v4_en');
 
         $item = Item::create(['default_price' => 100]);
         $item->default_price = 120;

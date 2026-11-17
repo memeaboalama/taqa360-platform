@@ -35,12 +35,12 @@ class FetchHomeDataAction
             Cache::forget('home_page_data_ar');
             Cache::forget('home_page_data_en');
             Cache::forget('home_page_data_' . app()->getLocale());
-            Cache::forget('home_page_data_storefront_v3_ar');
-            Cache::forget('home_page_data_storefront_v3_en');
-            Cache::forget('home_page_data_storefront_v3_' . app()->getLocale());
+            Cache::forget('home_page_data_storefront_v4_ar');
+            Cache::forget('home_page_data_storefront_v4_en');
+            Cache::forget('home_page_data_storefront_v4_' . app()->getLocale());
         }
 
-        $data = Cache::remember('home_page_data_storefront_v3_' . app()->getLocale(), 1800, function() {
+        $data = Cache::remember('home_page_data_storefront_v4_' . app()->getLocale(), 1800, function() {
             $page = AdPage::where('key', 'home')->first();
 
             if (!$page) {
