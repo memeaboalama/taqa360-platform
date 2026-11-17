@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\Controller;
 use App\Domain\AppBase\Models\Location\Country;
 use App\Domain\AppBase\Models\Location\City;
+use App\Domain\AppBase\Models\Location\Region;
+use App\Domain\AppBase\Models\Location\Distract;
 use App\Domain\MarketPlace\Models\MerchantOrderHistory;
 use Illuminate\Validation\Rule;
 
@@ -35,7 +37,7 @@ class AccountController extends Controller
         } elseif ($section === 'service_requests') {
             $data['serviceRequests'] = $this->getServiceRequests($user, $request);
         } elseif ($section === 'addresses') {
-            $data['addresses'] = $user->addresses;
+            $data['addresses'] = $user->addresses()->with(['country', 'city.region', 'distract'])->get();
         } else {
             $data['section'] = 'profile';
         }
@@ -288,17 +290,61 @@ class AccountController extends Controller
         $user = Auth::user();
         $countries = Country::all();
         $citiesByCountry = $this->citiesByCountry();
+        $regionsByCountry = $this->regionsByCountry();
+        $citiesByRegion = $this->citiesByRegion();
+        $districtsByCity = $this->districtsByCity();
+        $viewData = compact('user', 'countries', 'citiesByCountry', 'regionsByCountry', 'citiesByRegion', 'districtsByCity');
+
+        if (request()->header('X-Address-Modal') === 'true') {
+            return view('ecommerce::pages.account._create_address', $viewData + [
+                'useNewAccountLayout' => true,
+                'insideModal' => true,
+            ]);
+        }
 
         if (request()->header('X-Up-Target') == '.dashboard-content') {
-            return view('ecommerce::pages.account._create_address', compact('user', 'countries', 'citiesByCountry'));
+            return view('ecommerce::pages.account._create_address', $viewData);
         }
-        return view('ecommerce::pages.account.account-section-page', [
+        return view('ecommerce::pages.account.account-section-page', array_merge($viewData, [
             'section' => 'create_address',
-            'user' => $user,
-            'countries' => $countries,
-            'citiesByCountry' => $citiesByCountry,
             'useNewAccountLayout' => true,
-        ]);
+        ]));
+    }
+
+    private function regionsByCountry(): array
+    {
+        return Region::where('status', 'active')
+            ->get()
+            ->groupBy('country_id')
+            ->map(fn ($regions) => $regions->map(fn (Region $region) => [
+                'id' => $region->id,
+                'title' => $region->title,
+            ])->values())
+            ->all();
+    }
+
+    private function citiesByRegion(): array
+    {
+        return City::where('status', 'active')
+            ->get()
+            ->groupBy('region_id')
+            ->map(fn ($cities) => $cities->map(fn (City $city) => [
+                'id' => $city->id,
+                'title' => $city->title,
+            ])->values())
+            ->all();
+    }
+
+    private function districtsByCity(): array
+    {
+        return Distract::where('status', 'active')
+            ->get()
+            ->groupBy('city_id')
+            ->map(fn ($districts) => $districts->map(fn (Distract $district) => [
+                'id' => $district->id,
+                'title' => $district->title,
+            ])->values())
+            ->all();
     }
 
     private function citiesByCountry(): array
@@ -319,13 +365,25 @@ class AccountController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'country_id' => 'required|exists:countries,id',
+            'region_id' => [
+                'required',
+                Rule::exists('regions', 'id')
+                    ->where('country_id', $request->input('country_id'))
+                    ->where('status', 'active'),
+            ],
             'city_id' => [
                 'required',
                 Rule::exists('cities', 'id')
                     ->where('country_id', $request->input('country_id'))
+                    ->where('region_id', $request->input('region_id'))
                     ->where('status', 'active'),
             ],
-            'district_name' => 'nullable|string|max:255',
+            'distract_id' => [
+                'nullable',
+                Rule::exists('distracts', 'id')
+                    ->where('city_id', $request->input('city_id'))
+                    ->where('status', 'active'),
+            ],
             'address' => 'required|string',
         ]);
 
@@ -339,8 +397,8 @@ class AccountController extends Controller
             'title' => $request->title,
             'country_id' => $request->country_id,
             'city_id' => $request->city_id,
-            'distract_id' => null,
-            'district_name' => $request->input('district_name'),
+            'distract_id' => $request->input('distract_id'),
+            'district_name' => null,
             'address' => $request->address,
             'latitude' => $request->latitude ?? '0',
             'longitude' => $request->longitude ?? '0',
@@ -372,19 +430,26 @@ class AccountController extends Controller
         $address = $user->addresses()->findOrFail($id);
         $countries = Country::all();
         $citiesByCountry = $this->citiesByCountry();
+        $regionsByCountry = $this->regionsByCountry();
+        $citiesByRegion = $this->citiesByRegion();
+        $districtsByCity = $this->districtsByCity();
+        $viewData = compact('address', 'user', 'countries', 'citiesByCountry', 'regionsByCountry', 'citiesByRegion', 'districtsByCity');
 
-        if (request()->header('X-Up-Target') == '.dashboard-content') {
-            return view('ecommerce::pages.account._edit_address', compact('address', 'user', 'countries', 'citiesByCountry'));
+        if (request()->header('X-Address-Modal') === 'true') {
+            return view('ecommerce::pages.account._edit_address', $viewData + [
+                'useNewAccountLayout' => true,
+                'insideModal' => true,
+            ]);
         }
 
-        return view('ecommerce::pages.account.account-section-page', [
+        if (request()->header('X-Up-Target') == '.dashboard-content') {
+            return view('ecommerce::pages.account._edit_address', $viewData);
+        }
+
+        return view('ecommerce::pages.account.account-section-page', array_merge($viewData, [
             'section' => 'edit_address',
-            'address' => $address,
-            'user' => $user,
-            'countries' => $countries,
-            'citiesByCountry' => $citiesByCountry,
             'useNewAccountLayout' => true,
-        ]);
+        ]));
     }
 
     public function updateAddress(Request $request, $id)
@@ -395,13 +460,25 @@ class AccountController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'country_id' => 'required|exists:countries,id',
+            'region_id' => [
+                'required',
+                Rule::exists('regions', 'id')
+                    ->where('country_id', $request->input('country_id'))
+                    ->where('status', 'active'),
+            ],
             'city_id' => [
                 'required',
                 Rule::exists('cities', 'id')
                     ->where('country_id', $request->input('country_id'))
+                    ->where('region_id', $request->input('region_id'))
                     ->where('status', 'active'),
             ],
-            'district_name' => 'nullable|string|max:255',
+            'distract_id' => [
+                'nullable',
+                Rule::exists('distracts', 'id')
+                    ->where('city_id', $request->input('city_id'))
+                    ->where('status', 'active'),
+            ],
             'address' => 'required|string',
         ]);
 
@@ -413,8 +490,8 @@ class AccountController extends Controller
             'title' => $request->title,
             'country_id' => $request->country_id,
             'city_id' => $request->city_id,
-            'distract_id' => null,
-            'district_name' => $request->input('district_name'),
+            'distract_id' => $request->input('distract_id'),
+            'district_name' => null,
             'address' => $request->address,
             'latitude' => $request->latitude ?? $address->latitude,
             'longitude' => $request->longitude ?? $address->longitude,
@@ -450,6 +527,14 @@ class AccountController extends Controller
         }
 
         $address->delete();
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'redirect_url' => route('account.index', ['section' => 'addresses']),
+                'message' => __('ecommerce::ecommerce.address_deleted'),
+            ]);
+        }
 
         $addresses = $user->addresses;
 

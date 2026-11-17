@@ -16,6 +16,7 @@ class Update extends Component
     public int|null $country_id;
     public $priority = "";
     public $iso = "";
+    public $vat = '';
     public array $title = ['en' => null];
 
     protected $listeners = ['updateCountry'];
@@ -29,6 +30,7 @@ class Update extends Component
             $this->iso = $country->iso;
             $this->country_id = $country->id;
             $this->priority = $country->priority;
+            $this->vat = $country->vat;
             $this->emit('openModal', '#updateCountry');
         }
     }
@@ -47,6 +49,7 @@ class Update extends Component
             'title' => 'required|array',
             'priority' => 'required',
             'iso' => 'required|string|max:3',
+            'vat' => 'required|numeric|min:0|max:100',
             'title.*' => 'required|string|min:2|max:120',
             'status' => 'required|string|in:active,inactive',
         ];

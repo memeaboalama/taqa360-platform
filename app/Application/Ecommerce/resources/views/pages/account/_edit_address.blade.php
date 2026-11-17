@@ -168,6 +168,12 @@
     </div>
 @endunless
 
+    @php
+        $selectedCountryId = old('country_id', $address->country_id);
+        $selectedRegionId = old('region_id', $address->city?->region_id ?? '');
+        $selectedCityId = old('city_id', $address->city_id);
+        $selectedDistrictId = old('distract_id', $address->distract_id ?? '');
+    @endphp
     <div class="precise-form-card">
         @unless($useNewAccountLayout ?? false)
         <div class="form-header">
@@ -178,6 +184,7 @@
         <form class="address-form" action="{{ route('account.update_address', $address->id) }}" method="POST"
               @if($useNewAccountLayout ?? false)
               data-async-save="true"
+              @if($insideModal ?? false) data-address-modal-form="true" @endif
               @else
               up-submit up-target=".dashboard-content"
               @endif>
@@ -204,19 +211,39 @@
                     </div>
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="precise-form-group">
-                        <label>@lang('ecommerce::ecommerce.city') <span class="text-danger">*</span></label>
-                         <select name="city_id" id="address-city" required disabled>
-                             <option value="">@lang('ecommerce::ecommerce.select_city')</option>
+                        <label>@lang('ecommerce::ecommerce.region') <span class="text-danger">*</span></label>
+                        <select name="region_id" id="address-region" required>
+                            <option value="">@lang('ecommerce::ecommerce.select_region')</option>
+                            @foreach($regionsByCountry[$selectedCountryId] ?? [] as $region)
+                                <option value="{{ $region['id'] }}" {{ $selectedRegionId == $region['id'] ? 'selected' : '' }}>{{ $region['title'] }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-4">
+                    <div class="precise-form-group">
+                        <label>@lang('ecommerce::ecommerce.city') <span class="text-danger">*</span></label>
+                         <select name="city_id" id="address-city" required {{ $selectedRegionId ? '' : 'disabled' }}>
+                             <option value="">@lang('ecommerce::ecommerce.select_city')</option>
+                            @foreach($citiesByRegion[$selectedRegionId] ?? [] as $city)
+                                <option value="{{ $city['id'] }}" {{ $selectedCityId == $city['id'] ? 'selected' : '' }}>{{ $city['title'] }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
                     <div class="precise-form-group">
                         <label for="address-district">@lang('ecommerce::ecommerce.district')</label>
-                        <input type="text" name="district_name" id="address-district" value="{{ old('district_name', $address->district_name ?: $address->distract?->title) }}" maxlength="255">
+                        <select name="distract_id" id="address-district" {{ $selectedCityId ? '' : 'disabled' }}>
+                            <option value="">@lang('ecommerce::ecommerce.select_district')</option>
+                            @foreach($districtsByCity[$selectedCityId] ?? [] as $district)
+                                <option value="{{ $district['id'] }}" {{ $selectedDistrictId == $district['id'] ? 'selected' : '' }}>{{ $district['title'] }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
                 
@@ -238,6 +265,21 @@
 
                 <input type="hidden" name="latitude" value="{{ $address->latitude }}">
                 <input type="hidden" name="longitude" value="{{ $address->longitude }}">
+                @php
+                    $addressLocationData = [
+                    'regionsByCountry' => $regionsByCountry,
+                    'citiesByRegion' => $citiesByRegion,
+                    'districtsByCity' => $districtsByCity,
+                    'initialCountryId' => $selectedCountryId,
+                    'initialRegionId' => $selectedRegionId,
+                    'initialCityId' => $selectedCityId,
+                    'initialDistrictId' => $selectedDistrictId,
+                    'selectRegion' => __('ecommerce::ecommerce.select_region'),
+                    'selectCity' => __('ecommerce::ecommerce.select_city'),
+                    'selectDistrict' => __('ecommerce::ecommerce.select_district'),
+                    ];
+                @endphp
+                <script type="application/json" class="address-location-data">@json($addressLocationData)</script>
             </div>
 
             <div class="section-divider border-top pt-4 mt-0 opacity-25"></div>
@@ -248,9 +290,13 @@
                     <i class="fa fa-spinner fa-spin address-save-spinner" aria-hidden="true"></i>
                     @lang('ecommerce::ecommerce.save_changes')
                 </button>
-                <a href="{{ ($useNewAccountLayout ?? false) ? route('account.index', ['section' => 'addresses']) : route('account.addresses') }}" class="btn-cancel" @unless($useNewAccountLayout ?? false) up-target=".dashboard-content" @endunless>
-                    @lang('ecommerce::ecommerce.cancel')
-                </a>
+                @if($insideModal ?? false)
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">@lang('ecommerce::ecommerce.cancel')</button>
+                @else
+                    <a href="{{ ($useNewAccountLayout ?? false) ? route('account.index', ['section' => 'addresses']) : route('account.addresses') }}" class="btn-cancel" @unless($useNewAccountLayout ?? false) up-target=".dashboard-content" @endunless>
+                        @lang('ecommerce::ecommerce.cancel')
+                    </a>
+                @endif
             </div>
         </form>
     </div>
@@ -260,28 +306,60 @@
 
 <script>
     (function () {
-        var countrySelect = document.getElementById('address-country');
-        var citySelect = document.getElementById('address-city');
-        if (!countrySelect || !citySelect) return;
+        window.initializeAddressLocationForm = window.initializeAddressLocationForm || function (form) {
+            if (!form || form.dataset.locationInitialized === 'true') return;
+            var configElement = form.querySelector('.address-location-data');
+            if (!configElement) return;
 
-        var citiesByCountry = @json($citiesByCountry);
-        var initialCityId = @json(old('city_id', $address->city_id));
-        var placeholder = @json(__('ecommerce::ecommerce.select_city'));
+            var config = JSON.parse(configElement.textContent);
+            var countrySelect = form.querySelector('#address-country');
+            var regionSelect = form.querySelector('#address-region');
+            var citySelect = form.querySelector('#address-city');
+            var districtSelect = form.querySelector('#address-district');
+            if (!countrySelect || !regionSelect || !citySelect || !districtSelect) return;
 
-        function populateCities(selectedCityId) {
-            var cities = citiesByCountry[countrySelect.value] || [];
-            citySelect.replaceChildren(new Option(placeholder, ''));
-            cities.forEach(function (city) {
-                citySelect.add(new Option(city.title, city.id));
+            function populate(select, items, placeholder, selectedId) {
+                select.replaceChildren(new Option(placeholder, ''));
+                (items || []).forEach(function (item) {
+                    select.add(new Option(item.title, item.id));
+                });
+                select.value = selectedId || '';
+                select.disabled = !items || items.length === 0;
+            }
+
+            function populateRegions(selectedId) {
+                populate(regionSelect, config.regionsByCountry[countrySelect.value], config.selectRegion, selectedId);
+            }
+
+            function populateCities(selectedId) {
+                populate(citySelect, config.citiesByRegion[regionSelect.value], config.selectCity, selectedId);
+            }
+
+            function populateDistricts(selectedId) {
+                populate(districtSelect, config.districtsByCity[citySelect.value], config.selectDistrict, selectedId);
+            }
+
+            countrySelect.addEventListener('change', function () {
+                populateRegions('');
+                populateCities('');
+                populateDistricts('');
             });
-            citySelect.value = selectedCityId || '';
-            citySelect.disabled = !countrySelect.value;
-        }
+            regionSelect.addEventListener('change', function () {
+                populateCities('');
+                populateDistricts('');
+            });
 
-        countrySelect.addEventListener('change', function () {
-            populateCities('');
-        });
-        populateCities(initialCityId);
+            citySelect.addEventListener('change', function () {
+                populateDistricts('');
+            });
+
+            populateRegions(config.initialRegionId);
+            populateCities(config.initialCityId);
+            populateDistricts(config.initialDistrictId);
+            form.dataset.locationInitialized = 'true';
+        };
+
+        window.initializeAddressLocationForm(document.querySelector('.address-form'));
     })();
 </script>
 

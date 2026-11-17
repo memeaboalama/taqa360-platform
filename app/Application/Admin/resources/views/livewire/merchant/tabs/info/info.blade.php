@@ -79,7 +79,7 @@
 
             </div>
             <div class="row gy-3 mt-3">
-                <div class="col-xl-4">
+                <div class="col-xl-3">
                     <label for="branch-country"
                            class="form-label text-black ">@lang('admin::home.Country') <span class="text-danger">*</span></label>
 
@@ -100,7 +100,7 @@
                 </div>
 
 
-                <div class="col-xl-4">
+                <div class="col-xl-3">
                     <div>
                         <label for="branch-city" class="form-label text-black">@lang('admin::home.Region') <span class="text-danger">*</span></label>
                         <select class="form-control selectCity"
@@ -112,12 +112,12 @@
                             @endforeach
                         </select>
                     </div>
-                    @error('city_id') <span
+                    @error('region_id') <span
                         class="d-inline-block text-danger">{{ $message }}</span> @enderror
                 </div>
 
 
-                <div class="col-xl-4">
+                <div class="col-xl-3">
                     <div>
                         <label for="branch-city" class="form-label text-black">@lang('admin::home.City') <span class="text-danger">*</span></label>
                         <select class="form-control selectCity"
@@ -133,13 +133,13 @@
                         class="d-inline-block text-danger">{{ $message }}</span> @enderror
                 </div>
 
-                {{-- <div class="col-xl-4">
+                <div class="col-xl-3">
                     <div>
-                        <label for="branch-cityasa"
-                               class="form-label text-black">@lang('admin::home.District') <span class="text-danger">*</span></label>
+                        <label for="merchant-district"
+                               class="form-label text-black">@lang('admin::lang.District')</label>
                         <select class="form-control selectDistrict"
                                 wire:model.lazy="distract_id"
-                                id="branch-cityasa">
+                                id="merchant-district">
                             <option value="">@lang('admin::home.Select')</option>
                             @foreach($districts as $district)
                                 <option
@@ -149,7 +149,7 @@
                     </div>
                     @error('distract_id') <span
                         class="d-inline-block text-danger">{{ $message }}</span> @enderror
-                </div> --}}
+                </div>
 
             </div>
 

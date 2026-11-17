@@ -173,26 +173,36 @@ public  $company_name = ['en' => null,  'ar' => null];
     {
         if($country != "") {
             $country = json_decode($country);
-            $this->reset('country_id', 'regions');
+            $this->regions = [];
+            $this->region_id = null;
+            $this->cities = [];
+            $this->city_id = null;
+            $this->districts = [];
+            $this->distract_id = null;
             $this->country_id = $country->id;
             $this->regions = Region::where('country_id', $country->id)->get();
         }else{
             $this->regions = [];
             $this->cities = [];
             $this->districts = [];
+            $this->region_id = null;
+            $this->city_id = null;
+            $this->distract_id = null;
         }
     }    
     public function updatedRegionId($region_id): void
     {
-        $this->reset('city_id');
         $this->region_id = $region_id;
+        $this->city_id = null;
+        $this->distract_id = null;
+        $this->districts = [];
         $this->cities = City::where('region_id', $region_id)->get();
     }
 
     public function updatedCityId($city_id): void
     {
-        $this->reset('distract_id');
         $this->city_id = $city_id;
+        $this->distract_id = null;
         $this->districts = Distract::where('city_id', $city_id)->get();
 
     }

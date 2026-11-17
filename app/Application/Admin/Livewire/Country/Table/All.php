@@ -49,6 +49,10 @@ class All extends DataTableComponent
                 ->sortable()
                 ->searchable(),
 
+            Column::make(__('admin::home.vat') . ' (%)', 'vat')
+                ->format(fn ($value) => number_format((float) $value, 2) . '%')
+                ->sortable(),
+
             Column::make(__('admin::lang.Priority'), 'priority')
                 ->sortable()
                 ->searchable(),

@@ -548,6 +548,7 @@
                         </a>
                     </li>
                 @endAdminHasRole
+                {{--
                 @if(auth('admin')->user()?->type === 'admin'
                     || auth('admin')->user()?->hasAnyPermission(['admin', 'show delivery fees_settings', 'edit delivery fees_settings'])
                     || \App\Domain\MarketPlace\Models\CollectionSetting::adminCan('view'))
@@ -591,6 +592,7 @@
                         </ul>
                     </li>
                 @endif
+                --}}
             </ul>
             <div class="slide-right" id="slide-right">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="#7b8191" width="24" height="24" viewBox="0 0 24 24">

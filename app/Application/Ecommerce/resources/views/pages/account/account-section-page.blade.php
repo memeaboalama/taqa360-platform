@@ -6,6 +6,17 @@
 
 @section('page-styles')
     <style>
+        #accountAddressModal .modal-header,
+        #deleteAddressConfirmModal .modal-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        #accountAddressModal .modal-header .btn-close,
+        #deleteAddressConfirmModal .modal-header .btn-close {
+            margin: 0;
+            flex-shrink: 0;
+        }
         .account-hero {
             padding: 32px 0 42px;
             color: #fff;
@@ -249,6 +260,10 @@
 
         .data-table.orders-table {
             min-width: 620px
+        }
+
+        .data-table.addresses-table {
+            min-width: 860px
         }
 
         .data-table th,
@@ -635,14 +650,168 @@
 
 @section('scripts')
     <script>
+        window.initializeAddressLocationForm = window.initializeAddressLocationForm || function (form) {
+            if (!form || form.dataset.locationInitialized === 'true') return;
+            var configElement = form.querySelector('.address-location-data');
+            if (!configElement) return;
+
+            var config = JSON.parse(configElement.textContent);
+            var countrySelect = form.querySelector('#address-country');
+            var regionSelect = form.querySelector('#address-region');
+            var citySelect = form.querySelector('#address-city');
+            var districtSelect = form.querySelector('#address-district');
+            if (!countrySelect || !regionSelect || !citySelect || !districtSelect) return;
+
+            function populate(select, items, placeholder, selectedId) {
+                select.replaceChildren(new Option(placeholder, ''));
+                (items || []).forEach(function (item) {
+                    select.add(new Option(item.title, item.id));
+                });
+                select.value = selectedId || '';
+                select.disabled = !items || items.length === 0;
+            }
+
+            function populateRegions(selectedId) {
+                populate(regionSelect, config.regionsByCountry[countrySelect.value], config.selectRegion, selectedId);
+            }
+
+            function populateCities(selectedId) {
+                populate(citySelect, config.citiesByRegion[regionSelect.value], config.selectCity, selectedId);
+            }
+
+            function populateDistricts(selectedId) {
+                populate(districtSelect, config.districtsByCity[citySelect.value], config.selectDistrict, selectedId);
+            }
+
+            countrySelect.addEventListener('change', function () {
+                populateRegions('');
+                populateCities('');
+                populateDistricts('');
+            });
+            regionSelect.addEventListener('change', function () {
+                populateCities('');
+                populateDistricts('');
+            });
+
+            citySelect.addEventListener('change', function () {
+                populateDistricts('');
+            });
+
+            populateRegions(config.initialRegionId);
+            populateCities(config.initialCityId);
+            populateDistricts(config.initialDistrictId);
+            form.dataset.locationInitialized = 'true';
+        };
+
+        function showAccountModal(modalElement) {
+            if (!window.bootstrap || !window.bootstrap.Modal) {
+                throw new Error(@json(__('ecommerce::ecommerce.try_again_error')));
+            }
+            var modal = window.bootstrap.Modal.getInstance(modalElement) || new window.bootstrap.Modal(modalElement);
+            modal.show();
+        }
+
+        function hideAccountModal(modalElement) {
+            if (!modalElement || !window.bootstrap || !window.bootstrap.Modal) return;
+            var modal = window.bootstrap.Modal.getInstance(modalElement);
+            if (modal) modal.hide();
+        }
+
+        function notifyAccountAddress(message, type) {
+            var feedback = document.querySelector('[data-address-feedback]');
+            if (feedback) {
+                feedback.textContent = message;
+                feedback.className = 'alert ' + (type === 'danger' ? 'alert-danger' : 'alert-success');
+                feedback.hidden = false;
+                return;
+            }
+            if (typeof window.showNotification === 'function') {
+                window.showNotification(message, type);
+            } else {
+                window.alert(message);
+            }
+        }
+
+        async function refreshAccountAddressList(url) {
+            var response = await fetch(url, {
+                credentials: 'same-origin',
+                headers: { 'Accept': 'text/html' }
+            });
+            if (!response.ok) throw new Error(@json(__('ecommerce::ecommerce.try_again_error')));
+
+            var html = await response.text();
+            var parsedPage = new DOMParser().parseFromString(html, 'text/html');
+            var updatedList = parsedPage.querySelector('[data-address-list]');
+            var currentList = document.querySelector('[data-address-list]');
+            if (!updatedList || !currentList) {
+                window.location.assign(response.url || url);
+                return;
+            }
+
+            currentList.replaceWith(updatedList);
+            window.history.replaceState(window.history.state, '', response.url || url);
+        }
+
+        document.querySelectorAll('.address-form').forEach(function (form) {
+            window.initializeAddressLocationForm(form);
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!event.target || !event.target.closest) return;
+
+            var addressModalButton = event.target.closest('[data-address-modal-url]');
+            if (addressModalButton) {
+                event.preventDefault();
+                var modalElement = document.getElementById('accountAddressModal');
+                var modalBody = document.getElementById('accountAddressModalBody');
+                var modalTitle = document.getElementById('accountAddressModalTitle');
+                modalTitle.textContent = addressModalButton.dataset.addressModalTitle || '';
+                modalBody.innerHTML = '<div class="text-center py-4"><span class="spinner-border" role="status"></span></div>';
+                showAccountModal(modalElement);
+
+                fetch(addressModalButton.dataset.addressModalUrl, {
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'text/html',
+                        'X-Address-Modal': 'true',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                }).then(function (response) {
+                    if (!response.ok) throw new Error(@json(__('ecommerce::ecommerce.try_again_error')));
+                    return response.text();
+                }).then(function (formHtml) {
+                    modalBody.innerHTML = formHtml;
+                    window.initializeAddressLocationForm(modalBody.querySelector('.address-form'));
+                }).catch(function (error) {
+                    modalBody.innerHTML = '';
+                    hideAccountModal(modalElement);
+                    notifyAccountAddress(error.message || @json(__('ecommerce::ecommerce.try_again_error')), 'danger');
+                });
+                return;
+            }
+
+            var deleteButton = event.target.closest('[data-address-delete-url]');
+            if (deleteButton) {
+                event.preventDefault();
+                var deleteForm = document.querySelector('.address-delete-form');
+                deleteForm.action = deleteButton.dataset.addressDeleteUrl;
+                document.getElementById('deleteAddressConfirmTitle').textContent = deleteButton.dataset.addressTitle || '';
+                showAccountModal(document.getElementById('deleteAddressConfirmModal'));
+            }
+        });
+
         document.addEventListener('submit', function (event) {
             var form = event.target;
-            if (!form.matches || !form.matches('.address-form[data-async-save="true"]')) return;
+            if (!form.matches) return;
+            var isAddressForm = form.matches('.address-form[data-async-save="true"]');
+            var isModalAddressForm = form.matches('.address-form[data-address-modal-form="true"]');
+            var isDeleteForm = form.matches('.address-delete-form[data-async-delete="true"]');
+            if (!isAddressForm && !isDeleteForm) return;
 
             event.preventDefault();
             if (form.dataset.submitting === 'true') return;
 
-            var submitButton = form.querySelector('.btn-save');
+            var submitButton = form.querySelector('[type="submit"]');
             form.dataset.submitting = 'true';
             form.classList.add('is-submitting');
             if (submitButton) submitButton.disabled = true;
@@ -673,6 +842,13 @@
                     throw new Error(message || @json(__('ecommerce::ecommerce.try_again_error')));
                 }
 
+                if (isModalAddressForm || isDeleteForm) {
+                    hideAccountModal(form.closest('.modal'));
+                    await refreshAccountAddressList(result.redirect_url);
+                    notifyAccountAddress(result.message, 'success');
+                    return;
+                }
+
                 var pageResponse = await fetch(result.redirect_url, {
                     credentials: 'same-origin',
                     headers: { 'Accept': 'text/html' }
@@ -692,15 +868,9 @@
 
                 currentContent.replaceWith(updatedContent);
                 window.history.replaceState(window.history.state, '', pageResponse.url || result.redirect_url);
-                if (typeof window.showNotification === 'function') {
-                    window.showNotification(result.message, 'success');
-                }
+                notifyAccountAddress(result.message, 'success');
             })().catch(function (error) {
-                if (typeof window.showNotification === 'function') {
-                    window.showNotification(error.message || @json(__('ecommerce::ecommerce.try_again_error')), 'danger');
-                } else {
-                    window.alert(error.message || @json(__('ecommerce::ecommerce.try_again_error')));
-                }
+                notifyAccountAddress(error.message || @json(__('ecommerce::ecommerce.try_again_error')), 'danger');
             }).finally(function () {
                 if (submitButton && submitButton.isConnected) submitButton.disabled = false;
                 if (form.isConnected) {
@@ -774,7 +944,11 @@
                             @if($section === 'orders')
                                 <span class="order-count">{{ $orders->total() }} @lang('ecommerce::ecommerce.orders')</span>
                             @elseif($section === 'addresses')
-                                <a class="account-button primary" href="{{ route('account.create_address') }}"><i class="ti-plus"></i> @lang('ecommerce::ecommerce.add_new_address')</a>
+                                <button class="account-button primary" type="button"
+                                        data-address-modal-url="{{ route('account.create_address') }}"
+                                        data-address-modal-title="@lang('ecommerce::ecommerce.add_new_address')">
+                                    <i class="ti-plus"></i> @lang('ecommerce::ecommerce.add_new_address')
+                                </button>
                             @endif
                         </div>
                     @endif
@@ -1037,20 +1211,97 @@
                     @elseif($section === 'wallet_withdraw')
                         @include('ecommerce::pages.account.wallet._withdraw', ['hide_header' => true])
                     @elseif($section === 'addresses')
-                        @forelse($addresses as $address)
-                            <article class="address-card">
-                                <strong>{{ $address->title ?? __('ecommerce::ecommerce.address') }}</strong>
-                                <p>{{ $address->address ?? $address->street ?? '-' }}</p>
-                                @if($address->district_name)
-                                    <p>{{ $address->district_name }}</p>
-                                @endif
-                                <div class="address-card-actions">
-                                    <a class="account-button" href="{{ route('account.edit_address', $address->id) }}"><i class="ti-pencil"></i> @lang('ecommerce::ecommerce.edit')</a>
+                        <div data-address-feedback role="status" aria-live="polite" hidden></div>
+                        <div class="account-address-list" data-address-list>
+                            @if($addresses->isNotEmpty())
+                                <div class="account-table-wrap">
+                                    <table class="data-table addresses-table">
+                                        <thead>
+                                            <tr>
+                                                <th>@lang('ecommerce::ecommerce.address_label')</th>
+                                                <th>@lang('ecommerce::ecommerce.country')</th>
+                                                <th>@lang('ecommerce::ecommerce.region')</th>
+                                                <th>@lang('ecommerce::ecommerce.city')</th>
+                                                <th>@lang('ecommerce::ecommerce.district')</th>
+                                                <th>@lang('ecommerce::ecommerce.default')</th>
+                                                <th>@lang('ecommerce::ecommerce.actions')</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($addresses as $address)
+                                                <tr>
+                                                    <td>{{ $address->title ?? __('ecommerce::ecommerce.address') }}</td>
+                                                    <td>{{ $address->country?->title ?? '-' }}</td>
+                                                    <td>{{ $address->city?->region?->title ?? '-' }}</td>
+                                                    <td>{{ $address->city?->title ?? '-' }}</td>
+                                                    <td>{{ $address->district_name ?: ($address->distract?->title ?? '-') }}</td>
+                                                    <td>
+                                                        @if($address->is_default)
+                                                            <span class="order-count">@lang('ecommerce::ecommerce.default')</span>
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        <div class="d-flex gap-2">
+                                                            <button class="account-button" type="button"
+                                                                    title="@lang('ecommerce::ecommerce.edit')" aria-label="@lang('ecommerce::ecommerce.edit')"
+                                                                    data-address-modal-url="{{ route('account.edit_address', $address->id) }}"
+                                                                    data-address-modal-title="@lang('ecommerce::ecommerce.edit_address')">
+                                                                <i class="ti-pencil" aria-hidden="true"></i>
+                                                            </button>
+                                                            <button class="account-button address-delete-button" type="button"
+                                                                    title="@lang('ecommerce::ecommerce.delete')" aria-label="@lang('ecommerce::ecommerce.delete')"
+                                                                    data-address-delete-url="{{ route('account.delete_address', $address->id) }}"
+                                                                    data-address-title="{{ $address->title ?? __('ecommerce::ecommerce.address') }}">
+                                                                <i class="ti-trash" aria-hidden="true"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
                                 </div>
-                            </article>
-                        @empty
-                            <div class="empty">@lang('ecommerce::ecommerce.no_addresses_message')</div>
-                        @endforelse
+                            @else
+                                <div class="empty">@lang('ecommerce::ecommerce.no_addresses_message')</div>
+                            @endif
+                        </div>
+
+                        <div class="modal fade" id="accountAddressModal" tabindex="-1" aria-labelledby="accountAddressModalTitle" aria-hidden="true">
+                            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="accountAddressModalTitle"></h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@lang('ecommerce::ecommerce.cancel')"></button>
+                                    </div>
+                                    <div class="modal-body" id="accountAddressModalBody"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal fade" id="deleteAddressConfirmModal" tabindex="-1" aria-labelledby="deleteAddressConfirmModalTitle" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="deleteAddressConfirmModalTitle">@lang('ecommerce::ecommerce.delete')</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@lang('ecommerce::ecommerce.cancel')"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>@lang('ecommerce::ecommerce.confirm_delete_address')</p>
+                                        <strong id="deleteAddressConfirmTitle"></strong>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="account-button" data-bs-dismiss="modal">@lang('ecommerce::ecommerce.cancel')</button>
+                                        <form class="address-delete-form" method="POST" data-async-delete="true">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="account-button primary">@lang('ecommerce::ecommerce.delete')</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     @elseif($section === 'create_address')
                         @include('ecommerce::pages.account._create_address', ['useNewAccountLayout' => $useNewAccountLayout ?? false])
                     @elseif($section === 'edit_address')

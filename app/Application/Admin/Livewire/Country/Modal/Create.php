@@ -14,6 +14,7 @@ class Create extends Component
     public string $status = 'active';
     public $priority = "";
     public $iso = "";
+    public $vat = '';
     public array $title = ['en' => null];
 
 
@@ -30,6 +31,7 @@ class Create extends Component
             'title' => 'required|array',
             'priority' => 'required',
             'iso' => 'required|string|max:3',
+            'vat' => 'required|numeric|min:0|max:100',
             'title.*' => 'required|string|min:2|max:120',
             'status' => 'required|string|in:active,inactive',
         ];
@@ -48,7 +50,7 @@ class Create extends Component
         $this->emit('refreshDatatable');
         $this->emit('closeModal', '#createCountry');
         $this->alert('success', __('admin::lang.Country Created Successfully'));
-        $this->reset('title', 'priority', 'iso', 'status');
+        $this->reset('title', 'priority', 'iso', 'vat', 'status');
         DB::commit();
     }
 

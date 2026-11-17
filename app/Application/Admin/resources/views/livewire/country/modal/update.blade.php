@@ -38,7 +38,7 @@
                                                 </div>
                                             @endforeach
 
-                                                <div class="col-xl-4">
+                                                <div class="col-xl-3">
                                                     <label for="iso"
                                                            class="form-label text-black">@lang('admin::lang.Iso') <span class="text-danger">*</span></label>
                                                     <input
@@ -52,7 +52,7 @@
                                                         class="text-danger d-block mt-2">{{ $message }}</span> @enderror
                                                 </div>
 
-                                                <div class="col-xl-4">
+                                                <div class="col-xl-3">
                                                     <label for="priority"
                                                            class="form-label text-black">@lang('admin::lang.Priority') <span class="text-danger">*</span></label>
                                                     <input
@@ -67,7 +67,23 @@
                                                         class="text-danger d-block mt-2">{{ $message }}</span> @enderror
                                                 </div>
 
-                                            <div class="col-xl-4">
+                                                <div class="col-xl-3">
+                                                    <label for="country-vat-update"
+                                                           class="form-label text-black">@lang('admin::home.vat') (%) <span class="text-danger">*</span></label>
+                                                    <input
+                                                        id="country-vat-update"
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        step="0.01"
+                                                        class="form-control @error("vat") is-invalid @enderror"
+                                                        wire:model.defer="vat">
+
+                                                    @error("vat") <span
+                                                        class="text-danger d-block mt-2">{{ $message }}</span> @enderror
+                                                </div>
+
+                                            <div class="col-xl-3">
                                                 <label for="country-active"
                                                        class="form-label text-black">@lang('admin::lang.Status')</label>
                                                 <div class="custom-toggle-switch d-flex align-items-center mb-4 mt-3">
