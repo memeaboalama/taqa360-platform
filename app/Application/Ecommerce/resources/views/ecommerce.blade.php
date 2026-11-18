@@ -399,8 +399,38 @@
 
         .products {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 16px
+        }
+
+        .products[hidden] {
+            display: none
+        }
+
+        .products-carousel-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 12px
+        }
+
+        .products-carousel-controls button {
+            display: inline-flex;
+            width: 30px;
+            height: 30px;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #dfe5eb;
+            border-radius: 50%;
+            background: #fff;
+            color: #306FAA;
+            font-size: 16px
+        }
+
+        .products-carousel-status {
+            color: #747b84;
+            font-size: 11px
         }
 
         .product {
@@ -460,6 +490,11 @@
             unicode-bidi: isolate;
             text-align: start;
             margin-top: 1px
+        }
+
+        [dir="rtl"] .product .rating,
+        [dir="rtl"] .product .price {
+            text-align: right
         }
 
         .add-cart {
@@ -1142,10 +1177,10 @@
         $image = static function ($value, $fallback = 'assets/ecommerce/images/slider/4.webp') {
             return $value ?: asset($fallback);
         };
-        $products = static function ($items, $limit = 6) {
+        $products = static function ($items) {
             return collect($items ?? [])
                 ->filter()
-                ->take($limit);
+                ->values();
         };
         $renderProduct = static function ($product) use ($image, $localized) {
             $title = $localized($product->title ?? null, __('ecommerce::ecommerce.product_label'));
@@ -1285,21 +1320,25 @@
                     'products' => $bestSellers ?? [],
                     'title' => __('ecommerce::ecommerce.best_sellers'),
                     'id' => 'best-sellers',
+                    'collection' => 'best-sellers',
                 ],
                 [
                     'products' => $featuredProducts ?? [],
                     'title' => __('ecommerce::ecommerce.featured_products'),
                     'id' => 'featured-products',
+                    'collection' => 'featured-products',
                 ],
                 [
                     'products' => $newProducts ?? [],
                     'title' => __('ecommerce::ecommerce.new_products'),
                     'id' => 'new-products',
+                    'collection' => 'new-products',
                 ],
                 [
                     'products' => $exclusiveProducts ?? [],
                     'title' => __('ecommerce::ecommerce.exclusive_collections'),
                     'id' => 'exclusive-products',
+                    'collection' => 'exclusive-products',
                 ],
             ])
                 ->filter(fn($section) => collect($section['products'])->isNotEmpty())
@@ -1312,40 +1351,56 @@
                 class="extra-section product-section{{ $loop->odd ? ' product-section--soft' : '' }}{{ in_array($loop->index, [0, 2, 4], true) ? ' product-section--watermark product-section--watermark-' . (intdiv($loop->index, 2) % 2 === 0 ? 'left' : 'right') : '' }}">
                 <div class="section-head">
                     <h2>{{ $section['title'] }}</h2><a class="view-all"
-                        href="{{ route('categories.index') }}">@lang('ecommerce::ecommerce.view_all')
+                        href="{{ route('ecommerce.collection', ['section' => $section['collection']]) }}">@lang('ecommerce::ecommerce.view_all')
                         ></a>
                 </div>
-                <div class="products">
-                    @foreach ($products($section['products'], 8) as $product)
-                        @php $card = $renderProduct($product); @endphp
-                        <article class="product"><button type="button" data-product-id="{{ $product->id }}"
-                                class="favorite{{ isset($favoriteIds[$product->id]) ? ' is-favorite' : '' }}"
-                                aria-label="@lang('ecommerce::ecommerce.add_to_wishlist')"><i
-                                    class="{{ isset($favoriteIds[$product->id]) ? 'fa fa-heart' : 'ti-heart' }}"></i></button><a
-                                class="product-img-wrap" href="{{ route('product.static', $product->id) }}"><img
-                                    class="product-image" src="{{ $card['productImage'] }}" alt="{{ $card['title'] }}"
-                                    loading="lazy">
-                                @if (!$product->isInStock())
-                                    <span class="product-stock-badge">@lang('ecommerce::ecommerce.out_of_stock')</span>
-                                @endif
-                            </a>
-                            <h3><a href="{{ route('product.static', $product->id) }}"
-                                    style="color:inherit;text-decoration:none">{{ $card['title'] }}</a></h3>
-                            @include('ecommerce::partials.product.rating', ['product' => $product])
-                            <div class="price">{{ \App\Domain\AppBase\Models\Setting\Currency::format($card['price']) }}
-                            </div>
-                            <form class="add-cart-form" action="{{ route('cart.add') }}" method="POST">@csrf<input
-                                    type="hidden" name="item_id" value="{{ $product->id }}"><input type="hidden"
-                                    name="qty" value="1">
-                                @if (!$product->isInStock())
-                                    <button class="add-cart" type="button" disabled
-                                    style="background:#e5e7eb !important;color:#9ca3af !important;cursor:not-allowed">@lang('ecommerce::ecommerce.out_of_stock')</button>@else<button
-                                        class="add-cart" type="submit"><i class="ti-shopping-cart"></i>
-                                        @lang('ecommerce::ecommerce.add_to_cart')</button>
-                                @endif
-                            </form>
-                        </article>
+                @php $sectionSlides = $products($section['products'])->chunk(6)->values(); @endphp
+                <div class="products-carousel" data-product-carousel>
+                    @foreach ($sectionSlides as $slideIndex => $slideProducts)
+                        <div class="products" data-product-slide
+                             aria-hidden="{{ $slideIndex > 0 ? 'true' : 'false' }}"
+                             @if($slideIndex > 0) hidden @endif>
+                            @foreach ($slideProducts as $product)
+                                @php $card = $renderProduct($product); @endphp
+                                <article class="product"><button type="button" data-product-id="{{ $product->id }}"
+                                        class="favorite{{ isset($favoriteIds[$product->id]) ? ' is-favorite' : '' }}"
+                                        aria-label="@lang('ecommerce::ecommerce.add_to_wishlist')"><i
+                                            class="{{ isset($favoriteIds[$product->id]) ? 'fa fa-heart' : 'ti-heart' }}"></i></button><a
+                                        class="product-img-wrap" href="{{ route('product.static', $product->id) }}"><img
+                                            class="product-image" src="{{ $card['productImage'] }}" alt="{{ $card['title'] }}"
+                                            loading="lazy">
+                                    @if (!$product->isInStock())
+                                        <span class="product-stock-badge">@lang('ecommerce::ecommerce.out_of_stock')</span>
+                                    @endif
+                                </a>
+                                <h3><a href="{{ route('product.static', $product->id) }}"
+                                        style="color:inherit;text-decoration:none">{{ $card['title'] }}</a></h3>
+                                @include('ecommerce::partials.product.rating', ['product' => $product])
+                                <div class="price">{{ \App\Domain\AppBase\Models\Setting\Currency::format($card['price']) }}
+                                </div>
+                                <form class="add-cart-form" action="{{ route('cart.add') }}" method="POST">@csrf<input
+                                        type="hidden" name="item_id" value="{{ $product->id }}"><input type="hidden"
+                                        name="qty" value="1">
+                                    @if (!$product->isInStock())
+                                        <button class="add-cart" type="button" disabled
+                                        style="background:#e5e7eb !important;color:#9ca3af !important;cursor:not-allowed">@lang('ecommerce::ecommerce.out_of_stock')</button>@else<button
+                                            class="add-cart" type="submit"><i class="ti-shopping-cart"></i>
+                                            @lang('ecommerce::ecommerce.add_to_cart')</button>
+                                    @endif
+                                </form>
+                            </article>
+                            @endforeach
+                        </div>
                     @endforeach
+                    @if($sectionSlides->count() > 1)
+                        <div class="products-carousel-controls">
+                            <button type="button" data-products-prev
+                                    aria-label="@lang('ecommerce::ecommerce.previous')">{{ $isRTL ? '→' : '←' }}</button>
+                            <span class="products-carousel-status" data-products-status dir="ltr" aria-live="polite">1 / {{ $sectionSlides->count() }}</span>
+                            <button type="button" data-products-next
+                                    aria-label="@lang('ecommerce::ecommerce.next')">{{ $isRTL ? '←' : '→' }}</button>
+                        </div>
+                    @endif
                 </div>
             </section>
             @if ($midProductBanner && $loop->iteration === $bannerAfterSection)
@@ -1509,6 +1564,43 @@
 
 @section('scripts')
     <script>
+        document.querySelectorAll('[data-product-carousel]').forEach(function(carousel) {
+            const slides = Array.from(carousel.querySelectorAll('[data-product-slide]'));
+            if (slides.length < 2) return;
+
+            const status = carousel.querySelector('[data-products-status]');
+            let current = 0;
+
+            function showSlide(index) {
+                slides[current].hidden = true;
+                slides[current].setAttribute('aria-hidden', 'true');
+                current = (index + slides.length) % slides.length;
+                slides[current].hidden = false;
+                slides[current].setAttribute('aria-hidden', 'false');
+                status.textContent = (current + 1) + ' / ' + slides.length;
+            }
+
+            carousel.querySelector('[data-products-prev]').addEventListener('click', function() {
+                showSlide(current - 1);
+            });
+            carousel.querySelector('[data-products-next]').addEventListener('click', function() {
+                showSlide(current + 1);
+            });
+
+            let touchStartX = null;
+            carousel.addEventListener('touchstart', function(event) {
+                touchStartX = event.changedTouches[0].clientX;
+            }, { passive: true });
+            carousel.addEventListener('touchend', function(event) {
+                if (touchStartX === null) return;
+                const delta = touchStartX - event.changedTouches[0].clientX;
+                if (Math.abs(delta) > 40) {
+                    showSlide(current + (delta > 0 ? 1 : -1));
+                }
+                touchStartX = null;
+            }, { passive: true });
+        });
+
         /* ── Hero Slider ─────────────────────────────────────────────── */
         (function() {
             const slider = document.getElementById('hero-slider');

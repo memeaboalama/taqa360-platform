@@ -13,6 +13,7 @@ use Domain\MarketPlace\Models\Item;
 use Domain\MarketPlace\Models\MerchantBranch;
 use App\Domain\AppBase\Models\MerchantBranchTypeServices;
 use App\Support\Enum\StatusEnum;
+use App\Support\Traits\Models\HasConfiguredCartVat;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasEvents;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,6 +26,7 @@ class Cart extends Model
 {
     use HasFactory, MerchantRelation;
     use HasEvents;
+    use HasConfiguredCartVat;
 
 
     protected $fillable = [
@@ -142,17 +144,6 @@ class Cart extends Model
             }, 0)
         );
     }
-
-    protected function tax(): Attribute
-    {
-
-        return new Attribute(
-            get: fn() => ($this->subtotal - ($this->subtotal * (100 / 115)))
-                +
-                ($this->delivery_fee - ($this->delivery_fee * (100 / 115)))
-        );
-    }
-
 
     protected function deliveryFee(): Attribute
     {
@@ -301,7 +292,13 @@ class Cart extends Model
     protected function total(): Attribute
     {
         return new Attribute(
-            get: fn() =>        $this->service_type_id == 2 ? ($this->subtotal - $this->discount)  : ($this->subtotal - $this->discount) + $this->delivery_fee
+            get: fn() => round(
+                $this->subtotal
+                + $this->tax
+                - $this->discount
+                + ($this->service_type_id == 2 ? 0 : $this->delivery_fee),
+                2
+            )
         );
     }
 

@@ -51,7 +51,9 @@ Route::group(
 
 
         Route::middleware(['auth:web'])->group(function() {
-             Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
+             Route::get('/checkout/success/{orderId?}', [CheckoutController::class, 'success'])
+                 ->whereNumber('orderId')
+                 ->name('checkout.success');
              Route::get('/checkout/legacy', [CheckoutController::class, 'index'])->name('checkout.index');
              Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
              Route::post('/service-requests/store', [\App\Application\Educational\Controllers\ServiceRequestWebController::class, 'store'])->name('service-requests.store');
@@ -73,6 +75,7 @@ Route::group(
             Route::get('/featured-products', 'featuredProducts')->name('products.featured');
             Route::get('/new-arrivals', 'getNewArrivals')->name('products.new-arrivals');
             Route::get('/best-sellers', 'getBestSellers')->name('products.best-sellers');
+            Route::get('/collections/{section}', 'productCollection')->name('ecommerce.collection');
 
             Route::post('/save-filters', 'saveFilterState')->name('filters.save');
             Route::get('/filter', 'filterProducts')->name('filters.get');

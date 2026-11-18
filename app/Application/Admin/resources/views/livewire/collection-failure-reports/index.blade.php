@@ -46,7 +46,7 @@
                             <td>#{{ $report->order?->code }}</td>
                             <td>{{ $report->driver?->name ?? '—' }}</td>
                             <td>{{ number_format($report->order?->total_after_discount > 0 ? $report->order->total_after_discount : ($report->order?->total_after_vat ?? 0), 2) }} SAR</td>
-                            <td>{{ \Illuminate\Support\Str::limit($report->reason, 90) }}</td>
+                            <td>{{ \Illuminate\Support\Str::limit($report->reason_label, 90) }}</td>
                             <td>{{ \Illuminate\Support\Str::limit($report->driver_note, 90) ?: '—' }}</td>
                             <td>{{ $report->created_at?->format('Y-m-d H:i') ?? '—' }}</td>
                             <td>@lang('admin::home.collection_failure_status_' . $report->status)</td>

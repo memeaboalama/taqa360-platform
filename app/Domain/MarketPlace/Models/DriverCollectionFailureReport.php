@@ -44,4 +44,11 @@ class DriverCollectionFailureReport extends Model
     {
         return $this->belongsTo(\Domain\Admin\Models\Admin::class, 'decided_by');
     }
+
+    public function getReasonLabelAttribute(): string
+    {
+        $key = 'admin::home.collection_failure_reason_' . $this->reason;
+
+        return \Illuminate\Support\Facades\Lang::has($key) ? __($key) : (string) $this->reason;
+    }
 }

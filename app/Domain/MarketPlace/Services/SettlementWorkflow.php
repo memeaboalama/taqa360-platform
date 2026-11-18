@@ -34,110 +34,149 @@ class SettlementWorkflow
             }
 
             $settlement = OrderSettlement::query()->lockForUpdate()->findOrFail($settlementId);
-            $this->assertStatus($settlement, 'approved', ['pending_review', 'reviewed']);
-            if ($settlement->approved_at || $settlement->approved_by) {
-                throw ValidationException::withMessages([
-                    'settlement' => 'سبق اعتماد هذه التسوية ولا يمكن اعتمادها مرة أخرى.',
-                ]);
-            }
-
-            $order = MerchantOrder::query()->lockForUpdate()->findOrFail($settlement->order_id);
-            if (!MerchantOrder::isCashOnDeliveryMethod($order->payment_method)) {
-                throw ValidationException::withMessages([
-                    'settlement' => 'طريقة الدفع لهذا الطلب لا تسمح باعتماد توريد عهدة السائق.',
-                ]);
-            }
-
-            $payments = Payment::query()
-                ->where('payable_id', $order->id)
-                ->whereIn('payable_type', [
-                    $order->getMorphClass(),
-                    MerchantOrder::class,
-                    'App\\Domain\\MarketPlace\\Models\\MerchantOrder',
-                ])
+            $settlements = OrderSettlement::batchQuery($settlement->batch_number)
+                ->orderBy('id')
                 ->lockForUpdate()
-                ->get()
-                ->filter(fn (Payment $payment): bool =>
-                    $payment->source_message === MerchantOrder::COD_COLLECTION_CONFIRMATION_MESSAGE
-                    && MerchantOrder::resolvePaymentStatus($payment, 'unpaid', $order->payment_method) === 'paid'
-                )
-                ->groupBy('payment_id')
-                ->map(fn ($records) => $records->last())
-                ->values();
+                ->get();
+            if ($settlements->isEmpty()
+                || $settlements->contains(fn (OrderSettlement $item) =>
+                    (int) $item->driver_id !== (int) $settlement->driver_id)) {
+                throw ValidationException::withMessages([
+                    'settlement' => 'بيانات مجموعة التسوية غير متطابقة.',
+                ]);
+            }
+            foreach ($settlements as $item) {
+                $this->assertStatus($item, 'approved', ['pending_review', 'reviewed']);
+                if ($item->approved_at || $item->approved_by) {
+                    throw ValidationException::withMessages([
+                        'settlement' => 'سبق اعتماد هذه التسوية ولا يمكن اعتمادها مرة أخرى.',
+                    ]);
+                }
+            }
 
-            $collectedMinor = (int) $payments->sum(
-                fn (Payment $payment): int => (int) ($payment->captured ?: $payment->amount)
-            ) + (int) round((float) PaymentCorrectionRequest::query()
-                ->where('order_id', $order->id)
-                ->where('movement_type', 'collection')
-                ->where('status', 'approved')
-                ->sum('adjustment_amount') * 100);
-            $orderDue = $order->total_after_discount > 0
-                ? $order->total_after_discount
-                : $order->total_after_vat;
-            $expectedMinor = (int) round((float) $orderDue * 100);
-            $settlementMinor = (int) round((float) $settlement->amount * 100);
+            $settlementIds = $settlements->pluck('id');
+            $paymentsBySettlement = [];
+            $expectedTotalMinor = 0;
+            $settlementTotalMinor = 0;
+            $collectedTotalMinor = 0;
+            foreach ($settlements as $item) {
+                $order = MerchantOrder::query()->lockForUpdate()->findOrFail($item->order_id);
+                if (!MerchantOrder::isCashOnDeliveryMethod($order->payment_method)) {
+                    throw ValidationException::withMessages([
+                        'settlement' => 'طريقة الدفع لأحد الطلبات لا تسمح باعتماد توريد عهدة السائق.',
+                    ]);
+                }
+
+                $payments = Payment::query()
+                    ->where('payable_id', $order->id)
+                    ->whereIn('payable_type', [
+                        $order->getMorphClass(),
+                        MerchantOrder::class,
+                        'App\\Domain\\MarketPlace\\Models\\MerchantOrder',
+                    ])
+                    ->lockForUpdate()
+                    ->get()
+                    ->filter(fn (Payment $payment): bool =>
+                        $payment->source_message === MerchantOrder::COD_COLLECTION_CONFIRMATION_MESSAGE
+                        && MerchantOrder::resolvePaymentStatus($payment, 'unpaid', $order->payment_method) === 'paid'
+                    )
+                    ->groupBy('payment_id')
+                    ->map(fn ($records) => $records->last())
+                    ->values();
+
+                $orderDue = $order->total_after_discount > 0
+                    ? $order->total_after_discount
+                    : $order->total_after_vat;
+                $expectedMinor = (int) round((float) $orderDue * 100);
+                $settlementMinor = (int) round((float) $item->amount * 100);
+                $collectedMinor = (int) $payments->sum(
+                    fn (Payment $payment): int => (int) ($payment->captured ?: $payment->amount)
+                ) + (int) round((float) PaymentCorrectionRequest::query()
+                    ->where('order_id', $order->id)
+                    ->where('movement_type', 'collection')
+                    ->where('status', 'approved')
+                    ->sum('adjustment_amount') * 100);
+
+                if ($payments->isEmpty()
+                    || !self::amountsMatch($expectedMinor, $settlementMinor, $collectedMinor, $expectedMinor)) {
+                    throw ValidationException::withMessages([
+                        'settlement' => 'توجد فروقات في أحد الطلبات بين الإجمالي والتحصيل والتسوية؛ أوقف الاعتماد للمطابقة.',
+                    ]);
+                }
+
+                if (OrderSettlement::query()
+                    ->where('order_id', $order->id)
+                    ->where('status', 'approved')
+                    ->whereNotIn('id', $settlementIds)
+                    ->exists()) {
+                    throw ValidationException::withMessages([
+                        'settlement' => 'سبق اعتماد توريد لأحد الطلبات المشمولة.',
+                    ]);
+                }
+
+                $paymentsBySettlement[$item->id] = $payments;
+                $expectedTotalMinor += $expectedMinor;
+                $settlementTotalMinor += $settlementMinor;
+                $collectedTotalMinor += $collectedMinor;
+            }
+
             $receivedMinor = (int) round((float) $receipt['received_amount'] * 100);
-
-            if ($payments->isEmpty()
-                || !self::amountsMatch($expectedMinor, $settlementMinor, $collectedMinor, $receivedMinor)) {
+            if (!self::amountsMatch(
+                $expectedTotalMinor,
+                $settlementTotalMinor,
+                $collectedTotalMinor,
+                $receivedMinor
+            )) {
                 throw ValidationException::withMessages([
-                    'settlement' => 'توجد فروقات بين إجمالي الطلب والتحصيل والتسوية والمبلغ المستلم؛ أوقف الاعتماد للمطابقة.',
+                    'settlement' => 'المبلغ المستلم لا يطابق إجمالي المجموعة والتحصيلات؛ أوقف الاعتماد للمطابقة.',
                 ]);
             }
 
-            $alreadyApproved = OrderSettlement::query()
-                ->where('order_id', $order->id)
-                ->where('status', 'approved')
-                ->where('id', '<>', $settlement->id)
-                ->exists();
-            if ($alreadyApproved) {
-                throw ValidationException::withMessages([
-                    'settlement' => 'سبق اعتماد توريد لهذا الطلب.',
+            foreach ($settlements as $item) {
+                $previousStatus = $item->status;
+                $item->update([
+                    'status' => 'approved',
+                    'approved_by' => $actor->getKey(),
+                    'approved_at' => now(),
+                    'received_amount' => $item->amount,
+                    'received_at' => $receivedAt,
+                    'received_by' => $receivedBy,
+                    'receipt_confirmed' => true,
                 ]);
+                $payments = $paymentsBySettlement[$item->id];
+                Payment::query()
+                    ->whereIn('id', $payments->pluck('id'))
+                    ->update(['settlement_id' => $item->id]);
+                PaymentCorrectionRequest::query()
+                    ->where('order_id', $item->order_id)
+                    ->where('movement_type', 'collection')
+                    ->where('status', 'approved')
+                    ->update(['settlement_id' => $item->id]);
+                $this->record(
+                    $item,
+                    $actor,
+                    'approved',
+                    $previousStatus,
+                    'approved',
+                    null,
+                    [
+                        'recipient' => $item->recipient,
+                        'method' => $item->method,
+                        'recipient_name' => $item->recipient_name,
+                        'instructions' => $item->instructions,
+                        'account_data' => $item->account_data,
+                        'amount' => $item->amount,
+                        'reference' => $item->reference,
+                        'proof_path' => $item->proof_path,
+                        'supply_date' => $item->supply_date?->toDateString(),
+                        'received_amount' => $item->received_amount,
+                        'received_at' => $item->received_at?->toIso8601String(),
+                        'received_by' => $item->received_by,
+                        'receipt_confirmed' => $item->receipt_confirmed,
+                        'payment_ids' => $payments->pluck('payment_id')->all(),
+                    ]
+                );
             }
-
-            $previousStatus = $settlement->status;
-            $settlement->update([
-                'status' => 'approved',
-                'approved_by' => $actor->getKey(),
-                'approved_at' => now(),
-                'received_amount' => $receipt['received_amount'],
-                'received_at' => $receivedAt,
-                'received_by' => $receivedBy,
-                'receipt_confirmed' => true,
-            ]);
-            Payment::query()
-                ->whereIn('id', $payments->pluck('id'))
-                ->update(['settlement_id' => $settlement->id]);
-            PaymentCorrectionRequest::query()
-                ->where('order_id', $order->id)
-                ->where('movement_type', 'collection')
-                ->whereNull('settlement_id')
-                ->update(['settlement_id' => $settlement->id]);
-            $this->record(
-                $settlement,
-                $actor,
-                'approved',
-                $previousStatus,
-                'approved',
-                null,
-                [
-                    'recipient' => $settlement->recipient,
-                    'method' => $settlement->method,
-                    'recipient_name' => $settlement->recipient_name,
-                    'instructions' => $settlement->instructions,
-                    'account_data' => $settlement->account_data,
-                    'amount' => $settlement->amount,
-                    'reference' => $settlement->reference,
-                    'proof_path' => $settlement->proof_path,
-                    'received_amount' => $settlement->received_amount,
-                    'received_at' => $settlement->received_at?->toIso8601String(),
-                    'received_by' => $settlement->received_by,
-                    'receipt_confirmed' => $settlement->receipt_confirmed,
-                    'payment_ids' => $payments->pluck('payment_id')->all(),
-                ]
-            );
 
             return $settlement->fresh(['order', 'driver']);
         });
@@ -208,16 +247,33 @@ class SettlementWorkflow
             $note
         ): OrderSettlement {
             $settlement = OrderSettlement::query()->lockForUpdate()->findOrFail($settlementId);
-            $this->assertStatus($settlement, $newStatus, $allowedStatuses);
+            $settlements = OrderSettlement::batchQuery($settlement->batch_number)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
+            foreach ($settlements as $item) {
+                $this->assertStatus($item, $newStatus, $allowedStatuses);
+            }
 
-            $previousStatus = $settlement->status;
             $attributes = ['status' => $newStatus];
             if ($action === 'reviewed') {
                 $attributes['reviewed_by'] = $actor->getKey();
                 $attributes['reviewed_at'] = now();
             }
-            $settlement->update($attributes);
-            $this->record($settlement, $actor, $action, $previousStatus, $newStatus, $note);
+            foreach ($settlements as $item) {
+                $previousStatus = $item->status;
+                $item->update($attributes);
+                $this->record($item, $actor, $action, $previousStatus, $newStatus, $note);
+            }
+
+            if ($action === 'rejected') {
+                $settlementIds = $settlements->pluck('id');
+                Payment::query()->whereIn('settlement_id', $settlementIds)->update(['settlement_id' => null]);
+                PaymentCorrectionRequest::query()
+                    ->whereIn('settlement_id', $settlementIds)
+                    ->where('movement_type', 'collection')
+                    ->update(['settlement_id' => null]);
+            }
 
             return $settlement->fresh(['order', 'driver']);
         });

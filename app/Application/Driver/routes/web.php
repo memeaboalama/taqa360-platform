@@ -8,6 +8,7 @@ use Application\Driver\Controllers\RoleController;
 
 use Application\Driver\Controllers\MenuController;
 use Application\Driver\Controllers\DriverController;
+use Application\Driver\Controllers\SettlementProofController;
 use Application\Driver\Controllers\PasswordController;
 use Application\Driver\Controllers\FileController;
 use Application\Driver\Controllers\RegisterController;
@@ -83,6 +84,10 @@ use Application\Driver\Controllers\Finance\Reports\Orders\OrderReportController;
                     ->name('my-custody');
                 Route::get('/my-settlements', [DriverController::class, 'mySettlements'])
                     ->name('my-settlements');
+                Route::get('/settlements/{settlement}/proof', [SettlementProofController::class, 'show'])
+                    ->name('settlements.proof');
+                Route::get('/settlements/{settlement}/history/{history}/proof', [SettlementProofController::class, 'showHistory'])
+                    ->name('settlements.history.proof');
                 Route::get('/support', fn () => view('driver::pages.profile.support.send'))
                     ->name('sendMessage');
                 Route::post('/orders/{id}/accept', [DriverController::class, 'acceptOrder'])

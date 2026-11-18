@@ -3,6 +3,7 @@
 namespace Application\Driver\Controllers;
 
 use App\Domain\MarketPlace\Models\MerchantOrder;
+use App\Domain\MarketPlace\Services\OrderPaymentLedger;
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use App\Application\Marketplace\Enums\MerchantOrderHistoryStatuses;
@@ -42,6 +43,7 @@ class DriverController extends Controller
 
         $recentOrders = (clone $orders)->with([
             'user',
+            'payment',
             'orders_history' => function ($query) {
                 $query->whereIn('action', [
                     MerchantOrderHistoryStatuses::DRIVER_ACCEPT->value,
@@ -65,7 +67,7 @@ class DriverController extends Controller
             return redirect(RouteServiceProvider::DRIVER_LOGIN);
         }
 
-        return view('driver::pages.custody.index', compact('driver'));
+        return view('driver::pages.custody.index');
     }
 
     public function mySettlements()
@@ -139,6 +141,12 @@ class DriverController extends Controller
         } elseif ($status === 'completed' || $status === 'previous') {
             if ($currentStatus !== MerchantOrderStatuses::ON_WAY) {
                 return redirect()->back()->with('error', 'لا يمكن إكمال الطلب قبل بدء التوصيل.');
+            }
+            if (MerchantOrder::isCashOnDeliveryMethod($order->payment_method)) {
+                return redirect()->back()->with('error', 'أكد التسليم والتحصيل من نافذة تأكيد الطلب.');
+            }
+            if (app(OrderPaymentLedger::class)->forOrder($order)['payment_status'] === 'paid') {
+                return redirect()->back()->with('error', 'أكد تسليم الطلب المدفوع مسبقًا من نافذة تفاصيل الطلب.');
             }
 
             $order->update(['status' => MerchantOrderStatuses::PREVIOUS->value]);

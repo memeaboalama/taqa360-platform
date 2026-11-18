@@ -899,6 +899,7 @@
                         <p class="ltr">{{ $user->email }}</p>
                     </div>
                 </div>
+                {{--
                 <div class="balance">
                     <i class="ti-wallet"></i>
                     <div>
@@ -906,6 +907,7 @@
                         <small>@lang('ecommerce::ecommerce.currency_symbol')</small>
                     </div>
                 </div>
+                --}}
             </section>
             <div class="account-layout">
                 <aside class="account-tabs">
@@ -913,7 +915,7 @@
                     <a class="account-tab {{ in_array($section, ['orders', 'order_details'], true) ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'orders']) }}"><i class="ti-package"></i><span>@lang('ecommerce::ecommerce.orders')</span></a>
                     <a class="account-tab {{ in_array($section, ['service_requests', 'service_request_details'], true) ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'service_requests']) }}"><i class="ti-settings"></i><span>@lang('ecommerce::ecommerce.service_requests')</span></a>
                     <a class="account-tab {{ in_array($section, ['addresses', 'create_address', 'edit_address'], true) ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'addresses']) }}"><i class="ti-location-pin"></i><span>@lang('ecommerce::ecommerce.addresses')</span></a>
-                    <a class="account-tab {{ in_array($section, ['wallet', 'wallet_deposit', 'wallet_withdraw'], true) ? 'active' : '' }}" href="{{ route('account.wallet.index') }}"><i class="ti-wallet"></i><span>@lang('ecommerce::ecommerce.my_wallet')</span></a>
+                    {{-- <a class="account-tab {{ in_array($section, ['wallet', 'wallet_deposit', 'wallet_withdraw'], true) ? 'active' : '' }}" href="{{ route('account.wallet.index') }}"><i class="ti-wallet"></i><span>@lang('ecommerce::ecommerce.my_wallet')</span></a> --}}
                 </aside>
                 <section class="account-content">
                     @if(!in_array($section, ['service_requests', 'service_request_details'], true))

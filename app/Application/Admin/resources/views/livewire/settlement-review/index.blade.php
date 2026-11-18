@@ -54,14 +54,16 @@
                         <tr>
                             @php($lastSubmission = $settlement->histories->whereIn('action', ['submitted', 'resubmitted'])->last())
                             <td>
-                                STL-{{ $settlement->id }}
-                                <span class="text-muted d-block">#{{ $settlement->order?->code }}</span>
+                                STL-{{ $settlement->batch_number }}
+                                @foreach($settlement->batch_orders as $orderCode)
+                                    <span class="text-muted d-block">#{{ $orderCode }}</span>
+                                @endforeach
                             </td>
                             <td>{{ $settlement->driver?->name ?? '—' }}</td>
                             <td>{{ __('admin::home.' . ($settlement->recipient === 'merchant' ? 'merchant_recipient' : 'platform_recipient')) }}</td>
                             <td>{{ ($lastSubmission?->created_at ?? $settlement->created_at)?->format('Y-m-d H:i') ?? '—' }}</td>
-                            <td>{{ number_format($settlement->amount, 2) }} SAR</td>
-                            <td>1</td>
+                            <td>{{ number_format($settlement->batch_amount, 2) }} SAR</td>
+                            <td>{{ $settlement->batch_orders_count }}</td>
                             <td>{{ __('admin::home.supply_method_' . $settlement->method) }}</td>
                             <td>
                                 <span class="badge {{ $settlement->status === 'approved' ? 'bg-success' : (in_array($settlement->status, ['rejected'], true) ? 'bg-danger' : ($settlement->status === 'returned' ? 'bg-warning' : 'bg-info')) }}">

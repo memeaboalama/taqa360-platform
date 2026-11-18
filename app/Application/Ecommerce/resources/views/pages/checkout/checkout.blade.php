@@ -170,6 +170,23 @@
             margin: 0
         }
 
+        .checkout-back-link {
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 14px;
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, .45);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 12px;
+            text-decoration: none
+        }
+
+        .checkout-back-link:hover {
+            color: #173f65;
+            background: #fff
+        }
+
         .checkout-main {
             padding: 28px 0 70px
         }
@@ -209,7 +226,7 @@
 
         .product-row {
             display: grid;
-            grid-template-columns: 52px minmax(0, 1fr) 68px 120px 32px;
+            grid-template-columns: 52px minmax(0, 1fr) 68px 120px auto;
             gap: 14px;
             align-items: center;
             padding: 12px 0;
@@ -253,14 +270,20 @@
         }
 
         .checkout-item-remove {
-            display: inline-grid;
-            width: 36px;
+            display: inline-flex;
+            width: auto;
+            min-width: 72px;
             height: 36px;
-            place-items: center;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 0 9px;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             background: #fff;
             color: #64748b;
+            font-size: 12px;
+            white-space: nowrap;
             transition: background-color .15s, border-color .15s, color .15s, transform .15s
         }
 
@@ -774,12 +797,15 @@
 
 @section('content')
     @php
-        $checkoutVatRate = (float) ($cart->cartItems->first()?->item?->merchant?->country?->vat ?? 0);
+        $checkoutVatRate = $cart->vat_rate;
         $checkoutDeliveryFee = $cart->service_type_id == 2 ? 0 : (float) $cart->delivery_fee;
         $checkoutVatLabel = rtrim(rtrim(number_format($checkoutVatRate, 2, '.', ''), '0'), '.');
     @endphp
     <section class="checkout-hero">
         <div class="container">
+            <a href="{{ route('cart.index') }}" class="checkout-back-link">
+                @lang('ecommerce::ecommerce.back_to_cart')
+            </a>
             <h1>@lang('ecommerce::ecommerce.checkout')</h1>
             <p>@lang('ecommerce::ecommerce.checkout_message')</p>
         </div>
@@ -823,6 +849,7 @@
                                                 stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M3 6h18M8 6V4h8v2m2 0-.8 14H6.8L6 6m4 4v6m4-6v6" />
                                             </svg>
+                                            <span>@lang('ecommerce::ecommerce.remove')</span>
                                         </button>
                                     </div>
                                 @endforeach
@@ -1018,7 +1045,7 @@
                                 @endif
                                 @if ($cart->tax > 0)
                                     <div class="summary-row">
-                                        <span>@lang('ecommerce::ecommerce.vat') ({{ $checkoutVatLabel }}%)</span>
+                                        <span>@lang('ecommerce::ecommerce.vat_added_separately') ({{ $checkoutVatLabel }}%)</span>
                                         <strong>{{ \App\Domain\AppBase\Models\Setting\Currency::format($cart->tax) }}</strong>
                                     </div>
                                 @endif
@@ -1030,6 +1057,11 @@
                                     <span>@lang('ecommerce::ecommerce.total')</span>
                                     <strong>{{ \App\Domain\AppBase\Models\Setting\Currency::format($cart->total_after_vat ?? 0) }}</strong>
                                 </div>
+                                @if ($checkoutVatRate > 0)
+                                    <p class="small text-muted mt-2 mb-0">
+                                        @lang('ecommerce::ecommerce.vat_added_to_prices_note', ['rate' => $checkoutVatLabel])
+                                    </p>
+                                @endif
                             </div>
 
                             <div class="sidebar-group">

@@ -66,6 +66,7 @@ class DriverCustodyLedger
             'type' => ['nullable', 'in:collection,settlement,correction,refund'],
             'order' => ['nullable', 'string', 'max:100'],
             'settlement' => ['nullable', 'string', 'max:100'],
+            'settlement_status' => ['nullable', 'in:not_submitted,pending_review,reviewed,approved,returned,rejected'],
         ])->validate();
 
         $from = !empty($validated['from'])
@@ -92,6 +93,16 @@ class DriverCustodyLedger
         }
         $periodMovements->where('occurred_at', '<=', $to);
         $closingBalance = $openingBalance + $this->balanceFromMovements(clone $periodMovements);
+        $custodyBalance = $this->balanceFromMovements(
+            (clone $allMovements)->where('occurred_at', '<=', now()->endOfDay())
+        );
+        $pendingSettlementAmount = (float) DB::table('order_settlements')
+            ->where('driver_id', $driverId)
+            ->whereIn('status', ['pending_review', 'reviewed'])
+            ->sum('amount');
+        $approvedSettlementAmount = abs((float) (clone $periodMovements)
+            ->where('movement_type', 'settlement')
+            ->sum('amount'));
 
         $movements = clone $periodMovements;
         if (!empty($validated['type'])) {
@@ -112,6 +123,13 @@ class DriverCustodyLedger
                 $movements->whereRaw('1 = 0');
             }
         }
+        if (!empty($validated['settlement_status'])) {
+            if ($validated['settlement_status'] === 'not_submitted') {
+                $movements->whereNull('settlement_status');
+            } else {
+                $movements->where('settlement_status', $validated['settlement_status']);
+            }
+        }
 
         $rows = $movements
             ->orderBy('occurred_at')
@@ -123,9 +141,25 @@ class DriverCustodyLedger
             'movements' => $rows,
             'opening_balance' => round($openingBalance, 2),
             'closing_balance' => round($closingBalance, 2),
+            'custody_balance' => round($custodyBalance, 2),
+            'pending_settlement_amount' => round($pendingSettlementAmount, 2),
+            'approved_settlement_amount' => round($approvedSettlementAmount, 2),
             'from' => $from?->toDateString(),
             'to' => $to->toDateString(),
         ];
+    }
+
+    public function movement(int $driverId, string $movementType, int $recordId): ?object
+    {
+        if (!in_array($movementType, ['collection', 'settlement', 'correction', 'refund'], true)) {
+            return null;
+        }
+
+        return DB::query()
+            ->fromSub($this->baseMovements($driverId), 'ledger')
+            ->where('movement_type', $movementType)
+            ->where('record_id', $recordId)
+            ->first();
     }
 
     public function balanceForOrder(int $orderId, int $driverId): float
@@ -189,7 +223,7 @@ class DriverCustodyLedger
                 CAST(COALESCE(NULLIF(p.captured, 0), p.amount) AS DECIMAL(12,2)) / 100 as amount,
                 o.id as order_id,
                 o.code as order_code,
-                s.id as settlement_id,
+                COALESCE(s.batch_id, s.id) as settlement_id,
                 s.status as settlement_status,
                 COALESCE(p.description, p.source_message) as details,
                 'collection' as source_movement_type,
@@ -210,7 +244,7 @@ class DriverCustodyLedger
                 -s.amount as amount,
                 o.id as order_id,
                 o.code as order_code,
-                s.id as settlement_id,
+                COALESCE(s.batch_id, s.id) as settlement_id,
                 s.status as settlement_status,
                 CONCAT('توريد معتمد: ', s.recipient_name) as details,
                 'settlement' as source_movement_type,
@@ -232,7 +266,7 @@ class DriverCustodyLedger
                 c.amount as amount,
                 o.id as order_id,
                 o.code as order_code,
-                s.id as settlement_id,
+                COALESCE(s.batch_id, s.id) as settlement_id,
                 s.status as settlement_status,
                 CONCAT('تصحيح STL-', s.id, ': ', c.reason, ' — ', COALESCE(a.name, '')) as details,
                 'settlement' as source_movement_type,
@@ -271,7 +305,7 @@ class DriverCustodyLedger
                 END AS DECIMAL(12,2)) as amount,
                 o.id as order_id,
                 o.code as order_code,
-                c.settlement_id as settlement_id,
+                COALESCE(s.batch_id, c.settlement_id) as settlement_id,
                 s.status as settlement_status,
                 CONCAT('تصحيح ', c.movement_type, '-', c.movement_id, ': ', c.reason, ' — ', COALESCE(a.name, '')) as details,
                 c.movement_type as source_movement_type,
@@ -296,7 +330,10 @@ class DriverCustodyLedger
                 -r.amount as amount,
                 o.id as order_id,
                 o.code as order_code,
-                r.settlement_id as settlement_id,
+                COALESCE(
+                    (SELECT s_batch.batch_id FROM order_settlements s_batch WHERE s_batch.id = r.settlement_id),
+                    r.settlement_id
+                ) as settlement_id,
                 (SELECT s.status FROM order_settlements s WHERE s.id = r.settlement_id) as settlement_status,
                 r.note as details,
                 'refund' as source_movement_type,

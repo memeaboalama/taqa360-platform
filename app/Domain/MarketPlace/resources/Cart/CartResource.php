@@ -28,7 +28,9 @@ class CartResource extends JsonResource
             'branchData' => $this->branch,
             'payment_summary' => [
                 'subtotal' => $this->subtotal,
+                'vat_rate' => $this->vat_rate,
                 'vat' => number_format($this->tax,2),
+                'vat_included' => false,
                 'delivery_fees' => (number_format($this->service_type_id==2 ? 0 : ($this->delivery_fee??0) ,2) - $this->deliveryFeeDiscount??0),
                 'delivery_distance' => $this->deliveryDistance,
                 'delivery_fee_discount' => $this->deliveryFeeDiscount??0,

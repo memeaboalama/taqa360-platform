@@ -1,6 +1,6 @@
 <div>
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4>@lang('admin::home.settlement_review') STL-{{ $settlement->id }}</h4>
+        <h4>@lang('admin::home.settlement_review') STL-{{ $settlement->batch_number }}</h4>
         <a href="{{ route('admin:driver-settlements.index') }}" class="btn btn-outline-secondary">@lang('admin::home.back_to_settlements')</a>
     </div>
 
@@ -10,20 +10,22 @@
                 <div class="card-header"><h6 class="mb-0">@lang('admin::home.settlement_details')</h6></div>
                 <div class="card-body">
                     <dl class="row mb-0">
-                        <dt class="col-sm-4">@lang('admin::home.order')</dt>
+                        <dt class="col-sm-4">@lang('admin::home.settlement_orders')</dt>
                         <dd class="col-sm-8">
-                            <a href="{{ route('admin:merchant.orders.showOrder', $settlement->order_id) }}">
-                                #{{ $settlement->order?->code }}
-                            </a>
+                            @foreach($settlements as $item)
+                                <a class="d-block" href="{{ route('admin:merchant.orders.showOrder', $item->order_id) }}">
+                                    #{{ $item->order?->code }} — {{ number_format($item->amount, 2) }} SAR
+                                </a>
+                            @endforeach
                         </dd>
                         <dt class="col-sm-4">@lang('admin::home.driver_name')</dt>
                         <dd class="col-sm-8">{{ $settlement->driver?->name ?? '—' }}</dd>
                         <dt class="col-sm-4">@lang('admin::home.recipient')</dt>
                         <dd class="col-sm-8">{{ __('admin::home.' . ($settlement->recipient === 'merchant' ? 'merchant_recipient' : 'platform_recipient')) }} — {{ $settlement->recipient_name }}</dd>
                         <dt class="col-sm-4">@lang('admin::home.total_amount')</dt>
-                        <dd class="col-sm-8 fw-bold">{{ number_format($settlement->amount, 2) }} SAR</dd>
-                        <dt class="col-sm-4">@lang('admin::home.order_total')</dt>
-                        <dd class="col-sm-8">{{ number_format($settlement->order?->total_after_vat ?? 0, 2) }} SAR</dd>
+                        <dd class="col-sm-8 fw-bold">{{ number_format($batchAmount, 2) }} SAR</dd>
+                        <dt class="col-sm-4">@lang('admin::home.supply_date')</dt>
+                        <dd class="col-sm-8">{{ $settlement->supply_date?->toDateString() ?? '—' }}</dd>
                         <dt class="col-sm-4">@lang('admin::home.collected_amount')</dt>
                         <dd class="col-sm-8">{{ number_format($collectedAmount, 2) }} SAR</dd>
                         <dt class="col-sm-4">@lang('admin::home.payment_number')</dt>
@@ -34,9 +36,9 @@
                         <dd class="col-sm-8">{{ $settlement->reference ?: '—' }}</dd>
                         <dt class="col-sm-4">@lang('admin::home.settlement_status')</dt>
                         <dd class="col-sm-8">@lang('admin::home.settlement_status_' . $settlement->status)</dd>
-                        @if($settlement->received_amount !== null)
+                        @if($batchReceivedAmount > 0)
                             <dt class="col-sm-4">@lang('admin::home.actual_received_amount')</dt>
-                            <dd class="col-sm-8">{{ number_format($settlement->received_amount, 2) }} SAR</dd>
+                            <dd class="col-sm-8">{{ number_format($batchReceivedAmount, 2) }} SAR</dd>
                             <dt class="col-sm-4">@lang('admin::home.received_at')</dt>
                             <dd class="col-sm-8">{{ $settlement->received_at?->format('Y-m-d H:i') ?? '—' }}</dd>
                             <dt class="col-sm-4">@lang('admin::home.received_by')</dt>
@@ -64,6 +66,7 @@
                         <table class="table table-sm table-bordered align-middle mb-0">
                             <thead>
                                 <tr>
+                                    <th>@lang('admin::home.order')</th>
                                     <th>@lang('admin::home.payment_number')</th>
                                     <th>@lang('admin::home.collected_amount')</th>
                                     <th>@lang('admin::home.driver_name')</th>
@@ -73,13 +76,14 @@
                             <tbody>
                                 @forelse($collections as $collection)
                                     <tr>
+                                        <td>#{{ $collection->order_code ?? '—' }}</td>
                                         <td>{{ $collection->payment_id }}</td>
                                         <td>{{ number_format((float) ($collection->captured ?: $collection->amount) / 100, 2) }} SAR</td>
                                         <td>{{ $collection->source_name ?: '—' }}</td>
                                         <td>{{ $collection->capturedAt ?: $collection->created_at?->format('Y-m-d H:i') ?: '—' }}</td>
                                     </tr>
                                 @empty
-                                    <tr><td colspan="4" class="text-center text-muted">@lang('admin::home.no_settlement_collections')</td></tr>
+                                    <tr><td colspan="5" class="text-center text-muted">@lang('admin::home.no_settlement_collections')</td></tr>
                                 @endforelse
                             </tbody>
                         </table>

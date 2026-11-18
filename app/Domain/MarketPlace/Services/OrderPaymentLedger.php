@@ -85,7 +85,7 @@ class OrderPaymentLedger
                 'method' => $this->paymentMethodLabel($order, $confirmedPayment),
                 'collector' => $this->collectorName($order, $confirmedPayment, $settlement),
                 'occurred_at' => $this->dateLabel($confirmedPayment->capturedAt ?: $confirmedPayment->created_at),
-                'settlement_number' => $settlement ? 'STL-' . $settlement->id : null,
+                'settlement_number' => $settlement ? 'STL-' . $settlement->batch_number : null,
                 'settlement_status' => $settlement?->status,
                 'details' => $confirmedPayment->description ?: $confirmedPayment->source_message,
             ];
@@ -108,7 +108,7 @@ class OrderPaymentLedger
                     ?: __('ecommerce::ecommerce.admin_collector'),
                 'occurred_at' => $this->dateLabel($refund->executed_at ?: $refund->created_at),
                 'settlement_number' => $refund->settlement_id
-                    ? 'STL-' . $refund->settlement_id
+                    ? 'STL-' . ($refund->settlement?->batch_number ?? $refund->settlement_id)
                     : null,
                 'settlement_status' => $refund->settlement?->status,
                 'details' => trim(implode(' · ', array_filter([
@@ -131,7 +131,7 @@ class OrderPaymentLedger
                 'collector' => $correction->approvedBy?->name ?: __('ecommerce::ecommerce.admin_collector'),
                 'occurred_at' => $this->dateLabel($correction->approved_at),
                 'settlement_number' => $correction->settlement_id
-                    ? 'STL-' . $correction->settlement_id
+                    ? 'STL-' . ($correction->settlement?->batch_number ?? $correction->settlement_id)
                     : null,
                 'settlement_status' => $correction->settlement?->status,
                 'details' => sprintf(
@@ -170,7 +170,7 @@ class OrderPaymentLedger
             'settlement_status' => !$settlement || in_array($settlement->status, ['returned', 'rejected'], true)
                 ? 'not_submitted'
                 : ($settlement->status === 'approved' ? 'approved' : 'pending_review'),
-            'settlement_number' => $settlement ? 'STL-' . $settlement->id : null,
+            'settlement_number' => $settlement ? 'STL-' . $settlement->batch_number : null,
             'collection_date' => $latestCollection
                 ? $this->dateLabel($latestCollection->capturedAt ?: $latestCollection->created_at)
                 : null,

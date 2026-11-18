@@ -115,9 +115,9 @@ class CartController extends Controller
             ]);
 
             $deleteItemCartAction->removeV2($validated);
+            $cart = $cartAction->handle();
 
             if ($request->ajax() || $request->wantsJson()) {
-                $cart = $cartAction->handle();
                 return response()->json([
                     'success' => true,
                     'message' => __('ecommerce::ecommerce.cart.item_removed_success'),
@@ -125,6 +125,10 @@ class CartController extends Controller
                     'cart_total' => number_format((float) ($cart?->total ?? 0), 2),
                     'cart_empty' => !$cart || $cart->cartItems->isEmpty(),
                 ]);
+            }
+
+            if (!$cart || $cart->cartItems->isEmpty()) {
+                return redirect()->route('cart.index')->with('success', __('ecommerce::ecommerce.cart.item_removed_success'));
             }
 
             return redirect()->back()->with('success', __('ecommerce::ecommerce.cart.item_removed_success'));

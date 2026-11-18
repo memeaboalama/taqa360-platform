@@ -14,6 +14,8 @@ use App\Domain\ElmApp\Actions\Order\UpdateOrderStatusAction;
 use App\Domain\Employee\Actions\Order\UpdateElmStatusAction;
 use App\Domain\MarketPlace\Actions\Api\Order\LogOrderHistoryAction;
 use App\Domain\MarketPlace\Models\MerchantOrder;
+use App\Domain\MarketPlace\Services\CollectionFailureWorkflow;
+use App\Domain\MarketPlace\Services\OrderPaymentLedger;
 use App\Domain\MarketPlace\Models\MerchantOrderHistory;
 
 use App\Domain\Notification\Jobs\User\SendNotifyOrderToUser;
@@ -181,7 +183,32 @@ class OrderController extends Controller
 
                 unset($data['order_id']);
 
-                $order = $updateOrderStatusAction->handle($order->id, $data, $driver_auth_user, "Driver order completed");
+                if (MerchantOrder::isCashOnDeliveryMethod($order->payment_method)) {
+                    if (!$request->boolean('delivery_acknowledged') || !$request->boolean('collection_acknowledged')) {
+                        return $this->errorResponse(422, 'يجب تأكيد تسليم الطلب وتحصيل المبلغ كاملًا قبل إكمال الطلب.');
+                    }
+
+                    $order = app(CollectionFailureWorkflow::class)->completeDeliveryAndCollection(
+                        $order->id,
+                        (int) $driver_auth_id,
+                        $driver_auth_user,
+                        true,
+                        true
+                    );
+                } elseif (app(OrderPaymentLedger::class)->forOrder($order)['payment_status'] === 'paid') {
+                    if (!$request->boolean('delivery_acknowledged')) {
+                        return $this->errorResponse(422, 'يجب تأكيد تسليم الطلب المدفوع مسبقًا قبل إكماله.');
+                    }
+
+                    $order = app(CollectionFailureWorkflow::class)->completePrepaidDelivery(
+                        $order->id,
+                        (int) $driver_auth_id,
+                        $driver_auth_user,
+                        true
+                    );
+                } else {
+                    $order = $updateOrderStatusAction->handle($order->id, $data, $driver_auth_user, "Driver order completed");
+                }
                 // $order->update(['status' => $data["status"]]);
                 TempOrder::query()
                     ->where('driver_id', $driver_auth_id)

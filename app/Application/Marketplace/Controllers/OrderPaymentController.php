@@ -12,6 +12,7 @@ use App\Domain\MarketPlace\Actions\Order\OrderAction;
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use App\Domain\Notification\Jobs\Merchant\SendNotifyOrder;
 use App\Http\Controllers\Controller;
+use App\Support\Enum\ChannelTypesEnum;
 use App\Support\Enum\StatusEnum;
 use Domain\AppBase\Models\Payment;
 use Illuminate\Http\Request;
@@ -54,21 +55,12 @@ class OrderPaymentController extends Controller
 
     public function payment_check(Request $request, PaymentAction $paymentAction, OrderAction $orderAction): \Illuminate\Http\RedirectResponse
     {
+        $orderId = Session::get('payment_merchant_iframe.order_id');
         // Log::channel('daily')->info("OrderPaymentController payment_status".$request.);
         try {
             $data = $paymentAction->check($request->all());
             $res = Session::get('payment_merchant_iframe');
-            // $sessinData=$res->all();
-            // if($sessinData&&$sessinData['order_id'])
-            // $orderId=$sessinData['order_id'];
-            // if($res->has('order_id'))
-            // $orderId=$res->get('order_id');
-            //     if($res)
-            //     {
-            //         Log::channel('slack')->error("payment_check Session  data : {" .json_encode($res)."}");
-            // }
-            if ($res && $res['order_id'])
-                $orderId = $res['order_id'];
+            $orderId = $res['order_id'] ?? $orderId;
             if ($data && $data->status == 'paid')
                 return $this->test_payment_status('success', $data->payable_id ?? $orderId, $orderAction);
             else if ($data)
@@ -78,6 +70,10 @@ class OrderPaymentController extends Controller
         } catch (Exception $exception) {
             Log::error($exception);
             Log::channel('slack')->error("payment_check Moyasar  data : {" . json_encode($request->all()) . "}");
+            $order = $orderId ? $orderAction->getById($orderId) : null;
+            if ($order && $order->channel === ChannelTypesEnum::WEB->value) {
+                return redirect()->route('checkout.success', ['orderId' => $order->id]);
+            }
             return Redirect::to(config('app.url')."/payment-done?&order_id=&confirm=failed");
         }
     }
@@ -87,6 +83,9 @@ class OrderPaymentController extends Controller
         if (isset($id)) {
             $order = $orderAction->getById($id);
             if ($status == 'failed' || !$order) {
+                if ($order && $order->channel === ChannelTypesEnum::WEB->value) {
+                    return redirect()->route('checkout.success', ['orderId' => $order->id]);
+                }
                 return Redirect::to(config('app.url')."/payment-done?&order_id=" . $id . "&confirm=failed");
             } else {
                 // $order = $orderAction->update($id, MerchantOrderStatuses::PENDING->value)??$order;
@@ -101,6 +100,9 @@ class OrderPaymentController extends Controller
                 } catch (\Exception $exception) {
                     dd($exception->getMessage());
                     Log::error($exception);
+                }
+                if ($order->channel === ChannelTypesEnum::WEB->value) {
+                    return redirect()->route('checkout.success', ['orderId' => $order->id]);
                 }
                 return Redirect::to(config('app.url')."/payment-done?&order_id=$id&confirm=done");
             }

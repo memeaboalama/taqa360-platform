@@ -730,19 +730,23 @@
                 <div class="user-info">
                     <h3>{{ $user->name }}</h3>
                     <p class="ltr">{{ $user->email }}</p>
+                    {{--
                     <div class="user-balance">
                         <i class="ti-wallet"></i>
                         <span class="amount">{{ number_format($user->balance, 2) }}</span>
                         <small>SAR</small>
                     </div>
+                    --}}
                 </div>
             </div>
 
             <!-- Action Buttons -->
             <div class="action-buttons">
+                {{--
                 <a href="{{ route('account.wallet.deposit') }}" up-target=".dashboard-content" class="btn-header btn-primary">
                     <i class="ti-plus"></i> @lang('ecommerce::ecommerce.deposit_funds')
                 </a>
+                --}}
                 <form action="{{ route('logout') }}" method="POST" up-target=".main-body" style="margin: 0;">
                     @csrf
                     <button type="submit" class="btn-header">
@@ -782,6 +786,7 @@
                 <i class="ti-location-pin"></i>
                 <span>@lang('ecommerce::ecommerce.addresses')</span>
             </a>
+            {{--
             <a href="{{ route('account.wallet.index') }}"
                class="account-tab-link"
                up-target=".dashboard-content"
@@ -789,6 +794,7 @@
                 <i class="ti-wallet"></i>
                 <span>@lang('ecommerce::ecommerce.my_wallet')</span>
             </a>
+            --}}
         </div>
 
         <div class="dashboard-content">

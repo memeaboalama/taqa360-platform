@@ -488,6 +488,7 @@
 
 
 
+                {{--
                 <li class="slide has-sub {{ isActiveSection([url('admin/wallet/coupon'), url('admin/wallet/users')]) }}">
                     <a href="javascript:void(0);" class="side-menu__item {{ isActiveSection([url('admin/wallet/coupon'), url('admin/wallet/users')]) ? 'active' : '' }}">
                         <i class="bx bxs-wallet-alt side-menu__icon"></i>
@@ -513,6 +514,7 @@
                         @endAdminHasRole
                     </ul>
                 </li>
+                --}}
                 @AdminHasRole(['show_refundpayments', 'create_refundpayments', 'show_roles'])
                     <li class="slide">
                         <a href="{{ url('admin/refundPayment') }}" class="side-menu__item {{ isActive(url('admin/refundPayment')) }}">

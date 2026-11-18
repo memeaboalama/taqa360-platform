@@ -200,13 +200,31 @@
                                                             </button>
                                                         </form>
                                                     @elseif($statusVal === 'on-way')
-                                                        <form action="{{ route('driver:orders.updateStatus', $order->id) }}" method="POST" class="d-inline order-action-form">
-                                                            @csrf
-                                                            <input type="hidden" name="status" value="completed">
-                                                            <button type="submit" class="btn btn-sm btn-success">
-                                                                <i class="ri-checkbox-circle-line me-1"></i> تم التسليم
+                                                        @if(\App\Domain\MarketPlace\Models\MerchantOrder::isCashOnDeliveryMethod($order->payment_method))
+                                                            <button type="button" class="btn btn-sm btn-success"
+                                                                    onclick="Livewire.emit('showOrderDetails', {{ $order->id }})">
+                                                                <i class="ri-checkbox-circle-line me-1"></i> تأكيد التسليم والتحصيل
                                                             </button>
-                                                        </form>
+                                                                @if(\App\Domain\MarketPlace\Models\MerchantOrder::resolvePaymentStatus($order->payment, 'unpaid', $order->payment_method) !== 'paid')
+                                                                    <button type="button" class="btn btn-sm btn-outline-warning"
+                                                                            onclick="Livewire.emit('showCollectionFailure', {{ $order->id }})">
+                                                                        تعذر التحصيل
+                                                                    </button>
+                                                                @endif
+                                                        @elseif(\App\Domain\MarketPlace\Models\MerchantOrder::resolvePaymentStatus($order->payment, 'unpaid', $order->payment_method) === 'paid')
+                                                            <button type="button" class="btn btn-sm btn-success"
+                                                                    onclick="Livewire.emit('showOrderDetails', {{ $order->id }})">
+                                                                <i class="ri-checkbox-circle-line me-1"></i> تأكيد التسليم
+                                                            </button>
+                                                        @else
+                                                            <form action="{{ route('driver:orders.updateStatus', $order->id) }}" method="POST" class="d-inline order-action-form">
+                                                                @csrf
+                                                                <input type="hidden" name="status" value="completed">
+                                                                <button type="submit" class="btn btn-sm btn-success">
+                                                                    <i class="ri-checkbox-circle-line me-1"></i> تم التسليم
+                                                                </button>
+                                                            </form>
+                                                        @endif
                                                     @elseif($statusVal === 'completed')
                                                         <button type="button" class="btn btn-sm btn-success" disabled>
                                                             <i class="ri-checkbox-circle-line me-1"></i> {{ __('driver::home.order_status_completed') }}
@@ -285,6 +303,10 @@
         modalEl.querySelectorAll('[data-bs-dismiss="modal"]').forEach(function (btn) {
             btn.disabled = true;
         });
+    });
+
+    window.addEventListener('driver-order-delivery-completed', function () {
+        window.location.reload();
     });
 </script>
 @endpush

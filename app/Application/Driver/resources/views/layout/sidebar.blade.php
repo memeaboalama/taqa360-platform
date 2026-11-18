@@ -37,7 +37,7 @@
                     <a href="{{ route('driver:my-custody') }}"
                        class="side-menu__item {{ isActive(route('driver:my-custody')) }}">
                         <i class="bx bx-wallet side-menu__icon"></i>
-                        <span class="side-menu__label">{{ __('driver::home.my_custody') }}</span>
+                        <span class="side-menu__label">{{ __('driver::home.collected_amounts') }}</span>
                     </a>
                 </li>
                 <li class="slide">

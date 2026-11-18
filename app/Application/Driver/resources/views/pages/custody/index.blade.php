@@ -4,7 +4,6 @@
 
 @section('content')
     <div class="col-12">
-        <livewire:admin::driver-custody.statement :driver="$driver" />
+        <livewire:driver::custody.statement />
     </div>
-    <livewire:driver::home.order.modal.show />
 @endsection

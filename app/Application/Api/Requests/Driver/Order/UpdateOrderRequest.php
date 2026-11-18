@@ -33,7 +33,8 @@ class UpdateOrderRequest extends FormRequest
         return [
             'order_id' => ['required', Rule::exists('merchant_orders', 'id')],
             'status' => ['required','in:'.implode(',',[MerchantOrderStatuses::ON_WAY->value,MerchantOrderStatuses::PREVIOUS->value,"accept","reject"])],
-
+            'delivery_acknowledged' => ['sometimes', 'boolean'],
+            'collection_acknowledged' => ['sometimes', 'boolean'],
 
         ];
     }

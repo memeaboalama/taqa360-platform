@@ -10,6 +10,7 @@ use App\Domain\MarketPlace\Models\MerchantOrder;
 use App\Domain\MarketPlace\Services\OrderPaymentLedger;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -20,7 +21,7 @@ class Show extends Component
 {
     use LivewireAlert, WithFileUploads;
 
-    public $listeners = ['showOrderDetails'];
+    public $listeners = ['showOrderDetails', 'showCollectionFailure'];
 
     public array $order = [];
     public array $items = [];
@@ -29,7 +30,11 @@ class Show extends Component
     public $settlementProof;
     public string $collectionFailureReason = '';
     public string $collectionFailureNote = '';
+    public bool $showCollectionFailureForm = false;
     public string $retryFailureNote = '';
+    public bool $deliveryAcknowledged = false;
+    public bool $collectionAcknowledged = false;
+    public bool $requiresCollectionConfirmation = false;
 
     public function showOrderDetails($orderId): void
     {
@@ -88,11 +93,15 @@ class Show extends Component
             'payment_method' => $order->payment_method,
             'payment_status' => $paymentLedger['payment_status'],
             'payment_label' => $paymentLedger['payment_label'],
+            'collection_remaining' => $paymentLedger['remaining'],
+            'prepaid_amount' => $paymentLedger['collected'],
+            'prepaid_method' => $paymentLedger['payment_method'],
+            'prepaid_reference' => $paymentLedger['payment']?->payment_id,
             'collection_config' => $order->collection_config ?? [],
             'settlement_status' => $order->settlement?->status,
             'settlement_method' => $order->settlement?->method,
             'settlement_custody' => $order->settlement ? 'لدى السائق' : null,
-            'settlement_id' => $order->settlement?->id,
+            'settlement_id' => $order->settlement?->batch_number,
             'settlement_reference' => $order->settlement?->reference,
             'settlement_amount' => $order->settlement?->amount,
             'settlement_recipient_name' => $order->settlement?->recipient_name,
@@ -112,7 +121,10 @@ class Show extends Component
                     'created_at' => $history->created_at?->format('Y-m-d H:i'),
                 ])
                 ->all() ?? [],
-            'collection_failure_report' => $order->collectionFailureReports()->with('histories.actor')->first()?->toArray(),
+            'collection_failure_report' => $order->collectionFailureReports()
+                ->with('histories.actor')
+                ->latest('id')
+                ->first()?->toArray(),
             'payment_source_name' => $order->payment?->source_name,
             'note' => $order->note,
             'order_type' => $order->type_service_name(),
@@ -125,6 +137,12 @@ class Show extends Component
             ?? ($this->order['collection_config']['enabled_methods'][0] ?? null);
         $this->settlementReference = $this->order['settlement_reference'];
         $this->settlementProof = null;
+        $this->deliveryAcknowledged = false;
+        $this->collectionAcknowledged = false;
+        $this->collectionFailureReason = '';
+        $this->collectionFailureNote = '';
+        $this->showCollectionFailureForm = false;
+        $this->requiresCollectionConfirmation = $paymentLedger['payment_status'] !== 'paid';
 
         $this->items = $order->orderItems->map(function ($item) {
             $addons = collect($item->orderChoices)
@@ -144,6 +162,18 @@ class Show extends Component
         $this->emit('openModal', '#showOrderDetailsModal');
     }
 
+    public function showCollectionFailure($orderId): void
+    {
+        $this->showOrderDetails($orderId);
+
+        if (($this->order['status_value'] ?? null) === MerchantOrderStatuses::ON_WAY->value
+            && MerchantOrder::isCashOnDeliveryMethod($this->order['payment_method'] ?? null)
+            && ($this->order['payment_status'] ?? null) !== 'paid'
+            && empty($this->order['collection_failure_report'])) {
+            $this->showCollectionFailureForm = true;
+        }
+    }
+
     public function refreshPaymentStatus(): void
     {
         $orderId = $this->order['id'] ?? null;
@@ -160,12 +190,18 @@ class Show extends Component
         $paymentLedger = app(OrderPaymentLedger::class)->forOrder($order);
         $this->order['payment_status'] = $paymentLedger['payment_status'];
         $this->order['payment_label'] = $paymentLedger['payment_label'];
+        $this->order['collection_remaining'] = $paymentLedger['remaining'];
+        $this->order['prepaid_amount'] = $paymentLedger['collected'];
+        $this->order['prepaid_method'] = $paymentLedger['payment_method'];
+        $this->order['prepaid_reference'] = $paymentLedger['payment']?->payment_id;
+        $this->order['total_after_discount'] = $order->total_after_discount;
+        $this->requiresCollectionConfirmation = $paymentLedger['payment_status'] !== 'paid';
         $this->order['settlement_status'] = $order->settlement?->status;
         $this->order['settlement_method'] = $order->settlement?->method;
         $this->order['settlement_custody'] = $order->settlement ? 'لدى السائق' : null;
         $this->order['settlement_reference'] = $order->settlement?->reference;
         $this->order['settlement_amount'] = $order->settlement?->amount;
-        $this->order['settlement_id'] = $order->settlement?->id;
+        $this->order['settlement_id'] = $order->settlement?->batch_number;
         $this->order['settlement_history'] = $order->settlement?->histories()
             ->with('actor')
             ->get()
@@ -184,6 +220,7 @@ class Show extends Component
             && $paymentLedger['payment_status'] === 'paid';
         $this->order['collection_failure_report'] = $order->collectionFailureReports()
             ->with('histories.actor')
+            ->latest('id')
             ->first()?->toArray();
     }
 
@@ -195,21 +232,44 @@ class Show extends Component
         }
 
         $data = $this->validate([
-            'collectionFailureReason' => ['required', 'string', 'max:1000'],
-            'collectionFailureNote' => ['nullable', 'string', 'max:2000'],
+            'collectionFailureReason' => ['required', Rule::in(CollectionFailureWorkflow::REASONS)],
+            'collectionFailureNote' => ['required_if:collectionFailureReason,other', 'nullable', 'string', 'max:2000'],
         ]);
-        $report = $workflow->report(
-            (int) $this->order['id'],
-            (int) $driver->id,
-            $data['collectionFailureReason'],
-            $data['collectionFailureNote'] ?: null,
-            $driver
-        );
+        try {
+            $report = $workflow->report(
+                (int) $this->order['id'],
+                (int) $driver->id,
+                $data['collectionFailureReason'],
+                $data['collectionFailureNote'] ?: null,
+                $driver
+            );
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $message = collect($exception->errors())->flatten()->first() ?: $exception->getMessage();
+            $this->alert('warning', $message);
+            return;
+        } catch (\Throwable $exception) {
+            Log::error('Driver collection failure report submission failed.', [
+                'order_id' => $this->order['id'],
+                'driver_id' => $driver->id,
+                'exception' => $exception,
+            ]);
+            $this->alert('error', 'تعذر إرسال بلاغ تعذر التحصيل. لم تُسجل حركة مالية؛ حاول مرة أخرى.');
+            return;
+        }
+
         $report->load('histories.actor');
         $this->collectionFailureReason = '';
         $this->collectionFailureNote = '';
+        $this->showCollectionFailureForm = false;
         $this->order['collection_failure_report'] = $report->toArray();
         $this->alert('success', 'تم إرسال بلاغ تعذر التحصيل للإدارة.');
+    }
+
+    public function cancelCollectionFailure(): void
+    {
+        $this->collectionFailureReason = '';
+        $this->collectionFailureNote = '';
+        $this->showCollectionFailureForm = false;
     }
 
     public function confirmRetryCollection(CollectionFailureWorkflow $workflow): void
@@ -244,6 +304,99 @@ class Show extends Component
 
         $this->refreshPaymentStatus();
         $this->alert('success', 'تم تأكيد استلام المبلغ وتسجيل التحصيل.');
+    }
+
+    public function confirmDeliveryAndCollection(CollectionFailureWorkflow $workflow): void
+    {
+        $driver = auth('driver')->user();
+        $orderId = $this->order['id'] ?? null;
+        if (!$driver || !$orderId) {
+            abort(403);
+        }
+
+        $rules = [
+            'deliveryAcknowledged' => ['accepted'],
+            'collectionAcknowledged' => $this->requiresCollectionConfirmation
+                ? ['accepted']
+                : ['nullable', 'boolean'],
+        ];
+        $this->validate($rules);
+
+        try {
+            $order = $workflow->completeDeliveryAndCollection(
+                (int) $orderId,
+                (int) $driver->id,
+                $driver,
+                $this->deliveryAcknowledged,
+                $this->collectionAcknowledged
+            );
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $message = collect($exception->errors())->flatten()->first() ?: $exception->getMessage();
+            $this->alert('warning', $message);
+            return;
+        } catch (\Throwable $exception) {
+            Log::error('Driver delivery and collection confirmation failed.', [
+                'order_id' => $orderId,
+                'driver_id' => $driver->id,
+                'exception' => $exception,
+            ]);
+            $this->alert('error', 'تعذر حفظ تأكيد التسليم والتحصيل. لم يتم تغيير حالة الطلب؛ حاول مرة أخرى.');
+            return;
+        }
+
+        $status = $order->status instanceof MerchantOrderStatuses
+            ? $order->status
+            : MerchantOrderStatuses::tryFrom((string) $order->status);
+        $this->order['status_value'] = $status?->value;
+        $this->order['status_trans'] = $status?->trans() ?? (string) $order->status;
+        $this->order['status_color'] = $status?->color() ?? 'secondary';
+        $this->refreshPaymentStatus();
+        $this->alert('success', 'تم تأكيد التسليم والتحصيل وإكمال الطلب.');
+        $this->dispatchBrowserEvent('driver-order-delivery-completed', ['orderId' => (int) $orderId]);
+    }
+
+    public function confirmPrepaidDelivery(CollectionFailureWorkflow $workflow): void
+    {
+        $driver = auth('driver')->user();
+        $orderId = $this->order['id'] ?? null;
+        if (!$driver || !$orderId) {
+            abort(403);
+        }
+
+        $this->validate([
+            'deliveryAcknowledged' => ['accepted'],
+        ]);
+
+        try {
+            $order = $workflow->completePrepaidDelivery(
+                (int) $orderId,
+                (int) $driver->id,
+                $driver,
+                $this->deliveryAcknowledged
+            );
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $message = collect($exception->errors())->flatten()->first() ?: $exception->getMessage();
+            $this->alert('warning', $message);
+            return;
+        } catch (\Throwable $exception) {
+            Log::error('Driver prepaid delivery confirmation failed.', [
+                'order_id' => $orderId,
+                'driver_id' => $driver->id,
+                'exception' => $exception,
+            ]);
+            $this->alert('error', 'تعذر حفظ تأكيد التسليم. لم يتم تغيير حالة الطلب؛ حاول مرة أخرى.');
+            return;
+        }
+
+        $status = $order->status instanceof MerchantOrderStatuses
+            ? $order->status
+            : MerchantOrderStatuses::tryFrom((string) $order->status);
+        $this->order['status_value'] = $status?->value;
+        $this->order['status_trans'] = $status?->trans() ?? (string) $order->status;
+        $this->order['status_color'] = $status?->color() ?? 'secondary';
+        $this->refreshPaymentStatus();
+        $this->alert('success', 'تم تأكيد تسليم الطلب المدفوع مسبقًا.');
+        $this->dispatchBrowserEvent('driver-order-delivery-completed', ['orderId' => (int) $orderId]);
     }
 
     public function reportRetryFailure(CollectionFailureWorkflow $workflow): void
@@ -302,7 +455,7 @@ class Show extends Component
         }
         $existingPayment = $order->payment()->latest('id')->first();
         $paymentLedger = app(OrderPaymentLedger::class)->forOrder($order);
-        $latestFailureReport = $order->collectionFailureReports()->first();
+        $latestFailureReport = $order->collectionFailureReports()->latest('id')->first();
         if (in_array($latestFailureReport?->status, ['open', 'retry_requested', 'return_requested', 'return_completed'], true)) {
             $this->alert('warning', 'أكمل معالجة بلاغ تعذر التحصيل قبل إرسال التسوية.');
             return;
@@ -382,6 +535,7 @@ class Show extends Component
             $settlement = $lockedOrder->settlement()->lockForUpdate()->first();
             $latestFailureReport = $lockedOrder->collectionFailureReports()
                 ->lockForUpdate()
+                ->latest('id')
                 ->first();
             if (in_array($latestFailureReport?->status, ['open', 'retry_requested', 'return_requested', 'return_completed'], true)) {
                 return null;

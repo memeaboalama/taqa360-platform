@@ -32,6 +32,12 @@ class Show extends Component
         $this->settlementId = $settlement->id;
         $this->receivedAt = now()->format('Y-m-d\TH:i');
         $this->receivedBy = auth('admin')->user()->name;
+        $this->receivedAmount = number_format(
+            (float) OrderSettlement::batchQuery($settlement->batch_number)->sum('amount'),
+            2,
+            '.',
+            ''
+        );
     }
 
     public function markReviewed(SettlementWorkflow $workflow): void
@@ -167,11 +173,17 @@ class Show extends Component
         $settlement = OrderSettlement::query()
             ->with(['driver', 'order', 'histories.actor'])
             ->findOrFail($this->settlementId);
-        $collections = $settlement->order
+        $settlements = OrderSettlement::batchQuery($settlement->batch_number)
+            ->with('order')
+            ->orderBy('id')
+            ->get();
+        $orderIds = $settlements->pluck('order_id');
+        $orders = $settlements->pluck('order')->filter()->keyBy('id');
+        $collections = $orderIds->isNotEmpty()
             ? Payment::query()
-                ->where('payable_id', $settlement->order_id)
+                ->whereIn('payable_id', $orderIds)
                 ->whereIn('payable_type', [
-                    $settlement->order->getMorphClass(),
+                    (new MerchantOrder())->getMorphClass(),
                     MerchantOrder::class,
                     'App\\Domain\\MarketPlace\\Models\\MerchantOrder',
                 ])
@@ -179,8 +191,14 @@ class Show extends Component
                 ->whereIn('status', ['paid', 'success'])
                 ->orderBy('id')
                 ->get()
-                ->groupBy('payment_id')
+                ->groupBy(fn (Payment $payment) => $payment->payable_id . ':' . $payment->payment_id)
                 ->map(fn ($records) => $records->last())
+                ->each(function (Payment $payment) use ($orders) {
+                    $payment->setAttribute(
+                        'order_code',
+                        $orders->get($payment->payable_id)?->code
+                    );
+                })
                 ->values()
             : collect();
         $correctionRequests = $this->correctionRequestQuery()
@@ -200,11 +218,15 @@ class Show extends Component
 
         return view('admin::livewire.settlement-review.show', [
             'settlement' => $settlement,
+            'settlements' => $settlements,
+            'orders' => $orders,
             'payment' => $collections->last(),
             'collections' => $collections,
             'collectedAmount' => round($collections->sum(
                 fn (Payment $record): float => (float) ($record->captured ?: $record->amount) / 100
             ), 2),
+            'batchAmount' => round((float) $settlements->sum('amount'), 2),
+            'batchReceivedAmount' => round((float) $settlements->sum('received_amount'), 2),
             'canReview' => CollectionSetting::adminCan('review'),
             'canApprove' => CollectionSetting::adminCan('approve'),
             'canCorrect' => CollectionSetting::adminCan('correct'),

@@ -16,7 +16,7 @@
                         <dt class="col-sm-4">@lang('admin::home.amount_due')</dt>
                         <dd class="col-sm-8">{{ number_format($report->order?->total_after_discount > 0 ? $report->order->total_after_discount : ($report->order?->total_after_vat ?? 0), 2) }} SAR</dd>
                         <dt class="col-sm-4">@lang('admin::home.collection_failure_reason')</dt>
-                        <dd class="col-sm-8">{{ $report->reason }}</dd>
+                        <dd class="col-sm-8">{{ $report->reason_label }}</dd>
                         <dt class="col-sm-4">@lang('admin::home.collection_failure_note')</dt>
                         <dd class="col-sm-8">{{ $report->driver_note ?: '—' }}</dd>
                         <dt class="col-sm-4">@lang('admin::home.created_at')</dt>

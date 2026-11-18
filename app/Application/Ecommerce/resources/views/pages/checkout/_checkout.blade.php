@@ -234,6 +234,7 @@
                         <div class="sidebar-group">
                             <label class="sidebar-label">@lang('ecommerce::ecommerce.payment_method')</label>
                             <div class="payment-options">
+                                {{--
                                 <label class="payment-option">
                                     <input type="radio" name="payment_method" value="wallet"
                                         {{ old('payment_method', 'wallet') == 'wallet' ? 'checked' : '' }}>
@@ -247,6 +248,7 @@
                                         <i class="fa fa-money pay-icon" style="color: var(--primary);"></i>
                                     </div>
                                 </label>
+                                --}}
 
                              {{--     <label class="payment-option">
                                     <input type="radio" name="payment_method" value="{{ \App\Support\Enum\PaymentMethod::MADA->value }}"

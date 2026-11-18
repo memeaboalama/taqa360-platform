@@ -52,15 +52,22 @@ class Index extends Component
 
         $settlements = OrderSettlement::query()
             ->with(['driver', 'order', 'histories'])
+            ->where(function ($query) {
+                $query->whereNull('batch_id')->orWhereColumn('batch_id', 'id');
+            })
             ->when($this->search !== '', function ($query) {
                 $search = trim($this->search);
                 $settlementId = preg_replace('/^STL-/i', '', $search);
 
                 $query->where(function ($query) use ($search, $settlementId) {
                     if (ctype_digit($settlementId)) {
-                        $query->where('id', (int) $settlementId);
+                        $query->where('id', (int) $settlementId)
+                            ->orWhere('batch_id', (int) $settlementId);
                     }
                     $query->orWhereHas('order', function ($query) use ($search) {
+                        $query->where('code', 'like', '%' . $search . '%')
+                            ->orWhere('id', $search);
+                    })->orWhereHas('batchMembers.order', function ($query) use ($search) {
                         $query->where('code', 'like', '%' . $search . '%')
                             ->orWhere('id', $search);
                     });
@@ -71,7 +78,20 @@ class Index extends Component
             ->when($this->to !== '', fn ($query) => $query->whereDate('created_at', '<=', $this->to))
             ->when($this->status !== '', fn ($query) => $query->where('status', $this->status))
             ->latest('id')
-            ->paginate(25);
+            ->paginate(25)
+            ->through(function (OrderSettlement $settlement) {
+                $members = OrderSettlement::batchQuery($settlement->batch_number)
+                    ->with(['order', 'histories'])
+                    ->get();
+                $settlement->setAttribute('batch_amount', round((float) $members->sum('amount'), 2));
+                $settlement->setAttribute('batch_orders_count', $members->count());
+                $settlement->setAttribute(
+                    'batch_orders',
+                    $members->pluck('order.code')->filter()->values()->all()
+                );
+
+                return $settlement;
+            });
 
         return view('admin::livewire.settlement-review.index', [
             'settlements' => $settlements,

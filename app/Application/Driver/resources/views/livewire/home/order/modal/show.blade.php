@@ -163,7 +163,10 @@
                             </div>
 
                             @if(\App\Domain\MarketPlace\Models\MerchantOrder::isCashOnDeliveryMethod($order['payment_method'] ?? null)
-                                && ($order['status_value'] ?? null) === \App\Application\Marketplace\Enums\MerchantOrderStatuses::PREVIOUS->value)
+                                && in_array(($order['status_value'] ?? null), [
+                                    \App\Application\Marketplace\Enums\MerchantOrderStatuses::ON_WAY->value,
+                                    \App\Application\Marketplace\Enums\MerchantOrderStatuses::PREVIOUS->value,
+                                ], true))
                                 <div class="col-12">
                                     <div class="card custom-card shadow-none mb-0">
                                         <div class="card-header bg-white">
@@ -172,8 +175,59 @@
                                         <div class="card-body">
                                             @php($failureReport = $order['collection_failure_report'] ?? null)
                                             @php($collectionDue = ($order['total_after_discount'] ?? 0) > 0 ? $order['total_after_discount'] : ($order['total_after_vat'] ?? 0))
+                                            @if(($order['status_value'] ?? null) === \App\Application\Marketplace\Enums\MerchantOrderStatuses::ON_WAY->value
+                                                && (empty($failureReport) || $failureReport['status'] === 'collection_succeeded'))
+                                                <form class="alert alert-warning mb-3"
+                                                      wire:submit.prevent="confirmDeliveryAndCollection">
+                                                    <h6 class="fw-semibold">تأكيد التسليم والتحصيل</h6>
+                                                    <dl class="row mb-3">
+                                                        <dt class="col-sm-4">رقم الطلب</dt>
+                                                        <dd class="col-sm-8">#{{ $order['code'] }}</dd>
+                                                        <dt class="col-sm-4">طريقة الدفع</dt>
+                                                        <dd class="col-sm-8">{{ $order['payment_method'] }}</dd>
+                                                        <dt class="col-sm-4">المبلغ المتبقي</dt>
+                                                        <dd class="col-sm-8">{{ number_format($order['collection_remaining'] ?? 0, 2) }} SAR</dd>
+                                                    </dl>
+                                                    <label class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox"
+                                                               wire:model="deliveryAcknowledged">
+                                                        <span class="form-check-label">سلّمت الطلب</span>
+                                                    </label>
+                                                    @if($requiresCollectionConfirmation)
+                                                        <label class="form-check mb-3">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                   wire:model="collectionAcknowledged">
+                                                            <span class="form-check-label">حصّلت المبلغ كاملًا</span>
+                                                        </label>
+                                                    @else
+                                                        <div class="text-success mb-3">التحصيل مسجل مسبقًا.</div>
+                                                    @endif
+                                                    @error('deliveryAcknowledged') <div class="text-danger mb-2">{{ $message }}</div> @enderror
+                                                    @error('collectionAcknowledged') <div class="text-danger mb-2">{{ $message }}</div> @enderror
+                                                    <div class="d-flex gap-2">
+                                                        <button type="submit" class="btn btn-success"
+                                                                wire:loading.attr="disabled"
+                                                                wire:target="confirmDeliveryAndCollection"
+                                                                @if(!$deliveryAcknowledged || ($requiresCollectionConfirmation && !$collectionAcknowledged)) disabled @endif>
+                                                            <span wire:loading.remove wire:target="confirmDeliveryAndCollection">تأكيد التسليم والتحصيل</span>
+                                                            <span wire:loading wire:target="confirmDeliveryAndCollection">جارٍ الحفظ...</span>
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-secondary"
+                                                                data-bs-dismiss="modal">
+                                                            إلغاء
+                                                        </button>
+                                                        @if($requiresCollectionConfirmation && empty($failureReport))
+                                                            <button type="button" class="btn btn-outline-warning"
+                                                                    wire:click="$set('showCollectionFailureForm', true)">
+                                                                تعذر التحصيل
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                </form>
+                                            @endif
                                             @if(empty($order['has_driver_cod_collection'])
                                                 && ($order['payment_status'] ?? null) !== 'paid'
+                                                && ($order['status_value'] ?? null) === \App\Application\Marketplace\Enums\MerchantOrderStatuses::PREVIOUS->value
                                                 && empty($failureReport))
                                                 <div class="alert alert-warning">
                                                     <div class="fw-semibold">لم يُسجل تحصيل المبلغ بعد.</div>
@@ -189,8 +243,9 @@
                                                 <div class="alert alert-info">
                                                     <strong>@lang('driver::home.collection_failure_report')</strong>
                                                     <div>@lang('driver::home.collection_failure_status'): @lang('driver::home.collection_failure_status_' . $failureReport['status'])</div>
-                                                    <div>@lang('driver::home.collection_failure_reason'): {{ $failureReport['reason'] }}</div>
-                                                    @if($failureReport['admin_instructions'])
+                                                    @php($failureReasonKey = 'driver::home.collection_failure_reason_' . $failureReport['reason'])
+                                                    <div>@lang('driver::home.collection_failure_reason'): {{ \Illuminate\Support\Facades\Lang::has($failureReasonKey) ? __($failureReasonKey) : $failureReport['reason'] }}</div>
+                                                    @if(!empty($failureReport['admin_instructions']))
                                                         <div class="mt-1"><strong>@lang('driver::home.collection_failure_instructions'):</strong> {{ $failureReport['admin_instructions'] }}</div>
                                                     @endif
                                                     @foreach($failureReport['histories'] ?? [] as $history)
@@ -224,20 +279,47 @@
                                                     @endif
                                                 </div>
                                             @endif
-                                            @if(empty($order['has_driver_cod_collection'])
-                                                && (empty($failureReport) || !in_array($failureReport['status'], ['open', 'retry_requested', 'return_requested', 'return_completed'], true))
-                                                && ($order['payment_status'] ?? null) !== 'paid')
+
+                                            @if(($order['status_value'] ?? null) === \App\Application\Marketplace\Enums\MerchantOrderStatuses::ON_WAY->value
+                                                && ($order['payment_status'] ?? null) !== 'paid'
+                                                && empty($order['has_driver_cod_collection'])
+                                                && empty($failureReport)
+                                                && $showCollectionFailureForm)
                                                 <form class="border rounded p-3 mb-3" wire:submit.prevent="reportCollectionFailure">
                                                     <h6>@lang('driver::home.report_collection_failure')</h6>
+                                                    <dl class="row mb-3">
+                                                        <dt class="col-sm-4">@lang('driver::home.order_number')</dt>
+                                                        <dd class="col-sm-8">#{{ $order['code'] }}</dd>
+                                                        <dt class="col-sm-4">@lang('driver::home.amount_due')</dt>
+                                                        <dd class="col-sm-8">{{ number_format($order['collection_remaining'] ?? 0, 2) }} SAR</dd>
+                                                    </dl>
+                                                    <div class="alert alert-info py-2">
+                                                        @lang('driver::home.collection_failure_partial_payment_notice')
+                                                    </div>
                                                     <label class="form-label">@lang('driver::home.collection_failure_reason')</label>
-                                                    <input class="form-control mb-2" wire:model.defer="collectionFailureReason" maxlength="1000" required>
+                                                    <select class="form-select mb-2" wire:model="collectionFailureReason" required>
+                                                        <option value="">@lang('driver::home.select_collection_failure_reason')</option>
+                                                        <option value="payment_refused">@lang('driver::home.collection_failure_reason_payment_refused')</option>
+                                                        <option value="insufficient_amount">@lang('driver::home.collection_failure_reason_insufficient_amount')</option>
+                                                        <option value="unable_to_contact">@lang('driver::home.collection_failure_reason_unable_to_contact')</option>
+                                                        <option value="other">@lang('driver::home.collection_failure_reason_other')</option>
+                                                    </select>
                                                     @error('collectionFailureReason') <span class="text-danger">{{ $message }}</span> @enderror
                                                     <label class="form-label">@lang('driver::home.collection_failure_note')</label>
-                                                    <textarea class="form-control mb-2" wire:model.defer="collectionFailureNote" maxlength="2000"></textarea>
+                                                    <textarea class="form-control mb-2" wire:model.defer="collectionFailureNote"
+                                                              maxlength="2000"
+                                                              @if($collectionFailureReason === 'other') required @endif></textarea>
                                                     @error('collectionFailureNote') <span class="text-danger">{{ $message }}</span> @enderror
-                                                    <button type="submit" class="btn btn-outline-warning" wire:loading.attr="disabled">
-                                                        @lang('driver::home.submit_collection_failure_report')
-                                                    </button>
+                                                    <div class="d-flex gap-2">
+                                                        <button type="submit" class="btn btn-warning"
+                                                                wire:loading.attr="disabled" wire:target="reportCollectionFailure">
+                                                            @lang('driver::home.submit_collection_failure_report')
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-secondary"
+                                                                wire:click="cancelCollectionFailure">
+                                                            @lang('driver::home.cancel')
+                                                        </button>
+                                                    </div>
                                                 </form>
                                             @endif
                                             @if(!empty($order['settlement_status']))
@@ -353,6 +435,54 @@
                                                 <p class="text-danger mb-0">لم تُحفظ وسائل توريد مفعّلة لهذا الطلب؛ يرجى التواصل مع الإدارة.</p>
                                                 @endif
                                             @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if(!\App\Domain\MarketPlace\Models\MerchantOrder::isCashOnDeliveryMethod($order['payment_method'] ?? null)
+                                && ($order['payment_status'] ?? null) === 'paid'
+                                && ($order['status_value'] ?? null) === \App\Application\Marketplace\Enums\MerchantOrderStatuses::ON_WAY->value)
+                                <div class="col-12">
+                                    <div class="card custom-card shadow-none mb-0">
+                                        <div class="card-header bg-white">
+                                            <h6 class="card-title fw-semibold mb-0">تسليم الطلب المدفوع مسبقًا</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="alert alert-info">
+                                                <div class="fw-semibold">المطلوب تحصيله من العميل: 0.00 ريال</div>
+                                            </div>
+                                            <form class="alert alert-light border mb-0" wire:submit.prevent="confirmPrepaidDelivery">
+                                                <dl class="row mb-3">
+                                                    <dt class="col-sm-4">رقم الطلب</dt>
+                                                    <dd class="col-sm-8">#{{ $order['code'] }}</dd>
+                                                    <dt class="col-sm-4">المبلغ المدفوع</dt>
+                                                    <dd class="col-sm-8">{{ number_format($order['prepaid_amount'] ?? 0, 2) }} SAR</dd>
+                                                    <dt class="col-sm-4">طريقة الدفع</dt>
+                                                    <dd class="col-sm-8">{{ $order['prepaid_method'] ?: $order['payment_method'] }}</dd>
+                                                    @if(!empty($order['prepaid_reference']))
+                                                        <dt class="col-sm-4">مرجع الدفع</dt>
+                                                        <dd class="col-sm-8">{{ $order['prepaid_reference'] }}</dd>
+                                                    @endif
+                                                </dl>
+                                                <label class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" wire:model="deliveryAcknowledged">
+                                                    <span class="form-check-label">سلّمت الطلب</span>
+                                                </label>
+                                                @error('deliveryAcknowledged') <div class="text-danger mb-2">{{ $message }}</div> @enderror
+                                                <div class="d-flex gap-2">
+                                                    <button type="submit" class="btn btn-success"
+                                                            wire:loading.attr="disabled"
+                                                            wire:target="confirmPrepaidDelivery"
+                                                            @if(!$deliveryAcknowledged) disabled @endif>
+                                                        <span wire:loading.remove wire:target="confirmPrepaidDelivery">تأكيد التسليم</span>
+                                                        <span wire:loading wire:target="confirmPrepaidDelivery">جارٍ الحفظ...</span>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                                        إلغاء
+                                                    </button>
+                                                </div>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>

@@ -13,7 +13,7 @@ use App\Domain\Ecommerce\Actions\Web\Coupon\ApplyWebPromocodeAction;
 use App\Domain\MarketPlace\Actions\Api\Order\LogOrderHistoryAction;
 use App\Domain\MarketPlace\Actions\Api\Wallet\WalletOrderAction;
 use App\Http\Controllers\Controller;
-use App\Support\Enum\ChannelTypesEnum;
+use App\Domain\MarketPlace\Services\OrderPaymentLedger;
 use App\Support\Enum\PaymentMethod;
 use App\Payment\Payment;
 use App\Domain\User\Models\UserAddress;
@@ -262,7 +262,7 @@ class CheckoutController extends Controller
                 return redirect($paymentResponse['paymentUrl']);
             }
 
-            return redirect()->route('checkout.success')->with('success', __('ecommerce::ecommerce.order_placed_successfully'));
+            return redirect()->route('checkout.success', ['orderId' => $order['data']->id]);
 
         } catch (Exception $exception) {
             DB::rollBack();
@@ -357,9 +357,35 @@ class CheckoutController extends Controller
         }
     }
 
-    public function success()
+    public function success(?int $orderId = null)
     {
-        return view('ecommerce::pages.checkout.success');
+        $user = auth()->user();
+        if (!$user) {
+            return redirect()->route('auth.login');
+        }
+
+        if (!$orderId) {
+            return redirect()->route('account.orders');
+        }
+
+        $order = MerchantOrder::query()
+            ->where('user_id', $user->id)
+            ->findOrFail($orderId);
+        $paymentSummary = app(OrderPaymentLedger::class)->forOrder($order);
+        $confirmationState = match (true) {
+            $paymentSummary['payment_status'] === 'paid' => 'paid',
+            $paymentSummary['payment_status'] === 'failed' => 'failed',
+            MerchantOrder::isCashOnDeliveryMethod($order->payment_method)
+                && $paymentSummary['payment_status'] === 'pending' => 'cod_pending',
+            $paymentSummary['payment_status'] === 'partially_paid' => 'partial',
+            default => 'pending',
+        };
+
+        return view('ecommerce::pages.checkout.success', compact(
+            'order',
+            'paymentSummary',
+            'confirmationState'
+        ));
     }
 
     private function payWithMada($order)

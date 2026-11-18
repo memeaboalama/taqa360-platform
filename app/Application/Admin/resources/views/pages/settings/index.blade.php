@@ -65,6 +65,7 @@
                                                 class="ri-exchange-dollar-fill me-1 align-middle d-inline-block"></i>{{ __('admin::home.Orders Settings') }}</button>
                                     </li>
                                     @endAdminHasRole
+                                    {{--
                                     @AdminHasRole(['show delivery fees_settings'])
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link" id="PaymentSettings-tab" data-bs-toggle="tab"
@@ -73,6 +74,7 @@
                                                 class="ri-exchange-dollar-fill me-1 align-middle d-inline-block"></i>{{ __('admin::home.Payment Methods Commission') }}</button>
                                     </li>
                                     @endAdminHasRole
+                                    --}}
                                 </ul>
                             </div>
                         </div>
@@ -101,9 +103,11 @@
                                 <livewire:admin::settings.tabs.orders />
                                 @endAdminHasRole
 
+                                {{--
                                 @AdminHasRole(['show delivery fees_settings'])
                                 <livewire:admin::settings.tabs.payment />
                                 @endAdminHasRole
+                                --}}
                             </div>
                         </div>
                     </div>

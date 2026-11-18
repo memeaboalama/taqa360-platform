@@ -1,6 +1,6 @@
 @extends('ecommerce::layout.store-layout')
 
-@section('title', __('ecommerce::ecommerce.order_placed_successfully'))
+@section('title', __('ecommerce::ecommerce.checkout_confirmation_title'))
 
 @section('active-nav', 'account')
 
@@ -36,6 +36,18 @@
             font-size: 28px;
         }
 
+        .checkout-success-icon.is-warning {
+            border-color: #f2d89a;
+            background: #fff8e6;
+            color: #966c00;
+        }
+
+        .checkout-success-icon.is-failed {
+            border-color: #f0c2c2;
+            background: #fff0f0;
+            color: #b42318;
+        }
+
         .checkout-success-panel h1 {
             margin: 0 0 10px;
             color: var(--ink);
@@ -48,6 +60,38 @@
             color: var(--muted);
             font-size: 14px;
             line-height: 1.9;
+        }
+
+        .checkout-confirmation-details {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 12px;
+            margin: 24px 0 0;
+            padding: 18px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fafbfc;
+            text-align: start;
+        }
+
+        .checkout-confirmation-details div {
+            min-width: 0;
+        }
+
+        .checkout-confirmation-details dt {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .checkout-confirmation-details dd {
+            margin: 3px 0 0;
+            color: var(--ink);
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        .checkout-confirmation-details .confirmation-total dd {
+            font-size: 18px;
         }
 
         .checkout-success-actions {
@@ -113,6 +157,10 @@
                 font-size: 21px;
             }
 
+            .checkout-confirmation-details {
+                grid-template-columns: 1fr;
+            }
+
             .checkout-success-actions {
                 flex-direction: column;
             }
@@ -124,11 +172,47 @@
     <main class="checkout-success">
         <div class="container">
             <section class="checkout-success-panel" role="status" aria-live="polite">
-                <div class="checkout-success-icon" aria-hidden="true">
-                    <i class="fa fa-check"></i>
+                @php
+                    $isPaid = $confirmationState === 'paid';
+                    $isFailed = $confirmationState === 'failed';
+                    $isWarning = !$isPaid && !$isFailed;
+                @endphp
+                <div class="checkout-success-icon {{ $isFailed ? 'is-failed' : ($isWarning ? 'is-warning' : '') }}"
+                    aria-hidden="true">
+                    <i class="fa {{ $isFailed ? 'fa-times' : ($isPaid ? 'fa-check' : 'fa-clock-o') }}"></i>
                 </div>
-                <h1>@lang('ecommerce::ecommerce.order_placed_successfully')</h1>
-                <p>@lang('ecommerce::ecommerce.start_shopping_message')</p>
+                <h1>@lang('ecommerce::ecommerce.checkout_confirmation_title')</h1>
+                <p>@lang('ecommerce::ecommerce.checkout_confirmation_message_' . $confirmationState, ['order' => $order->code])</p>
+                <dl class="checkout-confirmation-details">
+                    <div>
+                        <dt>@lang('ecommerce::ecommerce.order_number')</dt>
+                        <dd>#{{ $order->code }}</dd>
+                    </div>
+                    <div>
+                        <dt>@lang('ecommerce::ecommerce.order_date')</dt>
+                        <dd>{{ $order->created_at?->format('Y-m-d H:i') ?? '—' }}</dd>
+                    </div>
+                    <div>
+                        <dt>@lang('ecommerce::ecommerce.payment_method')</dt>
+                        <dd>{{ $paymentSummary['payment_method'] ?: '—' }}</dd>
+                    </div>
+                    <div>
+                        <dt>@lang('ecommerce::ecommerce.payment_status')</dt>
+                        <dd>@lang('ecommerce::ecommerce.checkout_confirmation_state_' . $confirmationState)</dd>
+                    </div>
+                    <div class="confirmation-total">
+                        <dt>@lang('ecommerce::ecommerce.amount_due')</dt>
+                        <dd>{{ \App\Domain\AppBase\Models\Setting\Currency::format($paymentSummary['due']) }}</dd>
+                    </div>
+                    <div class="confirmation-total">
+                        <dt>@lang('ecommerce::ecommerce.amount_paid')</dt>
+                        <dd>{{ \App\Domain\AppBase\Models\Setting\Currency::format($paymentSummary['collected']) }}</dd>
+                    </div>
+                    <div>
+                        <dt>@lang('ecommerce::ecommerce.order_status')</dt>
+                        <dd>{{ $order->status_label }}</dd>
+                    </div>
+                </dl>
                 <div class="checkout-success-actions">
                     <a class="success-primary" href="{{ route('account.orders') }}">
                         @lang('ecommerce::ecommerce.orders')

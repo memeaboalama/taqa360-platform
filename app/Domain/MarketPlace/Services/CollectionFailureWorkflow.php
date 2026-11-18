@@ -7,6 +7,7 @@ use App\Domain\MarketPlace\Models\DriverCollectionFailureReport;
 use App\Domain\MarketPlace\Models\DriverCollectionFailureReportHistory;
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use Domain\AppBase\Models\Payment;
+use App\Domain\MarketPlace\Actions\Api\Order\LogOrderHistoryAction;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -14,16 +15,28 @@ use Illuminate\Validation\ValidationException;
 class CollectionFailureWorkflow
 {
     public const OPEN_STATUSES = ['open', 'retry_requested', 'return_requested'];
+    public const REASONS = ['payment_refused', 'insufficient_amount', 'unable_to_contact', 'other'];
 
     public function report(int $orderId, int $driverId, string $reason, ?string $driverNote, Model $driver): DriverCollectionFailureReport
     {
         return DB::transaction(function () use ($orderId, $driverId, $reason, $driverNote, $driver): DriverCollectionFailureReport {
+            $driverNote = trim((string) $driverNote);
             $order = MerchantOrder::query()
                 ->whereKey($orderId)
                 ->where('driver_id', $driverId)
                 ->lockForUpdate()
                 ->firstOrFail();
             $this->assertOrderCanBeReported($order);
+            if (!in_array($reason, self::REASONS, true)) {
+                throw ValidationException::withMessages([
+                    'collectionFailureReason' => 'اختر سببًا صحيحًا لتعذر التحصيل.',
+                ]);
+            }
+            if ($reason === 'other' && $driverNote === '') {
+                throw ValidationException::withMessages([
+                    'collectionFailureNote' => 'أدخل ملاحظة عند اختيار سبب آخر.',
+                ]);
+            }
             if ($order->collectionFailureReports()->where('status', 'return_completed')->exists()) {
                 throw ValidationException::withMessages([
                     'collectionFailure' => 'تم توثيق إرجاع الطلب ولا يمكن فتح بلاغ تحصيل جديد له.',
@@ -44,7 +57,7 @@ class CollectionFailureWorkflow
                 'order_id' => $order->id,
                 'driver_id' => $driverId,
                 'reason' => $reason,
-                'driver_note' => $driverNote,
+                'driver_note' => $driverNote !== '' ? $driverNote : null,
                 'status' => 'open',
             ]);
             if (!self::canTransition(null, 'open')) {
@@ -176,6 +189,188 @@ class CollectionFailureWorkflow
         });
     }
 
+    public function completeDeliveryAndCollection(
+        int $orderId,
+        int $driverId,
+        Model $driver,
+        bool $deliveryAcknowledged,
+        bool $collectionAcknowledged
+    ): MerchantOrder {
+        return DB::transaction(function () use (
+            $orderId,
+            $driverId,
+            $driver,
+            $deliveryAcknowledged,
+            $collectionAcknowledged
+        ): MerchantOrder {
+            $order = MerchantOrder::query()
+                ->whereKey($orderId)
+                ->where('driver_id', $driverId)
+                ->lockForUpdate()
+                ->firstOrFail();
+            $status = $order->status instanceof MerchantOrderStatuses
+                ? $order->status
+                : MerchantOrderStatuses::tryFrom((string) $order->status);
+
+            if (!MerchantOrder::isCashOnDeliveryMethod($order->payment_method)) {
+                throw ValidationException::withMessages([
+                    'deliveryConfirmation' => 'هذا الإجراء مخصص لطلبات الدفع عند الاستلام.',
+                ]);
+            }
+
+            if ($status === MerchantOrderStatuses::PREVIOUS) {
+                $paymentStatus = app(\App\Domain\MarketPlace\Services\OrderPaymentLedger::class)
+                    ->forOrder($order)['payment_status'];
+                if ($paymentStatus === 'paid') {
+                    return $order;
+                }
+                throw ValidationException::withMessages([
+                    'deliveryConfirmation' => 'الطلب مكتمل مسبقًا؛ أتمم تأكيد التحصيل من تفاصيل الطلب.',
+                ]);
+            }
+
+            if ($status !== MerchantOrderStatuses::ON_WAY) {
+                throw ValidationException::withMessages([
+                    'deliveryConfirmation' => 'لا يمكن تأكيد التسليم قبل بدء التوصيل.',
+                ]);
+            }
+
+            if (!$deliveryAcknowledged) {
+                throw ValidationException::withMessages([
+                    'deliveryAcknowledged' => 'أكد تسليم الطلب قبل المتابعة.',
+                ]);
+            }
+
+            $latestFailureReport = $order->collectionFailureReports()->latest('id')->first();
+            if (in_array($latestFailureReport?->status, [
+                'open',
+                'retry_requested',
+                'return_requested',
+                'return_completed',
+            ], true)) {
+                throw ValidationException::withMessages([
+                    'deliveryConfirmation' => 'أكمل معالجة بلاغ تعذر التحصيل قبل إكمال الطلب.',
+                ]);
+            }
+
+            $ledger = app(\App\Domain\MarketPlace\Services\OrderPaymentLedger::class)->forOrder($order);
+            if ($ledger['payment_status'] !== 'paid') {
+                if (!$collectionAcknowledged) {
+                    throw ValidationException::withMessages([
+                        'collectionAcknowledged' => 'أكد تحصيل المبلغ كاملًا قبل إكمال الطلب.',
+                    ]);
+                }
+
+                if ($ledger['remaining'] <= 0) {
+                    throw ValidationException::withMessages([
+                        'collectionAcknowledged' => 'لا يوجد مبلغ متبقٍ قابل للتحصيل.',
+                    ]);
+                }
+
+                if ($ledger['payment_status'] === 'partially_paid') {
+                    $existingCollection = Payment::query()
+                        ->where('payable_id', $order->id)
+                        ->whereIn('payable_type', [
+                            $order->getMorphClass(),
+                            MerchantOrder::class,
+                            'App\\Domain\\MarketPlace\\Models\\MerchantOrder',
+                        ])
+                        ->where('source_message', MerchantOrder::COD_COLLECTION_CONFIRMATION_MESSAGE)
+                        ->whereIn('status', ['paid', 'success'])
+                        ->latest('id')
+                        ->first();
+
+                    if (!$existingCollection) {
+                        throw ValidationException::withMessages([
+                            'collectionAcknowledged' => 'تعذر مطابقة التحصيل الجزئي؛ اطلب مراجعة الإدارة.',
+                        ]);
+                    }
+
+                    $collectedSoFar = round(
+                        (float) ($existingCollection->captured ?: $existingCollection->amount) / 100,
+                        2
+                    );
+                    $this->recordCollection(
+                        $order,
+                        $driverId,
+                        $driver,
+                        'Cash collection completed by driver at delivery.',
+                        $collectedSoFar + $ledger['remaining']
+                    );
+                } else {
+                    $this->recordCollection(
+                        $order,
+                        $driverId,
+                        $driver,
+                        'Cash collection confirmed by driver at delivery.',
+                        $ledger['remaining']
+                    );
+                }
+            }
+
+            $order->update(['status' => MerchantOrderStatuses::PREVIOUS->value]);
+            app(LogOrderHistoryAction::class)->handle(
+                $order->id,
+                \App\Application\Marketplace\Enums\MerchantOrderHistoryStatuses::COMPLETED->value,
+                'Driver confirmed delivery and collection via dashboard.',
+                $driver
+            );
+
+            return $order->fresh();
+        });
+    }
+
+    public function completePrepaidDelivery(
+        int $orderId,
+        int $driverId,
+        Model $driver,
+        bool $deliveryAcknowledged
+    ): MerchantOrder {
+        return DB::transaction(function () use ($orderId, $driverId, $driver, $deliveryAcknowledged): MerchantOrder {
+            $order = MerchantOrder::query()
+                ->whereKey($orderId)
+                ->where('driver_id', $driverId)
+                ->lockForUpdate()
+                ->firstOrFail();
+            $status = $order->status instanceof MerchantOrderStatuses
+                ? $order->status
+                : MerchantOrderStatuses::tryFrom((string) $order->status);
+
+            if (MerchantOrder::isCashOnDeliveryMethod($order->payment_method)) {
+                throw ValidationException::withMessages([
+                    'deliveryConfirmation' => 'هذا المسار مخصص للطلبات المدفوعة مسبقًا.',
+                ]);
+            }
+
+            $ledger = app(OrderPaymentLedger::class)->forOrder($order);
+            if ($status === MerchantOrderStatuses::PREVIOUS && $ledger['payment_status'] === 'paid') {
+                return $order;
+            }
+
+            if ($status !== MerchantOrderStatuses::ON_WAY || $ledger['payment_status'] !== 'paid') {
+                throw ValidationException::withMessages([
+                    'deliveryConfirmation' => 'لا يمكن إكمال الطلب قبل التوصيل أو قبل تسجيل الدفع المسبق.',
+                ]);
+            }
+
+            if (!$deliveryAcknowledged) {
+                throw ValidationException::withMessages([
+                    'deliveryAcknowledged' => 'أكد تسليم الطلب قبل المتابعة.',
+                ]);
+            }
+
+            $order->update(['status' => MerchantOrderStatuses::PREVIOUS->value]);
+            app(LogOrderHistoryAction::class)->handle(
+                $order->id,
+                \App\Application\Marketplace\Enums\MerchantOrderHistoryStatuses::COMPLETED->value,
+                'Driver confirmed prepaid order delivery via dashboard.',
+                $driver
+            );
+
+            return $order->fresh();
+        });
+    }
+
     public function retryFailed(int $reportId, int $driverId, string $note, Model $driver): DriverCollectionFailureReport
     {
         return DB::transaction(function () use ($reportId, $driverId, $note, $driver): DriverCollectionFailureReport {
@@ -249,8 +444,9 @@ class CollectionFailureWorkflow
             ? $order->status
             : MerchantOrderStatuses::tryFrom((string) $order->status);
 
-        if ($status !== MerchantOrderStatuses::PREVIOUS || !MerchantOrder::isCashOnDeliveryMethod($order->payment_method)) {
-            throw ValidationException::withMessages(['report' => 'يقبل البلاغ لطلب دفع عند الاستلام مكتمل فقط.']);
+        if (!in_array($status, [MerchantOrderStatuses::ON_WAY, MerchantOrderStatuses::PREVIOUS], true)
+            || !MerchantOrder::isCashOnDeliveryMethod($order->payment_method)) {
+            throw ValidationException::withMessages(['report' => 'يقبل البلاغ لطلب دفع عند الاستلام قيد التوصيل أو مكتمل فقط.']);
         }
         $this->assertNoConfirmedCollection($order);
     }
@@ -272,9 +468,10 @@ class CollectionFailureWorkflow
         MerchantOrder $order,
         int $driverId,
         Model $driver,
-        string $description
+        string $description,
+        ?float $amountOverride = null
     ): Payment {
-        $amount = round((float) ($order->total_after_discount > 0
+        $amount = $amountOverride ?? round((float) ($order->total_after_discount > 0
             ? $order->total_after_discount
             : $order->total_after_vat), 2);
         if ($amount <= 0) {

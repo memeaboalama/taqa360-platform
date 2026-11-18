@@ -4,6 +4,7 @@ namespace App\Domain\AppBase\Actions\Home;
 
 use App\Domain\AppBase\Models\AdMerchantContent;
 use App\Domain\AppBase\Models\AdPage;
+use App\Domain\AppBase\Models\AdPlacement;
 use App\Domain\AppBase\Models\CustomerTestimonial;
 use App\Domain\AppBase\Repositories\AdPlacementRepository;
 use App\Domain\AppBase\Repositories\AdBannerRepository;
@@ -35,12 +36,12 @@ class FetchHomeDataAction
             Cache::forget('home_page_data_ar');
             Cache::forget('home_page_data_en');
             Cache::forget('home_page_data_' . app()->getLocale());
-            Cache::forget('home_page_data_storefront_v4_ar');
-            Cache::forget('home_page_data_storefront_v4_en');
-            Cache::forget('home_page_data_storefront_v4_' . app()->getLocale());
+            Cache::forget('home_page_data_storefront_v5_ar');
+            Cache::forget('home_page_data_storefront_v5_en');
+            Cache::forget('home_page_data_storefront_v5_' . app()->getLocale());
         }
 
-        $data = Cache::remember('home_page_data_storefront_v4_' . app()->getLocale(), 1800, function() {
+        $data = Cache::remember('home_page_data_storefront_v5_' . app()->getLocale(), 1800, function() {
             $page = AdPage::where('key', 'home')->first();
 
             if (!$page) {
@@ -72,14 +73,14 @@ class FetchHomeDataAction
                 switch ($placement->key) {
                     case 'home_product_tabs':
                         $data['tabGroups'] = $this->organizeTabGroupsFromContents($placement);
-                        $data['featuredProducts'] = $this->getGroupProductsFromContents($placement, 'featured', 8);
-                        $data['newProducts'] = $this->getGroupProductsFromContents($placement, 'latest', 6);
-                        $data['bestSellers'] = $this->getGroupProductsFromContents($placement, 'best_selling', 6);
+                        $data['featuredProducts'] = $this->getGroupProductsFromContents($placement, 'featured');
+                        $data['newProducts'] = $this->getGroupProductsFromContents($placement, 'latest');
+                        $data['bestSellers'] = $this->getGroupProductsFromContents($placement, 'best_selling');
                         break;
 
                     case 'home_exclusive_slider':
                     case 'home_exclusive_collection':
-                        $data['exclusiveProducts'] = $products->take(6);
+                        $data['exclusiveProducts'] = $products->values();
                         break;
 
                     case 'sidebar_new_products':
@@ -138,6 +139,73 @@ class FetchHomeDataAction
         });
 
         return $this->filterUnavailableCachedProducts($data);
+    }
+
+    public function getProductCollection(string $section): \Illuminate\Support\Collection
+    {
+        $sections = [
+            'best-sellers' => [
+                'placement_keys' => ['home_product_tabs'],
+                'group_key' => 'best_selling',
+                'fallback_order' => 'random',
+            ],
+            'featured-products' => [
+                'placement_keys' => ['home_product_tabs'],
+                'group_key' => 'featured',
+                'fallback_order' => 'latest',
+            ],
+            'new-products' => [
+                'placement_keys' => ['home_product_tabs'],
+                'group_key' => 'latest',
+                'fallback_order' => 'latest',
+            ],
+            'exclusive-products' => [
+                'placement_keys' => ['home_exclusive_slider', 'home_exclusive_collection'],
+                'group_key' => null,
+                'fallback_order' => 'random',
+            ],
+        ];
+        $definition = $sections[$section] ?? null;
+
+        if (!$definition) {
+            throw new \InvalidArgumentException('Unsupported home product section.');
+        }
+
+        $homePage = AdPage::query()->where('key', 'home')->first();
+        if ($homePage) {
+            $placements = AdPlacement::query()
+                ->where('page_id', $homePage->id)
+                ->where('status', 'active')
+                ->whereIn('key', $definition['placement_keys'])
+                ->with(['activeProductContents' => function ($query) use ($definition) {
+                    if ($definition['group_key'] !== null) {
+                        $query->where('group_key', $definition['group_key']);
+                    }
+
+                    $query->with('product')->orderBy('priority')->orderBy('id');
+                }])
+                ->orderBy('sort_order')
+                ->get();
+
+            $products = $placements
+                ->flatMap(fn (AdPlacement $placement) => $placement->activeProductContents->pluck('product'))
+                ->filter()
+                ->unique('id')
+                ->values();
+
+            if ($products->isNotEmpty()) {
+                return $products;
+            }
+        }
+
+        $query = $this->itemRepository
+            ->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
+            ->with('merchant');
+
+        return ($definition['fallback_order'] === 'latest'
+            ? $query->latest()
+            : $query->inRandomOrder())
+            ->get();
     }
 
     private function filterUnavailableCachedProducts(array $data): array
@@ -199,13 +267,15 @@ class FetchHomeDataAction
         return $data;
     }
 
-    private function getGroupProductsFromContents($placement, $groupKey, $limit)
+    private function getGroupProductsFromContents($placement, $groupKey, ?int $limit = null)
     {
-        return $placement->activeProductContents
+        $products = $placement->activeProductContents
             ->filter(fn($content) => $content->group_key === $groupKey)
             ->pluck('product')
             ->filter()
-            ->take($limit);
+            ->values();
+
+        return $limit === null ? $products : $products->take($limit)->values();
     }
 
     private function organizeTabGroupsFromContents($placement)

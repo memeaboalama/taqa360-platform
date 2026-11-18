@@ -570,9 +570,11 @@
                         <p class="ltr">{{ $user->email }}</p>
                     </div>
                 </div>
+                {{--
                 <div class="balance"><i class="ti-wallet"></i>
                     <div><strong>{{ number_format($user->balance, 2) }}</strong><small>SAR</small></div>
                 </div>
+                --}}
             </section>
             <div class="account-layout">
                 <aside class="account-tabs"><a class="account-tab active" href="{{ route('account.index') }}"><i
@@ -582,9 +584,9 @@
                         class="account-tab" href="{{ route('account.index', ['section' => 'service_requests']) }}"><i
                             class="ti-settings"></i><span>@lang('ecommerce::ecommerce.service_requests')</span></a><a
                         class="account-tab" href="{{ route('account.index', ['section' => 'addresses']) }}"><i
-                            class="ti-location-pin"></i><span>@lang('ecommerce::ecommerce.addresses')</span></a><a
+                            class="ti-location-pin"></i><span>@lang('ecommerce::ecommerce.addresses')</span></a>{{-- <a
                         class="account-tab" href="{{ route('account.wallet.index') }}"><i
-                            class="ti-wallet"></i><span>@lang('ecommerce::ecommerce.my_wallet')</span></a></aside>
+                            class="ti-wallet"></i><span>@lang('ecommerce::ecommerce.my_wallet')</span></a> --}}</aside>
                 <section class="account-content">
                     <div class="content-heading">
                         <h2>@lang('ecommerce::ecommerce.personal_info')</h2><a class="edit-link"
@@ -609,9 +611,9 @@
 @endsection
 
 @section('scripts')
-    <div class="account-actions account-actions-source"><a class="account-action primary"
+    <div class="account-actions account-actions-source">{{-- <a class="account-action primary"
             href="{{ route('account.wallet.deposit') }}"><i class="ti-plus"></i>
-            @lang('ecommerce::ecommerce.deposit_funds')</a>
+            @lang('ecommerce::ecommerce.deposit_funds')</a> --}}
         <form action="{{ route('logout') }}" method="POST">@csrf<button class="account-action" type="submit"><i
                     class="ti-power-off"></i> @lang('ecommerce::ecommerce.logout')</button></form>
     </div>

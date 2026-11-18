@@ -266,6 +266,7 @@
                             </div>
                         </label>
 
+                        {{--
                         <label class="payment-option">
                             <input type="radio" name="payment_method" value="online">
                             <div class="payment-content">
@@ -276,6 +277,7 @@
                                 <i class="ti-credit-card pay-icon"></i>
                             </div>
                         </label>
+                        --}}
 </div>
                     </div>
 

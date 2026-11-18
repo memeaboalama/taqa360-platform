@@ -8,6 +8,7 @@ class OrderSettlement extends Model
 {
     protected $fillable = [
         'order_id',
+        'batch_id',
         'driver_id',
         'recipient',
         'method',
@@ -15,6 +16,7 @@ class OrderSettlement extends Model
         'instructions',
         'account_data',
         'amount',
+        'supply_date',
         'reference',
         'proof_path',
         'status',
@@ -30,6 +32,7 @@ class OrderSettlement extends Model
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'supply_date' => 'date',
         'received_amount' => 'decimal:2',
         'received_at' => 'datetime',
         'receipt_confirmed' => 'boolean',
@@ -40,6 +43,18 @@ class OrderSettlement extends Model
     public static function requiresProof(string $method): bool
     {
         return in_array($method, ['transfer', 'deposit'], true);
+    }
+
+    public function getBatchNumberAttribute(): int
+    {
+        return (int) ($this->batch_id ?: $this->id);
+    }
+
+    public static function batchQuery(int $batchId): \Illuminate\Database\Eloquent\Builder
+    {
+        return static::query()->where(function ($query) use ($batchId) {
+            $query->where('id', $batchId)->orWhere('batch_id', $batchId);
+        });
     }
 
     public function order(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -62,6 +77,11 @@ class OrderSettlement extends Model
         return $this->hasMany(OrderSettlementHistory::class, 'settlement_id')
             ->orderBy('created_at')
             ->orderBy('id');
+    }
+
+    public function batchMembers(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(self::class, 'batch_id', 'id');
     }
 
     public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany

@@ -8,6 +8,7 @@ use App\Domain\AppBase\Models\CashBack;
 use App\Domain\MarketPlace\Models\ItemPrices;
 use App\Domain\MarketPlace\Models\MerchantOrderItem;
 use App\Domain\User\Models\User;
+use App\Support\Traits\Models\HasConfiguredCartVat;
 use Carbon\Carbon;
 use Domain\MarketPlace\Models\CartChoice;
 use App\Support\Enum\StatusEnum;
@@ -21,6 +22,7 @@ class WebCart extends Model
 {
     use HasFactory;
     use HasEvents;
+    use HasConfiguredCartVat;
 
 
     protected $fillable = [
@@ -140,19 +142,6 @@ class WebCart extends Model
             }, 0)
         );
     }
-
-    protected function tax(): Attribute
-    {
-        return new Attribute(
-            get: function () {
-                $merchant = $this->cartItems->first()?->item?->merchant;
-                $vatRate = (float) ($merchant?->country?->vat ?? 0);
-
-                return round($this->subtotal * ($vatRate / 100), 2);
-            }
-        );
-    }
-
 
     protected function deliveryFee(): Attribute
     {
