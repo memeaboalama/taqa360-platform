@@ -751,25 +751,33 @@
             display: block
         }
 
-        .testimonials-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 20px
+        .testimonials-slider {
+            overflow: hidden
         }
 
-        @media(max-width:800px) {
-            .testimonials-grid {
-                grid-template-columns: 1fr;
-                gap: 14px
-            }
+        .testimonials-track {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding: 2px 2px 12px;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            scroll-behavior: smooth
+        }
+
+        .testimonials-track::-webkit-scrollbar {
+            display: none
         }
 
         .testimonial-card {
+            flex: 0 0 calc((100% - 40px) / 3);
             border: 1px solid #e5e8eb;
             border-radius: 12px;
             background: #fff;
             padding: 18px;
-            box-shadow: 0 4px 12px rgba(29, 37, 48, .05)
+            box-shadow: 0 4px 12px rgba(29, 37, 48, .05);
+            scroll-snap-align: start
         }
 
         .testimonial-card h3 {
@@ -789,6 +797,197 @@
             color: #626870;
             font-size: 12px;
             line-height: 1.8
+        }
+
+        .testimonials-slider-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 12px
+        }
+
+        .testimonials-slider-arrow {
+            display: grid;
+            place-items: center;
+            width: 34px;
+            height: 34px;
+            border: 1px solid #e5e8eb;
+            border-radius: 50%;
+            color: #343a42;
+            background: #fff;
+            cursor: pointer
+        }
+
+        .testimonials-slider-dots {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px
+        }
+
+        .testimonials-slider-dot {
+            width: 8px;
+            height: 8px;
+            padding: 0;
+            border-radius: 50%;
+            background: #cbd2d9;
+            cursor: pointer
+        }
+
+        .testimonials-slider-dot[aria-current="true"] {
+            width: 20px;
+            border-radius: 999px;
+            background: var(--yellow-deep)
+        }
+
+        @media(max-width:800px) {
+            .testimonial-card {
+                flex-basis: calc((100% - 20px) / 2)
+            }
+        }
+
+        @media(max-width:520px) {
+            .testimonials-track {
+                gap: 14px
+            }
+
+            .testimonial-card {
+                flex-basis: 100%
+            }
+        }
+
+        .testimonial-float {
+            position: fixed;
+            z-index: 1040;
+            inset-inline-end: 22px;
+            bottom: 24px;
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            padding: 12px 18px;
+            border-radius: 999px;
+            color: #fff;
+            background: var(--yellow-deep);
+            box-shadow: 0 6px 20px rgba(32, 37, 45, .2);
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .testimonial-float:hover,
+        .testimonial-float:focus-visible {
+            color: #fff;
+            background: var(--yellow);
+            transform: translateY(-2px)
+        }
+
+        .testimonial-float i {
+            font-size: 17px
+        }
+
+        .testimonial-dialog {
+            width: min(520px, calc(100% - 28px));
+            max-height: min(90vh, 720px);
+            padding: 0;
+            border: 0;
+            border-radius: 16px;
+            color: var(--ink);
+            box-shadow: 0 20px 70px rgba(0, 0, 0, .28)
+        }
+
+        .testimonial-dialog::backdrop {
+            background: rgba(15, 23, 42, .58)
+        }
+
+        .testimonial-dialog-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 18px 22px;
+            color: #fff;
+            background: var(--yellow-deep)
+        }
+
+        .testimonial-dialog-header h2 {
+            margin: 0;
+            font-size: 18px
+        }
+
+        .testimonial-dialog-close {
+            padding: 4px 8px;
+            color: #fff;
+            background: transparent;
+            font-size: 22px
+        }
+
+        .testimonial-dialog-body {
+            padding: 22px
+        }
+
+        .testimonial-dialog-body label {
+            display: block;
+            margin: 0 0 6px;
+            font-weight: 700
+        }
+
+        .testimonial-dialog-body input,
+        .testimonial-dialog-body textarea {
+            display: block;
+            width: 100%;
+            margin-bottom: 14px;
+            padding: 10px 12px;
+            border: 1px solid #dfe3e8;
+            border-radius: 8px;
+            direction: {{ $isRTL ? 'rtl' : 'ltr' }};
+            text-align: {{ $isRTL ? 'right' : 'left' }}
+        }
+
+        .testimonial-dialog-body textarea {
+            min-height: 130px;
+            resize: vertical
+        }
+
+        .testimonial-dialog-note {
+            margin: 0 0 16px;
+            color: #6b7280;
+            line-height: 1.7
+        }
+
+        .testimonial-form-alert {
+            margin-bottom: 16px;
+            padding: 11px 13px;
+            border-radius: 8px;
+            color: #165b34;
+            background: #e8f6ed;
+            line-height: 1.7
+        }
+
+        .testimonial-field-error {
+            display: block;
+            margin: -10px 0 12px;
+            color: #b42318;
+            font-size: 12px
+        }
+
+        .testimonial-honeypot {
+            position: absolute;
+            inset-inline-start: -10000px;
+            width: 1px;
+            height: 1px;
+            overflow: hidden
+        }
+
+        @media(max-width:520px) {
+            .testimonial-float {
+                inset-inline-end: 14px;
+                bottom: 16px;
+                padding: 12px 14px
+            }
+
+            .testimonial-dialog-body {
+                padding: 18px
+            }
         }
 
         .stores-section {
@@ -1548,22 +1747,182 @@
                 <div class="section-head">
                     <h2>{{ __('ecommerce::ecommerce.testimonials') }}</h2>
                 </div>
-                <div class="testimonials-grid">
-                    @foreach (collect($testimonials)->take(3) as $testimonial)
-                        <article class="testimonial-card">
-                            <h3>{{ $testimonial['name'] ?? '' }}</h3>
-                            <div class="testimonial-position">{{ $testimonial['position'] ?? '' }}</div>
-                            <p>{{ $testimonial['content'] ?? '' }}</p>
-                        </article>
-                    @endforeach
+                <div class="testimonials-slider" data-testimonials-slider>
+                    <div class="testimonials-track" data-testimonials-track>
+                        @foreach ($testimonials as $testimonial)
+                            <article class="testimonial-card">
+                                <h3>{{ $testimonial['name'] ?? '' }}</h3>
+                                <div class="testimonial-position">{{ $testimonial['position'] ?? '' }}</div>
+                                <p>{{ $testimonial['content'] ?? '' }}</p>
+                            </article>
+                        @endforeach
+                    </div>
                 </div>
+                @if (count($testimonials) > 1)
+                    <div class="testimonials-slider-controls">
+                        <button class="testimonials-slider-arrow" type="button" data-testimonials-previous
+                            aria-label="{{ __('ecommerce::ecommerce.previous') }}">
+                            <i class="fa {{ $isRTL ? 'fa-angle-right' : 'fa-angle-left' }}" aria-hidden="true"></i>
+                        </button>
+                        <div class="testimonials-slider-dots" aria-label="{{ __('ecommerce::ecommerce.testimonials') }}">
+                            @foreach ($testimonials as $index => $testimonial)
+                                <button class="testimonials-slider-dot" type="button" data-testimonials-dot="{{ $index }}"
+                                    aria-label="{{ __('ecommerce::ecommerce.testimonial_slide', ['number' => $index + 1]) }}"
+                                    aria-current="{{ $index === 0 ? 'true' : 'false' }}"></button>
+                            @endforeach
+                        </div>
+                        <button class="testimonials-slider-arrow" type="button" data-testimonials-next
+                            aria-label="{{ __('ecommerce::ecommerce.next') }}">
+                            <i class="fa {{ $isRTL ? 'fa-angle-left' : 'fa-angle-right' }}" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                @endif
             </div>
         </section>
     @endif
+
+    <button class="testimonial-float" type="button" id="open-testimonial-dialog"
+        title="{{ __('ecommerce::ecommerce.share_your_opinion_hint') }}"
+        aria-label="{{ __('ecommerce::ecommerce.share_your_opinion') }}">
+        <i class="fa fa-commenting-o" aria-hidden="true"></i>
+        <span>{{ __('ecommerce::ecommerce.share_your_opinion') }}</span>
+    </button>
+
+    <dialog class="testimonial-dialog" id="testimonial-dialog" aria-labelledby="testimonial-dialog-title">
+        <div class="testimonial-dialog-header">
+            <h2 id="testimonial-dialog-title">{{ __('ecommerce::ecommerce.testimonial_form_title') }}</h2>
+            <button type="button" class="testimonial-dialog-close" data-close-testimonial-dialog
+                aria-label="{{ __('ecommerce::ecommerce.testimonial_close') }}">&times;</button>
+        </div>
+        <div class="testimonial-dialog-body">
+            @if (session('testimonial_submitted'))
+                <div class="testimonial-form-alert" role="status">
+                    {{ __('ecommerce::ecommerce.testimonial_submitted') }}
+                </div>
+            @endif
+            <p class="testimonial-dialog-note">{{ __('ecommerce::ecommerce.testimonial_form_description') }}</p>
+            <form action="{{ route('customer-testimonials.store') }}" method="POST">
+                @csrf
+                <div class="testimonial-honeypot" aria-hidden="true">
+                    <label for="testimonial-website">Website</label>
+                    <input id="testimonial-website" type="text" name="website" tabindex="-1" autocomplete="off">
+                </div>
+                <label for="testimonial-name">{{ __('ecommerce::ecommerce.testimonial_name') }}</label>
+                <input id="testimonial-name" name="name" type="text" maxlength="100" required
+                    value="{{ old('name') }}" placeholder="{{ __('ecommerce::ecommerce.testimonial_name_placeholder') }}">
+                @error('name') <span class="testimonial-field-error">{{ $message }}</span> @enderror
+
+                <label for="testimonial-position">{{ __('ecommerce::ecommerce.testimonial_position') }}</label>
+                <input id="testimonial-position" name="position" type="text" maxlength="100" value="{{ old('position') }}">
+                @error('position') <span class="testimonial-field-error">{{ $message }}</span> @enderror
+
+                <label for="testimonial-content">{{ __('ecommerce::ecommerce.testimonial_content') }}</label>
+                <textarea id="testimonial-content" name="content" minlength="10" maxlength="2000" required
+                    placeholder="{{ __('ecommerce::ecommerce.testimonial_content_placeholder') }}">{{ old('content') }}</textarea>
+                @error('content') <span class="testimonial-field-error">{{ $message }}</span> @enderror
+
+                <button class="hero-cta" type="submit">{{ __('ecommerce::ecommerce.testimonial_submit') }}</button>
+            </form>
+        </div>
+    </dialog>
 @endsection
 
 @section('scripts')
     <script>
+        document.querySelectorAll('[data-testimonials-slider]').forEach(function(slider) {
+            const track = slider.querySelector('[data-testimonials-track]');
+            const cards = Array.from(track.querySelectorAll('.testimonial-card'));
+            const dots = Array.from(slider.parentElement.querySelectorAll('[data-testimonials-dot]'));
+            const previous = slider.parentElement.querySelector('[data-testimonials-previous]');
+            const next = slider.parentElement.querySelector('[data-testimonials-next]');
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            let activeIndex = 0;
+            let autoplayTimer;
+
+            function goTo(index) {
+                activeIndex = (index + cards.length) % cards.length;
+                cards[activeIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+                dots.forEach(function(dot, dotIndex) {
+                    dot.setAttribute('aria-current', dotIndex === activeIndex ? 'true' : 'false');
+                });
+            }
+
+            previous?.addEventListener('click', function() {
+                goTo(activeIndex - 1);
+            });
+            next?.addEventListener('click', function() {
+                goTo(activeIndex + 1);
+            });
+            dots.forEach(function(dot) {
+                dot.addEventListener('click', function() {
+                    goTo(Number(dot.dataset.testimonialsDot));
+                });
+            });
+
+            function stopAutoplay() {
+                window.clearInterval(autoplayTimer);
+                autoplayTimer = null;
+            }
+
+            function startAutoplay() {
+                stopAutoplay();
+                if (cards.length < 2 || prefersReducedMotion || document.hidden ||
+                    slider.matches(':hover') || slider.contains(document.activeElement)) {
+                    return;
+                }
+
+                autoplayTimer = window.setInterval(function() {
+                    goTo(activeIndex + 1);
+                }, 5000);
+            }
+
+            slider.addEventListener('mouseenter', stopAutoplay);
+            slider.addEventListener('mouseleave', startAutoplay);
+            slider.addEventListener('focusin', stopAutoplay);
+            slider.addEventListener('focusout', function(event) {
+                if (!slider.contains(event.relatedTarget)) startAutoplay();
+            });
+            document.addEventListener('visibilitychange', startAutoplay);
+            startAutoplay();
+
+            track.addEventListener('scroll', function() {
+                const center = track.getBoundingClientRect().left + track.clientWidth / 2;
+                const nearestIndex = cards.reduce(function(nearest, card, index) {
+                    const cardCenter = card.getBoundingClientRect().left + card.offsetWidth / 2;
+                    const nearestCenter = cards[nearest].getBoundingClientRect().left + cards[nearest].offsetWidth / 2;
+                    return Math.abs(cardCenter - center) < Math.abs(nearestCenter - center) ? index : nearest;
+                }, 0);
+
+                if (nearestIndex !== activeIndex) {
+                    activeIndex = nearestIndex;
+                    dots.forEach(function(dot, dotIndex) {
+                        dot.setAttribute('aria-current', dotIndex === activeIndex ? 'true' : 'false');
+                    });
+                }
+            }, { passive: true });
+        });
+
+        (function() {
+            const dialog = document.getElementById('testimonial-dialog');
+            const openButton = document.getElementById('open-testimonial-dialog');
+            if (!dialog || !openButton) return;
+
+            openButton.addEventListener('click', function() {
+                dialog.showModal();
+            });
+            dialog.querySelectorAll('[data-close-testimonial-dialog]').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    dialog.close();
+                });
+            });
+            dialog.addEventListener('click', function(event) {
+                if (event.target === dialog) dialog.close();
+            });
+            @if ($errors->has('name') || $errors->has('position') || $errors->has('content') || session('testimonial_submitted'))
+                dialog.showModal();
+            @endif
+        })();
+
         document.querySelectorAll('[data-product-carousel]').forEach(function(carousel) {
             const slides = Array.from(carousel.querySelectorAll('[data-product-slide]'));
             if (slides.length < 2) return;

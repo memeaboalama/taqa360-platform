@@ -36,6 +36,10 @@ class MarketplaceApplicationServiceProvider extends ServiceProvider
         );
 
         $this->registerLivewireComponents(app_path('Application/Marketplace/Livewire'));
+        Livewire::component(
+            'marketplace::finance.reports.order.components.collection-settlement',
+            \Application\Marketplace\Livewire\Finance\Reports\Order\Components\CollectionSettlement::class
+        );
 
     }
 

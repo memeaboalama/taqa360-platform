@@ -15,6 +15,7 @@ class CustomerTestimonial extends Model
         'content',
         'image',
         'is_active',
+        'status',
         'sort_order',
     ];
 

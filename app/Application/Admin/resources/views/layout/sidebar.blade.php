@@ -36,8 +36,8 @@
                 </li>
                 <!-- Banner Management System - Two Separate Sections -->
 
-                <li class="slide has-sub {{ isActiveSection([url('admin/banner-spaces'), url('admin/ads-content')]) }}">
-                    <a href="javascript:void(0);" class="side-menu__item {{ isActiveSection([url('admin/banner-spaces'), url('admin/ads-content')]) ? 'active' : '' }}">
+                <li class="slide has-sub {{ isActiveSection([url('admin/banner-spaces'), url('admin/ads-content'), url('admin/customer-testimonials')]) }}">
+                    <a href="javascript:void(0);" class="side-menu__item {{ isActiveSection([url('admin/banner-spaces'), url('admin/ads-content'), url('admin/customer-testimonials')]) ? 'active' : '' }}">
                         <i class="bx bx-layout side-menu__icon"></i>
                         <span class="side-menu__label">{{ __('admin::lang.Banner Spaces') }}</span>
                         <i class="fe fe-chevron-right side-menu__angle"></i>
@@ -55,6 +55,11 @@
                             <a href="{{ route('admin:ads-content.index') }}" class="side-menu__item {{ isActive(route('admin:ads-content.index')) }}">
                                 {{-- <i class="bx bx-images side-menu__icon"></i> --}}
                                 <span class="side-menu__label">{{ __('admin::lang.Ads Content') }}</span>
+                            </a>
+                        </li>
+                        <li class="slide">
+                            <a href="{{ route('admin:customer-testimonials.index') }}" class="side-menu__item {{ isActive(route('admin:customer-testimonials.index')) }}">
+                                <span class="side-menu__label">{{ __('admin::lang.Customer Testimonials') }}</span>
                             </a>
                         </li>
                     </ul>

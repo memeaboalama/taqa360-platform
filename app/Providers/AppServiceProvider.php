@@ -167,6 +167,9 @@ class AppServiceProvider extends ServiceProvider
         \Livewire\Livewire::component('admin::ads-content.shared.live-search', \Application\Admin\Livewire\AdsContent\Shared\LiveSearch::class);
         \Livewire\Livewire::component('admin::ads-content.header-settings', \Application\Admin\Livewire\AdsContent\HeaderSettings::class);
 
+        // Customer Testimonials
+        \Livewire\Livewire::component('admin::customer-testimonials.index', \Application\Admin\Livewire\CustomerTestimonials\Index::class);
+
         // Ad Placement Components
         \Livewire\Livewire::component('admin::adplacement.space-cards', \Application\Admin\Livewire\AdPlacement\SpaceCards::class);
         \Livewire\Livewire::component('admin::adplacement.modal.create', \Application\Admin\Livewire\AdPlacement\Modal\Create::class);

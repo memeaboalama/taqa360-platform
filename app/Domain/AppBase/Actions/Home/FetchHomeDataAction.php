@@ -500,13 +500,16 @@ class FetchHomeDataAction
     {
         return CustomerTestimonial::query()
             ->where('is_active', true)
+            ->where('status', 'approved')
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get()
             ->map(fn (CustomerTestimonial $testimonial): array => [
                 'name' => $testimonial->name,
                 'position' => $testimonial->position ?? '',
-                'image' => $testimonial->image,
+                'image' => $testimonial->image && !\Illuminate\Support\Str::startsWith($testimonial->image, ['http://', 'https://'])
+                    ? Storage::disk('fileDisk')->url($testimonial->image)
+                    : $testimonial->image,
                 'content' => $testimonial->content,
             ])
             ->all();

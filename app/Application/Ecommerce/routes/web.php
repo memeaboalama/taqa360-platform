@@ -5,6 +5,7 @@ use App\Application\Ecommerce\Controllers\AuthController;
 use App\Application\Ecommerce\Controllers\CartController;
 use App\Application\Ecommerce\Controllers\CategoryController;
 use App\Application\Ecommerce\Controllers\CheckoutController;
+use App\Application\Ecommerce\Controllers\CustomerTestimonialController;
 use App\Application\Ecommerce\Controllers\FilterController;
 use App\Application\Ecommerce\Controllers\MerchantController;
 use App\Application\Ecommerce\Controllers\OfferController;
@@ -43,6 +44,9 @@ Route::group(
             ->name('service-requests.services');
 
         Route::get('/', [EcommerceController::class, 'staticIndex'])->name('ecommerce.static');
+        Route::post('/customer-testimonials', [CustomerTestimonialController::class, 'store'])
+            ->middleware('throttle:5,10')
+            ->name('customer-testimonials.store');
         Route::get('/ecommerce-static', function () {
             return redirect()->route('ecommerce.static');
         });

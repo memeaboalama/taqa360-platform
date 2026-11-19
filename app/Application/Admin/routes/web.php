@@ -40,6 +40,7 @@ use Application\Admin\Controllers\Category\MarketplaceCategoryController;
 use Application\Admin\Controllers\BannerController;
 use Application\Admin\Controllers\BannerSpacesController;
 use Application\Admin\Controllers\AdsContentController;
+use Application\Admin\Controllers\CustomerTestimonialsController;
 use Application\Admin\Controllers\AdPageController;
 use Application\Admin\Controllers\AdPlacementController;
 use Application\Admin\Controllers\AdBannerController;
@@ -182,6 +183,8 @@ Route::group(
             Route::get('/placement/{placement}', [AdsContentController::class, 'manage'])->name('manage');
         });
 
+        Route::get('/customer-testimonials', [CustomerTestimonialsController::class, 'index'])
+            ->name('customer-testimonials.index');
 
         Route::prefix('roles')->as('roles.')->group(function () {
             Route::get('/', [RoleController::class, 'index'])->name('index');
