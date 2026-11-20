@@ -12,9 +12,25 @@ class RegisterServiceProviders
         $namespaces = [];
         $appsPath = app_path('Application');
         foreach (array_diff(scandir($appsPath), ['.', '..', '.DS_Store']) as $app) {
-            $providers = str_replace('.php', '', array_diff(scandir(app_path("Application/$app/Providers")), ['.', '..', '.DS_Store']));
-            foreach ($providers as $provider) {
-                $namespaces[] = (new \ReflectionClass("\\App\\Application\\$app\\Providers\\$provider"))->getName();
+            $providersPath = app_path("Application/$app/Providers");
+
+            if (!is_dir($providersPath)) {
+                continue;
+            }
+
+            foreach (array_diff(scandir($providersPath), ['.', '..', '.DS_Store']) as $providerFile) {
+                $providerPath = $providersPath . DIRECTORY_SEPARATOR . $providerFile;
+
+                if (!is_file($providerPath) || pathinfo($providerPath, PATHINFO_EXTENSION) !== 'php') {
+                    continue;
+                }
+
+                $provider = pathinfo($providerFile, PATHINFO_FILENAME);
+                $providerClass = "\\App\\Application\\$app\\Providers\\$provider";
+
+                if (class_exists($providerClass)) {
+                    $namespaces[] = (new \ReflectionClass($providerClass))->getName();
+                }
             }
         }
         return $namespaces;

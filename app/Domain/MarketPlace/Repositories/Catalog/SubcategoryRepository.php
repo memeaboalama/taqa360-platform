@@ -19,9 +19,16 @@ class SubcategoryRepository extends EloquentMainRepository
                 'category:id,title',
                 'childCategories:id,subcategory_id,title',
             ])
-            ->whereHas('items', fn($q) => $q->where('merchant_id', $merchantId))
+            ->where('is_active', true)
+            ->whereHas('items', fn($q) => $q
+                ->where('merchant_id', $merchantId)
+                ->where('status', 'active')
+                ->availableForStorefront())
             ->withCount([
-                'items as items_count' => fn($q) => $q->where('merchant_id', $merchantId)
+                'items as items_count' => fn($q) => $q
+                    ->where('merchant_id', $merchantId)
+                    ->where('status', 'active')
+                    ->availableForStorefront()
             ])
             ->select('id', 'category_id', 'title', 'slug', 'description', 'is_active')
             ->orderBy('title');

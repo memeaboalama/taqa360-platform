@@ -180,11 +180,7 @@ public function countMenuItems(int $merchant_id): int
         $query = $this->getActiveItemsByMerchant($merchant_id);
 
         if ($category_id && $category_id !== 'all') {
-            $query->where(function($q) use ($category_id) {
-                $q->where('main_category_id', $category_id)
-                  ->orWhere('sub_category_id', $category_id)
-                  ->orWhere('child_category_id', $category_id);
-            });
+            $query->where('sub_category_id', $category_id);
         }
 
         return $query->count();

@@ -637,6 +637,287 @@
             border: 1px solid var(--line);
             border-radius: 6px;
             outline: 0}.search-merchant:focus{border-color: var(--yellow)}
+        .merchant-detail .container { max-width: 1180px; }
+        .merchant-detail .merchant-breadcrumb { padding: 18px 0; }
+        .merchant-detail .merchant-hero {
+            margin: 0;
+            padding: 30px 32px;
+            min-height: 150px;
+            border-radius: 14px;
+            box-shadow: 0 3px 14px rgba(36,92,142,.06);
+        }
+        .merchant-detail .merchant-head { flex-wrap: nowrap; gap: 22px; }
+        .merchant-detail .merchant-logo {
+            width: 104px;
+            height: 104px;
+            border-radius: 18px;
+            padding: 8px;
+        }
+        .merchant-detail .merchant-info h1 { font-size: 26px; }
+        .merchant-detail .merchant-desc { max-width: 820px; }
+        .merchant-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 154px;
+            margin-inline-start: auto;
+        }
+        .merchant-action {
+            min-height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 0 15px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+            color: #245C8E;
+            text-decoration: none;
+            white-space: nowrap;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .merchant-action.primary { background: #245C8E; border-color: #245C8E; color: #fff; }
+        .merchant-action:hover { filter: brightness(.96); }
+        .store-tabs {
+            display: flex;
+            gap: 32px;
+            margin-top: 20px;
+            border-bottom: 1px solid var(--line);
+            overflow-x: auto;
+        }
+        .store-tab {
+            min-height: 58px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 0;
+            border-bottom: 3px solid transparent;
+            background: transparent;
+            color: var(--muted);
+            font-size: 15px;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .store-tab.active { color: var(--yellow); border-bottom-color: var(--yellow); }
+        .store-tab-count {
+            min-width: 24px;
+            height: 24px;
+            display: inline-grid;
+            place-items: center;
+            border-radius: 20px;
+            background: #edf3f8;
+            font-size: 11px;
+        }
+        .store-panel { display: none; }
+        .store-panel.active { display: block; }
+        .store-panel[hidden] { display: none; }
+        .store-section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 26px 2px 18px;
+        }
+        .store-section-head h2 { margin: 0 0 4px; font-size: 22px; }
+        .store-section-head p { margin: 0; color: var(--muted); }
+        .store-filter-box {
+            display: grid;
+            gap: 14px;
+            margin-bottom: 18px;
+            padding: 18px 20px 14px;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+        }
+        .store-filter-top { display: flex; gap: 12px; align-items: center; }
+        .store-filter-top .search-merchant { height: 42px; }
+        .store-filter-top .sort { height: 42px; min-width: 150px; }
+        .store-categories {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+        }
+        .store-category {
+            min-height: 39px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 13px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            color: #52677c;
+            background: #fff;
+            text-decoration: none;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+        .store-category:hover, .store-category.active {
+            color: #245C8E;
+            border-color: #b9cce0;
+            background: #eef4fa;
+        }
+        .store-category .count { color: #9aa7b3; }
+        .merchant-detail .layout {
+            display: block;
+            padding-top: 0;
+        }
+        .merchant-detail .sidebar {
+            display: block;
+            margin: 20px 0 18px;
+        }
+        .merchant-detail .filter-sidebar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 12px;
+            border-radius: 14px;
+            box-shadow: none;
+        }
+        .merchant-detail .filter-title { display: none; }
+        .merchant-detail .filter-option {
+            min-height: 39px;
+            border: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 7px 13px;
+            white-space: nowrap;
+        }
+        .merchant-detail .filter-option:last-child { border-bottom: 1px solid var(--line); }
+        .merchant-detail .products {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .merchant-detail .product {
+            min-height: 360px;
+            border-radius: 12px;
+            padding: 0;
+            overflow: hidden;
+        }
+        .merchant-detail .product-img-wrap { padding: 20px 18px 10px; }
+        .merchant-detail .product-image { height: 205px; }
+        .merchant-detail .product h3 {
+            height: auto;
+            min-height: 48px;
+            margin: 0 18px 6px;
+            font-size: 14px;
+        }
+        .merchant-detail .rating { margin: 0 18px; }
+        .merchant-detail .price { margin: 8px 18px 0; }
+        .merchant-detail .add-cart-form { margin: 0 18px 18px; }
+        .merchant-detail .favorite { inset-inline-end: 10px; inset-inline-start: auto; }
+        .store-about-grid {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr;
+            gap: 22px;
+            margin: 26px 0 40px;
+        }
+        .store-about-card {
+            padding: 24px;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+        }
+        .store-about-card h2 { margin: 0 0 12px; font-size: 18px; }
+        .store-about-card p { color: var(--muted); line-height: 2; }
+        .store-branches-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin: 24px 0 40px;
+        }
+        .store-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin: 18px 0 40px;
+            padding: 22px 26px;
+            border: 1px solid #dce8f2;
+            border-radius: 13px;
+            background: #eaf2f9;
+        }
+        .store-bottom h2 { margin: 0 0 6px; font-size: 19px; }
+        .store-bottom p { margin: 0; color: var(--muted); line-height: 1.8; }
+        .store-contact-dialog {
+            width: min(500px, calc(100% - 32px));
+            max-width: none;
+            max-height: min(85vh, 620px);
+            padding: 0;
+            overflow: hidden;
+            border: 0;
+            border-radius: 20px;
+            color: #23364a;
+            background: #fff;
+            box-shadow: 0 20px 60px rgba(14, 34, 54, .24);
+        }
+        .store-contact-dialog::backdrop { background: rgba(31, 51, 70, .52); }
+        .store-contact-dialog-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 19px 24px;
+            border-bottom: 1px solid #dfe6ed;
+        }
+        .store-contact-dialog-header h2 { margin: 0; font-size: 21px; font-weight: 800; }
+        .store-contact-close {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            border: 0;
+            border-radius: 50%;
+            background: #f0f3f6;
+            color: #23364a;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .store-contact-dialog-body { padding: 8px 24px 24px; }
+        .store-contact-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 0;
+            border-bottom: 1px solid #dfe6ed;
+        }
+        .store-contact-row > div { flex: 1; text-align: start; }
+        .store-contact-row:last-of-type { border-bottom: 0; }
+        .store-contact-label { display: block; margin-bottom: 5px; color: #7a8ea3; font-size: 13px; }
+        .store-contact-value { display: block; color: #23364a; font-size: 15px; text-decoration: none; }
+        [dir="rtl"] .store-contact-value { text-align: right; }
+        [dir="ltr"] .store-contact-value { text-align: left; }
+        .store-contact-row i { color: #397fbb; font-size: 18px; }
+        .store-contact-dialog-footer { display: flex; justify-content: flex-start; padding-top: 8px; }
+        @media(max-width:1000px) {
+            .merchant-detail .products { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        @media(max-width:800px) {
+            .merchant-detail .merchant-hero { padding: 22px 20px; }
+            .merchant-detail .merchant-head { align-items: flex-start; flex-wrap: wrap; }
+            .merchant-detail .merchant-logo { width: 78px; height: 78px; }
+            .merchant-detail .merchant-info h1 { font-size: 20px; }
+            .merchant-actions { width: 100%; min-width: 0; margin-inline-start: 0; }
+            .merchant-action { flex: 1; padding-inline: 8px; font-size: 12px; }
+            .store-tabs { gap: 20px; }
+            .store-tab { min-height: 52px; font-size: 13px; }
+            .store-filter-top { flex-wrap: wrap; }
+            .store-filter-top .search-merchant { flex-basis: 100%; }
+            .store-filter-top .sort { width: 100%; }
+            .merchant-detail .products { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+            .merchant-detail .product-image { height: 180px; }
+            .store-about-grid, .store-branches-grid { grid-template-columns: 1fr; }
+            .store-bottom { align-items: stretch; flex-direction: column; padding: 20px; }
+        }
+        @media(max-width:520px) {
+            .merchant-detail .merchant-head { flex-direction: column; }
+            .merchant-detail .products { grid-template-columns: 1fr; }
+            .merchant-detail .product-image { height: 210px; }
+        }
 </style>
 @endsection
 
@@ -662,7 +943,7 @@
                             <span class="merchant-rating" aria-label="@lang('ecommerce::ecommerce.rating') {{ number_format($merchantRating, 1) }}">
                                 <i class="fa fa-star" aria-hidden="true"></i> {{ number_format($merchantRating, 1) }} @lang('ecommerce::ecommerce.rating')
                             </span>
-                            <span><i class="fa fa-cube" aria-hidden="true"></i> {{ $totalProducts }} @lang('ecommerce::ecommerce.sales')</span>
+                            <span><i class="fa fa-cube" aria-hidden="true"></i> {{ $categoryCounts['all'] ?? $totalProducts }} @lang('ecommerce::ecommerce.sales')</span>
                             @if($merchant->phone)
                                 <span class="merchant-contact"><i class="fa fa-phone" aria-hidden="true"></i> <span class="num">{{ $merchant->phone }}</span></span>
                             @endif
@@ -674,9 +955,55 @@
                             <p class="merchant-desc">{{ $localizedDesc }}</p>
                         @endif
                     </div>
+                    <div class="merchant-actions">
+                        <button class="merchant-action primary" type="button" data-open-store-contact>
+                            <i class="fa fa-commenting-o" aria-hidden="true"></i>
+                            @lang('ecommerce::ecommerce.contact_store')
+                        </button>
+                        <button class="merchant-action" type="button" data-copy-store-link data-store-url="{{ route('merchant.show', $merchant->id) }}">
+                            <i class="fa fa-link" aria-hidden="true"></i>
+                            @lang('ecommerce::ecommerce.copy_store_link')
+                        </button>
+                    </div>
                 </div>
             </section>
-            @if($branches->isNotEmpty())
+            <div class="store-tabs" role="tablist" aria-label="@lang('ecommerce::ecommerce.store_categories')">
+                <button id="tab-products" type="button" class="store-tab active" role="tab" aria-selected="true" aria-controls="panel-products" data-store-tab="products">
+                    <i class="fa fa-th-large"></i>
+                    @lang('ecommerce::ecommerce.store_products')
+                    <span class="store-tab-count">{{ $categoryCounts['all'] ?? $totalProducts }}</span>
+                </button>
+                <button id="tab-about" type="button" class="store-tab" role="tab" aria-selected="false" aria-controls="panel-about" data-store-tab="about">
+                    <i class="fa fa-info-circle"></i>
+                    @lang('ecommerce::ecommerce.about_store')
+                </button>
+                <button id="tab-branches" type="button" class="store-tab" role="tab" aria-selected="false" aria-controls="panel-branches" data-store-tab="branches">
+                    <i class="fa fa-map-marker"></i>
+                    @lang('ecommerce::ecommerce.branches')
+                    <span class="store-tab-count">{{ $branches->count() }}</span>
+                </button>
+            </div>
+
+            <section id="panel-about" class="store-panel" data-store-panel="about" role="tabpanel" aria-labelledby="tab-about" hidden>
+                <div class="store-about-grid">
+                    <article class="store-about-card">
+                        <h2>@lang('ecommerce::ecommerce.about_store')</h2>
+                        <p>{{ $localizedDesc ?: __('ecommerce::ecommerce.store_description_missing') }}</p>
+                    </article>
+                    <article id="store-contact-details" class="store-about-card">
+                        <h2>@lang('ecommerce::ecommerce.store_contact_details')</h2>
+                        @if($merchant->phone)
+                            <p><i class="fa fa-phone" aria-hidden="true"></i> <a class="num" href="tel:{{ $merchant->phone }}">{{ $merchant->phone }}</a></p>
+                        @endif
+                        @if($merchant->email)
+                            <p><i class="fa fa-envelope-o" aria-hidden="true"></i> <a class="ltr" href="mailto:{{ $merchant->email }}">{{ $merchant->email }}</a></p>
+                        @endif
+                    </article>
+                </div>
+            </section>
+
+            <section id="panel-branches" class="store-panel" data-store-panel="branches" role="tabpanel" aria-labelledby="tab-branches" hidden>
+                @if($branches->isNotEmpty())
                 <section class="merchant-branches" aria-labelledby="merchant-branches-title">
                     <h2 id="merchant-branches-title">@lang('ecommerce::ecommerce.branches')</h2>
                     <div class="branch-list">
@@ -700,7 +1027,10 @@
                         @endforeach
                     </div>
                 </section>
-            @endif
+                @endif
+            </section>
+
+            <section id="panel-products" class="store-panel active" data-store-panel="products" role="tabpanel" aria-labelledby="tab-products">
             <div class="layout">
                 <aside class="sidebar">
                     <div class="filter-sidebar">
@@ -763,6 +1093,52 @@
                     <div class="pagination">{!! $products->links('pagination::bootstrap-4') !!}</div>@endif
                 </section>
             </div>
+            <section class="store-bottom" aria-labelledby="product-details-title">
+                <div>
+                    <h2 id="product-details-title">@lang('ecommerce::ecommerce.product_details_cta')</h2>
+                    <p>@lang('ecommerce::ecommerce.product_details_cta_desc')</p>
+                </div>
+                <button class="merchant-action primary" type="button" data-open-store-contact>
+                    <i class="fa fa-info-circle" aria-hidden="true"></i>
+                    @lang('ecommerce::ecommerce.store_contact_details')
+                </button>
+            </section>
+            </section>
+
+            <dialog class="store-contact-dialog" id="store-contact-dialog" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}" aria-labelledby="store-contact-dialog-title">
+                <div class="store-contact-dialog-header">
+                    <h2 id="store-contact-dialog-title">@lang('ecommerce::ecommerce.contact_store')</h2>
+                    <button class="store-contact-close" type="button" data-close-store-contact aria-label="@lang('ecommerce::ecommerce.close')">&times;</button>
+                </div>
+                <div class="store-contact-dialog-body">
+                    @if($merchant->phone)
+                        <div class="store-contact-row">
+                            <i class="fa fa-phone" aria-hidden="true"></i>
+                            <div>
+                                <span class="store-contact-label">@lang('ecommerce::ecommerce.store_phone_label')</span>
+                                <a class="store-contact-value" dir="ltr" href="tel:{{ $merchant->phone }}">{{ $merchant->phone }}</a>
+                            </div>
+                        </div>
+                    @endif
+                    @if($merchant->email)
+                        <div class="store-contact-row">
+                            <i class="fa fa-envelope-o" aria-hidden="true"></i>
+                            <div>
+                                <span class="store-contact-label">@lang('ecommerce::ecommerce.store_email_label')</span>
+                                <a class="store-contact-value" dir="ltr" href="mailto:{{ $merchant->email }}">{{ $merchant->email }}</a>
+                            </div>
+                        </div>
+                    @endif
+                    @unless($merchant->phone || $merchant->email)
+                        <p class="store-contact-label">@lang('ecommerce::ecommerce.store_contact_unavailable')</p>
+                    @endunless
+                    <div class="store-contact-dialog-footer">
+                        <button class="merchant-action" type="button" data-open-store-branches>
+                            @lang('ecommerce::ecommerce.show_store_branches')
+                        </button>
+                    </div>
+                </div>
+            </dialog>
 
             {{--
                 Store attachments: read-only list of files the merchant uploaded.
@@ -819,6 +1195,85 @@
 @section('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            var storeTabs = document.querySelectorAll('[data-store-tab]');
+            var storePanels = document.querySelectorAll('[data-store-panel]');
+            var contactDialog = document.getElementById('store-contact-dialog');
+
+            document.querySelectorAll('[data-open-store-contact]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    if (contactDialog && typeof contactDialog.showModal === 'function') {
+                        contactDialog.showModal();
+                    }
+                });
+            });
+
+            document.querySelectorAll('[data-close-store-contact]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    if (contactDialog) contactDialog.close();
+                });
+            });
+
+            if (contactDialog) {
+                contactDialog.addEventListener('click', function (event) {
+                    if (event.target === contactDialog) contactDialog.close();
+                });
+            }
+
+            var branchesButton = document.querySelector('[data-open-store-branches]');
+            if (branchesButton) {
+                branchesButton.addEventListener('click', function () {
+                    if (contactDialog) contactDialog.close();
+                    var branchesTab = document.querySelector('[data-store-tab="branches"]');
+                    if (branchesTab) {
+                        branchesTab.click();
+                        document.getElementById('panel-branches')?.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            }
+
+            storeTabs.forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                    var selectedPanel = tab.dataset.storeTab;
+                    storeTabs.forEach(function (candidate) {
+                        var isSelected = candidate === tab;
+                        candidate.classList.toggle('active', isSelected);
+                        candidate.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+                    });
+                    storePanels.forEach(function (panel) {
+                        var isSelected = panel.dataset.storePanel === selectedPanel;
+                        panel.classList.toggle('active', isSelected);
+                        panel.hidden = !isSelected;
+                    });
+                });
+            });
+
+            document.querySelectorAll('[data-copy-store-link]').forEach(function (button) {
+                button.addEventListener('click', async function () {
+                    try {
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            await navigator.clipboard.writeText(button.dataset.storeUrl);
+                        } else {
+                            var input = document.createElement('textarea');
+                            input.value = button.dataset.storeUrl;
+                            input.style.position = 'fixed';
+                            input.style.opacity = '0';
+                            document.body.appendChild(input);
+                            var copied = false;
+                            try {
+                                input.select();
+                                copied = document.execCommand('copy');
+                            } finally {
+                                input.remove();
+                            }
+                            if (!copied) throw new Error('Copy command failed');
+                        }
+                        window.showNotification(@json(__('ecommerce::ecommerce.store_link_copied')), 'success');
+                    } catch (error) {
+                        window.showNotification(@json(__('ecommerce::ecommerce.store_link_copy_failed')), 'danger');
+                    }
+                });
+            });
+
             document.querySelectorAll('.add-cart-form').forEach(function (form) {
                 form.addEventListener('submit', async function (e) {
                     e.preventDefault();
