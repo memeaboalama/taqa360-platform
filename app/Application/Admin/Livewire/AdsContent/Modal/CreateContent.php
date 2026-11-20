@@ -36,6 +36,8 @@ class CreateContent extends Component
     public $click_action_type = 'none';
     public $click_action_url;
     public $click_action_id;
+    public $button_text_en;
+    public $button_text_ar;
     public $selected_item;
     public $merchant_id;
     public $selected_merchant;
@@ -54,7 +56,7 @@ class CreateContent extends Component
     {
         $this->placementId = $placementId;
         $this->loadPlacement();
-        $this->reset(['name', 'title_en', 'title_ar', 'subtitle_en', 'subtitle_ar', 'image_desktop', 'image_tablet', 'image_mobile', 'image_favicon', 'click_action_type', 'click_action_url', 'click_action_id', 'start_date', 'end_date', 'status', 'priority', 'merchant_id', 'selected_merchant']);
+        $this->reset(['name', 'title_en', 'title_ar', 'subtitle_en', 'subtitle_ar', 'image_desktop', 'image_tablet', 'image_mobile', 'image_favicon', 'click_action_type', 'click_action_url', 'click_action_id', 'button_text_en', 'button_text_ar', 'start_date', 'end_date', 'status', 'priority', 'merchant_id', 'selected_merchant']);
         $this->activeTab = 'basic';
 
         if ($this->placement) {
@@ -196,6 +198,11 @@ class CreateContent extends Component
             'priority' => 'required|integer|min:0|max:100',
         ];
 
+        if ($this->placement->key === 'home_hero_slider') {
+            $rules['button_text_en'] = 'nullable|string|max:100';
+            $rules['button_text_ar'] = 'nullable|string|max:100';
+        }
+
         $devices = $this->placement->settings['display']['devices'] ?? [];
 
         if ($devices['desktop']['enabled'] ?? false) {
@@ -265,6 +272,19 @@ class CreateContent extends Component
             }
         }
 
+        $clickAction = [
+            'type' => $this->click_action_type,
+            'url' => $this->click_action_url,
+            'id' => $this->click_action_id,
+        ];
+
+        if ($this->placement->key === 'home_hero_slider') {
+            $clickAction['button_text'] = [
+                'en' => $this->button_text_en,
+                'ar' => $this->button_text_ar,
+            ];
+        }
+
         $data = [
             'placement_id' => $this->placementId,
             'name' => $this->name,
@@ -280,11 +300,7 @@ class CreateContent extends Component
             'image_tablet' => $this->image_tablet,
             'image_mobile' => $this->image_mobile,
             'image_favicon' => $this->image_favicon,
-            'click_action' => [
-                'type' => $this->click_action_type,
-                'url' => $this->click_action_url,
-                'id' => $this->click_action_id,
-            ],
+            'click_action' => $clickAction,
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
             'status' => BannerStatusEnum::from($this->status)->value,

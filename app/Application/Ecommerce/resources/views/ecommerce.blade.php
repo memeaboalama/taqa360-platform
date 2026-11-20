@@ -1438,6 +1438,7 @@
                         $galleryIndexes = array_values(
                             array_unique([$idx, ($idx + 1) % $slideCount, ($idx + 2) % $slideCount]),
                         );
+                        $buttonText = $slide->click_action['button_text'][$currentLocale] ?? null;
                     @endphp
                     <div class="hero-slide {{ $idx === 0 ? 'active' : '' }}" data-slide="{{ $idx }}">
                         <div class="hero-content">
@@ -1445,7 +1446,7 @@
                             </h1>
                             <p>{{ $slide->localized_subtitle ?: __('ecommerce::ecommerce.home_hero_subtitle', [], $currentLocale) }}
                             </p>
-                            <a class="hero-cta" href="{{ $slide->click_url ?: '#products' }}">
+                            <a class="hero-cta" href="{{ $slide->click_url ?: '#products' }}" target="_blank" rel="noopener noreferrer">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="4" />
@@ -1458,7 +1459,7 @@
                                     <line x1="4.22" y1="19.78" x2="6.34" y2="17.66" />
                                     <line x1="17.66" y1="6.34" x2="19.78" y2="4.22" />
                                 </svg>
-                                @lang('ecommerce::ecommerce.shop_now')
+                                {{ $buttonText ?: __('ecommerce::ecommerce.shop_now', [], $currentLocale) }}
                             </a>
                         </div>
                         <div class="hero-images">

@@ -44,6 +44,8 @@ class UpdateContent extends Component
     public $click_action_type = 'none';
     public $click_action_url;
     public $click_action_id;
+    public $button_text_en;
+    public $button_text_ar;
     public $selected_item;
     public $merchant_id;
     public $selected_merchant;
@@ -133,6 +135,8 @@ class UpdateContent extends Component
         $this->click_action_type = $clickAction['type'] ?? 'none';
         $this->click_action_url = $clickAction['url'] ?? null;
         $this->click_action_id = $clickAction['id'] ?? null;
+        $this->button_text_en = $clickAction['button_text']['en'] ?? '';
+        $this->button_text_ar = $clickAction['button_text']['ar'] ?? '';
 
         if ($this->click_action_type === 'product' && $this->click_action_id) {
             $product = Item::find($this->click_action_id);
@@ -262,6 +266,11 @@ class UpdateContent extends Component
             'priority' => 'required|integer|min:0|max:100',
         ];
 
+        if ($this->placement->key === 'home_hero_slider') {
+            $rules['button_text_en'] = 'nullable|string|max:100';
+            $rules['button_text_ar'] = 'nullable|string|max:100';
+        }
+
         $devices = $this->placement->settings['display']['devices'] ?? [];
 
         if ($devices['desktop']['enabled'] ?? false) {
@@ -335,6 +344,19 @@ class UpdateContent extends Component
             }
         }
 
+        $clickAction = [
+            'type' => $this->click_action_type,
+            'url' => $this->click_action_url,
+            'id' => $this->click_action_id,
+        ];
+
+        if ($this->placement->key === 'home_hero_slider') {
+            $clickAction['button_text'] = [
+                'en' => $this->button_text_en,
+                'ar' => $this->button_text_ar,
+            ];
+        }
+
         $data = [
             'name' => $this->name,
             'title' => [
@@ -345,11 +367,7 @@ class UpdateContent extends Component
                 'en' => $this->subtitle_en,
                 'ar' => $this->subtitle_ar,
             ],
-            'click_action' => [
-                'type' => $this->click_action_type,
-                'url' => $this->click_action_url,
-                'id' => $this->click_action_id,
-            ],
+            'click_action' => $clickAction,
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
             'status' => BannerStatusEnum::from($this->status),

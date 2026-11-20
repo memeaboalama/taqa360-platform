@@ -82,11 +82,6 @@
                         <div class="col-6">
                             <label class="form-label small mb-1">
                                 {{ $placement && $placement->type === \App\Support\Enum\PlacementTypeEnum::HEADER ? __('admin::lang.Logo') : __('admin::lang.Desktop Image') }}
-                                @if($placement && $placement->key !== 'home_hero_slider')
-                                    <small class="text-muted">
-                                        ({{ $placement->settings['display']['devices']['desktop']['width'] ?? '' }}x{{ $placement->settings['display']['devices']['desktop']['height'] ?? '' }}px)
-                                    </small>
-                                @endif
                             </label>
                             @if($existing_image_desktop)
                                 <div class="mb-1">
@@ -96,17 +91,18 @@
                                 </div>
                             @endif
                             <input type="file" id="ads-content-image-desktop" class="form-control form-control-sm @error('image_desktop') is-invalid @enderror" accept="image/*" data-property="image_desktop">
+                            @if($placement && ($placement->settings['display']['devices']['desktop']['enabled'] ?? false) && ($placement->settings['display']['devices']['desktop']['width'] ?? null) && ($placement->settings['display']['devices']['desktop']['height'] ?? null))
+                                <span class="form-text text-muted d-block mt-1">
+                                    {{ $placement->key === 'home_hero_slider' ? __('admin::lang.Recommended Image Dimensions') : __('admin::lang.Required Image Dimensions') }}
+                                    {{ $placement->settings['display']['devices']['desktop']['width'] }}x{{ $placement->settings['display']['devices']['desktop']['height'] }} px
+                                </span>
+                            @endif
                             @error('image_desktop') <small class="text-danger">{{ $message }}</small> @enderror
                             <img id="ads-crop-preview-image_desktop" class="ads-crop-preview d-none mt-1" src="" alt="{{ __('admin::lang.Desktop Image') }}">
                         </div>
                         <div class="col-6">
                             <label class="form-label small mb-1">
                                 {{ $placement && $placement->type === \App\Support\Enum\PlacementTypeEnum::HEADER ? __('admin::lang.Small Logo') : __('admin::lang.Mobile Image') }}
-                                @if($placement && $placement->key !== 'home_hero_slider')
-                                    <small class="text-muted">
-                                        ({{ $placement->settings['display']['devices']['mobile']['width'] ?? '' }}x{{ $placement->settings['display']['devices']['mobile']['height'] ?? '' }}px)
-                                    </small>
-                                @endif
                             </label>
                             @if($existing_image_mobile)
                                 <div class="mb-1">
@@ -116,6 +112,12 @@
                                 </div>
                             @endif
                             <input type="file" id="ads-content-image-mobile" class="form-control form-control-sm @error('image_mobile') is-invalid @enderror" accept="image/*" data-property="image_mobile">
+                            @if($placement && ($placement->settings['display']['devices']['mobile']['enabled'] ?? false) && ($placement->settings['display']['devices']['mobile']['width'] ?? null) && ($placement->settings['display']['devices']['mobile']['height'] ?? null))
+                                <span class="form-text text-muted d-block mt-1">
+                                    {{ $placement->key === 'home_hero_slider' ? __('admin::lang.Recommended Image Dimensions') : __('admin::lang.Required Image Dimensions') }}
+                                    {{ $placement->settings['display']['devices']['mobile']['width'] }}x{{ $placement->settings['display']['devices']['mobile']['height'] }} px
+                                </span>
+                            @endif
                             @error('image_mobile') <small class="text-danger">{{ $message }}</small> @enderror
                             <img id="ads-crop-preview-image_mobile" class="ads-crop-preview d-none mt-1" src="" alt="{{ __('admin::lang.Mobile Image') }}">
                         </div>
@@ -124,11 +126,6 @@
                         <div class="col-6">
                             <label class="form-label small mb-1">
                                 {{ __('admin::lang.Tablet Image') }}
-                                @if($placement && $placement->key !== 'home_hero_slider')
-                                    <small class="text-muted">
-                                        ({{ $placement->settings['display']['devices']['tablet']['width'] ?? '' }}x{{ $placement->settings['display']['devices']['tablet']['height'] ?? '' }}px)
-                                    </small>
-                                @endif
                             </label>
                             @if($existing_image_tablet)
                                 <div class="mb-1">
@@ -138,6 +135,12 @@
                                 </div>
                             @endif
                             <input type="file" id="ads-content-image-tablet" class="form-control form-control-sm @error('image_tablet') is-invalid @enderror" accept="image/*" data-property="image_tablet">
+                            @if($placement && ($placement->settings['display']['devices']['tablet']['enabled'] ?? false) && ($placement->settings['display']['devices']['tablet']['width'] ?? null) && ($placement->settings['display']['devices']['tablet']['height'] ?? null))
+                                <span class="form-text text-muted d-block mt-1">
+                                    {{ $placement->key === 'home_hero_slider' ? __('admin::lang.Recommended Image Dimensions') : __('admin::lang.Required Image Dimensions') }}
+                                    {{ $placement->settings['display']['devices']['tablet']['width'] }}x{{ $placement->settings['display']['devices']['tablet']['height'] }} px
+                                </span>
+                            @endif
                             @error('image_tablet') <small class="text-danger">{{ $message }}</small> @enderror
                             <img id="ads-crop-preview-image_tablet" class="ads-crop-preview d-none mt-1" src="" alt="{{ __('admin::lang.Tablet Image') }}">
                         </div>
@@ -159,6 +162,37 @@
                     </div>
 
                     <h6 class="text-warning mb-2 pb-1 border-bottom small fw-bold mt-3">{{ __('admin::lang.Click Action') }}</h6>
+
+                    @if($placement && $placement->key === 'home_hero_slider')
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="form-label small mb-1">
+                                    {{ __('admin::lang.Button Text') }} (AR)
+                                    <button type="button" class="p-0 border-0 bg-transparent text-primary align-middle ms-1" id="translate-ads-content-button-text-ar-update"
+                                        onclick="translateLocalizedField('ads-content-button-text-ar-update','ads-content-button-text-en-update','ar','en',true)"
+                                        title="{{ __('admin::lang.Translate') }}" style="cursor: pointer;">
+                                        <i class="ri-refresh-line"></i>
+                                    </button>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="ads-content-button-text-ar-update" wire:model.defer="button_text_ar" placeholder="تسوق الآن"
+                                    onblur="translateLocalizedField('ads-content-button-text-ar-update','ads-content-button-text-en-update','ar','en',false)">
+                                @error('button_text_ar') <small class="text-danger">{{ $message }}</small> @enderror
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small mb-1">
+                                    {{ __('admin::lang.Button Text') }} (EN)
+                                    <button type="button" class="p-0 border-0 bg-transparent text-primary align-middle ms-1" id="translate-ads-content-button-text-en-update"
+                                        onclick="translateLocalizedField('ads-content-button-text-en-update','ads-content-button-text-ar-update','en','ar',true)"
+                                        title="{{ __('admin::lang.Translate') }}" style="cursor: pointer;">
+                                        <i class="ri-refresh-line"></i>
+                                    </button>
+                                </label>
+                                <input type="text" class="form-control form-control-sm" id="ads-content-button-text-en-update" wire:model.defer="button_text_en" placeholder="Shop Now"
+                                    onblur="translateLocalizedField('ads-content-button-text-en-update','ads-content-button-text-ar-update','en','ar',false)">
+                                @error('button_text_en') <small class="text-danger">{{ $message }}</small> @enderror
+                            </div>
+                        </div>
+                    @endif
 
                     <div class="row g-2 mb-2 align-items-end">
                         <div class="col-md-{{ $click_action_type === 'product' ? '4' : '6' }}">
@@ -241,9 +275,12 @@
 
                 <div class="modal-footer bg-light py-2">
                     <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">{{ __('admin::lang.Close') }}</button>
-                    <button type="submit" class="btn btn-sm btn-warning">
-                        <span wire:loading.remove wire:target="update">
+                    <button type="submit" class="btn btn-sm btn-warning" wire:loading.attr="disabled" wire:target="update,image_desktop,image_tablet,image_mobile,image_favicon">
+                        <span wire:loading.remove wire:target="update,image_desktop,image_tablet,image_mobile,image_favicon">
                             <i class="fe fe-save me-1"></i>{{ __('admin::lang.Update') }}
+                        </span>
+                        <span wire:loading wire:target="image_desktop,image_tablet,image_mobile,image_favicon">
+                            <span class="spinner-border spinner-border-sm me-1"></span>{{ __('admin::lang.Uploading...') }}
                         </span>
                         <span wire:loading wire:target="update">
                             <span class="spinner-border spinner-border-sm me-1"></span>{{ __('admin::lang.Wait') }}

@@ -238,6 +238,25 @@ class AdBanner extends Model
         }
 
         if (filter_var($path, FILTER_VALIDATE_URL)) {
+            $urlPath = parse_url($path, PHP_URL_PATH);
+            $sourceHost = parse_url($path, PHP_URL_HOST);
+            $appHost = parse_url((string) config('app.url'), PHP_URL_HOST);
+            $storagePrefix = '/storage/';
+
+            if (
+                is_string($urlPath)
+                && str_starts_with($urlPath, $storagePrefix)
+                && is_string($sourceHost)
+                && is_string($appHost)
+                && strcasecmp($sourceHost, $appHost) === 0
+            ) {
+                $storedPath = substr($urlPath, strlen($storagePrefix));
+
+                if ($storedPath !== '') {
+                    return Storage::disk('fileDisk')->url($storedPath);
+                }
+            }
+
             return $path;
         }
 
