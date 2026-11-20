@@ -30,6 +30,7 @@
                             </label>
                             <input type="text" class="form-control form-control-sm" id="ads-content-title-en" wire:model.defer="title_en"
                                 onblur="translateLocalizedField('ads-content-title-en','ads-content-title-ar','en','ar',false)">
+                            @error('title_en') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-6">
                             <label class="form-label small mb-1">
@@ -43,6 +44,7 @@
                             </label>
                             <input type="text" class="form-control form-control-sm" id="ads-content-title-ar" wire:model.defer="title_ar"
                                 onblur="translateLocalizedField('ads-content-title-ar','ads-content-title-en','ar','en',false)">
+                            @error('title_ar') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-6">
                             <label class="form-label small mb-1">
@@ -56,6 +58,7 @@
                             </label>
                             <textarea class="form-control form-control-sm" id="ads-content-subtitle-en" wire:model.defer="subtitle_en" rows="2"
                                 onblur="translateLocalizedField('ads-content-subtitle-en','ads-content-subtitle-ar','en','ar',false)"></textarea>
+                            @error('subtitle_en') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-6">
                             <label class="form-label small mb-1">
@@ -69,6 +72,7 @@
                             </label>
                             <textarea class="form-control form-control-sm" id="ads-content-subtitle-ar" wire:model.defer="subtitle_ar" rows="2"
                                 onblur="translateLocalizedField('ads-content-subtitle-ar','ads-content-subtitle-en','ar','en',false)"></textarea>
+                            @error('subtitle_ar') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                     </div>
 
@@ -218,6 +222,10 @@
                             </div>
                         </div>
                         @endif
+                        <div class="col-12">
+                            @error('click_action_url') <small class="text-danger">{{ $message }}</small> @enderror
+                            @error('click_action_id') <small class="text-danger">{{ $message }}</small> @enderror
+                        </div>
                     </div>
 
                     <h6 class="text-primary mb-2 pb-1 border-bottom small fw-bold mt-3">{{ __('admin::lang.Schedule') }}</h6>
@@ -226,10 +234,12 @@
                         <div class="col-6">
                             <label class="form-label small mb-1">{{ __('admin::lang.Start Date') }}</label>
                             <input type="datetime-local" class="form-control form-control-sm" wire:model.defer="start_date">
+                            @error('start_date') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-6">
                             <label class="form-label small mb-1">{{ __('admin::lang.End Date') }}</label>
                             <input type="datetime-local" class="form-control form-control-sm" wire:model.defer="end_date">
+                            @error('end_date') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-6">
                             <label class="form-label small mb-1">{{ __('admin::lang.Status') }}</label>

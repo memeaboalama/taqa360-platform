@@ -46,7 +46,27 @@
                             <input type="file" class="form-control form-control-sm" wire:model="image_mobile">
                             @error('image_mobile') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Tablet Image') }}</label>
+                            <input type="file" class="form-control form-control-sm" wire:model="image_tablet">
+                            @error('image_tablet') <small class="text-danger">{{ $message }}</small> @enderror
+                        </div>
                     </div>
+
+                    @if($placement && $placement->key === 'home_hero_slider')
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Button Text') }} (EN)</label>
+                            <input type="text" class="form-control form-control-sm" wire:model="button_text_en">
+                            @error('button_text_en') <small class="text-danger">{{ $message }}</small> @enderror
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Button Text') }} (AR)</label>
+                            <input type="text" class="form-control form-control-sm" wire:model="button_text_ar">
+                            @error('button_text_ar') <small class="text-danger">{{ $message }}</small> @enderror
+                        </div>
+                    </div>
+                    @endif
 
                     <div class="row g-2 mb-2">
                         <div class="col-12">
@@ -87,6 +107,8 @@
                                    wire:model="click_action_url"
                                    placeholder="https://..."
                                    @if($click_action_type !== 'url' && $click_action_type !== 'none') readonly @endif>
+                            @error('click_action_url') <small class="text-danger">{{ $message }}</small> @enderror
+                            @error('click_action_id') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                     </div>
 
@@ -94,10 +116,12 @@
                         <div class="col-3">
                             <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Start Date') }}</label>
                             <input type="date" class="form-control form-control-sm" wire:model="start_date">
+                            @error('start_date') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-3">
                             <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.End Date') }}</label>
                             <input type="date" class="form-control form-control-sm" wire:model="end_date">
+                            @error('end_date') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-3">
                             <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Status') }}</label>
@@ -116,7 +140,7 @@
 
                 <div class="modal-footer bg-light py-2">
                     <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">{{ __('admin::lang.Cancel') }}</button>
-                    <button type="submit" class="btn btn-sm btn-primary" wire:loading.attr="disabled" wire:target="store, image_desktop">
+                    <button type="submit" class="btn btn-sm btn-primary" wire:loading.attr="disabled" wire:target="store, image_desktop, image_tablet, image_mobile">
                         <i class="fe fe-save me-1"></i>{{ __('admin::lang.Save') }}
                     </button>
                 </div>

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 use Spatie\Translatable\HasTranslations;
 
 class AdBanner extends Model
@@ -67,6 +68,21 @@ class AdBanner extends Model
     public function placement(): BelongsTo
     {
         return $this->belongsTo(AdPlacement::class, 'placement_id');
+    }
+
+    public static function forgetStorefrontCacheForPlacement(int $placementId): void
+    {
+        $placementKey = AdPlacement::whereKey($placementId)->value('key');
+        $locales = array_unique(['en', 'ar', app()->getLocale()]);
+
+        foreach ($locales as $locale) {
+            Cache::forget("home_page_data_storefront_v5_{$locale}");
+            Cache::forget("home_page_data_{$locale}");
+
+            if ($placementKey) {
+                Cache::forget("ecommerce_banners_{$placementKey}_{$locale}");
+            }
+        }
     }
 
     public function creator(): BelongsTo
@@ -145,29 +161,24 @@ class AdBanner extends Model
         $type = $this->click_action['type'] ?? null;
         $id = $this->click_action['id'] ?? null;
 
-        if ($type === 'product' && $id) {
-            return url(app()->getLocale() . "/product/{$id}");
-        }
+        return match ($type) {
+            'url' => $this->click_action['url'] ?? null,
+            'product' => $id ? url(app()->getLocale() . "/product/{$id}") : null,
+            'merchant' => $id ? url(app()->getLocale() . "/ecommerce/merchant/{$id}") : null,
+            'category' => $id ? $this->categoryClickUrl((int) $id) : null,
+            default => null,
+        };
+    }
 
-        if ($type === 'merchant' && $id) {
-            return url(app()->getLocale() . "/ecommerce/merchant/{$id}");
-        }
+    private function categoryClickUrl(int $id): string
+    {
+        $savedUrl = $this->click_action['url'] ?? null;
+        $query = is_string($savedUrl) ? parse_url($savedUrl, PHP_URL_QUERY) : null;
+        $baseUrl = url(app()->getLocale() . '/categories');
 
-        if ($type === 'category' && $id) {
-            // $level = $this->click_action['level'] ?? null;
-            // $parentId = $this->click_action['parent_id'] ?? null;
-
-            // $baseUrl = url(app()->getLocale() . '/categories');
-
-            // return match($level) {
-            //     1 => "{$baseUrl}?main_category={$id}",
-            //     2 => "{$baseUrl}?sub_category={$id}&main_category={$parentId}",
-            //     3 => "{$baseUrl}?sub_sub_category={$id}&sub_category={$parentId}",
-            //     default => null
-            // };
-        }
-
-        return $this->click_action['url'] ?? null;
+        return is_string($query) && $query !== ''
+            ? "{$baseUrl}?{$query}"
+            : url(app()->getLocale() . "/categories/{$id}");
     }
 
     public function getCtrAttribute(): float

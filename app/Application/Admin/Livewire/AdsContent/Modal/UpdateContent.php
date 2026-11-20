@@ -3,20 +3,21 @@
 namespace Application\Admin\Livewire\AdsContent\Modal;
 
 use App\Domain\AppBase\Actions\AdBanner\UpdateBannerAction;
-use App\Domain\AppBase\Actions\AdBanner\ReorderActiveBannersAction;
 use App\Domain\AppBase\Models\AdBanner;
 use App\Support\Enum\BannerStatusEnum;
 use App\Support\Enum\ClickActionTypeEnum;
 use App\Support\Enum\PlacementTypeEnum;
 use Domain\MarketPlace\Models\Item;
 use Domain\MarketPlace\Models\Merchant;
+use Domain\MarketPlace\Models\Catalog\Category;
+use Domain\MarketPlace\Models\Catalog\ChildCategory;
+use Domain\MarketPlace\Models\Catalog\Subcategory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Cache;
 
 class UpdateContent extends Component
 {
@@ -162,11 +163,57 @@ class UpdateContent extends Component
                     }
                 }
             }
-        } elseif ($this->click_action_id) {
-            // Load selected item for other types (merchant/category)
-            // This part might need adjustment depending on how other types are retrieved,
-            // but for now focusing on Product as requested.
-            // ... (Logic for other types if needed, but 'product' was the specific request)
+        } elseif ($this->click_action_type === 'merchant' && $this->click_action_id) {
+            $merchant = Merchant::find($this->click_action_id);
+            if ($merchant) {
+                $this->selected_item = [
+                    'id' => $merchant->id,
+                    'title' => $merchant->getTranslation('company_name', app()->getLocale()),
+                    'image' => $merchant->logo ?? '/default.jpg',
+                    'type' => 'merchant',
+                ];
+            }
+        } elseif ($this->click_action_type === 'category' && $this->click_action_id) {
+            $level = $clickAction['level'] ?? null;
+            if (!$level && $this->click_action_url) {
+                parse_str((string) parse_url($this->click_action_url, PHP_URL_QUERY), $query);
+                $level = isset($query['child_category']) ? 3 : (isset($query['sub_category']) ? 2 : 1);
+            }
+
+            if ($level === 3 || $level === '3') {
+                $category = ChildCategory::with('subcategory')->find($this->click_action_id);
+                if ($category) {
+                    $this->selected_item = [
+                        'id' => $category->id,
+                        'title' => $category->getTranslation('title', app()->getLocale()),
+                        'type' => 'category',
+                        'level' => 3,
+                        'parent_id' => $category->subcategory_id,
+                        'parent_main_id' => $category->subcategory->category_id ?? null,
+                    ];
+                }
+            } elseif ($level === 2 || $level === '2') {
+                $category = Subcategory::find($this->click_action_id);
+                if ($category) {
+                    $this->selected_item = [
+                        'id' => $category->id,
+                        'title' => $category->getTranslation('title', app()->getLocale()),
+                        'type' => 'category',
+                        'level' => 2,
+                        'parent_id' => $category->category_id,
+                    ];
+                }
+            } else {
+                $category = Category::find($this->click_action_id);
+                if ($category) {
+                    $this->selected_item = [
+                        'id' => $category->id,
+                        'title' => $category->getTranslation('title', app()->getLocale()),
+                        'type' => 'category',
+                        'level' => 1,
+                    ];
+                }
+            }
         }
 
         $this->start_date = $banner->start_date ? $banner->start_date->format('Y-m-d\TH:i') : null;
@@ -226,23 +273,27 @@ class UpdateContent extends Component
         $level = $item['level'] ?? null;
         $parentId = $item['parent_id'] ?? null;
 
+        $parentMainId = $item['parent_main_id'] ?? null;
+
         return match($type) {
             'product' => url(app()->getLocale() . "/product/{$id}"),
             'merchant' => url(app()->getLocale() . "/ecommerce/merchant/{$id}"),
-            'category' => $this->generateCategoryUrl($id, $level, $parentId),
+            'category' => $this->generateCategoryUrl($id, $level, $parentId, $parentMainId),
             default => null
         };
     }
 
-    private function generateCategoryUrl($id, $level, $parentId)
+    private function generateCategoryUrl($id, $level, $parentId, $parentMainId)
     {
         $baseUrl = url(app()->getLocale() . '/categories');
 
         return match($level) {
             1 => "{$baseUrl}?main_category={$id}",
-            2 => "{$baseUrl}?main_category={$parentId}&sub_category={$id}",
-            3 => "{$baseUrl}?main_category=1&child_category={$id}&sub_category=all",
-            default => "{$baseUrl}?main_category={$id}"
+            2 => $parentId ? "{$baseUrl}?main_category={$parentId}&sub_category={$id}" : null,
+            3 => $parentMainId && $parentId
+                ? "{$baseUrl}?main_category={$parentMainId}&sub_category={$parentId}&child_category={$id}"
+                : null,
+            default => null
         };
     }
 
@@ -261,12 +312,16 @@ class UpdateContent extends Component
             'title_ar' => 'nullable|string|max:255',
             'subtitle_en' => 'nullable|string|max:500',
             'subtitle_ar' => 'nullable|string|max:500',
-            'click_action_type' => 'nullable|in:' . implode(',', ClickActionTypeEnum::values()),
+            'click_action_type' => 'required|in:' . implode(',', ClickActionTypeEnum::values()),
+            'click_action_url' => 'nullable|required_if:click_action_type,url,product,category,merchant|url|max:2048',
+            'click_action_id' => 'nullable|required_if:click_action_type,product,category,merchant|integer',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
             'status' => 'required|in:' . implode(',', BannerStatusEnum::values()),
             'priority' => 'required|integer|min:0|max:100',
         ];
 
-        if ($this->placement->key === 'home_hero_slider') {
+        if ($this->placement->key === 'home_hero_slider' || $this->button_text_en !== '' || $this->button_text_ar !== '') {
             $rules['button_text_en'] = 'nullable|string|max:100';
             $rules['button_text_ar'] = 'nullable|string|max:100';
         }
@@ -346,16 +401,20 @@ class UpdateContent extends Component
 
         $clickAction = [
             'type' => $this->click_action_type,
-            'url' => $this->click_action_url,
-            'id' => $this->click_action_id,
+            'url' => $this->click_action_type === 'none' ? null : $this->click_action_url,
+            'id' => in_array($this->click_action_type, ['product', 'category', 'merchant'], true) ? $this->click_action_id : null,
         ];
 
-        if ($this->placement->key === 'home_hero_slider') {
-            $clickAction['button_text'] = [
-                'en' => $this->button_text_en,
-                'ar' => $this->button_text_ar,
-            ];
+        if ($this->click_action_type === 'category' && $this->selected_item) {
+            $clickAction['level'] = $this->selected_item['level'] ?? null;
+            $clickAction['parent_id'] = $this->selected_item['parent_id'] ?? null;
+            $clickAction['parent_main_id'] = $this->selected_item['parent_main_id'] ?? null;
         }
+
+        $clickAction['button_text'] = [
+            'en' => $this->button_text_en,
+            'ar' => $this->button_text_ar,
+        ];
 
         $data = [
             'name' => $this->name,
@@ -392,13 +451,8 @@ class UpdateContent extends Component
             $action->handle($this->bannerId, $data);
             DB::commit();
 
-            (new ReorderActiveBannersAction())->handle($this->placement->id);
-
             if ($this->placement) {
-                Cache::forget("ecommerce_banners_{$this->placement->key}_en");
-                Cache::forget("ecommerce_banners_{$this->placement->key}_ar");
-                Cache::forget('home_page_data_en');
-                Cache::forget('home_page_data_ar');
+                AdBanner::forgetStorefrontCacheForPlacement((int) $this->placement->id);
             }
 
             $this->emit('banner-updated');
@@ -407,7 +461,7 @@ class UpdateContent extends Component
             $this->alert('success', __('admin::lang.Updated Successfully'));
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::info('Error creating ad banner: ' . $e->getMessage(), ['exception' => $e]);
+            Log::error('Error updating ad banner: ' . $e->getMessage(), ['exception' => $e]);
             $this->alert('error', __('admin::lang.Error occurred') . ': ' . $e->getMessage());
         }
     }

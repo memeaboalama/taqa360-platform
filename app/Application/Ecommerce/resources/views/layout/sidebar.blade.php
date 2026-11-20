@@ -100,15 +100,33 @@
         <div class="col-md-12 col-6 set-order-md-5 mb-3">
             @if(isset($sidebarBanner) && $sidebarBanner->isNotEmpty())
                 @php $banner = $sidebarBanner->first(); @endphp
-                <a href="{{ $banner->click_url ?: '#' }}" class="d-block">
+                @if($banner->click_url)
+                <a href="{{ $banner->click_url }}" target="{{ $banner->target ?? '_self' }}"
+                    @if(($banner->target ?? '_self') === '_blank') rel="noopener noreferrer" @endif class="d-block">
+                @else
+                <div class="d-block">
+                @endif
                 <div class="side-banner">
-                    <img src="{{ $banner->desktop_image_url ?: asset('assets/images/ecommerce/Side-banner/1.png') }}" class="bg-img bg-bottom" alt="{{ $banner->localized_title }}">
+                    <picture>
+                        @if($banner->mobile_image_url)
+                            <source media="(max-width: 767px)" srcset="{{ $banner->mobile_image_url }}">
+                        @endif
+                        @if($banner->tablet_image_url)
+                            <source media="(max-width: 1024px)" srcset="{{ $banner->tablet_image_url }}">
+                        @endif
+                        <img src="{{ $banner->desktop_image_url ?: asset('assets/images/ecommerce/Side-banner/1.png') }}"
+                            class="bg-img bg-bottom" alt="{{ $banner->localized_title }}">
+                    </picture>
                     <div class="side-banner-text">
                         <h6>{{ $banner->localized_subtitle ?: __('ecommerce::ecommerce.sidebar.discount_offer') }}</h6>
                         <h4>{{ $banner->localized_title ?: __('ecommerce::ecommerce.sidebar.latest_tools') }}</h4>
                     </div>
                 </div>
+                @if($banner->click_url)
                 </a>
+                @else
+                </div>
+                @endif
             @else
                 <div class="side-banner">
                     <img src="{{ asset('assets/images/ecommerce/Side-banner/1.png') }}" class="bg-img bg-bottom" alt="">
@@ -158,15 +176,33 @@
         <div class="col-md-12 col-6 mb-3">
             @if(isset($sidebarBanner2) && $sidebarBanner2->isNotEmpty())
                 @php $banner2 = $sidebarBanner2->first(); @endphp
-                <a href="{{ $banner2->click_url ?: '#' }}" class="d-block">
+                @if($banner2->click_url)
+                <a href="{{ $banner2->click_url }}" target="{{ $banner2->target ?? '_self' }}"
+                    @if(($banner2->target ?? '_self') === '_blank') rel="noopener noreferrer" @endif class="d-block">
+                @else
+                <div class="d-block">
+                @endif
                 <div class="side-banner">
-                    <img src="{{ $banner2->desktop_image_url ?: asset('assets/images/ecommerce/Side-banner/1.png') }}" class="bg-img bg-bottom" alt="{{ $banner2->localized_title }}">
+                    <picture>
+                        @if($banner2->mobile_image_url)
+                            <source media="(max-width: 767px)" srcset="{{ $banner2->mobile_image_url }}">
+                        @endif
+                        @if($banner2->tablet_image_url)
+                            <source media="(max-width: 1024px)" srcset="{{ $banner2->tablet_image_url }}">
+                        @endif
+                        <img src="{{ $banner2->desktop_image_url ?: asset('assets/images/ecommerce/Side-banner/1.png') }}"
+                            class="bg-img bg-bottom" alt="{{ $banner2->localized_title }}">
+                    </picture>
                     <div class="side-banner-text">
                         <h6>{{ $banner2->localized_subtitle ?: __('ecommerce::ecommerce.sidebar.discount_offer') }}</h6>
                         <h4>{{ $banner2->localized_title ?: __('ecommerce::ecommerce.sidebar.latest_tools') }}</h4>
                     </div>
                 </div>
+                @if($banner2->click_url)
                 </a>
+                @else
+                </div>
+                @endif
             @else
                 <div class="side-banner">
                     <img src="{{ asset('assets/images/ecommerce/Side-banner/1.png') }}" class="bg-img bg-bottom" alt="">

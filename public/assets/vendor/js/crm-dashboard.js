@@ -491,11 +491,16 @@ var options1 = {
         }
     }
 };
-document.getElementById('crm-profits-earned').innerHTML = '';
-var chart1 = new ApexCharts(document.querySelector("#crm-profits-earned"), options1);
-chart1.render();
+var profitsEarnedElement = document.getElementById('crm-profits-earned');
+var chart1;
+if (profitsEarnedElement) {
+    profitsEarnedElement.innerHTML = '';
+    chart1 = new ApexCharts(profitsEarnedElement, options1);
+    chart1.render();
+}
 
 function crmProfitsearned() {
+    if (!chart1) return;
     chart1.updateOptions({
         colors: ["rgba(" + myVarVal + ", 1)", "#ededed"],
     });
@@ -505,7 +510,10 @@ function crmProfitsearned() {
 /* Leads By Source Chart */
 Chart.defaults.elements.arc.borderWidth = 0;
 Chart.defaults.datasets.doughnut.cutout = '85%';
-var chartInstance = new Chart(document.getElementById("leads-source"), {
+var leadsSourceElement = document.getElementById("leads-source");
+var chartInstance;
+if (leadsSourceElement) {
+    chartInstance = new Chart(leadsSourceElement, {
     type: 'doughnut',
     data: {
         datasets: [{
@@ -554,9 +562,11 @@ var chartInstance = new Chart(document.getElementById("leads-source"), {
             });
         }
     }]
-});
+    });
+}
 
 function leads(myVarVal) {
+    if (!chartInstance) return;
 
     chartInstance.data.datasets[0] = {
         label: 'My First Dataset',

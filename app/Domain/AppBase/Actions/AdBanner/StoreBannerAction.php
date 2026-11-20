@@ -8,6 +8,7 @@ use App\Domain\AppBase\Repositories\AdBannerRepository;
 use App\Support\Services\ImagesServices\ImageService;
 use App\Support\Enum\FileTypesEnum;
 use App\Support\Enum\PlacementTypeEnum;
+use Illuminate\Http\UploadedFile;
 
 class StoreBannerAction
 {
@@ -32,7 +33,10 @@ class StoreBannerAction
             $data['created_by'] = auth()->id();
         }
 
-        return $this->bannerRepository->store($data);
+        $banner = $this->bannerRepository->store($data);
+        AdBanner::forgetStorefrontCacheForPlacement((int) $data['placement_id']);
+
+        return $banner;
     }
 
     protected function formatDataForPlacement(array $data): array
@@ -142,38 +146,22 @@ class StoreBannerAction
         $content = [];
 
         if (isset($data['image_desktop']) && is_object($data['image_desktop'])) {
-            $image = $this->imageService->storeImage(
-                $data['image_desktop'],
-                'upload/ads/banners',
-                FileTypesEnum::BANNER
-            );
+            $image = $this->storeBannerImage($data['image_desktop'], 'desktop');
             $content['images']['desktop'] = $image['path'];
         }
 
         if (isset($data['image_tablet']) && is_object($data['image_tablet'])) {
-            $image = $this->imageService->storeImage(
-                $data['image_tablet'],
-                'upload/ads/banners',
-                FileTypesEnum::BANNER
-            );
+            $image = $this->storeBannerImage($data['image_tablet'], 'tablet');
             $content['images']['tablet'] = $image['path'];
         }
 
         if (isset($data['image_mobile']) && is_object($data['image_mobile'])) {
-            $image = $this->imageService->storeImage(
-                $data['image_mobile'],
-                'upload/ads/banners',
-                FileTypesEnum::BANNER
-            );
+            $image = $this->storeBannerImage($data['image_mobile'], 'mobile');
             $content['images']['mobile'] = $image['path'];
         }
 
         if (isset($data['image_favicon']) && is_object($data['image_favicon'])) {
-            $image = $this->imageService->storeImage(
-                $data['image_favicon'],
-                'upload/ads/banners',
-                FileTypesEnum::BANNER
-            );
+            $image = $this->storeBannerImage($data['image_favicon'], 'favicon');
             $content['images']['favicon'] = $image['path'];
         }
 
@@ -205,4 +193,32 @@ class StoreBannerAction
 
         return $content;
     }
+
+    private function storeBannerImage(UploadedFile $file, string $device): array
+    {
+        try {
+            return $this->imageService->storeImage(
+                $file,
+                'upload/ads/banners',
+                FileTypesEnum::BANNER
+            );
+        } catch (\Throwable $exception) {
+            $field = __('admin::lang.' . match ($device) {
+                'desktop' => 'Desktop Image',
+                'tablet' => 'Tablet Image',
+                'mobile' => 'Mobile Image',
+                default => 'Favicon',
+            });
+
+            throw new \RuntimeException(
+                __('admin::lang.Unable to save :field: :reason', [
+                    'field' => $field,
+                    'reason' => $exception->getMessage(),
+                ]),
+                0,
+                $exception
+            );
+        }
+    }
+
 }

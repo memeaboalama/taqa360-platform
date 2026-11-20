@@ -4,7 +4,6 @@ namespace Application\Admin\Livewire\AdsContent\Modal;
 
 use App\Domain\AppBase\Repositories\AdBannerRepository;
 use App\Domain\AppBase\Repositories\AdPlacementRepository;
-use App\Domain\AppBase\Actions\AdBanner\ReorderActiveBannersAction;
 use App\Domain\AppBase\Actions\AdProductContent\ReorderProductContentsAction;
 use App\Domain\AppBase\Models\AdBanner;
 use App\Domain\AppBase\Models\AdPlacement;
@@ -112,25 +111,32 @@ class Reactivate extends Component
             $repo = new AdBannerRepository(new AdBanner());
         }
 
-        $maxPriority = $repo->builder()
-            ->where('placement_id', $this->placementId)
-            ->where('status', 'active')
-            ->max('priority') ?? 0;
+        $updates = [
+            'status' => 'active',
+            'start_date' => $this->start_date ?: null,
+            'end_date' => $this->end_date ?: null,
+        ];
 
-        $repo->update(
-            $this->bannerId,
-            [
-                'status' => 'active',
-                'priority' => $maxPriority + 1,
-                'start_date' => $this->start_date ?: null,
-                'end_date' => $this->end_date ?: null,
-            ]
-        );
+        if ($this->contentType === 'product') {
+            $maxPriority = $repo->builder()
+                ->where('placement_id', $this->placementId)
+                ->where('status', 'active')
+                ->max('priority') ?? 0;
+            $updates['priority'] = $maxPriority + 1;
+        }
+
+        $repo->update($this->bannerId, $updates);
 
         $this->reorderActiveItems();
 
-        Cache::forget('home_page_data_ar');
-        Cache::forget('home_page_data_en');
+        if ($this->contentType === 'product') {
+            Cache::forget('home_page_data_storefront_v5_ar');
+            Cache::forget('home_page_data_storefront_v5_en');
+            Cache::forget('home_page_data_ar');
+            Cache::forget('home_page_data_en');
+        } else {
+            AdBanner::forgetStorefrontCacheForPlacement((int) $this->placementId);
+        }
 
         $this->alert('success', __('admin::lang.Content reactivated successfully'));
         $this->emit('contentReactivated');
@@ -144,8 +150,6 @@ class Reactivate extends Component
     {
         if ($this->contentType === 'product') {
              (new ReorderProductContentsAction())->handle($this->placementId);
-        } else {
-            (new ReorderActiveBannersAction())->handle($this->placementId);
         }
     }
 

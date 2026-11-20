@@ -171,6 +171,8 @@
             input: null,
             cropEnabled: true,
             previewUrls: {},
+            failedUploads: {},
+            pendingUploads: {},
         };
 
         function cropModalRoot() {
@@ -214,7 +216,45 @@
             }
         }
 
+        function clearPreview(property) {
+            var root = cropModalRoot();
+            var preview = root.querySelector('#ads-crop-preview-' + property);
+            if (preview) {
+                preview.classList.add('d-none');
+                preview.removeAttribute('src');
+            }
+            if (state.previewUrls[property]) {
+                URL.revokeObjectURL(state.previewUrls[property]);
+                delete state.previewUrls[property];
+            }
+        }
+
+        function showUploadFailure(property, error, prepareFailure) {
+            var status = error && (error.status || (error.xhr && error.xhr.status));
+            var reason = prepareFailure
+                ? @json(__('admin::lang.Could not prepare image for upload.'))
+                : status === 413
+                    ? @json(__('admin::lang.The image is larger than the server limit'))
+                    : status === 419
+                        ? @json(__('admin::lang.Your session expired. Refresh and retry.'))
+                        : status === 422 || status === 415
+                            ? @json(__('admin::lang.The image was rejected. Check its format and dimensions.'))
+                            : @json(__('admin::lang.The image could not be uploaded due to a server or network error.'));
+            var label = (getConfig(property) || {}).label || property;
+
+            state.pendingUploads[property] = false;
+            state.failedUploads[property] = true;
+            clearPreview(property);
+            if (window.Swal) {
+                Swal.fire(@json(__('admin::lang.Upload Failed')), label + ': ' + reason, 'error');
+            } else {
+                console.error(label + ': ' + reason, error);
+            }
+        }
+
         function uploadFile(file, property, previewUrl) {
+            state.failedUploads[property] = false;
+            state.pendingUploads[property] = true;
             if (previewUrl) {
                 if (state.previewUrls[property]) URL.revokeObjectURL(state.previewUrls[property]);
                 state.previewUrls[property] = previewUrl;
@@ -225,18 +265,20 @@
             var component = root && root.__livewire;
 
             if (!component || !component.upload) {
-                if (window.Swal) Swal.fire('Error', 'Livewire upload is not available', 'error');
+                showUploadFailure(property);
                 return;
             }
 
             component.upload(property, file, function () {
+                state.pendingUploads[property] = false;
+                state.failedUploads[property] = false;
                 if (state.input && state.input.files) {
                     var dt = new DataTransfer();
                     dt.items.add(state.input.files[0]);
                     state.input.files = dt.files;
                 }
-            }, function () {
-                if (window.Swal) Swal.fire('Error', 'Upload failed, please try again', 'error');
+            }, function (error) {
+                showUploadFailure(property, error);
             });
         }
 
@@ -346,7 +388,10 @@
             });
 
             canvas.toBlob(function (blob) {
-                if (!blob) return;
+                if (!blob) {
+                    showUploadFailure(property, null, true);
+                    return;
+                }
                 var ext = (blob.type.split('/')[1] || 'png');
                 var base = (state.fileName || 'image').replace(/\.[^/.]+$/, '');
                 var croppedFile = new File([blob], base + '.' + ext, {
@@ -366,6 +411,24 @@
             state.input = input;
             openCropper(input.files[0], input.dataset.property);
         });
+
+        document.addEventListener('submit', function (e) {
+            if (!e.target || !e.target.matches('#createContentModal form, #updateContentModal form')) return;
+            var blocked = Object.keys(state.failedUploads).some(function (property) {
+                return state.failedUploads[property];
+            }) || Object.keys(state.pendingUploads).some(function (property) {
+                return state.pendingUploads[property];
+            });
+            if (!blocked) return;
+            e.preventDefault();
+            if (window.Swal) {
+                Swal.fire(
+                    @json(__('admin::lang.Upload Failed')),
+                    @json(__('admin::lang.An upload is still in progress or failed. Retry it before saving.')),
+                    'error'
+                );
+            }
+        }, true);
 
         document.getElementById('ads-crop-apply').addEventListener('click', applyCrop);
         document.getElementById('ads-crop-cancel').addEventListener('click', closeCropper);
@@ -393,7 +456,27 @@
         ['createContentModal', 'updateContentModal'].forEach(function (id) {
             var modalEl = document.getElementById(id);
             if (!modalEl) return;
+            modalEl.addEventListener('show.bs.modal', function () {
+                state.failedUploads = {};
+                state.pendingUploads = {};
+            });
+            modalEl.addEventListener('hide.bs.modal', function (e) {
+                var uploadPending = Object.keys(state.pendingUploads).some(function (property) {
+                    return state.pendingUploads[property];
+                });
+                if (!uploadPending) return;
+                e.preventDefault();
+                if (window.Swal) {
+                    Swal.fire(
+                        @json(__('admin::lang.Upload Failed')),
+                        @json(__('admin::lang.An upload is still in progress or failed. Retry it before saving.')),
+                        'error'
+                    );
+                }
+            });
             modalEl.addEventListener('hidden.bs.modal', function () {
+                state.failedUploads = {};
+                state.pendingUploads = {};
                 modalEl.querySelectorAll('input[data-property]').forEach(function (input) {
                     input.value = '';
                 });

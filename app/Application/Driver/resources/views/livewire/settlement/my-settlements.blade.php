@@ -3,7 +3,7 @@
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="card-title mb-0">@lang('driver::home.my_settlements')</h5>
             <button type="button" class="btn btn-primary"
-                    onclick="Livewire.emit('openDriverSettlementForm')">
+                    wire:click="$emit('openDriverSettlementForm')">
                 @lang('driver::home.create_settlement_request')
             </button>
         </div>

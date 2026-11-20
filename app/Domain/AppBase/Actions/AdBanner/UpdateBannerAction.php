@@ -8,6 +8,7 @@ use App\Domain\AppBase\Repositories\AdBannerRepository;
 use App\Support\Services\ImagesServices\ImageService;
 use App\Support\Enum\FileTypesEnum;
 use App\Support\Enum\PlacementTypeEnum;
+use Illuminate\Http\UploadedFile;
 
 class UpdateBannerAction
 {
@@ -42,21 +43,13 @@ class UpdateBannerAction
             foreach (['desktop', 'tablet', 'mobile'] as $device) {
                 $fileKey = "image_{$device}";
                 if (isset($data[$fileKey]) && is_object($data[$fileKey])) {
-                    $image = $this->imageService->storeImage(
-                        $data[$fileKey],
-                        'upload/ads/banners',
-                        FileTypesEnum::BANNER
-                    );
+                    $image = $this->storeBannerImage($data[$fileKey], $device);
                     $content['images'][$device] = $image['path'];
                 }
             }
 
             if (isset($data['image_favicon']) && is_object($data['image_favicon'])) {
-                $image = $this->imageService->storeImage(
-                    $data['image_favicon'],
-                    'upload/ads/banners',
-                    FileTypesEnum::BANNER
-                );
+                $image = $this->storeBannerImage($data['image_favicon'], 'favicon');
                 $content['images']['favicon'] = $image['path'];
             }
 
@@ -64,10 +57,43 @@ class UpdateBannerAction
         }
 
         $result = $this->bannerRepository->update($id, $data);
-        return $result ? true : false;
+        if (!$result) {
+            throw new \RuntimeException('Unable to save banner changes.');
+        }
+
+        AdBanner::forgetStorefrontCacheForPlacement((int) $banner->placement_id);
+
+        return true;
     }
 
-    protected function validatePlacementLimits(int $placementId, string|\BackedEnum $status, int $currentBannerId = null): void
+    private function storeBannerImage(UploadedFile $file, string $device): array
+    {
+        try {
+            return $this->imageService->storeImage(
+                $file,
+                'upload/ads/banners',
+                FileTypesEnum::BANNER
+            );
+        } catch (\Throwable $exception) {
+            $field = __('admin::lang.' . match ($device) {
+                'desktop' => 'Desktop Image',
+                'tablet' => 'Tablet Image',
+                'mobile' => 'Mobile Image',
+                default => 'Favicon',
+            });
+
+            throw new \RuntimeException(
+                __('admin::lang.Unable to save :field: :reason', [
+                    'field' => $field,
+                    'reason' => $exception->getMessage(),
+                ]),
+                0,
+                $exception
+            );
+        }
+    }
+
+    protected function validatePlacementLimits(int $placementId, string|\BackedEnum $status, ?int $currentBannerId = null): void
     {
         $status = $status instanceof \BackedEnum ? $status->value : $status;
 
@@ -108,4 +134,5 @@ class UpdateBannerAction
             throw new \Exception(__('admin::lang.Cannot activate. Maximum :max active items allowed for this section.', ['max' => $maxItems]));
         }
     }
+
 }

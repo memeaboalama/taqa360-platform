@@ -121,7 +121,7 @@ class LiveSearch extends Component
 
         $childCategories = ChildCategory::where('title->ar', 'like', "%{$query}%")
             ->orWhere('title->en', 'like', "%{$query}%")
-            ->with('subcategory')
+            ->with('subcategory.category')
             ->limit(5)
             ->get()
             ->map(fn($cat) => [
@@ -130,6 +130,7 @@ class LiveSearch extends Component
                 'type' => 'category',
                 'level' => 3,
                 'parent_id' => $cat->subcategory_id ?? null,
+                'parent_main_id' => $cat->subcategory->category_id ?? null,
                 'slug' => $cat->slug ?? null
             ]);
 

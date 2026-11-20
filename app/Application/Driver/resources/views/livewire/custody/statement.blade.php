@@ -68,7 +68,7 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h5 class="card-title mb-0">@lang('driver::home.custody_movements')</h5>
                 <button type="button" class="btn btn-primary"
-                        onclick="Livewire.emit('openDriverSettlementForm')">
+                        wire:click="$emit('openDriverSettlementForm')">
                     @lang('driver::home.create_settlement_request')
                 </button>
             </div>
@@ -108,7 +108,7 @@
                                     @if($movement->movement_type === 'collection'
                                         && in_array($movement->settlement_status, [null, 'returned', 'rejected'], true))
                                         <button type="button" class="btn btn-sm btn-primary"
-                                                onclick="Livewire.emit('openDriverSettlementForm', {{ $movement->record_id }})">
+                                                wire:click="$emit('openDriverSettlementForm', {{ $movement->record_id }})">
                                             @lang('driver::home.custody_create_settlement')
                                         </button>
                                     @endif

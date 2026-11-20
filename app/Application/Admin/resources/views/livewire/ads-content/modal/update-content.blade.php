@@ -31,6 +31,7 @@
                             </label>
                             <input type="text" class="form-control form-control-sm" id="ads-content-title-en-update" wire:model.defer="title_en"
                                 onblur="translateLocalizedField('ads-content-title-en-update','ads-content-title-ar-update','en','ar',false)">
+                            @error('title_en') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-6">
                             <label class="form-label small mb-1">
@@ -44,6 +45,7 @@
                             </label>
                             <input type="text" class="form-control form-control-sm" id="ads-content-title-ar-update" wire:model.defer="title_ar"
                                 onblur="translateLocalizedField('ads-content-title-ar-update','ads-content-title-en-update','ar','en',false)">
+                            @error('title_ar') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-6">
                             <label class="form-label small mb-1">
@@ -57,6 +59,7 @@
                             </label>
                             <textarea class="form-control form-control-sm" id="ads-content-subtitle-en-update" wire:model.defer="subtitle_en" rows="2"
                                 onblur="translateLocalizedField('ads-content-subtitle-en-update','ads-content-subtitle-ar-update','en','ar',false)"></textarea>
+                            @error('subtitle_en') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-6">
                             <label class="form-label small mb-1">
@@ -70,11 +73,12 @@
                             </label>
                             <textarea class="form-control form-control-sm" id="ads-content-subtitle-ar-update" wire:model.defer="subtitle_ar" rows="2"
                                 onblur="translateLocalizedField('ads-content-subtitle-ar-update','ads-content-subtitle-en-update','ar','en',false)"></textarea>
+                            @error('subtitle_ar') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                     </div>
 
                     <h6 class="text-warning mb-2 pb-1 border-bottom small fw-bold mt-3">{{ __('admin::lang.Images') }}</h6>
-                    @if($placement && $placement->key === 'home_hero_slider')
+                    @if($placement && ($placement->key === 'home_hero_slider' || $button_text_en || $button_text_ar))
                         <small class="text-muted d-block mb-2">{{ __('admin::lang.Full image display hint') }}</small>
                     @endif
 
@@ -85,7 +89,7 @@
                             </label>
                             @if($existing_image_desktop)
                                 <div class="mb-1">
-                                    <a href="{{ Storage::url($existing_image_desktop) }}" target="_blank" class="small text-primary">
+                                    <a href="{{ Storage::disk('fileDisk')->url($existing_image_desktop) }}" target="_blank" class="small text-primary">
                                         <i class="fe fe-eye me-1"></i>View Current
                                     </a>
                                 </div>
@@ -106,7 +110,7 @@
                             </label>
                             @if($existing_image_mobile)
                                 <div class="mb-1">
-                                    <a href="{{ Storage::url($existing_image_mobile) }}" target="_blank" class="small text-primary">
+                                    <a href="{{ Storage::disk('fileDisk')->url($existing_image_mobile) }}" target="_blank" class="small text-primary">
                                         <i class="fe fe-eye me-1"></i>View Current
                                     </a>
                                 </div>
@@ -129,7 +133,7 @@
                             </label>
                             @if($existing_image_tablet)
                                 <div class="mb-1">
-                                    <a href="{{ Storage::url($existing_image_tablet) }}" target="_blank" class="small text-primary">
+                                    <a href="{{ Storage::disk('fileDisk')->url($existing_image_tablet) }}" target="_blank" class="small text-primary">
                                         <i class="fe fe-eye me-1"></i>View Current
                                     </a>
                                 </div>
@@ -151,7 +155,7 @@
                                 <label class="form-label small mb-1">{{ __('admin::lang.Favicon') }}</label>
                                 @if($existing_image_favicon)
                                     <div class="mb-1">
-                                        <a href="{{ Storage::url($existing_image_favicon) }}" target="_blank" class="small text-primary">
+                                        <a href="{{ Storage::disk('fileDisk')->url($existing_image_favicon) }}" target="_blank" class="small text-primary">
                                             <i class="fe fe-eye me-1"></i>View Current
                                         </a>
                                     </div>
@@ -245,6 +249,10 @@
                                 </div>
                             </div>
                         @endif
+                        <div class="col-12">
+                            @error('click_action_url') <small class="text-danger">{{ $message }}</small> @enderror
+                            @error('click_action_id') <small class="text-danger">{{ $message }}</small> @enderror
+                        </div>
                     </div>
 
                     <h6 class="text-warning mb-2 pb-1 border-bottom small fw-bold mt-3">{{ __('admin::lang.Schedule') }}</h6>
@@ -253,10 +261,12 @@
                         <div class="col-6">
                             <label class="form-label small mb-1">{{ __('admin::lang.Start Date') }}</label>
                             <input type="datetime-local" class="form-control form-control-sm" wire:model.defer="start_date">
+                            @error('start_date') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-6">
                             <label class="form-label small mb-1">{{ __('admin::lang.End Date') }}</label>
                             <input type="datetime-local" class="form-control form-control-sm" wire:model.defer="end_date">
+                            @error('end_date') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-6">
                             <label class="form-label small mb-1">{{ __('admin::lang.Status') }}</label>

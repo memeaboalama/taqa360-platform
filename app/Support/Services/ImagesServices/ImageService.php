@@ -43,10 +43,6 @@ class ImageService
 
         $name = $file->hashName();
 
-        if ($oldPath) {
-            $this->destroyImg($oldPath, $disk);
-        }
-
         if (str_starts_with($mime, 'image/') && !in_array($mime, $nonImageMimes)) {
             try {
                 $image = Image::make($file);
@@ -61,11 +57,20 @@ class ImageService
             Storage::disk($disk)->putFileAs($path, $file, $name);
         }
 
+        $storedPath = "$path/$name";
+        if (!Storage::disk($disk)->exists($storedPath)) {
+            throw new \RuntimeException('Unable to store the uploaded file.');
+        }
+
+        if ($oldPath && $oldPath !== $storedPath) {
+            $this->destroyImg($oldPath, $disk);
+        }
+
         return [
             'original_name' => $file->getClientOriginalName(),
             'file_name' => $name,
-            'path' => "$path/$name",
-            'url' => Storage::disk($disk)->url("$path/$name"),
+            'path' => $storedPath,
+            'url' => Storage::disk($disk)->url($storedPath),
             'storage' => $disk,
             'type' => $type,
             'size' => number_format($file->getSize() / 1048576, 2),

@@ -723,7 +723,7 @@ class CollectionSettlementAcceptanceTest extends TestCase
             ->assertDontSee($otherOrder->code)
             ->assertSee('العهدة المطلوب توريدها')
             ->assertSee('إنشاء طلب تسوية')
-            ->assertSee("Livewire.emit('openDriverSettlementForm', {$collection->id})", false)
+            ->assertSee("wire:click=\"\$emit('openDriverSettlementForm', {$collection->id})\"", false)
             ->call('viewMovement', 'collection', $collection->id)
             ->assertSet('movementDetails.order_code', $order->code)
             ->assertSee('تفاصيل الحركة');
@@ -1129,6 +1129,19 @@ class CollectionSettlementAcceptanceTest extends TestCase
             $this->assertNull($payment->fresh()->settlement_id);
             $this->assertSame(100.0, app(DriverCustodyLedger::class)->balanceForOrder($order->id, $this->driver->id));
         }
+    }
+
+    public function test_driver_can_open_settlement_form_from_settlement_pages(): void
+    {
+        Auth::guard('driver')->setUser($this->driver);
+
+        Livewire::test(DriverMySettlements::class)
+            ->assertSee("wire:click=\"\$emit('openDriverSettlementForm')\"", false)
+            ->assertSee('إنشاء طلب تسوية');
+
+        Livewire::test(DriverSettlementCreate::class)
+            ->call('openDriverSettlementForm')
+            ->assertEmitted('openModal', '#driverSettlementSubmissionModal');
     }
 
     public function test_merchant_payment_card_uses_shared_payment_and_remittance_statuses(): void

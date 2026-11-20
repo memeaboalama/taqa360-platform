@@ -20,18 +20,22 @@
                         <div class="col-6">
                             <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Title (EN)') }}</label>
                             <input type="text" class="form-control form-control-sm" wire:model="title_en">
+                            @error('title_en') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-6">
                             <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Title (AR)') }}</label>
                             <input type="text" class="form-control form-control-sm" wire:model="title_ar">
+                            @error('title_ar') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-6">
                             <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Subtitle (EN)') }}</label>
                             <input type="text" class="form-control form-control-sm" wire:model="subtitle_en">
+                            @error('subtitle_en') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-6">
                             <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Subtitle (AR)') }}</label>
                             <input type="text" class="form-control form-control-sm" wire:model="subtitle_ar">
+                            @error('subtitle_ar') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                     </div>
 
@@ -40,7 +44,7 @@
                             <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Desktop Image') }}</label>
                             @if($image_desktop)
                                 <div class="mb-1">
-                                    <a href="{{ Storage::url($image_desktop) }}" target="_blank" class="small text-primary">{{ __('admin::lang.View Current') }}</a>
+                                    <a href="{{ Storage::disk('fileDisk')->url($image_desktop) }}" target="_blank" class="small text-primary">{{ __('admin::lang.View Current') }}</a>
                                 </div>
                             @endif
                             <input type="file" class="form-control form-control-sm" wire:model="new_image_desktop">
@@ -50,13 +54,38 @@
                             <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Mobile Image') }}</label>
                             @if($image_mobile)
                                 <div class="mb-1">
-                                    <a href="{{ Storage::url($image_mobile) }}" target="_blank" class="small text-primary">{{ __('admin::lang.View Current') }}</a>
+                                    <a href="{{ Storage::disk('fileDisk')->url($image_mobile) }}" target="_blank" class="small text-primary">{{ __('admin::lang.View Current') }}</a>
                                 </div>
                             @endif
                             <input type="file" class="form-control form-control-sm" wire:model="new_image_mobile">
                             @error('new_image_mobile') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Tablet Image') }}</label>
+                            @if($image_tablet)
+                                <div class="mb-1">
+                                    <a href="{{ Storage::disk('fileDisk')->url($image_tablet) }}" target="_blank" class="small text-primary">{{ __('admin::lang.View Current') }}</a>
+                                </div>
+                            @endif
+                            <input type="file" class="form-control form-control-sm" wire:model="new_image_tablet">
+                            @error('new_image_tablet') <small class="text-danger">{{ $message }}</small> @enderror
+                        </div>
                     </div>
+
+                    @if($placement && ($placement->key === 'home_hero_slider' || $button_text_en || $button_text_ar))
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Button Text') }} (EN)</label>
+                            <input type="text" class="form-control form-control-sm" wire:model="button_text_en">
+                            @error('button_text_en') <small class="text-danger">{{ $message }}</small> @enderror
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Button Text') }} (AR)</label>
+                            <input type="text" class="form-control form-control-sm" wire:model="button_text_ar">
+                            @error('button_text_ar') <small class="text-danger">{{ $message }}</small> @enderror
+                        </div>
+                    </div>
+                    @endif
 
                     <div class="row g-2 mb-2">
                         <div class="col-12">
@@ -97,6 +126,8 @@
                                    wire:model="click_action_url"
                                    placeholder="https://..."
                                    @if($click_action_type !== 'url' && $click_action_type !== 'none') readonly @endif>
+                            @error('click_action_url') <small class="text-danger">{{ $message }}</small> @enderror
+                            @error('click_action_id') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                     </div>
 
@@ -104,10 +135,12 @@
                         <div class="col-3">
                             <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Start Date') }}</label>
                             <input type="date" class="form-control form-control-sm" wire:model="start_date">
+                            @error('start_date') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-3">
                             <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.End Date') }}</label>
                             <input type="date" class="form-control form-control-sm" wire:model="end_date">
+                            @error('end_date') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                         <div class="col-3">
                             <label class="form-label fw-semibold small mb-1">{{ __('admin::lang.Status') }}</label>
@@ -126,7 +159,7 @@
 
                 <div class="modal-footer bg-light py-2">
                     <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">{{ __('admin::lang.Cancel') }}</button>
-                    <button type="submit" class="btn btn-sm btn-warning">
+                    <button type="submit" class="btn btn-sm btn-warning" wire:loading.attr="disabled" wire:target="update,new_image_desktop,new_image_tablet,new_image_mobile">
                         <i class="fe fe-save me-1"></i>{{ __('admin::lang.Update') }}
                     </button>
                 </div>

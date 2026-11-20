@@ -3,7 +3,6 @@
 namespace Application\Admin\Livewire\AdsContent\Modal;
 
 use App\Domain\AppBase\Actions\AdBanner\StoreBannerAction;
-use App\Domain\AppBase\Actions\AdBanner\ReorderActiveBannersAction;
 use App\Domain\AppBase\Repositories\AdPlacementRepository;
 use App\Support\Enum\BannerStatusEnum;
 use App\Support\Enum\ClickActionTypeEnum;
@@ -14,7 +13,6 @@ use Illuminate\Support\Facades\Log;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\Cache;
 
 class CreateContent extends Component
 {
@@ -157,23 +155,27 @@ class CreateContent extends Component
         $level = $item['level'] ?? null;
         $parentId = $item['parent_id'] ?? null;
 
+        $parentMainId = $item['parent_main_id'] ?? null;
+
         return match($type) {
             'product' => url(app()->getLocale() . "/product/{$id}"),
             'merchant' => url(app()->getLocale() . "/ecommerce/merchant/{$id}"),
-            'category' => $this->generateCategoryUrl($id, $level, $parentId),
+            'category' => $this->generateCategoryUrl($id, $level, $parentId, $parentMainId),
             default => null
         };
     }
 
-    private function generateCategoryUrl($id, $level, $parentId)
+    private function generateCategoryUrl($id, $level, $parentId, $parentMainId)
     {
         $baseUrl = url(app()->getLocale() . '/categories');
 
         return match($level) {
             1 => "{$baseUrl}?main_category={$id}",
-            2 => "{$baseUrl}?main_category={$parentId}&sub_category={$id}",
-            3 => "{$baseUrl}?main_category=1&child_category={$id}&sub_category=all",
-            default => "{$baseUrl}?main_category={$id}"
+            2 => $parentId ? "{$baseUrl}?main_category={$parentId}&sub_category={$id}" : null,
+            3 => $parentMainId && $parentId
+                ? "{$baseUrl}?main_category={$parentMainId}&sub_category={$parentId}&child_category={$id}"
+                : null,
+            default => null
         };
     }
 
@@ -193,7 +195,11 @@ class CreateContent extends Component
             'title_ar' => 'nullable|string|max:255',
             'subtitle_en' => 'nullable|string|max:500',
             'subtitle_ar' => 'nullable|string|max:500',
-            'click_action_type' => 'nullable|in:' . implode(',', ClickActionTypeEnum::values()),
+            'click_action_type' => 'required|in:' . implode(',', ClickActionTypeEnum::values()),
+            'click_action_url' => 'nullable|required_if:click_action_type,url,product,category,merchant|url|max:2048',
+            'click_action_id' => 'nullable|required_if:click_action_type,product,category,merchant|integer',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
             'status' => 'required|in:' . implode(',', BannerStatusEnum::values()),
             'priority' => 'required|integer|min:0|max:100',
         ];
@@ -274,16 +280,20 @@ class CreateContent extends Component
 
         $clickAction = [
             'type' => $this->click_action_type,
-            'url' => $this->click_action_url,
-            'id' => $this->click_action_id,
+            'url' => $this->click_action_type === 'none' ? null : $this->click_action_url,
+            'id' => in_array($this->click_action_type, ['product', 'category', 'merchant'], true) ? $this->click_action_id : null,
         ];
 
-        if ($this->placement->key === 'home_hero_slider') {
-            $clickAction['button_text'] = [
-                'en' => $this->button_text_en,
-                'ar' => $this->button_text_ar,
-            ];
+        if ($this->click_action_type === 'category' && $this->selected_item) {
+            $clickAction['level'] = $this->selected_item['level'] ?? null;
+            $clickAction['parent_id'] = $this->selected_item['parent_id'] ?? null;
+            $clickAction['parent_main_id'] = $this->selected_item['parent_main_id'] ?? null;
         }
+
+        $clickAction['button_text'] = [
+            'en' => $this->button_text_en,
+            'ar' => $this->button_text_ar,
+        ];
 
         $data = [
             'placement_id' => $this->placementId,
@@ -312,17 +322,8 @@ class CreateContent extends Component
             $action->handle($data);
             DB::commit();
 
-            DB::commit();
-
-            if ($this->status === 'active') {
-                (new ReorderActiveBannersAction())->handle($this->placementId);
-            }
-
             if ($this->placement) {
-                Cache::forget("ecommerce_banners_{$this->placement->key}_en");
-                Cache::forget("ecommerce_banners_{$this->placement->key}_ar");
-                Cache::forget('home_page_data_en');
-                Cache::forget('home_page_data_ar');
+                \App\Domain\AppBase\Models\AdBanner::forgetStorefrontCacheForPlacement((int) $this->placement->id);
             }
 
             $this->emit('banner-created');

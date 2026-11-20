@@ -28,6 +28,8 @@ class Create extends Component
     public $image_desktop;
     public $image_tablet;
     public $image_mobile;
+    public $button_text_en;
+    public $button_text_ar;
 
     public $click_action_type = 'none';
     public $click_action_url;
@@ -47,7 +49,14 @@ class Create extends Component
     {
         $this->placementId = $placementId;
         $this->placement = $repo->findByCols(['id' => $placementId]);
-        $this->reset(['name', 'title_en', 'title_ar', 'subtitle_en', 'subtitle_ar']);
+        $this->reset([
+            'name', 'title_en', 'title_ar', 'subtitle_en', 'subtitle_ar',
+            'image_desktop', 'image_tablet', 'image_mobile', 'button_text_en', 'button_text_ar',
+            'click_action_url', 'click_action_id', 'searchQuery', 'searchResults',
+            'start_date', 'end_date', 'priority',
+        ]);
+        $this->click_action_type = 'none';
+        $this->status = 'draft';
         $this->emit('openModal', '#createBannerModal');
     }
 
@@ -61,8 +70,15 @@ class Create extends Component
             'subtitle_en' => 'nullable|string|max:500',
             'subtitle_ar' => 'nullable|string|max:500',
             'image_desktop' => 'required|image|max:2048',
+            'image_tablet' => 'nullable|image|max:2048',
             'image_mobile' => 'nullable|image|max:2048',
             'click_action_type' => 'required|in:' . implode(',', ClickActionTypeEnum::values()),
+            'click_action_url' => 'nullable|required_if:click_action_type,url,product,category,merchant|url|max:2048',
+            'click_action_id' => 'nullable|required_if:click_action_type,product,category,merchant|integer',
+            'button_text_en' => 'nullable|string|max:100',
+            'button_text_ar' => 'nullable|string|max:100',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
             'status' => 'required|in:' . implode(',', BannerStatusEnum::values()),
             'priority' => 'required|integer|min:0|max:100',
         ];
@@ -88,8 +104,12 @@ class Create extends Component
             'image_mobile' => $this->image_mobile,
             'click_action' => [
                 'type' => $this->click_action_type,
-                'url' => $this->click_action_url,
-                'id' => $this->click_action_id,
+                'url' => $this->click_action_type === 'none' ? null : $this->click_action_url,
+                'id' => in_array($this->click_action_type, ['product', 'category', 'merchant'], true) ? $this->click_action_id : null,
+                'button_text' => [
+                    'en' => $this->button_text_en,
+                    'ar' => $this->button_text_ar,
+                ],
             ],
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
@@ -123,13 +143,21 @@ class Create extends Component
     {
         $url = match($this->click_action_type) {
             'product' => route('product.show', $id),
-            'category' => route('category.show', $id),
+            'category' => route('categories.show', $id),
             'merchant' => route('merchant.show', $id),
             default => ''
         };
         
         $this->click_action_url = $url;
         $this->click_action_id = $id;
+        $this->searchQuery = '';
+        $this->searchResults = [];
+    }
+
+    public function updatedClickActionType(): void
+    {
+        $this->click_action_url = null;
+        $this->click_action_id = null;
         $this->searchQuery = '';
         $this->searchResults = [];
     }

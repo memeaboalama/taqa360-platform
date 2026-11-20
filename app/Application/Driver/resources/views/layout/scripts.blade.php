@@ -1,12 +1,13 @@
-<script src="https://code.jquery.com/jquery-3.7.0.slim.min.js"
-        integrity="sha256-tG5mcZUtJsZvyKAxYLVXrmjKBVLd6VpVccqz/r4ypFE=" crossorigin="anonymous"></script>
+<script src="{{ asset('assets/vendor/libs/jquery/jquery-3.7.0.min.js') }}"></script>
 <!-- Popper JS -->
 <script src="{{ asset('assets/vendor') }}/libs/@popperjs/core/umd/popper.min.js"></script>
 
 <!-- Bootstrap JS -->
 <script src="{{ asset('assets/vendor/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <!-- Defaultmenu JS -->
-<script src="{{ asset('assets/vendor') }}/js/defaultmenu.min.js"></script>
+@if(auth('driver')->check())
+    <script src="{{ asset('assets/vendor') }}/js/defaultmenu.min.js"></script>
+@endif
 
 <!-- Node Waves JS-->
 <script src="{{ asset('assets/vendor') }}/libs/node-waves/waves.min.js"></script>
@@ -43,11 +44,7 @@
 <script src="{{ asset('assets/vendor/js/main.js') }}"></script>
 
 <!-- Crop Image Js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
-{{-- <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script> --}}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.6/cropper.js"></script>
-{{-- <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script> --}}
+<script src="{{ asset('assets/vendor/libs/cropperjs/cropper.min.js') }}"></script>
 
 
 

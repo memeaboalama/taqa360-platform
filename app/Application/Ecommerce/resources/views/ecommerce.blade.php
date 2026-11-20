@@ -149,6 +149,14 @@
             transition: transform .28s ease, opacity .28s ease;
         }
 
+        .hero-gallery-card:not(.is-disabled) {
+            text-decoration: none;
+        }
+
+        .hero-gallery-card.is-disabled {
+            cursor: default;
+        }
+
         .hero-gallery-card:nth-child(2) {
             transform: scale(.82);
         }
@@ -157,10 +165,14 @@
             transform: scale(.68);
         }
 
+        .hero-gallery-card picture,
         .hero-gallery-card img {
             display: block;
             width: 100%;
             height: 100%;
+        }
+
+        .hero-gallery-card img {
             object-fit: cover;
             object-position: center;
             border-radius: 14px;
@@ -344,6 +356,11 @@
             overflow: hidden;
             position: relative;
             padding: 22px 19px;
+        }
+
+        a.promo {
+            color: inherit;
+            text-decoration: none;;
             background-size: cover;
             background-position: center
         }
@@ -632,6 +649,17 @@
         .product-section .products {
             position: relative;
             z-index: 1
+            pointer-events: none;
+        }
+
+        .wide-banner-image-link {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        .wide-banner-content .primary-btn {
+            pointer-events: auto;
         }
 
         .product-section .section-head {
@@ -1362,6 +1390,22 @@
         .favorite.is-favorite {
             color: #EA993E
         }
+
+        .ad-responsive-bg {
+            background-image: var(--ad-image-desktop);
+        }
+
+        @media (max-width: 1024px) {
+            .ad-responsive-bg {
+                background-image: var(--ad-image-tablet, var(--ad-image-desktop));
+            }
+        }
+
+        @media (max-width: 767px) {
+            .ad-responsive-bg {
+                background-image: var(--ad-image-mobile, var(--ad-image-desktop));
+            }
+        }
     </style>
 @endsection
 
@@ -1375,6 +1419,13 @@
         };
         $image = static function ($value, $fallback = 'assets/ecommerce/images/slider/4.webp') {
             return $value ?: asset($fallback);
+        };
+        $bannerBackgroundStyle = static function ($banner, $fallback = 'assets/ecommerce/images/slider/4.webp') use ($image) {
+            $desktop = $image($banner->desktop_image_url ?? ($banner->image_desktop ?? null), $fallback);
+            $tablet = $image($banner->tablet_image_url ?? null, $desktop);
+            $mobile = $image($banner->mobile_image_url ?? null, $desktop);
+
+            return "--ad-image-desktop:url('{$desktop}');--ad-image-tablet:url('{$tablet}');--ad-image-mobile:url('{$mobile}')";
         };
         $products = static function ($items) {
             return collect($items ?? [])
@@ -1397,22 +1448,28 @@
                         $slide = (object) $slide;
                     }
                     $defaultImg = asset('assets/ecommerce/images/slider/4.webp');
-                    $img =
-                        $slide->desktop_image_url ??
-                        ($slide->tablet_image_url ??
-                            ($slide->mobile_image_url ??
-                                ($slide->image_desktop ?? null ?? ($slide->image ?? null ?? null))));
+                    $resolveImage = function (string $device) use ($slide) {
+                        $image = method_exists($slide, 'getImageUrl')
+                            ? $slide->getImageUrl($device)
+                            : ($slide->{$device . '_image_url'} ??
+                                data_get($slide, "content.images.{$device}") ??
+                                ($slide->{'image_' . $device} ?? null));
 
-                    if (
-                        $img &&
-                        !filter_var($img, FILTER_VALIDATE_URL) &&
-                        !str_starts_with($img, '/') &&
-                        file_exists(public_path($img))
-                    ) {
-                        $img = asset($img);
-                    }
+                        if ($image && !filter_var($image, FILTER_VALIDATE_URL) && !str_starts_with($image, '/') && file_exists(public_path($image))) {
+                            $image = asset($image);
+                        }
 
-                    $slide->resolved_image = $img ?: $defaultImg;
+                        return $image ?: null;
+                    };
+                    $slide->resolved_images = [
+                        'desktop' => $resolveImage('desktop'),
+                        'tablet' => $resolveImage('tablet'),
+                        'mobile' => $resolveImage('mobile'),
+                    ];
+                    $slide->resolved_image = $slide->resolved_images['desktop']
+                        ?: $slide->resolved_images['tablet']
+                        ?: $slide->resolved_images['mobile']
+                        ?: $defaultImg;
                     return $slide;
                 })
                 ->values();
@@ -1438,7 +1495,7 @@
                         $galleryIndexes = array_values(
                             array_unique([$idx, ($idx + 1) % $slideCount, ($idx + 2) % $slideCount]),
                         );
-                        $buttonText = $slide->click_action['button_text'][$currentLocale] ?? null;
+                        $buttonText = data_get($slide, "click_action.button_text.{$currentLocale}");
                     @endphp
                     <div class="hero-slide {{ $idx === 0 ? 'active' : '' }}" data-slide="{{ $idx }}">
                         <div class="hero-content">
@@ -1446,7 +1503,8 @@
                             </h1>
                             <p>{{ $slide->localized_subtitle ?: __('ecommerce::ecommerce.home_hero_subtitle', [], $currentLocale) }}
                             </p>
-                            <a class="hero-cta" href="{{ $slide->click_url ?: '#products' }}" target="_blank" rel="noopener noreferrer">
+                            @if($slide->click_url)
+                            <a class="hero-cta" href="{{ $slide->click_url }}" target="{{ $slide->target ?? '_self' }}" @if(($slide->target ?? '_self') === '_blank') rel="noopener noreferrer" @endif>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="4" />
@@ -1461,18 +1519,51 @@
                                 </svg>
                                 {{ $buttonText ?: __('ecommerce::ecommerce.shop_now', [], $currentLocale) }}
                             </a>
+                            @endif
                         </div>
                         <div class="hero-images">
                             <div class="hero-gallery {{ $slideCount === 1 ? 'hero-gallery--single' : '' }}">
                                 @foreach ($galleryIndexes as $galleryIndex)
-                                    @php $gallerySlide = $heroSlides[$galleryIndex]; @endphp
-                                    <button class="hero-gallery-card {{ $galleryIndex === $idx ? 'is-current' : '' }}"
-                                        type="button" data-index="{{ $galleryIndex }}"
-                                        aria-label="{{ is_object($gallerySlide) && !empty($gallerySlide->localized_title) ? $gallerySlide->localized_title : __('ecommerce::ecommerce.home_hero_title', [], $currentLocale) }}">
-                                        <img src="{{ $gallerySlide->resolved_image ?? asset('assets/ecommerce/images/slider/4.webp') }}"
-                                            alt="{{ is_object($gallerySlide) && method_exists($gallerySlide, 'getAltText') ? $gallerySlide->getAltText($currentLocale) : $gallerySlide->localized_title ?? '' }}"
-                                            loading="{{ $galleryIndex === $idx ? 'eager' : 'lazy' }}">
-                                    </button>
+                                    @php
+                                        $gallerySlide = $heroSlides[$galleryIndex];
+                                        $galleryImage = $gallerySlide->resolved_image ?? asset('assets/ecommerce/images/slider/4.webp');
+                                        $galleryLabel = $gallerySlide->localized_title ?? __('ecommerce::ecommerce.home_hero_title', [], $currentLocale);
+                                        $galleryAlt = is_object($gallerySlide) && method_exists($gallerySlide, 'getAltText')
+                                            ? $gallerySlide->getAltText($currentLocale)
+                                            : ($gallerySlide->localized_title ?? '');
+                                    @endphp
+                                    @if($gallerySlide->click_url)
+                                        <a class="hero-gallery-card {{ $galleryIndex === $idx ? 'is-current' : '' }}"
+                                            href="{{ $gallerySlide->click_url }}"
+                                            target="{{ $gallerySlide->target ?? '_self' }}"
+                                            @if(($gallerySlide->target ?? '_self') === '_blank') rel="noopener noreferrer" @endif
+                                            aria-label="{{ $galleryLabel }}">
+                                            <picture>
+                                                @if(!empty($gallerySlide->resolved_images['mobile']))
+                                                    <source media="(max-width: 767px)" srcset="{{ $gallerySlide->resolved_images['mobile'] }}">
+                                                @endif
+                                                @if(!empty($gallerySlide->resolved_images['tablet']))
+                                                    <source media="(max-width: 1024px)" srcset="{{ $gallerySlide->resolved_images['tablet'] }}">
+                                                @endif
+                                                <img src="{{ $galleryImage }}" alt="{{ $galleryAlt }}"
+                                                    loading="{{ $galleryIndex === $idx ? 'eager' : 'lazy' }}">
+                                            </picture>
+                                        </a>
+                                    @else
+                                        <div class="hero-gallery-card is-disabled {{ $galleryIndex === $idx ? 'is-current' : '' }}"
+                                            aria-label="{{ $galleryLabel }}">
+                                            <picture>
+                                                @if(!empty($gallerySlide->resolved_images['mobile']))
+                                                    <source media="(max-width: 767px)" srcset="{{ $gallerySlide->resolved_images['mobile'] }}">
+                                                @endif
+                                                @if(!empty($gallerySlide->resolved_images['tablet']))
+                                                    <source media="(max-width: 1024px)" srcset="{{ $gallerySlide->resolved_images['tablet'] }}">
+                                                @endif
+                                                <img src="{{ $galleryImage }}" alt="{{ $galleryAlt }}"
+                                                    loading="{{ $galleryIndex === $idx ? 'eager' : 'lazy' }}">
+                                            </picture>
+                                        </div>
+                                    @endif
                                 @endforeach
                             </div>
                             <div class="hero-pagination" role="tablist" aria-label="Slides">
@@ -1503,15 +1594,27 @@
         </section>
         <section id="offers" class="promo-grid">
             @foreach (collect($productBanners ?? [])->take(3) as $banner)
-                <article class="promo"
-                    style="background-image:url('{{ $image($banner->desktop_image_url ?? ($banner->image_desktop ?? null)) }}')">
+                @php $bannerButtonText = data_get($banner, "click_action.button_text.{$currentLocale}"); @endphp
+                @if($banner->click_url)
+                    <a class="promo ad-responsive-bg" href="{{ $banner->click_url }}" target="{{ $banner->target ?? '_self' }}"
+                        @if(($banner->target ?? '_self') === '_blank') rel="noopener noreferrer" @endif
+                        style="{{ $bannerBackgroundStyle($banner) }}">
+                @else
+                    <article class="promo ad-responsive-bg" style="{{ $bannerBackgroundStyle($banner) }}">
+                @endif
                     <div class="promo-content">
                         <h3>{{ $localized($banner->localized_title ?? ($banner->title ?? null), __('ecommerce::ecommerce.home_banner_fallback')) }}
                         </h3>
-                        <p>{{ $localized($banner->localized_subtitle ?? ($banner->subtitle ?? null)) }}</p><a
-                            class="small-btn" href="{{ $banner->click_url ?? '#products' }}">@lang('ecommerce::ecommerce.shop_now')</a>
+                        <p>{{ $localized($banner->localized_subtitle ?? ($banner->subtitle ?? null)) }}</p>
+                        @if($banner->click_url)
+                            <span class="small-btn">{{ $bannerButtonText ?: __('ecommerce::ecommerce.shop_now', [], $currentLocale) }}</span>
+                        @endif
                     </div>
-                </article>
+                @if($banner->click_url)
+                    </a>
+                @else
+                    </article>
+                @endif
             @endforeach
         </section>
         @php
@@ -1604,15 +1707,25 @@
                 </div>
             </section>
             @if ($midProductBanner && $loop->iteration === $bannerAfterSection)
-                <section class="wide-banner"
-                    style="background-image:url('{{ $image($midProductBanner->desktop_image_url ?? ($midProductBanner->image_desktop ?? null)) }}')">
+                <section class="wide-banner ad-responsive-bg" style="{{ $bannerBackgroundStyle($midProductBanner) }}">
+                    @if($midProductBanner->click_url)
+                        <a class="wide-banner-image-link" href="{{ $midProductBanner->click_url }}"
+                            target="{{ $midProductBanner->target ?? '_self' }}"
+                            @if(($midProductBanner->target ?? '_self') === '_blank') rel="noopener noreferrer" @endif
+                            aria-label="{{ $localized($midProductBanner->localized_title ?? ($midProductBanner->title ?? null), __('ecommerce::ecommerce.home_banner2_fallback')) }}"></a>
+                    @endif
                     <div class="wide-banner-content">
                         <p>{{ $localized($midProductBanner->localized_subtitle ?? ($midProductBanner->subtitle ?? null)) }}
                         </p>
                         <h2>{{ $localized($midProductBanner->localized_title ?? ($midProductBanner->title ?? null), __('ecommerce::ecommerce.home_banner2_fallback')) }}
                         </h2>
-                        <a class="primary-btn" href="{{ $midProductBanner->click_url ?? '#products' }}">@lang('ecommerce::ecommerce.shop_now')
-                            <span class="arrow-end" aria-hidden="true">→</span></a>
+                        @if($midProductBanner->click_url)
+                            <a class="primary-btn" href="{{ $midProductBanner->click_url }}"
+                                target="{{ $midProductBanner->target ?? '_self' }}"
+                                @if(($midProductBanner->target ?? '_self') === '_blank') rel="noopener noreferrer" @endif>
+                                {{ data_get($midProductBanner, "click_action.button_text.{$currentLocale}") ?: __('ecommerce::ecommerce.shop_now', [], $currentLocale) }}
+                                <span class="arrow-end" aria-hidden="true">→</span></a>
+                        @endif
                     </div>
                 </section>
             @endif
@@ -1696,12 +1809,24 @@
                             $newsTitle = $localized($news->localized_title ?? ($news->title ?? null), '');
                             $newsSubtitle = $localized($news->localized_subtitle ?? ($news->subtitle ?? null), '');
                             $newsImage = $news->desktop_image_url ?? null;
-                            $newsHref = $news->click_url ?? '#';
+                            $newsHref = $news->click_url;
                         @endphp
-                        <a class="news-card" href="{{ $newsHref }}">
+                        @if($newsHref)
+                        <a class="news-card" href="{{ $newsHref }}" target="{{ $news->target ?? '_self' }}"
+                            @if(($news->target ?? '_self') === '_blank') rel="noopener noreferrer" @endif>
+                        @else
+                        <article class="news-card">
+                        @endif
                             @if ($newsImage)
-                                <img class="news-card-img" src="{{ $newsImage }}" alt="{{ $newsTitle }}"
-                                    loading="lazy">
+                                <picture>
+                                    @if($news->mobile_image_url)
+                                        <source media="(max-width: 767px)" srcset="{{ $news->mobile_image_url }}">
+                                    @endif
+                                    @if($news->tablet_image_url)
+                                        <source media="(max-width: 1024px)" srcset="{{ $news->tablet_image_url }}">
+                                    @endif
+                                    <img class="news-card-img" src="{{ $newsImage }}" alt="{{ $newsTitle }}" loading="lazy">
+                                </picture>
                             @else
                                 <img class="news-card-img" src="{{ asset('assets/ecommerce/images/slider/4.webp') }}"
                                     alt="{{ $newsTitle }}" loading="lazy">
@@ -1712,7 +1837,11 @@
                                     <p>{{ $newsSubtitle }}</p>
                                 @endif
                             </div>
+                        @if($newsHref)
                         </a>
+                        @else
+                        </article>
+                        @endif
                     @endforeach
                 </div>
             </div>
@@ -1730,13 +1859,31 @@
                             $brandTitle = $localized($brand->localized_title ?? ($brand->title ?? null), '');
                             $brandLogo = $brand->desktop_image_url ?? null;
                         @endphp
+                        @if($brand->click_url)
+                        <a class="brand-card" title="{{ $brandTitle }}" href="{{ $brand->click_url }}"
+                            target="{{ $brand->target ?? '_self' }}"
+                            @if(($brand->target ?? '_self') === '_blank') rel="noopener noreferrer" @endif>
+                        @else
                         <div class="brand-card" title="{{ $brandTitle }}">
+                        @endif
                             @if ($brandLogo)
-                                <img src="{{ $brandLogo }}" alt="{{ $brandTitle }}" loading="lazy">
+                                <picture>
+                                    @if($brand->mobile_image_url)
+                                        <source media="(max-width: 767px)" srcset="{{ $brand->mobile_image_url }}">
+                                    @endif
+                                    @if($brand->tablet_image_url)
+                                        <source media="(max-width: 1024px)" srcset="{{ $brand->tablet_image_url }}">
+                                    @endif
+                                    <img src="{{ $brandLogo }}" alt="{{ $brandTitle }}" loading="lazy">
+                                </picture>
                             @else
                                 <span style="font-size:14px;font-weight:700;color:#343a42">{{ $brandTitle }}</span>
                             @endif
+                        @if($brand->click_url)
+                        </a>
+                        @else
                         </div>
+                        @endif
                     @endforeach
                 </div>
             </div>
@@ -1968,7 +2115,6 @@
 
             const slides = [...slider.querySelectorAll('.hero-slide')];
             const allDots = [...slider.querySelectorAll('.hero-dot')];
-            const galleryCards = [...slider.querySelectorAll('.hero-gallery-card')];
             let current = 0;
             let autoTimer = null;
             let touchStartX = null;
@@ -2003,16 +2149,6 @@
                 dot.addEventListener('click', function(e) {
                     e.stopPropagation();
                     const targetIdx = parseInt(this.getAttribute('data-index'), 10);
-                    goTo(targetIdx);
-                    startAuto();
-                });
-            });
-
-            galleryCards.forEach(function(card) {
-                card.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const targetIdx = parseInt(this.getAttribute('data-index'), 10);
-                    if (Number.isNaN(targetIdx) || targetIdx === current) return;
                     goTo(targetIdx);
                     startAuto();
                 });

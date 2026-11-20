@@ -2,8 +2,8 @@
 
 namespace App\Domain\AppBase\Actions\AdBanner;
 
+use App\Domain\AppBase\Models\AdBanner;
 use App\Domain\AppBase\Repositories\AdBannerRepository;
-use Illuminate\Support\Facades\Storage;
 
 class DeleteBannerAction
 {
@@ -19,25 +19,11 @@ class DeleteBannerAction
             return false;
         }
 
-        $this->deleteFiles($banner->content);
-
-        return $this->bannerRepository->destroy($id);
-    }
-
-    protected function deleteFiles(array $content): void
-    {
-        if (isset($content['images'])) {
-            foreach ($content['images'] as $imagePath) {
-                Storage::disk('fileDisk')->delete($imagePath);
-            }
+        $result = $this->bannerRepository->destroy($id);
+        if ($result) {
+            AdBanner::forgetStorefrontCacheForPlacement((int) $banner->placement_id);
         }
 
-        if (isset($content['video']['file'])) {
-            Storage::disk('fileDisk')->delete($content['video']['file']);
-        }
-
-        if (isset($content['video']['poster'])) {
-            Storage::disk('fileDisk')->delete($content['video']['poster']);
-        }
+        return $result;
     }
 }

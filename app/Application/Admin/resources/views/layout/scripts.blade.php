@@ -5,7 +5,9 @@
 <!-- Bootstrap JS -->
 <script src="{{ asset('assets/vendor/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <!-- Defaultmenu JS -->
-<script src="{{ asset('assets/vendor') }}/js/defaultmenu.min.js"></script>
+@if(auth('admin')->check())
+    <script src="{{ asset('assets/vendor') }}/js/defaultmenu.min.js"></script>
+@endif
 
 <!-- Node Waves JS-->
 <script src="{{ asset('assets/vendor') }}/libs/node-waves/waves.min.js"></script>
