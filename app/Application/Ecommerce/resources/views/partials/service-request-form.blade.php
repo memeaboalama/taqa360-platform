@@ -2,24 +2,355 @@
     $academicMajors = config('app.brand') === 'huloolcom' ? \Domain\AppBase\Models\Edu\AcademicMajor::all() : collect();
 @endphp
 
-<!-- Service Request Modal -->
-<div class="modal fade" id="serviceRequestModal" tabindex="-1" aria-labelledby="serviceRequestModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
-        <div class="modal-content border-0 shadow-lg style-service-modal" style="border-radius: 16px; overflow: visible;">
-            <div class="modal-header text-white"
-                dir="{{ in_array(app()->getLocale(), ['ar', 'he', 'fa', 'ur'], true) ? 'rtl' : 'ltr' }}"
-                style="background-color:{{ $platformBrand['primary_color'] }}; padding: 18px 24px;">
-                <h5 class="modal-title font-weight-bold d-flex align-items-center" id="serviceRequestModalLabel"
-                    style="font-size: 1.25rem; gap: 0.5rem;">
-                    <i class="fa fa-file-text-o" style="font-size: 1.3rem;"></i>
-                    @lang(config('app.brand') === 'huloolcom' ? 'ecommerce::ecommerce.sr_title_hulool' : 'ecommerce::ecommerce.sr_title_taqa')
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"
-                    style="filter: brightness(0) invert(1); margin: 0;"></button>
-            </div>
+<style>
+    .service-request-page {
+        min-height: 70vh;
+        padding: 34px 0 56px;
+        background: #f3f6fa;
+    }
 
-            <form id="serviceRequestForm" action="{{ route('service-requests.store', [], false) }}" method="POST"
+    .service-request-page > .container {
+        max-width: 1120px;
+    }
+
+    .sr-page-heading {
+        margin-bottom: 24px;
+    }
+
+    .sr-page-heading a {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        color: var(--yellow);
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .sr-page-heading h1 {
+        margin: 0;
+        color: #172b3a;
+        font-size: clamp(25px, 3vw, 32px);
+        font-weight: 800;
+    }
+
+    .sr-page-heading p {
+        margin: 5px 0 0;
+        color: #718096;
+        font-size: 14px;
+    }
+
+    .sr-request-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 300px;
+        align-items: start;
+        gap: 22px;
+    }
+
+    .sr-page-card {
+        overflow: hidden;
+        border: 1px solid #e5eaf0;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 8px 26px rgba(29, 37, 48, .055);
+    }
+
+    .sr-stepper {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        padding: 18px 24px 0;
+        border-bottom: 1px solid #edf0f4;
+    }
+
+    .sr-stepper-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        min-width: 0;
+        padding: 0 8px 16px;
+        border-bottom: 3px solid transparent;
+        background: transparent;
+        color: #7b8794;
+        font-size: 13px;
+        font-weight: 700;
+        text-align: start;
+    }
+
+    .sr-stepper-item:disabled {
+        cursor: default;
+    }
+
+    .sr-stepper-number {
+        display: grid;
+        flex: 0 0 30px;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border: 1px solid #dfe5ec;
+        border-radius: 50%;
+        background: #f7f9fb;
+        color: #738092;
+        font-size: 12px;
+    }
+
+    .sr-stepper-item.is-active {
+        border-color: var(--yellow);
+        color: #243746;
+    }
+
+    .sr-stepper-item.is-active .sr-stepper-number,
+    .sr-stepper-item.is-complete .sr-stepper-number {
+        border-color: var(--yellow);
+        background: var(--yellow);
+        color: #fff;
+    }
+
+    .sr-form-body {
+        padding: 26px !important;
+        background: #fff;
+    }
+
+    .sr-step-panel[hidden] {
+        display: none !important;
+    }
+
+    .sr-section-heading {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 23px;
+    }
+
+    .sr-section-number {
+        display: grid;
+        flex: 0 0 38px;
+        place-items: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+        background: {{ $platformBrand['primary_light_color'] }};
+        color: {{ $platformBrand['primary_hover_color'] }};
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    .sr-section-heading h2 {
+        margin: 0;
+        color: #26394a;
+        font-size: 18px;
+        font-weight: 800;
+    }
+
+    .sr-section-heading p {
+        margin: 3px 0 0;
+        color: #8793a1;
+        font-size: 12px;
+    }
+
+    #serviceRequestForm .form-label {
+        color: #34495b !important;
+        font-size: 13px;
+        font-weight: 700 !important;
+    }
+
+    #serviceRequestForm .form-control,
+    #serviceRequestForm .form-select {
+        min-height: 48px;
+        border-color: #dfe5ec !important;
+        border-radius: 10px !important;
+        background-color: #fff;
+        color: #253746;
+        font-size: 14px !important;
+        box-shadow: none;
+    }
+
+    #serviceRequestForm textarea.form-control {
+        min-height: 116px;
+        padding-top: 12px;
+        resize: vertical;
+    }
+
+    #serviceRequestForm .form-control:focus,
+    #serviceRequestForm .form-select:focus {
+        border-color: var(--yellow) !important;
+        box-shadow: 0 0 0 3px {{ $platformBrand['primary_light_color'] }};
+    }
+
+    .sr-form-footer {
+        gap: 12px;
+        padding: 18px 26px !important;
+        border-top: 1px solid #edf0f3;
+        background: #fff;
+    }
+
+    .sr-form-footer .btn {
+        min-height: 46px;
+        border-radius: 10px !important;
+        font-weight: 700;
+    }
+
+    .sr-form-footer .sr-step-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .sr-request-aside {
+        position: sticky;
+        top: 96px;
+        padding: 22px;
+        border: 1px solid #e5eaf0;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 8px 26px rgba(29, 37, 48, .055);
+    }
+
+    .sr-aside-icon {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 15px;
+        border-radius: 14px;
+        background: {{ $platformBrand['primary_light_color'] }};
+        color: {{ $platformBrand['primary_hover_color'] }};
+        font-size: 20px;
+    }
+
+    .sr-request-aside h2 {
+        margin: 0;
+        color: #26394a;
+        font-size: 18px;
+        font-weight: 800;
+    }
+
+    .sr-request-aside > p {
+        margin: 8px 0 18px;
+        color: #778596;
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    .sr-summary-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 0;
+        border-top: 1px solid #edf0f4;
+        font-size: 12px;
+    }
+
+    .sr-summary-row span {
+        color: #7b8794;
+    }
+
+    .sr-summary-row strong {
+        max-width: 60%;
+        overflow-wrap: anywhere;
+        color: #34495b;
+        text-align: end;
+    }
+
+    .sr-aside-note {
+        margin-top: 16px;
+        padding: 12px;
+        border-radius: 10px;
+        background: #f6f8fa;
+        color: #69798a;
+        font-size: 11px;
+        line-height: 1.8;
+    }
+
+    @media (max-width: 900px) {
+        .sr-request-layout {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .sr-request-aside {
+            position: static;
+        }
+    }
+
+    @media (max-width: 575px) {
+        .service-request-page {
+            padding: 20px 0 36px;
+        }
+
+        .sr-request-layout {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .sr-form-body {
+            padding: 18px !important;
+        }
+
+        .sr-form-footer {
+            flex-wrap: wrap;
+            padding: 14px !important;
+        }
+
+        .sr-form-footer .btn {
+            padding-inline: 12px !important;
+            font-size: .9rem !important;
+        }
+
+        .sr-stepper {
+            padding: 15px 10px 0;
+        }
+
+        .sr-stepper-item {
+            flex-direction: column;
+            gap: 5px;
+            padding: 0 3px 11px;
+            font-size: 10px;
+            text-align: center;
+        }
+
+        .sr-stepper-number {
+            flex-basis: 27px;
+            width: 27px;
+            height: 27px;
+        }
+
+        .sr-request-aside {
+            position: static;
+        }
+    }
+</style>
+
+<div class="service-request-page">
+    <div class="container">
+        <header class="sr-page-heading"
+            dir="{{ in_array(app()->getLocale(), ['ar', 'he', 'fa', 'ur'], true) ? 'rtl' : 'ltr' }}">
+            <a href="{{ route('service-requests.create') }}" up-follow="false">
+                <i class="fa fa-arrow-{{ in_array(app()->getLocale(), ['ar', 'he', 'fa', 'ur'], true) ? 'right' : 'left' }}"
+                    aria-hidden="true"></i>
+                @lang('ecommerce::ecommerce.home')
+            </a>
+            <h1>@lang('ecommerce::ecommerce.request_service')</h1>
+            <p>@lang('ecommerce::ecommerce.sr_page_intro')</p>
+        </header>
+
+        <div class="sr-request-layout">
+            <section class="sr-page-card">
+                <div class="sr-stepper" role="group"
+                    aria-label="@lang('ecommerce::ecommerce.sr_page_intro')">
+                    <button type="button" class="sr-stepper-item is-active" data-step-target="1"
+                        aria-current="step">
+                        <span class="sr-stepper-number">1</span>
+                        <span>@lang('ecommerce::ecommerce.sr_page_step_basics')</span>
+                    </button>
+                    <button type="button" class="sr-stepper-item" data-step-target="2" disabled>
+                        <span class="sr-stepper-number">2</span>
+                        <span>@lang('ecommerce::ecommerce.sr_page_step_details')</span>
+                    </button>
+                    <button type="button" class="sr-stepper-item" data-step-target="3" disabled>
+                        <span class="sr-stepper-number">3</span>
+                        <span>@lang('ecommerce::ecommerce.sr_page_step_files')</span>
+                    </button>
+                </div>
+
+                <form id="serviceRequestForm" action="{{ route('service-requests.store', [], false) }}" method="POST"
                 enctype="multipart/form-data" novalidate>
                 @csrf
                 <style>
@@ -142,10 +473,18 @@
                     }
                 </style>
 
-                <div class="modal-body p-4" style="max-height: 80vh; overflow-y: auto; background-color: #f8f9fa;">
+                <div class="sr-form-body p-4">
 
                     <div id="serviceRequestAlert" class="alert d-none" role="alert"></div>
 
+                    <section class="sr-step-panel" data-step-panel="1">
+                        <div class="sr-section-heading">
+                            <span class="sr-section-number">1</span>
+                            <div>
+                                <h2>@lang('ecommerce::ecommerce.sr_page_step_basics')</h2>
+                                <p>@lang('ecommerce::ecommerce.sr_page_summary_help')</p>
+                            </div>
+                        </div>
                     <div class="row g-3">
                         <!-- Title -->
                         <div class="col-12">
@@ -263,11 +602,23 @@
                                 @lang('ecommerce::ecommerce.service_type')
                             </label>
                             <select class="form-select form-select-lg border-2" id="sr_type" name="service_id"
-                                required disabled style="border-radius: 10px; font-size: 0.95rem;">
+                                data-selected-service="{{ request('service') }}" required disabled
+                                style="border-radius: 10px; font-size: 0.95rem;">
                                 <option value="">@lang('ecommerce::ecommerce.loading')</option>
                             </select>
                         </div>
+                    </div>
+                    </section>
 
+                    <section class="sr-step-panel" data-step-panel="2" hidden>
+                        <div class="sr-section-heading">
+                            <span class="sr-section-number">2</span>
+                            <div>
+                                <h2>@lang('ecommerce::ecommerce.sr_page_step_details')</h2>
+                                <p>@lang('ecommerce::ecommerce.sr_urgency_hint')</p>
+                            </div>
+                        </div>
+                    <div class="row g-3">
                         <!-- Budget -->
                         <div class="col-md-6">
                             <label for="sr_budget" class="form-label font-weight-bold text-dark mb-1">
@@ -324,7 +675,18 @@
                             <textarea class="form-control border-2" id="sr_additional_notes" name="additional_notes" rows="2"
                                 placeholder="@lang('ecommerce::ecommerce.sr_notes_placeholder')" style="border-radius: 10px; font-size: 0.95rem;"></textarea>
                         </div>
+                    </div>
+                    </section>
 
+                    <section class="sr-step-panel" data-step-panel="3" hidden>
+                        <div class="sr-section-heading">
+                            <span class="sr-section-number">3</span>
+                            <div>
+                                <h2>@lang('ecommerce::ecommerce.sr_page_step_files')</h2>
+                                <p>@lang('ecommerce::ecommerce.sr_attachments_hint')</p>
+                            </div>
+                        </div>
+                    <div class="row g-3">
                         <!-- Attachments -->
                         <div class="col-12">
                             <label for="sr_attachments" class="form-label font-weight-bold text-dark mb-1">
@@ -337,22 +699,52 @@
                             </div>
                         </div>
                     </div>
+                    </section>
 
                 </div>
 
-                <div class="modal-footer bg-white border-top p-3 d-flex justify-content-between">
-                    <button type="button" class="btn btn-light btn-lg px-4 border" data-bs-dismiss="modal"
+                <div class="sr-form-footer p-3 d-flex justify-content-between">
+                    <a href="{{ route('service-requests.create') }}" class="btn btn-light btn-lg px-4 border"
                         style="border-radius: 10px; font-size: 0.95rem;">
                         @lang('ecommerce::ecommerce.sr_cancel')
-                    </button>
+                    </a>
+                    <div class="sr-step-actions">
+                        <button type="button" class="btn btn-light border" id="sr_previous_btn" hidden>
+                            @lang('ecommerce::ecommerce.sr_page_previous')
+                        </button>
+                        <button type="button" class="btn btn-primary" id="sr_next_btn">
+                            @lang('ecommerce::ecommerce.sr_page_next')
+                        </button>
                     <button type="submit" id="sr_submit_btn" class="btn btn-danger btn-lg px-5 font-weight-bold"
+                        hidden
                         style="background: #306FAA;border-color: #306FAA;color: #ffffff;; border-radius: 10px; font-size: 0.95rem;">
                         <span id="sr_submit_spinner" class="spinner-border spinner-border-sm me-2 d-none"
                             role="status" aria-hidden="true"></span>
                         <i class="fa fa-paper-plane me-1"></i> @lang('ecommerce::ecommerce.sr_submit')
                     </button>
+                    </div>
                 </div>
             </form>
+            </section>
+
+            <aside class="sr-request-aside">
+                <span class="sr-aside-icon"><i class="fa fa-file-text-o" aria-hidden="true"></i></span>
+                <h2>@lang('ecommerce::ecommerce.sr_page_summary_title')</h2>
+                <p>@lang('ecommerce::ecommerce.sr_page_summary_help')</p>
+                <div class="sr-summary-row">
+                    <span>@lang('ecommerce::ecommerce.sr_page_summary_service')</span>
+                    <strong id="sr-summary-service">@lang('ecommerce::ecommerce.sr_select_service')</strong>
+                </div>
+                <div class="sr-summary-row">
+                    <span>@lang('ecommerce::ecommerce.sr_page_summary_budget')</span>
+                    <strong id="sr-summary-budget">—</strong>
+                </div>
+                <div class="sr-summary-row">
+                    <span>@lang('ecommerce::ecommerce.sr_page_summary_urgency')</span>
+                    <strong id="sr-summary-urgency">—</strong>
+                </div>
+                <div class="sr-aside-note">@lang('ecommerce::ecommerce.sr_attachments_hint')</div>
+            </aside>
         </div>
     </div>
 </div>
@@ -363,6 +755,11 @@
         const alertBox = document.getElementById('serviceRequestAlert');
         const submitBtn = document.getElementById('sr_submit_btn');
         const submitSpinner = document.getElementById('sr_submit_spinner');
+        const nextBtn = document.getElementById('sr_next_btn');
+        const previousBtn = document.getElementById('sr_previous_btn');
+        const stepPanels = Array.from(form?.querySelectorAll('[data-step-panel]') || []);
+        const stepButtons = Array.from(document.querySelectorAll('[data-step-target]'));
+        let activeStep = 1;
 
         const messages = {
             titleRequired: @json(__('ecommerce::ecommerce.sr_title_required')),
@@ -382,14 +779,79 @@
         if (!form) return;
 
         const serviceSelect = document.getElementById('sr_type');
+        const summaryService = document.getElementById('sr-summary-service');
+        const summaryBudget = document.getElementById('sr-summary-budget');
+        const summaryUrgency = document.getElementById('sr-summary-urgency');
         let servicesLoading = false;
         let servicesError = false;
+
+        function setActiveStep(step) {
+            activeStep = step;
+            stepPanels.forEach(function(panel) {
+                panel.hidden = Number(panel.dataset.stepPanel) !== activeStep;
+            });
+            stepButtons.forEach(function(button) {
+                const buttonStep = Number(button.dataset.stepTarget);
+                button.disabled = buttonStep > activeStep;
+                button.classList.toggle('is-active', buttonStep === activeStep);
+                button.classList.toggle('is-complete', buttonStep < activeStep);
+                if (buttonStep === activeStep) {
+                    button.setAttribute('aria-current', 'step');
+                } else {
+                    button.removeAttribute('aria-current');
+                }
+            });
+            previousBtn.hidden = activeStep === 1;
+            nextBtn.hidden = activeStep === 3;
+            submitBtn.hidden = activeStep !== 3;
+        }
+
+        function updateSummary() {
+            const selectedService = serviceSelect.selectedOptions[0];
+            summaryService.textContent = serviceSelect.value && selectedService ?
+                selectedService.textContent : messages.selectService;
+
+            const budget = document.getElementById('sr_budget').value.trim();
+            summaryBudget.textContent = budget ?
+                `${budget} ${@json(__('ecommerce::ecommerce.currency_symbol'))}` : '—';
+
+            const urgency = form.querySelector('input[name="urgency_level"]:checked');
+            summaryUrgency.textContent = urgency ?
+                urgency.nextElementSibling.textContent.trim() : '—';
+        }
+
+        setActiveStep(1);
+        updateSummary();
+
+        stepButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                const targetStep = Number(button.dataset.stepTarget);
+                if (targetStep < activeStep) setActiveStep(targetStep);
+            });
+        });
+
+        previousBtn.addEventListener('click', function() {
+            if (activeStep > 1) setActiveStep(activeStep - 1);
+        });
+
+        nextBtn.addEventListener('click', function() {
+            if (validateForm(activeStep)) {
+                setActiveStep(activeStep + 1);
+                document.querySelector('.sr-page-card').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+
+        form.addEventListener('input', updateSummary);
+        form.addEventListener('change', updateSummary);
 
         async function loadServices() {
             if (servicesLoading) return;
             servicesLoading = true;
             servicesError = false;
-            const selected = serviceSelect.value;
+            const selected = serviceSelect.dataset.selectedService || serviceSelect.value;
             serviceSelect.disabled = true;
             serviceSelect.replaceChildren(new Option(messages.loading, ''));
 
@@ -423,6 +885,7 @@
                 if (services.some(service => String(service.id) === String(selected))) {
                     serviceSelect.value = selected;
                 }
+                delete serviceSelect.dataset.selectedService;
 
                 serviceSelect.disabled = services.length === 0;
             } catch (error) {
@@ -430,12 +893,11 @@
                 serviceSelect.replaceChildren(new Option(messages.servicesError, ''));
             } finally {
                 servicesLoading = false;
+                updateSummary();
             }
         }
 
         loadServices();
-
-        document.getElementById('serviceRequestModal').addEventListener('show.bs.modal', loadServices);
 
         function clearFieldErrors() {
             form.querySelectorAll('.sr-field-error').forEach(function(el) {
@@ -484,48 +946,52 @@
             });
         });
 
-        function validateForm() {
+        function validateForm(step) {
             clearFieldErrors();
 
             let valid = true;
             let firstInvalid = null;
 
-            if (servicesLoading || servicesError || !serviceSelect.value) {
-                setFieldError(
-                    serviceSelect,
-                    servicesError ? messages.servicesError : messages.selectService
-                );
+            if (step === 1 || step === 3) {
+                if (servicesLoading || servicesError || !serviceSelect.value) {
+                    setFieldError(
+                        serviceSelect,
+                        servicesError ? messages.servicesError : messages.selectService
+                    );
 
-                valid = false;
-                firstInvalid = serviceSelect;
+                    valid = false;
+                    firstInvalid = serviceSelect;
+                }
+
+                const title = document.getElementById('sr_title');
+
+                if (!title.value.trim()) {
+                    setFieldError(title, messages.titleRequired);
+                    valid = false;
+                    firstInvalid = firstInvalid || title;
+                }
             }
 
-            const title = document.getElementById('sr_title');
+            if (step === 2 || step === 3) {
+                const description = document.getElementById('sr_description');
 
-            if (!title.value.trim()) {
-                setFieldError(title, messages.titleRequired);
-                valid = false;
-                firstInvalid = firstInvalid || title;
-            }
+                if (!description.value.trim()) {
+                    setFieldError(description, messages.descriptionRequired);
+                    valid = false;
+                    firstInvalid = firstInvalid || description;
+                } else if (description.value.trim().length < 10) {
+                    setFieldError(description, messages.descriptionMin);
+                    valid = false;
+                    firstInvalid = firstInvalid || description;
+                }
 
-            const description = document.getElementById('sr_description');
+                const budget = document.getElementById('sr_budget');
 
-            if (!description.value.trim()) {
-                setFieldError(description, messages.descriptionRequired);
-                valid = false;
-                firstInvalid = firstInvalid || description;
-            } else if (description.value.trim().length < 10) {
-                setFieldError(description, messages.descriptionMin);
-                valid = false;
-                firstInvalid = firstInvalid || description;
-            }
-
-            const budget = document.getElementById('sr_budget');
-
-            if (budget.value !== '' && (isNaN(budget.value) || Number(budget.value) < 0)) {
-                setFieldError(budget, messages.budgetInvalid);
-                valid = false;
-                firstInvalid = firstInvalid || budget;
+                if (budget.value !== '' && (isNaN(budget.value) || Number(budget.value) < 0)) {
+                    setFieldError(budget, messages.budgetInvalid);
+                    valid = false;
+                    firstInvalid = firstInvalid || budget;
+                }
             }
 
             if (firstInvalid) {
@@ -545,6 +1011,7 @@
         function showServerErrors(errors) {
             if (!errors || typeof errors !== 'object') return;
 
+            let firstErrorStep = null;
             Object.keys(errors).forEach(function(name) {
                 const msgs = Array.isArray(errors[name]) ? errors[name] : [errors[name]];
 
@@ -566,7 +1033,13 @@
                 }
 
                 setFieldError(field, typeof message === 'string' ? message : message.message);
+                const fieldPanel = field?.closest('[data-step-panel]');
+                const fieldStep = fieldPanel ? Number(fieldPanel.dataset.stepPanel) : null;
+                if (fieldStep && (!firstErrorStep || fieldStep < firstErrorStep)) {
+                    firstErrorStep = fieldStep;
+                }
             });
+            if (firstErrorStep) setActiveStep(firstErrorStep);
         }
 
         form.addEventListener('submit', function(e) {
@@ -578,7 +1051,7 @@
             alertBox.innerHTML = '';
 
             // Inline validation instead of browser popups
-            if (!validateForm()) return;
+            if (!validateForm(3)) return;
 
             // Disable button & show spinner
             submitBtn.disabled = true;
@@ -603,45 +1076,13 @@
                     });
 
                     if (response.ok && data.success) {
-                        alertBox.className = 'd-none';
-                        alertBox.innerHTML = '';
-                        form.reset();
-
-                        const modalEl = document.getElementById('serviceRequestModal');
-
-                        if (modalEl) {
-                            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                                let instance = typeof bootstrap.Modal.getInstance ===
-                                    'function' ? bootstrap.Modal.getInstance(modalEl) : null;
-
-                                if (instance) {
-                                    instance.hide();
-                                } else if (typeof $ !== 'undefined' && $.fn.modal) {
-                                    $(modalEl).modal('hide');
-                                }
-                            } else if (typeof $ !== 'undefined' && $.fn.modal) {
-                                $(modalEl).modal('hide');
-                            }
-                        }
-
                         const successMsg = data.message || messages.successMsg;
-
-                        if (typeof showNotification === 'function') {
-                            showNotification(successMsg, 'success');
-                        } else if (typeof toastr !== 'undefined') {
-                            toastr.success(successMsg);
-                        } else {
-                            alert(successMsg);
-                        }
-
-                        // Refresh the service requests list live if the user is on that page
-                        if (/\/account\/service-requests/.test(window.location.pathname)) {
-                            if (typeof up !== 'undefined' && typeof up.reload === 'function') {
-                                up.reload('.dashboard-content');
-                            } else {
-                                window.location.reload();
-                            }
-                        }
+                        alertBox.className = 'alert alert-success d-block mb-3';
+                        alertBox.textContent = successMsg;
+                        form.reset();
+                        setActiveStep(1);
+                        loadServices();
+                        alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     } else if (response.status === 422) {
                         const validationErrors = data.errors || data.data;
 

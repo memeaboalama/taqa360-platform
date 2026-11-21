@@ -368,7 +368,6 @@
 
         @include('ecommerce::partials.product.quick-view')
         @include('ecommerce::partials.login-required-modal')
-        @include('ecommerce::partials.service-request-modal')
         @include('ecommerce::partials.confirmation-modal')
     </body>
 

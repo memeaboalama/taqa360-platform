@@ -23,11 +23,11 @@
             <li><a class="active" href="{{ route('auth.login') }}">@lang('ecommerce::ecommerce.auth.login')</a></li>
         @endif
         <li class="mobile-service-item">
-            <button type="button" class="service" data-bs-toggle="modal"
-                data-bs-target="{{ auth()->check() ? '#serviceRequestModal' : '#loginRequiredModal' }}">
+            <a class="service" href="{{ auth()->check() ? route('service-requests.create') : route('auth.login', ['redirect' => route('service-requests.create')]) }}"
+                up-follow="false">
                 <i class="fa fa-plus-circle" aria-hidden="true"></i>
                 @lang('ecommerce::ecommerce.request_service')
-            </button>
+            </a>
         </li>
     </ul>
 </nav>

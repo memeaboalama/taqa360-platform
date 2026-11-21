@@ -16,11 +16,11 @@
                     aria-label="{{ __('ecommerce::ecommerce.search') }}">⌕</button><input name="q" type="search"
                     placeholder="{{ $storeSearchPlaceholder }}" aria-label="{{ __('ecommerce::ecommerce.search') }}"></form>
             <div class="top-actions">
-                <button type="button" class="service" data-bs-toggle="modal"
-                    data-bs-target="{{ auth()->check() ? '#serviceRequestModal' : '#loginRequiredModal' }}">
+                <a class="service" href="{{ auth()->check() ? route('service-requests.create') : route('auth.login', ['redirect' => route('service-requests.create')]) }}"
+                    up-follow="false">
                     <i class="fa fa-plus-circle"></i>
                     @lang('ecommerce::ecommerce.request_service')
-                </button>
+                </a>
                 @if($storeShowLanguage)
                     @include('ecommerce::partials.language-switcher')
                 @endif

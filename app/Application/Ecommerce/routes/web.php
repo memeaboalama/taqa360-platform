@@ -56,6 +56,9 @@ Route::group(
 
 
         Route::middleware(['auth:web'])->group(function() {
+             Route::get('/service-requests/create', function () {
+                 return view('ecommerce::pages.service-request');
+             })->name('service-requests.create');
              Route::get('/checkout/success/{orderId?}', [CheckoutController::class, 'success'])
                  ->whereNumber('orderId')
                  ->name('checkout.success');

@@ -239,9 +239,9 @@
                 <div class="text-muted small">
                     @lang('ecommerce::ecommerce.total_requests'): <strong>{{ $serviceRequests->total() }}</strong>
                 </div>
-                <button type="button" class="btn btn-solid" data-bs-toggle="modal" data-bs-target="#serviceRequestModal">
+                <a class="btn btn-solid" href="{{ route('service-requests.create') }}" up-follow="false">
                     @lang('ecommerce::ecommerce.submit_service_request')
-                </button>
+                </a>
             </div>
         </div>
 

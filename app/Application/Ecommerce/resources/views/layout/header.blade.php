@@ -474,13 +474,13 @@
                                 padding-right: 0;
                             }
                         </style>
-                        <button type="button"
+                        <a
                             class="btn text-white me-2 ms-2 font-weight-bold"
                             style="background: #306FAA; color: #fff !important; border: none; border-radius: 6px; padding: 10px 18px; font-size: 0.95rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(48, 111, 170, 0.25);"
-                            data-bs-toggle="modal"
-                            data-bs-target="{{ auth()->check() ? '#serviceRequestModal' : '#loginRequiredModal' }}">
+                            href="{{ auth()->check() ? route('service-requests.create') : route('auth.login', ['redirect' => route('service-requests.create')]) }}"
+                            up-follow="false">
                             <i class="fa fa-plus-circle"></i> @lang('ecommerce::ecommerce.request_service')
-                        </button>
+                        </a>
 
                         @auth
                         <a class="btn btn_white" href="{{ route('account.index') }}" up-target=".main-body">
