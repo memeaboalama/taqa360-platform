@@ -168,13 +168,13 @@ class CheckoutController extends Controller
             foreach ($cartForStock->cartItems as $cartItem) {
                 $product = $cartItem->item;
                 if (!$product) {
-                    return $this->withUnpolyNotification(redirect()->back(), __('ecommerce::ecommerce.product_not_available'), 'error');
+                    return $this->withUnpolyNotification(redirect()->route('checkout'), __('ecommerce::ecommerce.product_not_available'), 'error');
                 }
                 if (!$product->isInStock()) {
-                    return $this->withUnpolyNotification(redirect()->back(), __('ecommerce::ecommerce.product_out_of_stock'), 'error');
+                    return $this->withUnpolyNotification(redirect()->route('checkout'), __('ecommerce::ecommerce.product_out_of_stock'), 'error');
                 }
                 if ($product->stock !== null && (int) $cartItem->qty > (int) $product->stock) {
-                    return $this->withUnpolyNotification(redirect()->back(), __('ecommerce::ecommerce.remaining_stock', ['count' => (int) $product->stock]), 'error');
+                    return $this->withUnpolyNotification(redirect()->route('checkout'), __('ecommerce::ecommerce.remaining_stock', ['count' => (int) $product->stock]), 'error');
                 }
             }
         }
@@ -185,7 +185,7 @@ class CheckoutController extends Controller
         if (!$isNewAddress && isset($data['address_id'])) {
             $data['address'] = $user->addresses()->find($data['address_id']);
             if (!$data['address']) {
-                return redirect()->back()->with('error', __('ecommerce::ecommerce.invalid_address'));
+                return redirect()->route('checkout')->with('error', __('ecommerce::ecommerce.invalid_address'));
             }
         }
 
@@ -198,7 +198,7 @@ class CheckoutController extends Controller
                 Log::info("Pre-check wallet balance", ['user_id' => $user->id, 'balance' => $user->balance, 'required' => $total]);
 
                 if ($user->balance < $total) {
-                     return $this->withUnpolyNotification(redirect()->back(), __('ecommerce::ecommerce.insufficient_balance'), 'error', 'payment_method');
+                     return $this->withUnpolyNotification(redirect()->route('checkout'), __('ecommerce::ecommerce.insufficient_balance'), 'error', 'payment_method');
                 }
             }
 
@@ -232,7 +232,7 @@ class CheckoutController extends Controller
 
             if (!$order["status"]) {
                 DB::rollBack();
-                return $this->withUnpolyNotification(redirect()->back(), $this->translateOrderError($order["message"], $order["data"] ?? null), 'error');
+                return $this->withUnpolyNotification(redirect()->route('checkout'), $this->translateOrderError($order["message"], $order["data"] ?? null), 'error');
             }
 
             $reason = 'User create web';
@@ -254,7 +254,7 @@ class CheckoutController extends Controller
             if (isset($paymentResponse['error']) && $paymentResponse['error']) {
                 DB::rollBack();
                 $errorField = $data['payment_method'] === 'wallet' ? 'payment_method' : null;
-                return $this->withUnpolyNotification(redirect()->back(), $paymentResponse['message'], 'error', $errorField);
+                return $this->withUnpolyNotification(redirect()->route('checkout'), $paymentResponse['message'], 'error', $errorField);
             }
 
             DB::commit();
@@ -268,7 +268,7 @@ class CheckoutController extends Controller
         } catch (Exception $exception) {
             DB::rollBack();
             Log::error($exception);
-            return $this->withUnpolyNotification(redirect()->back(), __('ecommerce::ecommerce.something_went_wrong'), 'error');
+            return $this->withUnpolyNotification(redirect()->route('checkout'), __('ecommerce::ecommerce.something_went_wrong'), 'error');
         }
     }
 

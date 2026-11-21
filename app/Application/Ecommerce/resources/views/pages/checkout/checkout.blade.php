@@ -272,7 +272,7 @@
         .checkout-item-remove {
             display: inline-flex;
             width: auto;
-            min-width: 72px;
+            min-width: auto;
             height: 36px;
             align-items: center;
             justify-content: center;
@@ -772,7 +772,7 @@
                 height: 44px
             }
 
-            .product-row > div {
+            .product-row>div {
                 grid-column: 2;
                 grid-row: 1
             }
@@ -841,15 +841,13 @@
                                         <strong
                                             class="product-price">{{ \App\Domain\AppBase\Models\Setting\Currency::format($item->subtotal) }}</strong>
                                         <button type="submit" form="remove-checkout-item-{{ $loop->index }}"
-                                            class="checkout-item-remove"
-                                            aria-label="@lang('ecommerce::ecommerce.remove')"
+                                            class="checkout-item-remove" aria-label="@lang('ecommerce::ecommerce.remove')"
                                             title="@lang('ecommerce::ecommerce.remove')">
                                             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"
                                                 fill="none" stroke="currentColor" stroke-width="1.8"
                                                 stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M3 6h18M8 6V4h8v2m2 0-.8 14H6.8L6 6m4 4v6m4-6v6" />
                                             </svg>
-                                            <span>@lang('ecommerce::ecommerce.remove')</span>
                                         </button>
                                     </div>
                                 @endforeach
@@ -957,8 +955,8 @@
                                                 <output class="location-coordinates-value" id="location-coordinates"
                                                     dir="ltr">@lang('ecommerce::ecommerce.no_location_selected')</output>
                                             </div>
-                                            <div id="checkout-location-map" class="checkout-location-map" role="application"
-                                                aria-label="@lang('ecommerce::ecommerce.location_on_map')"></div>
+                                            <div id="checkout-location-map" class="checkout-location-map"
+                                                role="application" aria-label="@lang('ecommerce::ecommerce.location_on_map')"></div>
                                             <div class="location-map-actions">
                                                 <button type="button" class="location-map-button"
                                                     id="use-current-location">@lang('ecommerce::ecommerce.use_current_location')</button>
@@ -1069,27 +1067,7 @@
                                 @php($codCollectionAvailable = (bool) ($collectionSettings['enabled_methods'] ?? []))
                                 @php($selectedPaymentMethod = \App\Support\Enum\PaymentMethod::COD->value)
                                 <label class="sidebar-label">@lang('ecommerce::ecommerce.payment_method')</label>
-                                {{--
-                                <div class="payment-method-card wallet-method" style="margin-bottom:0;">
-                                    <input type="radio" name="payment_method" value="wallet"
-                                        {{ $selectedPaymentMethod === 'wallet' ? 'checked' : '' }}>
-                                    <span class="payment-text">@lang('ecommerce::ecommerce.pay_wallet')</span>
-                                    <small class="d-block" style="color: #28a745; font-weight: bold;">
-                                        @lang('ecommerce::ecommerce.balance'):
-                                        {{ \App\Domain\AppBase\Models\Setting\Currency::format(auth()->user()->balance) }}
-                                    </small>
-                                    @error('payment_method')
-                                        <div class="wallet-balance-error" role="alert">
-                                            <i class="ti-alert" aria-hidden="true"></i>
-                                            <div>
-                                                <span>{{ $message }}</span>
-                                                <a href="{{ route('account.wallet.deposit') }}">@lang('ecommerce::ecommerce.deposit_funds')</a>
-                                            </div>
-                                        </div>
-                                    @enderror
-                                </div>
-                                --}}
-                                {{-- @if ($codCollectionAvailable) --}}
+                                @if ($codCollectionAvailable)
                                     <div class="payment-method-card cod-method" style="margin-bottom:0;">
                                         <input type="radio" name="payment_method"
                                             value="{{ \App\Support\Enum\PaymentMethod::COD->value }}"
@@ -1097,16 +1075,18 @@
                                         <span class="payment-text">@lang('ecommerce::ecommerce.cod')</span>
                                     </div>
                                     <p class="cod-payment-note">@lang('ecommerce::ecommerce.cod_full_payment_at_delivery')</p>
-                                {{-- @else
-                                    <div class="alert alert-warning cod-availability-notice">@lang('ecommerce::ecommerce.cod_collection_unavailable')</div>
+                                @else
+                                    <div class="alert alert-warning" role="alert">
+                                        @lang('ecommerce::ecommerce.cod_collection_unavailable')
+                                    </div>
                                 @endif
                                 @error('payment_method')
                                     <div class="alert alert-danger" role="alert">{{ $message }}</div>
-                                @enderror --}}
+                                @enderror
                             </div>
 
                             <div class="sidebar-group" style="margin-top:20px;">
-                                <button type="submit" class="btn-primary"
+                                <button type="submit" class="btn-primary" {{ $codCollectionAvailable ? '' : 'disabled' }}
                                     style="width:100%;">@lang('ecommerce::ecommerce.place_order')</button>
                             </div>
                         </div>

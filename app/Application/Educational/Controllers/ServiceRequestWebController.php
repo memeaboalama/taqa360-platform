@@ -20,13 +20,6 @@ class ServiceRequestWebController extends Controller
                 'education_level' => ['nullable', 'string', 'max:100'],
             ]
             : [
-                'service_id' => [
-                    'required',
-                    'integer',
-                    Rule::exists('services', 'id')
-                        ->where('status', 'active')
-                        ->whereNull('deleted_at'),
-                ],
                 'project_site_type' => ['nullable', 'in:residential,commercial,agricultural,industrial,medical,educational,other'],
                 'solar_system_type' => ['nullable', 'in:off-grid,on-grid,hybrid,not_sure'],
             ];

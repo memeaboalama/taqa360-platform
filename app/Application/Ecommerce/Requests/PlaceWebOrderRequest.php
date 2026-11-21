@@ -12,6 +12,8 @@ use Illuminate\Validation\Validator;
 
 class PlaceWebOrderRequest extends FormRequest
 {
+    protected $redirectRoute = 'checkout';
+
     public function authorize()
     {
         return true;
