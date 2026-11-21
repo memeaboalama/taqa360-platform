@@ -573,13 +573,29 @@
                                         <div class="tab-pane fade" id="top-services" role="tabpanel" aria-labelledby="services-top-tab">
                                             <ul class="services-list list-unstyled mt-4">
                                                 @foreach($product->activeItemPrices as $itemPrice)
+                                                    @php
+                                                        $typeServiceName = $itemPrice->type_service?->name;
+                                                        $typeServiceLabel = match ($typeServiceName) {
+                                                            'default', 'with_delivery' => __('admin::home.with_delivery'),
+                                                            'without_delivery' => __('admin::home.without_delivery'),
+                                                            null => '-',
+                                                            default => \Illuminate\Support\Facades\Lang::has('admin::home.' . $typeServiceName)
+                                                                ? __('admin::home.' . $typeServiceName)
+                                                                : $typeServiceName,
+                                                        };
+                                                        $hasServicePrice = is_numeric($itemPrice->price) && (float) $itemPrice->price > 0;
+                                                    @endphp
                                                     <li class="service-item d-flex align-items-center mb-3">
                                                         <i class="fa fa-wrench fa-2x text-primary me-3"></i>
                                                         <div>
-                                                            <h5>{{ $itemPrice->type_service?->name ?? $itemPrice->type_service_name }}</h5>
+                                                            <h5>{{ $typeServiceLabel }}</h5>
                                                             <p class="mb-0 text-muted">
-                                                                @lang('ecommerce::ecommerce.price'):
-                                                                {{ \App\Domain\AppBase\Models\Setting\Currency::format($itemPrice->price) }}
+                                                                @lang('ecommerce::ecommerce.product_price_for_service'):
+                                                                @if($hasServicePrice)
+                                                                    {{ \App\Domain\AppBase\Models\Setting\Currency::format((float) $itemPrice->price) }}
+                                                                @else
+                                                                    @lang('ecommerce::ecommerce.price_not_specified')
+                                                                @endif
                                                             </p>
                                                         </div>
                                                     </li>
@@ -751,17 +767,6 @@
                     <!-- Services Block -->
                     <div class="collection-filter-block">
                         <div class="product-service mb-0">
-                            <div class="media d-flex">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                                    <path d="M16 10a4 4 0 0 1-8 0"></path>
-                                </svg>
-                                <div class="media-body">
-                                    <h4>@lang('ecommerce::ecommerce.free_shipping')</h4>
-                                    <p>@lang('ecommerce::ecommerce.free_shipping_worldwide')</p>
-                                </div>
-                            </div>
                             <div class="media d-flex">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="10"></circle>

@@ -31,7 +31,7 @@ class UpdateBasicInfoAction
         $merchant->update($data);
         if ((string) $previousBrandId !== (string) $merchant->brand_id) {
             foreach ($merchant->items()->pluck('id') as $itemId) {
-                Cache::forget("storefront_product_details_{$itemId}_v4");
+                Cache::forget("storefront_product_details_{$itemId}_v5");
             }
         }
         $merchant->categories()->detach();

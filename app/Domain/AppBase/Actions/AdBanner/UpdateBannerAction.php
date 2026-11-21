@@ -9,6 +9,9 @@ use App\Support\Services\ImagesServices\ImageService;
 use App\Support\Enum\FileTypesEnum;
 use App\Support\Enum\PlacementTypeEnum;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class UpdateBannerAction
 {
@@ -22,48 +25,140 @@ class UpdateBannerAction
         $banner = $this->bannerRepository->findByCols(['id' => $id]);
 
         if (!$banner) {
-            return false;
+            throw new \RuntimeException('Ad banner not found.');
         }
 
-        if (isset($data['status'])) {
-            $statusValue = $data['status'] instanceof \BackedEnum ? $data['status']->value : $data['status'];
+        $storedImagePaths = [];
 
-            if ($statusValue === 'active' && $banner->status->value !== 'active') {
-                $this->validatePlacementLimits($banner->placement_id, $data['status'], $id);
-            }
-        }
+        try {
+            DB::transaction(function () use ($id, $data, $banner, &$storedImagePaths): void {
+                if (isset($data['status'])) {
+                    $statusValue = $data['status'] instanceof \BackedEnum ? $data['status']->value : $data['status'];
 
-        if (isset($data['image_desktop']) || isset($data['image_tablet']) || isset($data['image_mobile']) || isset($data['content'])) {
-            $content = $banner->content ?? [];
-
-            if (isset($data['content']) && is_array($data['content'])) {
-                $content = array_merge($content, $data['content']);
-            }
-
-            foreach (['desktop', 'tablet', 'mobile'] as $device) {
-                $fileKey = "image_{$device}";
-                if (isset($data[$fileKey]) && is_object($data[$fileKey])) {
-                    $image = $this->storeBannerImage($data[$fileKey], $device);
-                    $content['images'][$device] = $image['path'];
+                    if ($statusValue === 'active' && $banner->status->value !== 'active') {
+                        $this->validatePlacementLimits($banner->placement_id, $data['status'], $id);
+                    }
                 }
-            }
 
-            if (isset($data['image_favicon']) && is_object($data['image_favicon'])) {
-                $image = $this->storeBannerImage($data['image_favicon'], 'favicon');
-                $content['images']['favicon'] = $image['path'];
-            }
+                $oldImagePaths = $this->getImagePaths($banner);
 
-            $data['content'] = $content;
+                if (
+                    isset($data['image_desktop'])
+                    || isset($data['image_tablet'])
+                    || isset($data['image_mobile'])
+                    || isset($data['image_favicon'])
+                    || isset($data['content'])
+                ) {
+                    $content = $banner->content ?? [];
+
+                    if (isset($data['content']) && is_array($data['content'])) {
+                        $content = array_merge($content, $data['content']);
+                    }
+
+                    foreach (['desktop', 'tablet', 'mobile'] as $device) {
+                        $fileKey = "image_{$device}";
+                        if (isset($data[$fileKey]) && $data[$fileKey] instanceof UploadedFile) {
+                            $image = $this->storeBannerImage($data[$fileKey], $device);
+                            $storedImagePaths[] = $image['path'];
+                            $content['images'][$device] = $image['path'];
+                        }
+                    }
+
+                    if (isset($data['image_favicon']) && $data['image_favicon'] instanceof UploadedFile) {
+                        $image = $this->storeBannerImage($data['image_favicon'], 'favicon');
+                        $storedImagePaths[] = $image['path'];
+                        $content['images']['favicon'] = $image['path'];
+                    }
+
+                    $data['content'] = $content;
+                }
+
+                $banner->fill($data);
+                if (!$banner->save()) {
+                    throw new \RuntimeException('Unable to save banner changes.');
+                }
+
+                $removedImagePaths = array_values(array_diff($oldImagePaths, $this->getImagePaths($banner)));
+                $placementId = (int) $banner->placement_id;
+
+                DB::afterCommit(function () use ($placementId, $removedImagePaths): void {
+                    try {
+                        AdBanner::forgetStorefrontCacheForPlacement($placementId);
+                    } catch (Throwable $exception) {
+                        Log::error('Unable to clear ad banner storefront cache.', [
+                            'placement_id' => $placementId,
+                            'exception' => $exception,
+                        ]);
+                    }
+
+                    $this->deleteUnusedImages($removedImagePaths);
+                });
+            });
+        } catch (Throwable $exception) {
+            $this->deleteUnusedImages($storedImagePaths);
+            throw $exception;
         }
-
-        $result = $this->bannerRepository->update($id, $data);
-        if (!$result) {
-            throw new \RuntimeException('Unable to save banner changes.');
-        }
-
-        AdBanner::forgetStorefrontCacheForPlacement((int) $banner->placement_id);
 
         return true;
+    }
+
+    private function getImagePaths(AdBanner $banner): array
+    {
+        $content = $banner->content ?? [];
+        $images = is_array($content['images'] ?? null) ? $content['images'] : [];
+        $paths = array_merge(
+            array_values($images),
+            [$content['image'] ?? null, $content['image_desktop'] ?? null]
+        );
+
+        return array_values(array_unique(array_filter(
+            $paths,
+            static fn ($path): bool => is_string($path) && $path !== ''
+        )));
+    }
+
+    private function deleteUnusedImages(array $paths): void
+    {
+        foreach (array_unique($paths) as $path) {
+            if (!is_string($path) || !$this->isManagedImagePath($path)) {
+                continue;
+            }
+
+            try {
+                if (!$this->isImageReferenced($path)) {
+                    $this->imageService->destroyImg(ltrim($path, '/'));
+                }
+            } catch (Throwable $exception) {
+                Log::warning('Unable to clean up an ad banner image.', [
+                    'path' => $path,
+                    'exception' => $exception,
+                ]);
+            }
+        }
+    }
+
+    private function isImageReferenced(string $path): bool
+    {
+        $normalizedPath = ltrim($path, '/');
+
+        return AdBanner::withTrashed()
+            ->where(function ($query) use ($path, $normalizedPath): void {
+                foreach (['desktop', 'tablet', 'mobile', 'favicon'] as $device) {
+                    $query->orWhere("content->images->{$device}", $path)
+                        ->orWhere("content->images->{$device}", $normalizedPath);
+                }
+
+                $query->orWhere('content->image', $path)
+                    ->orWhere('content->image', $normalizedPath)
+                    ->orWhere('content->image_desktop', $path)
+                    ->orWhere('content->image_desktop', $normalizedPath);
+            })
+            ->exists();
+    }
+
+    private function isManagedImagePath(string $path): bool
+    {
+        return str_starts_with(ltrim($path, '/'), 'upload/ads/banners/');
     }
 
     private function storeBannerImage(UploadedFile $file, string $device): array

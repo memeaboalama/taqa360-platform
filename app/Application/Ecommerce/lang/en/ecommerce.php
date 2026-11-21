@@ -112,6 +112,8 @@ return [
 
 
     'available_services'                => 'Available Services',
+    'product_price_for_service'         => 'Product price for this service',
+    'price_not_specified'               => 'Price not specified',
     'services_intro'                    => 'The following additional services are available for this product, provided by the merchant.',
     'solar_panel_installation'          => 'Solar Panel Installation',
     'solar_panel_desc'                  => 'Professional installation service by our certified technicians to ensure maximum efficiency.',

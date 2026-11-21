@@ -211,12 +211,13 @@
 
                         @if($click_action_type === 'product')
                             <div class="col-md-4">
-                                <label class="form-label small mb-1">{{ __('admin::lang.Merchant') }} <small class="text-muted">({{ __('admin::lang.Optional') }})</small></label>
+                                <label class="form-label small mb-1">{{ __('admin::lang.Merchant') }}</label>
                                 <livewire:admin::ads-content.shared.live-search
                                     type="merchant"
                                     :selectedItem="$selected_merchant"
                                     emitEvent="merchantSelected"
-                                    key="search-merchant-filter-update"
+                                    :lazyLoad="true"
+                                    :key="'search-merchant-filter-update-' . ($bannerId ?? 'new') . '-' . $click_action_type"
                                 />
                             </div>
                         @endif
@@ -228,8 +229,10 @@
                                     :type="$click_action_type"
                                     :selectedItem="$selected_item"
                                     :merchantId="$click_action_type === 'product' ? $merchant_id : null"
+                                    :lazyLoad="in_array($click_action_type, ['product', 'merchant', 'category'])"
+                                    :disabled="$click_action_type === 'product' && !$merchant_id"
                                     :emitEvent="'itemSelected'"
-                                    :key="'search-update-' . $click_action_type . '-' . ($merchant_id ?? 'all')"
+                                    :key="'search-update-' . $click_action_type . '-' . ($merchant_id ?? 'all') . '-' . ($click_action_id ?? 'none')"
                                 />
                             </div>
                         @endif

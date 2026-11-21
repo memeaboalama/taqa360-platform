@@ -229,22 +229,31 @@
             }
         }
 
-        function showUploadFailure(property, error, prepareFailure) {
+        function showUploadFailure(property, error, prepareFailure, explicitReason) {
             var status = error && (error.status || (error.xhr && error.xhr.status));
-            var reason = prepareFailure
+            var responseText = error && error.xhr && error.xhr.responseText;
+            var errorMessage = error && error.message;
+            var errorDetails = [responseText, errorMessage].filter(Boolean).join(' ');
+            var dimensionsMismatch = /dimensions?|width|height|أبعاد|ابعاد|العرض|الارتفاع/i.test(errorDetails);
+            var reason = explicitReason || (dimensionsMismatch
+                ? @json(__('admin::lang.Image dimensions do not match'))
+                : prepareFailure
                 ? @json(__('admin::lang.Could not prepare image for upload.'))
                 : status === 413
                     ? @json(__('admin::lang.The image is larger than the server limit'))
                     : status === 419
                         ? @json(__('admin::lang.Your session expired. Refresh and retry.'))
                         : status === 422 || status === 415
-                            ? @json(__('admin::lang.The image was rejected. Check its format and dimensions.'))
-                            : @json(__('admin::lang.The image could not be uploaded due to a server or network error.'));
+                            ? @json(__('admin::lang.Image format or dimensions are invalid'))
+                            : @json(__('admin::lang.The image could not be uploaded due to a server or network error.')));
             var label = (getConfig(property) || {}).label || property;
 
             state.pendingUploads[property] = false;
             state.failedUploads[property] = true;
             clearPreview(property);
+            if (state.input) {
+                state.input.value = '';
+            }
             if (window.Swal) {
                 Swal.fire(@json(__('admin::lang.Upload Failed')), label + ': ' + reason, 'error');
             } else {
@@ -341,6 +350,16 @@
         function openCropper(file, property) {
             var cfg = getConfig(property);
             if (!cfg) return;
+
+            if (state.cropEnabled && file.type !== 'image/gif' && file.type.startsWith('image/') && typeof Cropper === 'undefined') {
+                showUploadFailure(
+                    property,
+                    null,
+                    false,
+                    @json(__('admin::lang.Image dimensions do not match and cropper unavailable'))
+                );
+                return;
+            }
 
             if (!state.cropEnabled || file.type === 'image/gif' || !file.type.startsWith('image/')) {
                 uploadFile(file, property, URL.createObjectURL(file));
