@@ -10,6 +10,7 @@ use App\Application\Ecommerce\Controllers\FilterController;
 use App\Application\Ecommerce\Controllers\MerchantController;
 use App\Application\Ecommerce\Controllers\OfferController;
 use App\Application\Ecommerce\Controllers\ProductController;
+use App\Application\Ecommerce\Controllers\ProductReviewController;
 use App\Application\Ecommerce\Controllers\WishlistController;
 use Application\Ecommerce\Controllers\EcommerceController;
 use Illuminate\Support\Facades\Route;
@@ -61,6 +62,10 @@ Route::group(
              Route::get('/checkout/legacy', [CheckoutController::class, 'index'])->name('checkout.index');
              Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
              Route::post('/service-requests/store', [\App\Application\Educational\Controllers\ServiceRequestWebController::class, 'store'])->name('service-requests.store');
+             Route::post('/products/{item_id}/reviews', [ProductReviewController::class, 'store'])
+                 ->whereNumber('item_id')
+                 ->middleware('throttle:5,10')
+                 ->name('products.reviews.store');
         });
 
         Route::controller(EcommerceController::class)->group(function () {

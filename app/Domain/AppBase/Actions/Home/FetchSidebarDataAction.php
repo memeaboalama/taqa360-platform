@@ -37,7 +37,7 @@ class FetchSidebarDataAction
             }
         }
 
-        return Cache::remember("storefront_sidebar_new_products_v2_" . app()->getLocale() . '_' . $limit, 1800, function() use ($limit) {
+        return Cache::remember("storefront_sidebar_new_products_v3_" . app()->getLocale() . '_' . $limit, 1800, function() use ($limit) {
             return $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->take($limit)
                 ->get();
@@ -67,7 +67,7 @@ class FetchSidebarDataAction
             }
         }
 
-        return Cache::remember("storefront_sidebar_recently_viewed_v2_" . app()->getLocale() . '_' . $limit, 1800, function() use ($limit) {
+        return Cache::remember("storefront_sidebar_recently_viewed_v3_" . app()->getLocale() . '_' . $limit, 1800, function() use ($limit) {
             return $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->inRandomOrder()
                 ->take($limit)
@@ -77,7 +77,7 @@ class FetchSidebarDataAction
 
     public function getSuggestedProducts(int $limit = 6)
     {
-        return Cache::remember('storefront_sidebar_suggested_products_v2_' . app()->getLocale() . '_' . $limit, 1800, function() use ($limit) {
+        return Cache::remember('storefront_sidebar_suggested_products_v3_' . app()->getLocale() . '_' . $limit, 1800, function() use ($limit) {
             return $this->itemRepository->storefrontQuery(['status' => ActiveEnum::ACTIVE->value])
                 ->inRandomOrder()
                 ->take($limit)

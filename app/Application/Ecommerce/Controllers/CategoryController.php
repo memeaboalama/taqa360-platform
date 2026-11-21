@@ -135,7 +135,10 @@ class CategoryController extends Controller
 
     private function getFilteredProducts(Request $request, $filters)
     {
-        $query = Item::where('status', 'active')->availableForStorefront()->with(['merchant']);
+        $query = Item::where('status', 'active')
+            ->availableForStorefront()
+            ->withReviewSummary()
+            ->with(['merchant']);
 
         if ($filters['activeMainId']) $query->where('main_category_id', $filters['activeMainId']);
         if ($filters['activeSubId']) $query->where('sub_category_id', $filters['activeSubId']);

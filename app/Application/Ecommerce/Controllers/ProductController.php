@@ -118,7 +118,7 @@ class ProductController extends Controller
 
     private function getProductWithDetails($itemId)
     {
-        return Cache::remember("storefront_product_details_{$itemId}_v4", 3600, function () use ($itemId) {
+        return Cache::remember("storefront_product_details_{$itemId}_v5", 3600, function () use ($itemId) {
             $product = Item::query()
                 ->with([
                     'merchant.brand',
@@ -129,7 +129,9 @@ class ProductController extends Controller
                         ->where('specification_properties.status', 'active'),
                     'files',
                     'activeItemPrices.type_service',
+                    'reviews' => fn ($query) => $query->approved()->with('user')->latest(),
                 ])
+                ->withReviewSummary()
                 ->where('id', $itemId)
                 ->where('status', 'active')
                 ->availableForStorefront()
@@ -145,10 +147,11 @@ class ProductController extends Controller
 
     private function getRelatedProducts($product)
     {
-        return Cache::remember("storefront_related_products_{$product->id}_v2", 1800, function () use ($product) {
+        return Cache::remember("storefront_related_products_{$product->id}_v3", 1800, function () use ($product) {
             return Item::query()
                 ->where('status', 'active')
                 ->availableForStorefront()
+                ->withReviewSummary()
                 ->where('main_category_id', $product->main_category_id)
                 ->where('id', '!=', $product->id)
                 ->limit(5)

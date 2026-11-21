@@ -25,6 +25,7 @@ class FetchItemsAction
                 ->select(['id', 'title', 'description', 'default_price', 'calories', 'preparing_time', 'image', 'status'])
                 ->where('status', StatusEnum::ACTIVE->value)
                 ->availableForStorefront()
+                ->withReviewSummary()
                 ->with(['additionGroups', 'additionGroups.choices'])
                 ->orderBy('id');
 
@@ -67,6 +68,7 @@ class FetchItemsAction
                 ->where('status', StatusEnum::ACTIVE->value)
                 ->where('category_id', $category_id)
                 ->availableForStorefront()
+                ->withReviewSummary()
                 ->with(['additionGroups', 'additionGroups.choices'])
                 ->orderBy('id');
 

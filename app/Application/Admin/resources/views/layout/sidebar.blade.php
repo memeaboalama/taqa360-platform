@@ -64,6 +64,12 @@
                         </li>
                     </ul>
                 </li>
+                <li class="slide">
+                    <a href="{{ route('admin:product-reviews.index') }}" class="side-menu__item {{ isActive(route('admin:product-reviews.index')) }}">
+                        <i class="bx bx-star side-menu__icon"></i>
+                        <span class="side-menu__label">{{ __('admin::lang.Product Reviews') }}</span>
+                    </a>
+                </li>
                 @AdminHasRole(['show_merchants'])
                     <li class="slide has-sub {{ isActiveSection([url('admin/merchants'), url('admin/packages'), url('admin/typeservices')]) }}">
                         <a href="javascript:void(0);" class="side-menu__item {{ isActiveSection([url('admin/merchants'), url('admin/packages'), url('admin/typeservices')]) ? 'active' : '' }}">

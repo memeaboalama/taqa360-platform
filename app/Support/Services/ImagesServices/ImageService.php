@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Intervention\Image\Facades\Image;
 use Illuminate\Http\UploadedFile;
+use App\Support\Enum\FileTypesEnum;
 
 class ImageService
 {
@@ -23,6 +24,13 @@ class ImageService
         }
 
         $mime = $file->getMimeType();
+        $isBanner = $type instanceof FileTypesEnum
+            ? $type === FileTypesEnum::BANNER
+            : $type === FileTypesEnum::BANNER->value;
+
+        if ($isBanner && (!str_starts_with((string) $mime, 'image/') || @getimagesize($file->getRealPath()) === false)) {
+            throw new \InvalidArgumentException('The uploaded file is not a valid image.');
+        }
 
         $nonImageMimes = [
             'application/pdf',

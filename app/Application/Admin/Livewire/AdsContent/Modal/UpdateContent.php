@@ -328,13 +328,14 @@ class UpdateContent extends Component
 
         $devices = $this->placement->settings['display']['devices'] ?? [];
 
-        if ($devices['desktop']['enabled'] ?? false) {
-            $rules['image_desktop'] = [
-                'nullable',
-                'image',
-                'max:2048',
-                'mimes:jpeg,png,jpg,gif,webp',
-            ];
+        $desktopEnabled = (bool) ($devices['desktop']['enabled'] ?? false);
+        $rules['image_desktop'] = [
+            'nullable',
+            'image',
+            'max:2048',
+            'mimes:jpeg,png,jpg,gif,webp',
+        ];
+        if ($desktopEnabled) {
             if ($this->placement->key !== 'home_hero_slider') {
                 $rules['image_desktop'][] = 'dimensions:width=' . ($devices['desktop']['width'] ?? 1920) . ',height=' . ($devices['desktop']['height'] ?? 600);
             }

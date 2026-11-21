@@ -149,8 +149,9 @@
         @if($product->activeItemPrices->isNotEmpty())
             <section style="margin-top:32px;">
                 <div class="section-head">
-                    <h3>@lang('ecommerce::ecommerce.available_services')</h3>
+                    <h3>@lang('ecommerce::ecommerce.product_options')</h3>
                 </div>
+                <p>@lang('ecommerce::ecommerce.product_option_price_note')</p>
                 <div class="info-grid">
                     @foreach($product->activeItemPrices as $itemPrice)
                         @php
@@ -165,14 +166,89 @@
                         <div class="info-card">
                             <h4>{{ $typeServiceLabel }}</h4>
                             <p>
-                                @lang('ecommerce::ecommerce.price'):
-                                {{ \App\Domain\AppBase\Models\Setting\Currency::format($itemPrice->price) }}
+                                @lang('ecommerce::ecommerce.provided_by_store'):
+                                @if($product->merchant)
+                                    <a href="{{ route('merchant.show', $product->merchant->id) }}">
+                                        {{ $product->merchant->getTranslation('company_name', app()->getLocale()) ?: $product->merchant->name }}
+                                    </a>
+                                @else
+                                    {{ __('ecommerce::ecommerce.site_name') }}
+                                @endif
+                            </p>
+                            <p>
+                                @lang('ecommerce::ecommerce.product_price_for_option'):
+                                {{ \App\Domain\AppBase\Models\Setting\Currency::format((float) $itemPrice->price > 0 ? $itemPrice->price : $product->default_price) }}
                             </p>
                         </div>
                     @endforeach
                 </div>
             </section>
         @endif
+
+        <section>
+            <div class="section-head">
+                <h3>@lang('ecommerce::ecommerce.reviews') ({{ $product->reviews_count }})</h3>
+            </div>
+
+            @if(session('product_review_submitted'))
+                <p class="alert alert-success" role="status">@lang('ecommerce::ecommerce.product_review_submitted')</p>
+            @endif
+            @if($errors->has('purchase'))
+                <p class="alert alert-danger" role="alert">{{ $errors->first('purchase') }}</p>
+            @endif
+
+            @forelse($product->reviews as $review)
+                <article class="info-card mb-3">
+                    <div class="d-flex justify-content-between gap-3">
+                        <strong>{{ $review->user?->name }}</strong>
+                        <span>{{ $review->rating }} / 5</span>
+                    </div>
+                    <h4 class="mt-2">{{ $review->title }}</h4>
+                    <p>{{ $review->comment }}</p>
+                </article>
+            @empty
+                <p class="text-muted">@lang('ecommerce::ecommerce.no_reviews_yet')</p>
+            @endforelse
+
+            @if($canReview)
+                <form method="POST" action="{{ route('products.reviews.store', $product->id) }}" class="info-card mt-4">
+                    @csrf
+                    <h4>@lang('ecommerce::ecommerce.add_your_review')</h4>
+                    @if($errors->has('rating') || $errors->has('title') || $errors->has('comment') || $errors->has('purchase'))
+                        <div class="alert alert-danger" role="alert">
+                            @foreach($errors->all() as $error)
+                                <div>{{ $error }}</div>
+                            @endforeach
+                        </div>
+                    @endif
+                    <label for="review-rating" class="form-label">@lang('ecommerce::ecommerce.rating')</label>
+                    <select id="review-rating" name="rating" class="form-control mb-3" required>
+                        <option value="">@lang('ecommerce::ecommerce.select_rating')</option>
+                        @for($rating = 5; $rating >= 1; $rating--)
+                            <option value="{{ $rating }}" @selected(old('rating') == $rating)>{{ $rating }} / 5</option>
+                        @endfor
+                    </select>
+                    <label for="review-title" class="form-label">@lang('ecommerce::ecommerce.review_title')</label>
+                    <input id="review-title" name="title" type="text" class="form-control mb-3" maxlength="120" value="{{ old('title') }}" required>
+                    <label for="review-comment" class="form-label">@lang('ecommerce::ecommerce.your_review')</label>
+                    <textarea id="review-comment" name="comment" class="form-control mb-3" rows="4" maxlength="2000" required>{{ old('comment') }}</textarea>
+                    <button type="submit" class="primary-btn">@lang('ecommerce::ecommerce.submit_review')</button>
+                </form>
+            @elseif($existingReview)
+                <p class="text-muted" role="status">
+                    @lang($existingReview->status === 'pending'
+                        ? 'ecommerce::ecommerce.product_review_pending'
+                        : 'ecommerce::ecommerce.product_review_already_submitted')
+                </p>
+            @elseif(!auth()->check())
+                <p class="text-muted">
+                    @lang('ecommerce::ecommerce.product_review_login_required')
+                    <a href="{{ route('auth.login') }}">@lang('ecommerce::ecommerce.login')</a>
+                </p>
+            @elseif(!$hasCompletedPurchase)
+                <p class="text-muted">@lang('ecommerce::ecommerce.product_review_purchase_required')</p>
+            @endif
+        </section>
 
         @if($relatedProducts && $relatedProducts->count())
             @php
@@ -192,6 +268,7 @@
                         @php $isRelatedFavorite = isset($relatedFavoriteIds[$item->id]); @endphp
                         <article class="product-box">
                             <a class="img" href="{{ route('product.static', $item->id) }}"><img src="{{ $item->image_path ?? asset('assets/ecommerce/images/default-product.png') }}" alt="{{ $item->title }}"></a>
+                            @include('ecommerce::partials.product.rating', ['product' => $item])
                             <h4><a href="{{ route('product.static', $item->id) }}" style="color:inherit;text-decoration:none">{{ $item->title }}</a></h4>
                             <div class="related-actions">
                                 <div class="price-mini">{{ \App\Domain\AppBase\Models\Setting\Currency::format((float)($item->default_price ?? 0)) }}</div>

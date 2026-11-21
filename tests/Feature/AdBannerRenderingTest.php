@@ -3,7 +3,10 @@
 namespace Tests\Feature;
 
 use App\Domain\AppBase\Models\AdBanner;
+use App\Support\Enum\FileTypesEnum;
+use App\Support\Services\ImagesServices\ImageService;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class AdBannerRenderingTest extends TestCase
@@ -81,5 +84,19 @@ class AdBannerRenderingTest extends TestCase
         app()->setLocale('en');
         $this->assertSame('English title', $banner->localized_title);
         $this->assertSame('English description', $banner->localized_subtitle);
+    }
+
+    public function test_banner_upload_rejects_non_image_files(): void
+    {
+        $file = UploadedFile::fake()->create('payload.json', 10, 'application/json');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('not a valid image');
+
+        app(ImageService::class)->storeImage(
+            $file,
+            'upload/ads/banners',
+            FileTypesEnum::BANNER
+        );
     }
 }

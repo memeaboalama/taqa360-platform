@@ -1989,7 +1989,19 @@
 
             function goTo(index) {
                 activeIndex = (index + cards.length) % cards.length;
-                cards[activeIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+                const card = cards[activeIndex];
+                const trackBounds = track.getBoundingClientRect();
+                const cardBounds = card.getBoundingClientRect();
+                const scrollOffset = cardBounds.left < trackBounds.left
+                    ? cardBounds.left - trackBounds.left
+                    : cardBounds.right > trackBounds.right
+                        ? cardBounds.right - trackBounds.right
+                        : 0;
+
+                if (scrollOffset !== 0) {
+                    track.scrollBy({ left: scrollOffset, behavior: 'smooth' });
+                }
+
                 dots.forEach(function(dot, dotIndex) {
                     dot.setAttribute('aria-current', dotIndex === activeIndex ? 'true' : 'false');
                 });

@@ -1,4 +1,4 @@
-﻿@extends('ecommerce::layout.layout')
+@extends('ecommerce::layout.layout')
 
 @section('title', __('ecommerce::ecommerce.home'))
 

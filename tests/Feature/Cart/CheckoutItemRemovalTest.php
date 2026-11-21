@@ -2,6 +2,12 @@
 
 namespace Tests\Feature\Cart;
 
+use App\Application\Ecommerce\Controllers\CheckoutController;
+use App\Application\Ecommerce\Requests\PlaceWebOrderRequest;
+use App\Domain\AppBase\Actions\Payment\PaymentAction;
+use App\Domain\Ecommerce\Actions\Web\Order\CreateWebOrderAction;
+use App\Domain\MarketPlace\Actions\Api\Order\LogOrderHistoryAction;
+use App\Domain\MarketPlace\Actions\Api\Wallet\WalletOrderAction;
 use App\Domain\User\Models\User;
 use Domain\MarketPlace\Models\Item;
 use Domain\MarketPlace\Models\Merchant;
@@ -106,6 +112,35 @@ class CheckoutItemRemovalTest extends TestCase
             ->assertRedirect(route('cart.index'));
 
         $this->assertDatabaseMissing('web_carts', ['user_id' => $this->user->id]);
+    }
+
+    public function test_checkout_store_reaches_order_action_with_web_channel(): void
+    {
+        $this->actingAs($this->user);
+
+        $orderAction = \Mockery::mock(CreateWebOrderAction::class);
+        $orderAction->shouldReceive('handle')
+            ->once()
+            ->with(\Mockery::on(function (array $data): bool {
+                return ($data['channel'] ?? null) === 'web';
+            }), $this->user)
+            ->andReturn(['status' => false, 'message' => 'NoCartData']);
+
+        $request = \Mockery::mock(PlaceWebOrderRequest::class);
+        $request->shouldReceive('validated')->once()->andReturn([
+            'payment_method' => 'mada',
+        ]);
+
+        $controller = new CheckoutController(
+            $orderAction,
+            \Mockery::mock(PaymentAction::class),
+            \Mockery::mock(WalletOrderAction::class),
+            \Mockery::mock(LogOrderHistoryAction::class)
+        );
+
+        $response = $controller->store($request);
+
+        $this->assertSame(302, $response->getStatusCode());
     }
 
     private function createItem(string $title, float $price): Item

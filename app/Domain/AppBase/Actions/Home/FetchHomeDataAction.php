@@ -55,7 +55,8 @@ class FetchHomeDataAction
                     $query->orderBy('priority', 'asc');
                 }])
                 ->with(['activeProductContents' => function($query) {
-                    $query->with('product')->orderBy('priority', 'asc');
+                    $query->with(['product' => fn ($productQuery) => $productQuery->withReviewSummary()])
+                        ->orderBy('priority', 'asc');
                 }])
                 ->get();
 
@@ -182,7 +183,9 @@ class FetchHomeDataAction
                         $query->where('group_key', $definition['group_key']);
                     }
 
-                    $query->with('product')->orderBy('priority')->orderBy('id');
+                    $query->with(['product' => fn ($productQuery) => $productQuery->withReviewSummary()])
+                        ->orderBy('priority')
+                        ->orderBy('id');
                 }])
                 ->orderBy('sort_order')
                 ->get();
@@ -243,6 +246,7 @@ class FetchHomeDataAction
             ->whereIn('id', $productIds)
             ->where('status', ActiveEnum::ACTIVE->value)
             ->availableForStorefront()
+            ->withReviewSummary()
             ->get()
             ->keyBy('id');
 

@@ -12,6 +12,7 @@ use App\Domain\MarketPlace\Models\CartItem;
 use App\Domain\MarketPlace\Models\Favorite;
 use App\Domain\MarketPlace\Models\MerchantOrderItem;
 use App\Domain\MarketPlace\Models\ItemPrices;
+use App\Domain\MarketPlace\Models\ProductReview;
 use App\Domain\MarketPlace\Models\Brand;
 use App\Domain\Catalog\Models\Specification;
 use App\Support\Enum\ActiveEnum;
@@ -106,6 +107,19 @@ class Item extends Model
     {
         return $this->hasMany(MerchantOrderItem::class, 'item_id', 'id');
     }
+
+    public function reviews(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductReview::class, 'item_id');
+    }
+
+    public function scopeWithReviewSummary(Builder $query): Builder
+    {
+        return $query
+            ->withCount(['reviews as reviews_count' => fn (Builder $reviews) => $reviews->approved()])
+            ->withAvg(['reviews as rate' => fn (Builder $reviews) => $reviews->approved()], 'rating');
+    }
+
     public function specificationsItems(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(SpecificationsItems::class, 'item_id', 'id');

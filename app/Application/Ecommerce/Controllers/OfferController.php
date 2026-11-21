@@ -164,6 +164,7 @@ class OfferController extends Controller
         $query = Item::query()
             ->where('status', 'active')
             ->availableForStorefront()
+            ->withReviewSummary()
             ->onSale()                              // uses the scope we added to Item
             ->with(['merchant', 'mainCategory']);
 

@@ -63,6 +63,7 @@ class ItemRepository extends EloquentMainRepository
     {
         return $this->modal->newQuery()
             ->availableForStorefront()
+            ->withReviewSummary()
             ->where($conditions);
     }
 

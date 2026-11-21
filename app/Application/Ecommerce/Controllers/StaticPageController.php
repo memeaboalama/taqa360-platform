@@ -5,11 +5,14 @@ namespace App\Application\Ecommerce\Controllers;
 use App\Domain\AppBase\Models\Location\City;
 use App\Domain\AppBase\Models\Location\Country;
 use App\Domain\MarketPlace\Models\Favorite;
+use App\Domain\MarketPlace\Models\MerchantOrderItem;
+use App\Domain\MarketPlace\Models\ProductReview;
 use App\Http\Controllers\Controller;
 use Domain\MarketPlace\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use App\Application\Marketplace\Enums\MerchantOrderStatuses;
 
 class StaticPageController extends Controller
 {
@@ -123,7 +126,9 @@ class StaticPageController extends Controller
                 ->where('specification_properties.status', 'active'),
             'files',
             'activeItemPrices.type_service',
+            'reviews' => fn ($query) => $query->approved()->with('user')->latest(),
         ])
+            ->withReviewSummary()
             ->where('id', $item_id)
             ->where('status', 'active')
             ->availableForStorefront()
@@ -134,12 +139,25 @@ class StaticPageController extends Controller
         }
 
         $relatedProducts = Item::with(['merchant'])
+            ->withReviewSummary()
             ->where('status', 'active')
             ->availableForStorefront()
             ->where('main_category_id', $product->main_category_id)
             ->where('id', '!=', $product->id)
             ->limit(4)
             ->get();
+
+        $hasCompletedPurchase = Auth::check() && MerchantOrderItem::query()
+            ->where('item_id', $product->id)
+            ->whereHas('order', fn ($query) => $query
+                ->where('user_id', Auth::id())
+                ->where('status', MerchantOrderStatuses::PREVIOUS->value))
+            ->exists();
+        $existingReview = Auth::check() ? ProductReview::query()
+            ->where('item_id', $product->id)
+            ->where('user_id', Auth::id())
+            ->first() : null;
+        $canReview = $hasCompletedPurchase && $existingReview === null;
 
         $isFavorite = Auth::check() && Favorite::where('user_id', Auth::id())
             ->where('item_id', $product->id)
@@ -149,6 +167,14 @@ class StaticPageController extends Controller
             ? Favorite::where('user_id', Auth::id())->whereIn('item_id', $relatedProducts->pluck('id'))->pluck('item_id')->flip()->all()
             : [];
 
-        return view('ecommerce::pages.product.product-details-static', compact('product', 'relatedProducts', 'isFavorite', 'relatedFavoriteIds'));
+        return view('ecommerce::pages.product.product-details-static', compact(
+            'product',
+            'relatedProducts',
+            'isFavorite',
+            'relatedFavoriteIds',
+            'canReview',
+            'hasCompletedPurchase',
+            'existingReview'
+        ));
     }
 }
