@@ -95,7 +95,7 @@ class CreateContent extends Component
             ];
         }
 
-        $result['allowCrop'] = $this->placement->key !== 'home_hero_slider';
+        $result['allowCrop'] = true;
 
         return $result;
     }
@@ -258,6 +258,15 @@ class CreateContent extends Component
         }
 
         return $rules;
+    }
+
+    protected function messages(): array
+    {
+        return [
+            'image_desktop.dimensions' => __('admin::lang.Image dimensions do not match'),
+            'image_tablet.dimensions' => __('admin::lang.Image dimensions do not match'),
+            'image_mobile.dimensions' => __('admin::lang.Image dimensions do not match'),
+        ];
     }
 
     public function store(StoreBannerAction $action)

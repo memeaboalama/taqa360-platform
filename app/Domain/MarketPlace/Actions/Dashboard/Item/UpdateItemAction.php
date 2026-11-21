@@ -6,6 +6,7 @@ use App\Domain\Catalog\Actions\Specification\AttachMasterSpecificationToItemActi
 use App\Domain\Catalog\Data\Specification\AttachMasterSpecificationData;
 use App\Support\Services\ImagesServices\ImageService;
 use App\Domain\MarketPlace\Repositories\Merchant\ItemRepository;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -68,6 +69,7 @@ class UpdateItemAction
             }
 
             $this->handleItemPrices($model, $data);
+            Cache::forget("storefront_product_details_{$model->id}_v5");
 
             $this->handleAdditionalImages($model, $data);
             return $model;

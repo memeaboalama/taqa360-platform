@@ -140,7 +140,9 @@ class Item extends Model
     }
     public function activeItemPrices(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(ItemPrices::class, 'item_id', 'id')->where('status', ActiveEnum::ACTIVE->value);
+        return $this->hasMany(ItemPrices::class, 'item_id', 'id')
+            ->where('status', ActiveEnum::ACTIVE->value)
+            ->whereHas('type_service', fn (Builder $query) => $query->where('status', ActiveEnum::ACTIVE->value));
     }
     public function inactiveItemPrices(): \Illuminate\Database\Eloquent\Relations\HasMany
     {

@@ -12,7 +12,6 @@ use Domain\MarketPlace\Models\Merchant;
 use Domain\MarketPlace\Models\Catalog\Category;
 use Domain\MarketPlace\Models\Catalog\ChildCategory;
 use Domain\MarketPlace\Models\Catalog\Subcategory;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
@@ -105,7 +104,7 @@ class UpdateContent extends Component
             ];
         }
 
-        $result['allowCrop'] = $this->placement->key !== 'home_hero_slider';
+        $result['allowCrop'] = true;
 
         return $result;
     }
@@ -114,6 +113,9 @@ class UpdateContent extends Component
     {
         $banner = AdBanner::with('placement')->findOrFail($this->bannerId);
         $this->placement = $banner->placement;
+        $this->selected_item = null;
+        $this->selected_merchant = null;
+        $this->merchant_id = null;
 
         $this->name = $banner->name ?? '';
         $this->title_en = $banner->getTranslation('title', 'en') ?? '';
@@ -240,25 +242,30 @@ class UpdateContent extends Component
     public function updatedMerchantId($value)
     {
         $merchantId = is_array($value) ? ($value['id'] ?? null) : $value;
-        if ($merchantId) {
-            $merchant = Merchant::find($merchantId);
-            if ($merchant) {
-                $this->selected_merchant = [
-                    'id' => $merchant->id,
-                    'title' => $merchant->getTranslation('company_name', app()->getLocale()),
-                    'image' => $merchant->logo ?? '/default.jpg',
-                    'type' => 'merchant'
-                ];
-            }
-            // Reset product selection if merchant changes
+        $merchant = $merchantId ? Merchant::find($merchantId) : null;
+
+        if (!$merchant) {
+            $this->merchant_id = null;
+            $this->selected_merchant = null;
             if ($this->click_action_type === 'product') {
                 $this->reset(['click_action_id', 'click_action_url', 'selected_item']);
             }
-            $this->emit('updateMerchantId', $merchantId);
-        } else {
-            $this->selected_merchant = null;
             $this->emit('updateMerchantId', null);
+            return;
         }
+
+        $this->merchant_id = $merchant->id;
+        $this->selected_merchant = [
+            'id' => $merchant->id,
+            'title' => $merchant->getTranslation('company_name', app()->getLocale()),
+            'image' => $merchant->logo ?? '/default.jpg',
+            'type' => 'merchant'
+        ];
+
+        if ($this->click_action_type === 'product') {
+            $this->reset(['click_action_id', 'click_action_url', 'selected_item']);
+        }
+        $this->emit('updateMerchantId', $merchant->id);
     }
 
     public function updatedClickActionType($value)
@@ -377,6 +384,15 @@ class UpdateContent extends Component
         return $rules;
     }
 
+    protected function messages(): array
+    {
+        return [
+            'image_desktop.dimensions' => __('admin::lang.Image dimensions do not match'),
+            'image_tablet.dimensions' => __('admin::lang.Image dimensions do not match'),
+            'image_mobile.dimensions' => __('admin::lang.Image dimensions do not match'),
+        ];
+    }
+
     public function update(UpdateBannerAction $action)
     {
         $this->validate();
@@ -448,20 +464,15 @@ class UpdateContent extends Component
         }
 
         try {
-            DB::beginTransaction();
-            $action->handle($this->bannerId, $data);
-            DB::commit();
-
-            if ($this->placement) {
-                AdBanner::forgetStorefrontCacheForPlacement((int) $this->placement->id);
+            if (!$action->handle($this->bannerId, $data)) {
+                throw new \RuntimeException('Unable to save banner changes.');
             }
 
             $this->emit('banner-updated');
             $this->emit('closeModal', '#updateContentModal');
             $this->emit('refreshDatatable');
             $this->alert('success', __('admin::lang.Updated Successfully'));
-        } catch (\Exception $e) {
-            DB::rollBack();
+        } catch (\Throwable $e) {
             Log::error('Error updating ad banner: ' . $e->getMessage(), ['exception' => $e]);
             $this->alert('error', __('admin::lang.Error occurred') . ': ' . $e->getMessage());
         }

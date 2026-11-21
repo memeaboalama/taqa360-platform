@@ -4,7 +4,7 @@
     $title = static fn($value) => is_array($value) ? ($value[app()->getLocale()] ?? $value['en'] ?? reset($value)) : ($value ?: '');
     $image = static fn($value) => $value ?: asset('assets/images/pro/1.jpg');
     $currencySymbol = \App\Domain\AppBase\Models\Setting\Currency::symbol();
-    $priceRanges = ['hundred' => '10 - 100 ' . $currencySymbol, 'twohundred' => '100 - 200 ' . $currencySymbol, 'threehundred' => '200 - 300 ' . $currencySymbol, 'fourhundredabove' => '400+ ' . $currencySymbol];
+    $priceRanges = ['hundred' => '10 - 100 ' . $currencySymbol, 'twohundred' => '100 - 200 ' . $currencySymbol, 'threehundred' => '200 - 300 ' . $currencySymbol, 'fourhundred' => '300 - 400 ' . $currencySymbol, 'fourhundredabove' => '400+ ' . $currencySymbol];
 @endphp
 
 @section('title', $currentCategory->title ?? __('ecommerce::ecommerce.categories.categories'))

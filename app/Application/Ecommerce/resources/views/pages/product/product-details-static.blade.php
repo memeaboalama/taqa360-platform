@@ -160,8 +160,11 @@
                                 'default', 'with_delivery' => __('admin::home.with_delivery'),
                                 'without_delivery' => __('admin::home.without_delivery'),
                                 null => '-',
-                                default => $typeServiceName,
+                                default => \Illuminate\Support\Facades\Lang::has('admin::home.' . $typeServiceName)
+                                    ? __('admin::home.' . $typeServiceName)
+                                    : $typeServiceName,
                             };
+                            $hasServicePrice = is_numeric($itemPrice->price) && (float) $itemPrice->price > 0;
                         @endphp
                         <div class="info-card">
                             <h4>{{ $typeServiceLabel }}</h4>

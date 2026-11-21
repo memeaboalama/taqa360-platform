@@ -123,6 +123,8 @@ return [
     'accessories' => 'الملحقات والإكسسوارات',
 
     'available_services' => 'الخدمات المتاحة',
+    'product_price_for_service' => 'سعر المنتج لهذا الخيار',
+    'price_not_specified' => 'السعر غير محدد',
     'services_intro' => 'الخدمات الإضافية التالية متاحة لهذا المتجر، ويتم تقديمها بواسطة المتجر.',
     'solar_panel_installation' => 'تركيب الألواح الشمسية',
     'solar_panel_desc' => 'خدمة تركيب احترافية على أيدي فنيين معتمدين لضمان أقصى كفاءة.',
