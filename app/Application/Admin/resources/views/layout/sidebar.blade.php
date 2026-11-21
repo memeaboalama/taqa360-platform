@@ -503,7 +503,7 @@
                 <li class="slide has-sub {{ isActiveSection([url('admin/wallet/coupon'), url('admin/wallet/users')]) }}">
                     <a href="javascript:void(0);" class="side-menu__item {{ isActiveSection([url('admin/wallet/coupon'), url('admin/wallet/users')]) ? 'active' : '' }}">
                         <i class="bx bxs-wallet-alt side-menu__icon"></i>
-                        {{-- <i class='bx bx-slider-alt'></i> --}}
+                        <i class='bx bx-slider-alt'></i>
                         <span class="side-menu__label">{{ __('admin::home.wallet') }}</span>
                         <i class="fe fe-chevron-right side-menu__angle"></i>
                     </a>
@@ -518,7 +518,7 @@
                         @AdminHasRole(['show user balances_wallet'])
                             <li class="slide">
                                 <a href="{{ url('admin/wallet/users') }}" class="side-menu__item {{ isActive(url('admin/wallet/users')) }}">
-                                    {{-- <i class="bx bxs-user side-menu__icon"></i> --}}
+                                    <i class="bx bxs-user side-menu__icon"></i>
                                     <span class="side-menu__label">{{ __('admin::home.customers') }}</span>
                                 </a>
                             </li>
