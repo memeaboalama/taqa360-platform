@@ -25,6 +25,7 @@ use Database\Seeders\ecommerce\SubCategorySeeder;
 use Database\Seeders\Educator\AcademicMajorSeeder;
 use Database\Seeders\Educator\ServiceSeeder;
 use Database\Seeders\Educator\SkillSeeder;
+use Database\Seeders\Educator\TaqaEnergyServiceSeeder;
 use Database\Seeders\Location\CitySeeder;
 use Database\Seeders\Location\CountrySeeder;
 use Database\Seeders\Location\DistractSeeder;
@@ -219,7 +220,7 @@ class DatabaseSeeder extends Seeder
 
             // Edcutore
             AcademicMajorSeeder::class,
-            ServiceSeeder::class,
+            config('app.brand') === 'taqa360' ? TaqaEnergyServiceSeeder::class : ServiceSeeder::class,
             SkillSeeder::class,
 
             // Ecommerce

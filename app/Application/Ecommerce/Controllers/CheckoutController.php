@@ -323,9 +323,15 @@ class CheckoutController extends Controller
                 }
             }
 
-            // Notifications as per API
-            $this->notifyEmployees($order["data"]);
-            $this->notifyBranchManager($order["data"]);
+            try {
+                $this->notifyEmployees($order["data"]);
+                $this->notifyBranchManager($order["data"]);
+            } catch (\Throwable $exception) {
+                Log::error('Web order notification failed after order placement.', [
+                    'order_id' => $order['data']->id,
+                    'exception' => $exception->getMessage(),
+                ]);
+            }
 
             $order["data"]->update(['status' => MerchantOrderStatuses::PENDING]);
             $this->clearCart($cart);

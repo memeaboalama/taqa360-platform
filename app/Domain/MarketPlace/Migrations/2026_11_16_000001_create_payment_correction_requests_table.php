@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('payment_correction_requests')) {
+            return;
+        }
+
         Schema::create('payment_correction_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('merchant_orders')->cascadeOnDelete();

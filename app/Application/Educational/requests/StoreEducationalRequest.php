@@ -3,6 +3,8 @@
 namespace App\Application\Educational\Requests;
 
 use App\Application\Educational\Enums\EducationalRequestType;
+use App\Support\Enum\StatusEnum;
+use Domain\AppBase\Models\Edu\Service;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreEducationalRequest extends FormRequest
@@ -20,6 +22,20 @@ class StoreEducationalRequest extends FormRequest
                 'education_level' => ['nullable', 'string', 'max:100'],
             ]
             : [
+                'service_id' => ['nullable', function ($attribute, $value, $fail) {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+
+                    $query = Service::query()->where('status', StatusEnum::ACTIVE->value);
+                    $exists = is_numeric($value)
+                        ? $query->whereKey((int) $value)->exists()
+                        : $query->where('uuid', $value)->exists();
+
+                    if (!$exists) {
+                        $fail('الخدمة المحددة غير متاحة للطلب الجديد');
+                    }
+                }],
                 'project_site_type' => ['nullable', 'in:residential,commercial,agricultural,industrial,medical,educational,other'],
                 'solar_system_type' => ['nullable', 'in:off-grid,on-grid,hybrid,not_sure'],
             ];

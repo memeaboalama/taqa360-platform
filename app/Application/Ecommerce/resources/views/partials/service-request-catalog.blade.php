@@ -183,31 +183,6 @@
         -webkit-line-clamp: 2;
     }
 
-    .sr-service-details {
-        margin: auto 0 13px;
-        padding: 11px 0 0;
-        border-top: 1px solid #edf1f4;
-    }
-
-    .sr-service-details[hidden] {
-        display: none !important;
-    }
-
-    .sr-service-details h4 {
-        margin: 0 0 5px;
-        color: #51677a;
-        font-size: 11px;
-        font-weight: 800;
-    }
-
-    .sr-service-details p {
-        margin: 0;
-        color: #718294;
-        font-size: 11px;
-        line-height: 1.8;
-        white-space: pre-line;
-    }
-
     .sr-service-card-actions {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -235,19 +210,19 @@
         transition: background .18s ease, border-color .18s ease, color .18s ease;
     }
 
-    .sr-service-card-actions a {
+    .sr-service-card-actions a.is-primary {
         border-color: #347bb2;
         background: #347bb2;
         color: #fff;
     }
 
-    .sr-service-card-actions a:hover {
+    .sr-service-card-actions a.is-primary:hover {
         border-color: #28699b;
         background: #28699b;
         color: #fff;
     }
 
-    .sr-service-card-actions button:hover {
+    .sr-service-card-actions a:not(.is-primary):hover {
         border-color: #b8d0e2;
         background: #f5f9fc;
     }
@@ -365,6 +340,7 @@
         const grid = document.getElementById('sr-catalog-grid');
         const search = document.getElementById('sr-catalog-search');
         const catalogUrl = @json(route('service-requests.services', [], false));
+        const serviceDetailsUrl = @json(route('service-requests.catalog', [], false));
         const formUrl = @json(route('service-requests.create', [], false));
         const locale = @json(app()->getLocale());
         const messages = {
@@ -374,8 +350,6 @@
             available: @json(__('ecommerce::ecommerce.sr_catalog_available')),
             request: @json(__('ecommerce::ecommerce.sr_catalog_request')),
             details: @json(__('ecommerce::ecommerce.sr_catalog_details')),
-            hideDetails: @json(__('ecommerce::ecommerce.sr_catalog_hide_details')),
-            scope: @json(__('ecommerce::ecommerce.sr_catalog_scope')),
             noDetails: @json(__('ecommerce::ecommerce.sr_catalog_no_details')),
             retry: @json(__('ecommerce::ecommerce.sr_catalog_retry')),
         };
@@ -429,36 +403,26 @@
             summary.className = 'sr-service-description';
             summary.textContent = description || messages.noDetails;
 
-            const detailPanel = document.createElement('div');
-            detailPanel.className = 'sr-service-details';
-            detailPanel.hidden = true;
-            const scopeTitle = document.createElement('h4');
-            scopeTitle.textContent = messages.scope;
-            const detailText = document.createElement('p');
-            detailText.textContent = scope || description || messages.noDetails;
-            detailPanel.append(scopeTitle, detailText);
-
             const actions = document.createElement('div');
             actions.className = 'sr-service-card-actions';
             const requestLink = document.createElement('a');
+            requestLink.className = 'is-primary';
             requestLink.textContent = messages.request;
             const requestUrl = new URL(formUrl, window.location.origin);
             requestUrl.searchParams.set('service', service.id);
             requestLink.href = requestUrl.href;
             requestLink.setAttribute('up-follow', 'false');
 
-            const detailsButton = document.createElement('button');
-            detailsButton.type = 'button';
-            detailsButton.textContent = messages.details;
-            detailsButton.setAttribute('aria-expanded', 'false');
-            detailsButton.addEventListener('click', function() {
-                const isOpen = detailPanel.hidden;
-                detailPanel.hidden = !isOpen;
-                detailsButton.setAttribute('aria-expanded', String(isOpen));
-                detailsButton.textContent = isOpen ? messages.hideDetails : messages.details;
-            });
-            actions.append(requestLink, detailsButton);
-            card.append(top, title, summary, detailPanel, actions);
+            const detailsLink = document.createElement('a');
+            detailsLink.textContent = messages.details;
+            detailsLink.href = new URL(
+                serviceDetailsUrl + '/' + encodeURIComponent(service.id),
+                window.location.origin
+            ).href;
+            detailsLink.setAttribute('up-follow', 'false');
+
+            actions.append(requestLink, detailsLink);
+            card.append(top, title, summary, actions);
             return card;
         }
 

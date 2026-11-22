@@ -582,7 +582,7 @@
                         class="account-tab" href="{{ route('account.index', ['section' => 'orders']) }}"><i
                             class="ti-package"></i><span>@lang('ecommerce::ecommerce.orders')</span></a><a
                         class="account-tab" href="{{ route('account.index', ['section' => 'service_requests']) }}"><i
-                            class="ti-settings"></i><span>@lang('ecommerce::ecommerce.service_requests')</span></a><a
+                            class="ti-settings"></i><span>{{ config('app.brand') === 'taqa360' ? __('ecommerce::ecommerce.sr_workspace_my_requests') : __('ecommerce::ecommerce.service_requests') }}</span></a><a
                         class="account-tab" href="{{ route('account.index', ['section' => 'addresses']) }}"><i
                             class="ti-location-pin"></i><span>@lang('ecommerce::ecommerce.addresses')</span></a>{{-- <a
                         class="account-tab" href="{{ route('account.wallet.index') }}"><i

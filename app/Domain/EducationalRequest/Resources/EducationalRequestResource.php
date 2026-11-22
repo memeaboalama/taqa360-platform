@@ -20,6 +20,20 @@ class EducationalRequestResource extends JsonResource
             : [
                 'projectSiteType' => $this->project_site_type,
                 'solarSystemType' => $this->solar_system_type,
+                'deliveryMode' => $this->delivery_mode,
+                'propertyType' => $this->property_type,
+                'siteCity' => $this->site_city,
+                'siteCityOther' => $this->site_city_other,
+                'serviceAddress' => $this->service_address,
+                'latitude' => $this->latitude,
+                'longitude' => $this->longitude,
+                'accessNotes' => $this->access_notes,
+                'preferredDate' => $this->preferred_date?->toDateString(),
+                'isFlexible' => $this->is_flexible,
+                'preferredPeriod' => $this->preferred_period,
+                'contactName' => $this->contact_name,
+                'contactPhone' => $this->contact_phone,
+                'serviceAnswers' => $this->service_answers,
             ];
 
         $resource = [

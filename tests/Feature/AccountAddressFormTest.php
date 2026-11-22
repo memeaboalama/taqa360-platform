@@ -35,6 +35,9 @@ class AccountAddressFormTest extends TestCase
 
         $this->assertStringContainsString('data-address-modal-form="true"', $html);
         $this->assertStringContainsString('data-bs-dismiss="modal"', $html);
+        $this->assertStringContainsString('data-address-map', $html);
+        $this->assertStringContainsString('name="latitude"', $html);
+        $this->assertStringContainsString('name="longitude"', $html);
         $this->assertLessThan(strpos($html, 'name="city_id"'), strpos($html, 'name="region_id"'));
         $data = $this->locationData($html);
         $this->assertSame('Riyadh region', $data['regionsByCountry'][1][0]['title']);
@@ -65,6 +68,8 @@ class AccountAddressFormTest extends TestCase
         $this->assertStringContainsString('data-address-modal-form="true"', $html);
         $this->assertStringContainsString('name="_method" value="PUT"', $html);
         $this->assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $html);
+        $this->assertStringContainsString('name="latitude" value="0"', $html);
+        $this->assertStringContainsString('name="longitude" value="0"', $html);
         $data = $this->locationData($html);
         $this->assertSame(1, $data['initialCountryId']);
         $this->assertSame(2, $data['initialRegionId']);
@@ -97,6 +102,8 @@ class AccountAddressFormTest extends TestCase
         $this->postJson('/_test/account-address', [
             'title' => 'Home', 'country_id' => 1, 'region_id' => 2,
             'city_id' => 3, 'distract_id' => 5, 'address' => 'Street',
-        ])->assertUnprocessable()->assertJsonValidationErrors('distract_id');
+        ])->assertUnprocessable()
+            ->assertJsonPath('status', false)
+            ->assertJsonStructure(['data' => ['distract_id']]);
     }
 }

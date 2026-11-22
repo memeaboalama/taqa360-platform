@@ -263,8 +263,7 @@
                     </label>
                 </div>
 
-                <input type="hidden" name="latitude" value="{{ $address->latitude }}">
-                <input type="hidden" name="longitude" value="{{ $address->longitude }}">
+                @include('ecommerce::partials.address-location-picker')
                 @php
                     $addressLocationData = [
                     'regionsByCountry' => $regionsByCountry,
@@ -360,6 +359,9 @@
         };
 
         window.initializeAddressLocationForm(document.querySelector('.address-form'));
+        if (window.initializeAddressMapPicker) {
+            window.initializeAddressMapPicker(document.querySelector('.address-form'));
+        }
     })();
 </script>
 

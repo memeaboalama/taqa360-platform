@@ -229,11 +229,15 @@ class AccountController extends Controller
     public function addresses()
     {
         $user = Auth::user();
-        $addresses = $user->addresses;
+        $addresses = $user->addresses()->with(['country', 'city.region', 'distract'])->get();
         if (request()->header('X-Up-Target') == '.dashboard-content') {
             return view('ecommerce::pages.account._addresses', compact('addresses'));
         }
-        return view('ecommerce::pages.account.dashboard', ['page' => 'addresses', 'user' => $user, 'addresses' => $addresses]);
+        return view('ecommerce::pages.account.account-section-page', [
+            'section' => 'addresses',
+            'user' => $user,
+            'addresses' => $addresses,
+        ]);
     }
 
     public function editProfile()
@@ -385,6 +389,8 @@ class AccountController extends Controller
                     ->where('status', 'active'),
             ],
             'address' => 'required|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
         $user = Auth::user();
@@ -400,8 +406,8 @@ class AccountController extends Controller
             'distract_id' => $request->input('distract_id'),
             'district_name' => null,
             'address' => $request->address,
-            'latitude' => $request->latitude ?? '0',
-            'longitude' => $request->longitude ?? '0',
+            'latitude' => $request->filled('latitude') ? $request->input('latitude') : '0',
+            'longitude' => $request->filled('longitude') ? $request->input('longitude') : '0',
             'is_default' => $request->is_default ?? false,
         ]);
 
@@ -480,6 +486,8 @@ class AccountController extends Controller
                     ->where('status', 'active'),
             ],
             'address' => 'required|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
         if ($request->is_default) {
@@ -493,8 +501,8 @@ class AccountController extends Controller
             'distract_id' => $request->input('distract_id'),
             'district_name' => null,
             'address' => $request->address,
-            'latitude' => $request->latitude ?? $address->latitude,
-            'longitude' => $request->longitude ?? $address->longitude,
+            'latitude' => $request->filled('latitude') ? $request->input('latitude') : $address->latitude,
+            'longitude' => $request->filled('longitude') ? $request->input('longitude') : $address->longitude,
             'is_default' => $request->is_default ?? false,
         ]);
 

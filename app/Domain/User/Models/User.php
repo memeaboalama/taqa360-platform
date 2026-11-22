@@ -76,6 +76,7 @@ class User extends Authenticatable implements Wallet ,WalletFloat
         'email_verified_at',
         'phone_verified_at',
         'last_logged_in_at',
+        'date_of_birth',
     ];
 
     protected $appends = ['phone_number'];
@@ -98,6 +99,7 @@ class User extends Authenticatable implements Wallet ,WalletFloat
     protected $casts = [
         'email_verified_at' => 'datetime',
         'last_logged_in_at' => 'datetime',
+        'date_of_birth' => 'date',
         'status' => ActiveEnum::class,
     ];
 

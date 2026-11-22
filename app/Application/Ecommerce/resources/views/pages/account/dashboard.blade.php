@@ -777,7 +777,7 @@
                up-target=".dashboard-content"
                onclick="setActiveTab(this)">
                 <i class="ti-settings"></i>
-                <span>@lang('ecommerce::ecommerce.service_requests')</span>
+               <span>{{ config('app.brand') === 'taqa360' ? __('ecommerce::ecommerce.sr_workspace_my_requests') : __('ecommerce::ecommerce.service_requests') }}</span>
             </a>
             <a href="{{ route('account.addresses') }}"
                class="account-tab-link"

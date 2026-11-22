@@ -5,7 +5,45 @@
 @section('active-nav', 'account')
 
 @section('page-styles')
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <style>
+        .address-location-map {
+            height: 280px;
+            width: 100%;
+            border: 1px solid #e7ecf2;
+            border-radius: 8px;
+            z-index: 0;
+        }
+        .address-location-coordinates,
+        .address-location-map-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .address-location-coordinates {
+            padding: 10px 12px;
+            border: 1px solid #dce5ef;
+            border-radius: 8px;
+            background: #f4f8fc;
+        }
+        .address-location-coordinates span {
+            font-weight: 700;
+            color: #245c8e;
+        }
+        .address-location-coordinates output {
+            direction: ltr;
+            unicode-bidi: isolate;
+            font-family: monospace;
+        }
+        .address-location-map-actions {
+            justify-content: flex-start;
+            margin-top: 10px;
+        }
+        .address-location-map-actions p {
+            font-size: 12px;
+        }
         #accountAddressModal .modal-header,
         #deleteAddressConfirmModal .modal-header {
             display: flex;
@@ -649,6 +687,7 @@
 @endsection
 
 @section('scripts')
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         window.initializeAddressLocationForm = window.initializeAddressLocationForm || function (form) {
             if (!form || form.dataset.locationInitialized === 'true') return;
@@ -703,6 +742,88 @@
             form.dataset.locationInitialized = 'true';
         };
 
+        window.initializeAddressMapPicker = window.initializeAddressMapPicker || function (form) {
+            if (!form || form.dataset.mapInitialized === 'true') return;
+
+            var mapElement = form.querySelector('[data-address-map]');
+            var latitudeInput = form.querySelector('input[name="latitude"]');
+            var longitudeInput = form.querySelector('input[name="longitude"]');
+            var coordinatesOutput = form.querySelector('[data-address-coordinates]');
+            var mapStatus = form.querySelector('[data-address-map-status]');
+            var locateButton = form.querySelector('[data-address-use-location]');
+            if (!mapElement || !latitudeInput || !longitudeInput || !coordinatesOutput || !mapStatus) return;
+            if (!window.L) {
+                mapStatus.textContent = @json(__('ecommerce::ecommerce.map_load_error'));
+                return;
+            }
+
+            var addressMap = L.map(mapElement).setView([24.7136, 46.6753], 5);
+            L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+            }).addTo(addressMap);
+
+            var marker = null;
+            function setLocation(latitude, longitude) {
+                var position = L.latLng(latitude, longitude);
+                if (marker) {
+                    marker.setLatLng(position);
+                } else {
+                    marker = L.marker(position, { draggable: true }).addTo(addressMap);
+                    marker.on('dragend', function (event) {
+                        var draggedPosition = event.target.getLatLng();
+                        setLocation(draggedPosition.lat, draggedPosition.lng);
+                    });
+                }
+
+                latitudeInput.value = position.lat.toFixed(7);
+                longitudeInput.value = position.lng.toFixed(7);
+                coordinatesOutput.textContent = latitudeInput.value + ', ' + longitudeInput.value;
+                mapStatus.textContent = @json(__('ecommerce::ecommerce.location_selected')) + ': ' +
+                    position.lat.toFixed(5) + ', ' + position.lng.toFixed(5);
+            }
+
+            addressMap.on('click', function (event) {
+                setLocation(event.latlng.lat, event.latlng.lng);
+            });
+
+            var latitude = parseFloat(latitudeInput.value);
+            var longitude = parseFloat(longitudeInput.value);
+            if (Number.isFinite(latitude) && Number.isFinite(longitude) && (latitude !== 0 || longitude !== 0)) {
+                setLocation(latitude, longitude);
+                addressMap.setView([latitude, longitude], 15);
+            } else {
+                mapStatus.textContent = @json(__('ecommerce::ecommerce.location_selection_required'));
+            }
+
+            if (locateButton) {
+                locateButton.addEventListener('click', function () {
+                    if (!navigator.geolocation) {
+                        mapStatus.textContent = @json(__('ecommerce::ecommerce.location_unavailable'));
+                        return;
+                    }
+
+                    locateButton.disabled = true;
+                    navigator.geolocation.getCurrentPosition(function (position) {
+                        setLocation(position.coords.latitude, position.coords.longitude);
+                        addressMap.setView([position.coords.latitude, position.coords.longitude], 16);
+                        locateButton.disabled = false;
+                    }, function () {
+                        mapStatus.textContent = @json(__('ecommerce::ecommerce.location_unavailable'));
+                        locateButton.disabled = false;
+                    }, { enableHighAccuracy: true, timeout: 10000 });
+                });
+            }
+
+            form.dataset.mapInitialized = 'true';
+            var modal = mapElement.closest('.modal');
+            if (modal) {
+                modal.addEventListener('shown.bs.modal', function () {
+                    addressMap.invalidateSize();
+                }, { once: true });
+            }
+        };
+
         function showAccountModal(modalElement) {
             if (!window.bootstrap || !window.bootstrap.Modal) {
                 throw new Error(@json(__('ecommerce::ecommerce.try_again_error')));
@@ -754,6 +875,7 @@
 
         document.querySelectorAll('.address-form').forEach(function (form) {
             window.initializeAddressLocationForm(form);
+            window.initializeAddressMapPicker(form);
         });
 
         document.addEventListener('click', function (event) {
@@ -781,7 +903,9 @@
                     return response.text();
                 }).then(function (formHtml) {
                     modalBody.innerHTML = formHtml;
-                    window.initializeAddressLocationForm(modalBody.querySelector('.address-form'));
+                    var form = modalBody.querySelector('.address-form');
+                    window.initializeAddressLocationForm(form);
+                    window.initializeAddressMapPicker(form);
                 }).catch(function (error) {
                     modalBody.innerHTML = '';
                     hideAccountModal(modalElement);
@@ -913,7 +1037,7 @@
                 <aside class="account-tabs">
                     <a class="account-tab {{ in_array($section, ['profile', 'edit_profile'], true) ? 'active' : '' }}" href="{{ route('account.index') }}"><i class="ti-user"></i><span>@lang('ecommerce::ecommerce.personal_info')</span></a>
                     <a class="account-tab {{ in_array($section, ['orders', 'order_details'], true) ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'orders']) }}"><i class="ti-package"></i><span>@lang('ecommerce::ecommerce.orders')</span></a>
-                    <a class="account-tab {{ in_array($section, ['service_requests', 'service_request_details'], true) ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'service_requests']) }}"><i class="ti-settings"></i><span>@lang('ecommerce::ecommerce.service_requests')</span></a>
+                    <a class="account-tab {{ in_array($section, ['service_requests', 'service_request_details'], true) ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'service_requests']) }}"><i class="ti-settings"></i><span>{{ config('app.brand') === 'taqa360' ? __('ecommerce::ecommerce.sr_workspace_my_requests') : __('ecommerce::ecommerce.service_requests') }}</span></a>
                     <a class="account-tab {{ in_array($section, ['addresses', 'create_address', 'edit_address'], true) ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'addresses']) }}"><i class="ti-location-pin"></i><span>@lang('ecommerce::ecommerce.addresses')</span></a>
                     {{-- <a class="account-tab {{ in_array($section, ['wallet', 'wallet_deposit', 'wallet_withdraw'], true) ? 'active' : '' }}" href="{{ route('account.wallet.index') }}"><i class="ti-wallet"></i><span>@lang('ecommerce::ecommerce.my_wallet')</span></a> --}}
                 </aside>

@@ -20,11 +20,15 @@ class Service extends Model
         'name',
         'description',
         'scope_of_work',
+        'request_config',
+        'details',
         'status',
     ];
 
     protected $casts = [
         'status' => StatusEnum::class,
+        'request_config' => 'array',
+        'details' => 'array',
     ];
 
     public function educators()

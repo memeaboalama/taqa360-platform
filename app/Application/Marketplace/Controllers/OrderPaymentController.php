@@ -89,7 +89,7 @@ class OrderPaymentController extends Controller
                 return Redirect::to(config('app.url')."/payment-done?&order_id=" . $id . "&confirm=failed");
             } else {
                 // $order = $orderAction->update($id, MerchantOrderStatuses::PENDING->value)??$order;
-                if (($order->status == MerchantOrderStatuses::DRAFT && $order->status == MerchantOrderStatuses::DRAFT->value))
+                if ($order->status === MerchantOrderStatuses::DRAFT || $order->status === MerchantOrderStatuses::DRAFT->value)
                     $order = $orderAction->update($id, MerchantOrderStatuses::PENDING->value) ?? $order;
                 // return Redirect::to(config('app.url')."/payment-done?&order_id=".$id."&confirm=failed");
                 try {
@@ -98,7 +98,6 @@ class OrderPaymentController extends Controller
                     // $this->notifyEmployees($order);
                     // $this->notifyBranchManager($order);
                 } catch (\Exception $exception) {
-                    dd($exception->getMessage());
                     Log::error($exception);
                 }
                 if ($order->channel === ChannelTypesEnum::WEB->value) {
@@ -125,7 +124,6 @@ class OrderPaymentController extends Controller
                     // $this->notifyEmployees($order);
                     // $this->notifyBranchManager($order);
                 } catch (\Exception $exception) {
-                    dd($exception->getMessage());
                     Log::error($exception);
                 }
             }
@@ -166,7 +164,7 @@ class OrderPaymentController extends Controller
                 $this->notifyEmployees($order);
                 $this->notifyBranchManager($order);
             } catch (\Exception $exception) {
-                dd($exception->getMessage());
+                Log::error($exception);
             }
             return Redirect::to(config('app.url')."/payment-done?&order_id=$id&confirm=done");
         } elseif ($status == 'failed' && isset($id)) {
@@ -202,7 +200,6 @@ class OrderPaymentController extends Controller
         try {
             dispatch(new \App\Domain\Notification\Jobs\Merchant\V1\SendNotifyOrderV3($order->id))->afterResponse();
         } catch (\Exception $exception) {
-            dd($exception->getMessage());
             Log::error($exception);
         }
     }

@@ -24,6 +24,8 @@ class AdminServiceManagementTest extends TestCase
 
         (require app_path('Domain/AppBase/Migrations/2025_07_09_012226_create_services_table.php'))->up();
         (require app_path('Domain/AppBase/Migrations/2026_11_13_000001_add_scope_of_work_to_services_table.php'))->up();
+        (require app_path('Domain/AppBase/Migrations/2026_11_22_000002_add_request_config_to_services_table.php'))->up();
+        (require app_path('Domain/AppBase/Migrations/2026_11_22_000004_add_service_details_to_services_table.php'))->up();
 
         Schema::create('educator_services', function ($table) {
             $table->id();
@@ -47,6 +49,26 @@ class AdminServiceManagementTest extends TestCase
             'name' => ['ar' => "خدمة {$suffix}", 'en' => "Service {$suffix}"],
             'description' => ['ar' => "وصف مختصر {$suffix}", 'en' => "Short description {$suffix}"],
             'scope_of_work' => ['ar' => "نطاق العمل {$suffix}", 'en' => "Scope of work {$suffix}"],
+            'details' => [
+                'category' => ['ar' => "تصنيف {$suffix}", 'en' => "Category {$suffix}"],
+                'process' => [[
+                    'icon' => 'fa-check',
+                    'title' => ['ar' => "خطوة {$suffix}", 'en' => "Step {$suffix}"],
+                    'description' => ['ar' => "وصف الخطوة {$suffix}", 'en' => "Step description {$suffix}"],
+                ]],
+                'cta_title' => ['ar' => "اطلب {$suffix}", 'en' => "Request {$suffix}"],
+            ],
+            'request_config' => [
+                'mode' => 'both',
+                'fields' => [[
+                    'key' => 'usage',
+                    'label' => ['ar' => "الاستخدام {$suffix}", 'en' => "Usage {$suffix}"],
+                    'type' => 'select',
+                    'options' => ['ar' => ['منزلي'], 'en' => ['Residential']],
+                    'help' => ['ar' => "مساعدة {$suffix}", 'en' => "Help {$suffix}"],
+                    'required' => false,
+                ]],
+            ],
         ];
     }
 
@@ -55,21 +77,38 @@ class AdminServiceManagementTest extends TestCase
         $created = $this->postJson('/_test/admin/edu/services', $this->servicePayload('أ'))
             ->assertCreated()
             ->assertJsonPath('data.service.description', 'وصف مختصر أ')
-            ->assertJsonPath('data.service.scope_of_work', 'نطاق العمل أ');
+            ->assertJsonPath('data.service.name_translations.en', 'Service أ')
+            ->assertJsonPath('data.service.description_translations.en', 'Short description أ')
+            ->assertJsonPath('data.service.scope_of_work', 'نطاق العمل أ')
+            ->assertJsonPath('data.service.scope_of_work_translations.en', 'Scope of work أ')
+            ->assertJsonPath('data.service.details.process.0.title.ar', 'خطوة أ')
+            ->assertJsonPath('data.service.request_config.fields.0.label.en', 'Usage أ')
+            ->assertJsonPath('data.service.request_config.fields.0.options.en.0', 'Residential');
 
         $serviceId = $created->json('data.service.id');
+        $service = Service::where('uuid', $serviceId)->firstOrFail();
+        $service->update(['details' => array_merge($service->details, ['_seed_key' => 'stable-seed-key'])]);
 
         $this->putJson("/_test/admin/edu/services/{$serviceId}", $this->servicePayload('ب'))
             ->assertOk()
             ->assertJsonPath('data.service.name', 'خدمة ب')
             ->assertJsonPath('data.service.description', 'وصف مختصر ب')
-            ->assertJsonPath('data.service.scope_of_work', 'نطاق العمل ب');
+            ->assertJsonPath('data.service.scope_of_work', 'نطاق العمل ب')
+            ->assertJsonPath('data.service.details.cta_title.en', 'Request ب')
+            ->assertJsonPath('data.service.request_config.fields.0.label.ar', 'الاستخدام ب')
+            ->assertJsonMissingPath('data.service.details._seed_key');
+        $this->assertSame(
+            'stable-seed-key',
+            Service::where('uuid', $serviceId)->firstOrFail()->details['_seed_key']
+        );
 
         $this->getJson("/_test/admin/edu/services/{$serviceId}")
             ->assertOk()
             ->assertJsonPath('data.service.name', 'خدمة ب')
             ->assertJsonPath('data.service.description', 'وصف مختصر ب')
-            ->assertJsonPath('data.service.scope_of_work', 'نطاق العمل ب');
+            ->assertJsonPath('data.service.scope_of_work', 'نطاق العمل ب')
+            ->assertJsonPath('data.service.details.process.0.description.en', 'Step description ب')
+            ->assertJsonPath('data.service.request_config.fields.0.options.ar.0', 'منزلي');
     }
 
     public function test_only_service_name_is_required_when_creating_and_updating(): void
@@ -91,7 +130,7 @@ class AdminServiceManagementTest extends TestCase
 
         $this->postJson('/_test/admin/edu/services', ['description' => ['ar' => 'وصف']])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors('name');
+            ->assertJsonPath('data.name.0', 'حقل الاسم مطلوب.');
     }
 
     public function test_services_index_returns_only_requested_page_and_pagination_metadata(): void

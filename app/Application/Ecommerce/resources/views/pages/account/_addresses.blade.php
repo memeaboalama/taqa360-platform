@@ -169,7 +169,7 @@
     <div class="row g-4">
         <!-- Add New Address Card -->
         <div class="col-md-6 col-lg-4">
-            <a href="{{ route('account.create_address') }}" class="add-new-card" up-target=".dashboard-content">
+            <a href="{{ route('account.create_address') }}" class="add-new-card">
                 <div class="add-icon-circle">
                     <i class="ti-plus"></i>
                 </div>
@@ -213,7 +213,7 @@
                     </div>
 
                     <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #f7fafc;">
-                        <a href="{{ route('account.edit_address', $address->id) }}" class="btn-edit" up-target=".dashboard-content">
+                        <a href="{{ route('account.edit_address', $address->id) }}" class="btn-edit">
                             @lang('ecommerce::ecommerce.edit')
                         </a>
                     </div>

@@ -11,6 +11,7 @@ use App\Application\Ecommerce\Controllers\MerchantController;
 use App\Application\Ecommerce\Controllers\OfferController;
 use App\Application\Ecommerce\Controllers\ProductController;
 use App\Application\Ecommerce\Controllers\ProductReviewController;
+use App\Application\Ecommerce\Controllers\ServiceCatalogController;
 use App\Application\Ecommerce\Controllers\WishlistController;
 use Application\Ecommerce\Controllers\EcommerceController;
 use Illuminate\Support\Facades\Route;
@@ -43,6 +44,14 @@ Route::group(
         Route::get('/ecommerce/index', [EcommerceController::class, 'index']);
         Route::get('/service-requests/services', [\App\Application\Admin\Controllers\Api\Edu\ServiceController::class, 'options'])
             ->name('service-requests.services');
+        Route::get('/service-requests/services/{serviceUuid}', [ServiceCatalogController::class, 'showData'])
+            ->where('serviceUuid', '[0-9a-fA-F-]{36}')
+            ->name('service-requests.service-data');
+        Route::get('/services', [ServiceCatalogController::class, 'index'])
+            ->name('service-requests.catalog');
+        Route::get('/services/{serviceUuid}', [ServiceCatalogController::class, 'show'])
+            ->where('serviceUuid', '[0-9a-fA-F-]{36}')
+            ->name('service-requests.catalog.details');
 
         Route::get('/', [EcommerceController::class, 'staticIndex'])->name('ecommerce.static');
         Route::post('/customer-testimonials', [CustomerTestimonialController::class, 'store'])

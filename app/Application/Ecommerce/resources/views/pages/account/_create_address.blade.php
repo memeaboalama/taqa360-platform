@@ -253,8 +253,7 @@
                     </div>
                 </div>
 
-                <input type="hidden" name="latitude" value="0">
-                <input type="hidden" name="longitude" value="0">
+                @include('ecommerce::partials.address-location-picker')
                 @php
                     $addressLocationData = [
                     'regionsByCountry' => $regionsByCountry,
@@ -359,6 +358,9 @@
         };
 
         window.initializeAddressLocationForm(document.querySelector('.address-form'));
+        if (window.initializeAddressMapPicker) {
+            window.initializeAddressMapPicker(document.querySelector('.address-form'));
+        }
     })();
 </script>
 
