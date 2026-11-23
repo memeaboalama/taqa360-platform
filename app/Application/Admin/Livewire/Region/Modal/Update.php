@@ -4,7 +4,7 @@ namespace Application\Admin\Livewire\Region\Modal;
 
 use App\Domain\Admin\Actions\Dashboard\Region\FetchSingleRegionAction;
 use App\Domain\Admin\Actions\Dashboard\Region\UpdateRegionAction;
-use App\Domain\AppBase\Actions\Location\FetchCitiesAction;
+use App\Domain\AppBase\Models\Location\Country;
 use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
@@ -16,12 +16,12 @@ class Update extends Component
     public string $status = 'active';
     public int|null $region_id;
     public $priority = "";
-    public $city_id, $cities;
+    public $country_id, $countries;
     public array $title = ['en' => null];
 
-    public function mount(FetchCitiesAction $fetchCitiesAction)
+    public function mount(): void
     {
-        $this->cities = $fetchCitiesAction->handle();
+        $this->countries = Country::query()->get(['id', 'title']);
     }
 
     protected $listeners = ['updateRegion'];
@@ -34,7 +34,7 @@ class Update extends Component
             $this->status = $region->status->value;
             $this->region_id = $region->id;
             $this->priority = $region->priority;
-            $this->city_id = $region->city()->first()?->id;
+            $this->country_id = $region->country_id;
             $this->emit('openModal', '#updateRegion');
         }
     }
@@ -43,7 +43,7 @@ class Update extends Component
     {
         return [
             'title.ar' => trans('admin:lang.fields.title'),
-            'city_id' => 'city',
+            'country_id' => 'country',
             'title.en' => 'title'
         ];
     }
@@ -55,7 +55,7 @@ class Update extends Component
         return [
             'title' => 'required|array',
             'priority' => 'required',
-            'city_id' => 'required|integer|exists:cities,id',
+            'country_id' => 'required|integer|exists:countries,id',
             'title.*' => 'required|string|min:2|max:120',
             'status' => 'required|string|in:active,inactive',
         ];

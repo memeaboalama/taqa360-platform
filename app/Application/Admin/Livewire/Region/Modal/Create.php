@@ -3,7 +3,7 @@
 namespace Application\Admin\Livewire\Region\Modal;
 
 use App\Domain\Admin\Actions\Dashboard\Region\StoreRegionAction;
-use App\Domain\AppBase\Actions\Location\FetchCitiesAction;
+use App\Domain\AppBase\Models\Location\Country;
 use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
@@ -14,19 +14,19 @@ class Create extends Component
 
     public string $status = 'active';
     public $priority = "";
-    public $city_id, $cities;
+    public $country_id, $countries;
     public array $title = ['en' => null];
 
-    public function mount(FetchCitiesAction $fetchCitiesAction)
+    public function mount(): void
     {
-        $this->cities = $fetchCitiesAction->handle();
+        $this->countries = Country::query()->get(['id', 'title']);
     }
 
     public function nickNames()
     {
         return [
             'title.ar' => trans('admin:lang.fields.title'),
-            'city_id' => 'city',
+            'country_id' => 'country',
             'title.en' => 'title'
         ];
     }
@@ -35,7 +35,7 @@ class Create extends Component
         return [
             'title' => 'required|array',
             'priority' => 'required',
-            'city_id' => 'required|integer|exists:cities,id',
+            'country_id' => 'required|integer|exists:countries,id',
             'title.*' => 'required|string|min:2|max:120',
             'status' => 'required|string|in:active,inactive',
         ];
@@ -54,7 +54,7 @@ class Create extends Component
         $this->emit('refreshDatatable');
         $this->emit('closeModal', '#createRegion');
         $this->alert('success', __('admin::lang.Region Created Successfully'));
-        $this->reset('title', 'priority', 'status', 'city_id');
+        $this->reset('title', 'priority', 'status', 'country_id');
         DB::commit();
     }
 

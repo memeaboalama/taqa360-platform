@@ -39,15 +39,15 @@
                                             @endforeach
 
                                             <div class="col-md-8">
-                                                <label for="city" class="form-label text-black">@lang('admin::lang.City') <span class="text-danger">*</span></label>
-                                                <select class="form-control @error("city_id") is-invalid @enderror" wire:model.defer="city_id">
-                                                    <option value="">--{{ __('admin::lang.Select City') }}--</option>
-                                                    @foreach($cities as $city)
-                                                        <option value="{{ $city->id }}">{{ $city->title }}</option>
+                                                <label for="region-country-update" class="form-label text-black">@lang('admin::lang.Country') <span class="text-danger">*</span></label>
+                                                <select id="region-country-update" class="form-control @error("country_id") is-invalid @enderror" wire:model.defer="country_id">
+                                                    <option value="">--{{ __('admin::home.Select Country') }}--</option>
+                                                    @foreach($countries as $country)
+                                                        <option value="{{ $country->id }}">{{ $country->title }}</option>
                                                     @endforeach
                                                 </select>
 
-                                                @error("city_id") <span
+                                                @error("country_id") <span
                                                     class="text-danger d-block mt-2">{{ $message }}</span> @enderror
                                             </div>
 

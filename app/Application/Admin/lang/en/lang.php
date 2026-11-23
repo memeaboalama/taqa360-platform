@@ -378,6 +378,7 @@ return [
 
     // Region
     'Region' => 'Region',
+    'Select Region' => 'Select Region',
     'Create New Region' => 'Create New Region',
     'Update Region' => 'Update Region',
     'Delete Region' => 'Delete Region',

@@ -360,18 +360,18 @@
                                         class="side-menu__item {{ isActive(route('admin:countries.index')) }}">{{ __('admin::home.Countries') }}</a>
                                 </li>
                             @endAdminHasRole
+                            
+                            @AdminHasRole(['show_regions'])
+                            <li class="slide">
+                                <a href="{{ route('admin:regions.index') }}"
+                                class="side-menu__item {{ isActive(route('admin:regions.index')) }}">{{ __('admin::home.Regions') }}</a>
+                            </li>
+                            @endAdminHasRole
 
                             @AdminHasRole(['show_cities'])
                                 <li class="slide">
                                     <a href="{{ route('admin:cities.index') }}"
                                         class="side-menu__item {{ isActive(route('admin:cities.index')) }}">{{ __('admin::home.Cities') }}</a>
-                                </li>
-                            @endAdminHasRole
-
-                            @AdminHasRole(['show_regions'])
-                                <li class="slide">
-                                    <a href="{{ route('admin:regions.index') }}"
-                                        class="side-menu__item {{ isActive(route('admin:regions.index')) }}">{{ __('admin::home.Regions') }}</a>
                                 </li>
                             @endAdminHasRole
 

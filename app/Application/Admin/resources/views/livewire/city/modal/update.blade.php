@@ -39,17 +39,17 @@
                                             @endforeach
 
                                             <div class="col-xl-6">
-                                                <label for="city-country-update" class="form-label text-black">
-                                                    @lang('admin::home.Country') <span class="text-danger">*</span>
+                                                <label for="city-region-update" class="form-label text-black">
+                                                    @lang('admin::lang.Region') <span class="text-danger">*</span>
                                                 </label>
-                                                <select id="city-country-update" class="form-control @error('country_id') is-invalid @enderror"
-                                                        wire:model.defer="country_id">
-                                                    <option value="">--{{ __('admin::home.Select Country') }}--</option>
-                                                    @foreach($countries as $country)
-                                                        <option value="{{ $country->id }}">{{ $country->title }}</option>
+                                                <select id="city-region-update" class="form-control @error('region_id') is-invalid @enderror"
+                                                        wire:model.defer="region_id">
+                                                    <option value="">--{{ __('admin::lang.Select Region') }}--</option>
+                                                    @foreach($regions as $region)
+                                                        <option value="{{ $region->id }}">{{ $region->title }}</option>
                                                     @endforeach
                                                 </select>
-                                                @error('country_id') <span class="text-danger d-block mt-2">{{ $message }}</span> @enderror
+                                                @error('region_id') <span class="text-danger d-block mt-2">{{ $message }}</span> @enderror
                                             </div>
 
                                                 <div class="col-xl-4">

@@ -363,6 +363,7 @@ return [
 
     // Region
     'Region' => 'المنطقة',
+    'Select Region' => 'اختر المنطقة',
     'Create New Region' => 'إضافة منطقة جديدة',
     'Update Region' => 'تعديل المنطقة',
     'Delete Region' => 'حذف المنطقة',

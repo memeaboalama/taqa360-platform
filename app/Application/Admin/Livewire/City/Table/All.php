@@ -25,12 +25,15 @@ class All extends DataTableComponent
 
     public function configure(): void
     {
-        $this->setPrimaryKey('id')->setSearchStatus(false);;
+        $this->setPrimaryKey('id')
+            ->setSearchStatus(false)
+            ->setDefaultSort('priority', 'asc');
     }
 
     public function builder(): Builder
     {
-        return $this->cityRepository->builder(order: 'desc')->with('country:id,title');
+        return $this->cityRepository->builder(order: 'asc', orderCol: 'priority')
+            ->with('region:id,title');
     }
 
     public function columns(): array
@@ -45,8 +48,8 @@ class All extends DataTableComponent
                 ->sortable()
                 ->searchable(),
 
-            Column::make(__('admin::lang.Country'), 'country_id')
-                ->format(fn ($value, $row) => $row->country?->title ?? '—'),
+            Column::make(__('admin::lang.Region'), 'region_id')
+                ->format(fn ($value, $row) => $row->region?->title ?? '—'),
 
             Column::make(__('admin::lang.Priority'), 'priority')
                 ->sortable()

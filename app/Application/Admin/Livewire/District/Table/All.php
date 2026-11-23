@@ -25,12 +25,14 @@ class All extends DataTableComponent
 
     public function configure(): void
     {
-        $this->setPrimaryKey('id')->setSearchStatus(false);;
+        $this->setPrimaryKey('id')
+            ->setSearchStatus(false)
+            ->setDefaultSort('priority', 'asc');
     }
 
     public function builder(): Builder
     {
-        return $this->distractRepository->builder(order: 'desc');
+        return $this->distractRepository->builder(order: 'asc', orderCol: 'priority');
     }
 
     public function columns(): array
