@@ -8,6 +8,9 @@ class CreateServiceAction
 {
     public function execute(array $data): Service
     {
+        if (($data['pricing_mode'] ?? 'quote') === 'quote') {
+            $data['price'] = null;
+        }
         return Service::create($data);
     }
 }

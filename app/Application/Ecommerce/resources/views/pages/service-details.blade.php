@@ -33,9 +33,7 @@
             <div class="sr-detail-top" data-detail-content hidden>
                 <div class="sr-detail-main">
                     <section class="sr-service-banner">
-                        <span class="sr-detail-icon" data-service-icon aria-hidden="true" hidden></span>
                         <div class="sr-service-banner-copy">
-                            <span class="sr-detail-category" data-service-category hidden></span>
                             <h1 data-service-name></h1>
                             <p data-service-description hidden></p>
                             <div class="sr-detail-badges">
@@ -56,40 +54,9 @@
                         <ul class="sr-detail-list" data-detail-list="scope"></ul>
                     </section>
 
-                    <div class="sr-detail-two-col">
-                        <section class="sr-detail-panel" data-detail-section="deliverables" hidden>
-                            <h2>@lang('ecommerce::ecommerce.sr_detail_deliverables')</h2>
-                            <ul class="sr-detail-list" data-detail-list="deliverables"></ul>
-                        </section>
-                        <section class="sr-detail-panel" data-detail-section="exclusions" hidden>
-                            <h2>@lang('ecommerce::ecommerce.sr_detail_exclusions')</h2>
-                            <ul class="sr-detail-list is-muted" data-detail-list="exclusions"></ul>
-                        </section>
-                    </div>
-
-                    <section class="sr-detail-panel" data-detail-section="requirements" hidden>
-                        <h2>@lang('ecommerce::ecommerce.sr_detail_requirements')</h2>
-                        <ul class="sr-detail-list" data-detail-list="requirements"></ul>
-                        <p class="sr-detail-note" data-requirements-note hidden></p>
-                    </section>
-
-                    <section class="sr-detail-panel" data-detail-section="process" hidden>
-                        <h2>@lang('ecommerce::ecommerce.sr_detail_process')</h2>
-                        <div class="sr-detail-flow" data-detail-process></div>
-                    </section>
                 </div>
 
                 <aside class="sr-detail-aside">
-                    <h2 data-cta-title hidden></h2>
-                    <p data-cta-help hidden></p>
-                    <div class="sr-detail-fact" data-detail-fact="pricing" hidden>
-                        <span>@lang('ecommerce::ecommerce.sr_detail_pricing')</span>
-                        <strong data-detail-value="pricing"></strong>
-                    </div>
-                    <div class="sr-detail-fact" data-detail-fact="duration" hidden>
-                        <span>@lang('ecommerce::ecommerce.sr_detail_duration')</span>
-                        <strong data-detail-value="duration"></strong>
-                    </div>
                     <div class="sr-detail-fact" data-detail-fact="mode" hidden>
                         <span>@lang('ecommerce::ecommerce.sr_detail_delivery_mode')</span>
                         <strong data-detail-value="mode"></strong>
@@ -100,7 +67,6 @@
                         <i class="fa fa-plus-circle" aria-hidden="true"></i>
                         @lang('ecommerce::ecommerce.sr_catalog_request')
                     </a>
-                    <p class="sr-detail-disclaimer" data-detail-disclaimer hidden></p>
                 </aside>
             </div>
         </div>
@@ -154,77 +120,17 @@
                 section.hidden = items.length === 0;
             }
 
-            function fillProcess(steps) {
-                const section = page.querySelector('[data-detail-section="process"]');
-                const flow = page.querySelector('[data-detail-process]');
-                const cards = Array.isArray(steps) ? steps.filter((step) =>
-                    localized(step && step.title) || localized(step && step.description)
-                ) : [];
-
-                flow.replaceChildren(...cards.map((step) => {
-                    const card = document.createElement('div');
-                    const iconName = typeof step.icon === 'string' && /^[a-z0-9-]+$/i.test(step.icon)
-                        ? step.icon
-                        : '';
-                    const icon = document.createElement('span');
-                    if (iconName) {
-                        const iconElement = document.createElement('i');
-                        iconElement.className = 'fa ' + iconName;
-                        iconElement.setAttribute('aria-hidden', 'true');
-                        icon.appendChild(iconElement);
-                    }
-                    const title = document.createElement('h3');
-                    title.textContent = localized(step.title);
-                    const description = document.createElement('p');
-                    description.textContent = localized(step.description);
-                    card.append(icon, title, description);
-                    return card;
-                }));
-                section.hidden = cards.length === 0;
-            }
-
             function renderService(service) {
-                const details = service.details && typeof service.details === 'object'
-                    ? service.details
-                    : {};
                 const config = service.request_config && typeof service.request_config === 'object'
                     ? service.request_config
                     : {};
                 const modeLabel = modeLabels[config.mode] || '';
-                const iconName = typeof details.icon === 'string' && /^[a-z0-9-]+$/i.test(details.icon)
-                    ? details.icon
-                    : '';
-                const icon = page.querySelector('[data-service-icon]');
-
                 page.querySelectorAll('[data-service-name]').forEach((element) => {
                     element.textContent = localized(service.name);
                 });
-                text('[data-service-category]', localized(details.category));
                 text('[data-service-description]', localized(service.description));
                 text('[data-service-mode]', modeLabel);
-                if (iconName) {
-                    const element = document.createElement('i');
-                    element.className = 'fa ' + iconName;
-                    element.setAttribute('aria-hidden', 'true');
-                    icon.replaceChildren(element);
-                    icon.hidden = false;
-                }
-
                 fillList('scope', service.scope_of_work);
-                fillList('deliverables', details.deliverables);
-                fillList('exclusions', details.exclusions);
-                fillList('requirements', details.requirements);
-                text('[data-requirements-note]', localized(details.requirements_note));
-                fillProcess(details.process);
-                text('[data-cta-title]', localized(details.cta_title));
-                text('[data-cta-help]', localized(details.cta_help));
-                text('[data-detail-disclaimer]', localized(details.disclaimer));
-
-                ['pricing', 'duration'].forEach((key) => {
-                    const value = localized(details[key]);
-                    text('[data-detail-value="' + key + '"]', value);
-                    page.querySelector('[data-detail-fact="' + key + '"]').hidden = !value;
-                });
                 text('[data-detail-value="mode"]', modeLabel);
                 page.querySelector('[data-detail-fact="mode"]').hidden = !modeLabel;
 

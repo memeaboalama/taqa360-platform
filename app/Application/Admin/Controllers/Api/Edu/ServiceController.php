@@ -9,6 +9,7 @@ use App\Domain\AppBase\Actions\Edu\Service\UpdateServiceAction;
 use App\Domain\AppBase\Resources\Edu\ServiceResource;
 use App\Http\Controllers\Controller;
 use App\Support\Enum\StatusEnum;
+use App\Support\Services\TaqaServiceRequestConfiguration;
 use App\Support\Traits\Api\ApiResponseTrait;
 use Domain\AppBase\Models\Edu\Service;
 use Illuminate\Http\JsonResponse;
@@ -22,10 +23,17 @@ class ServiceController extends Controller
 
     public function options(): JsonResponse
     {
+        $services = Service::where('status', StatusEnum::ACTIVE->value)->get();
+        $serviceOptions = ServiceResource::collection($services)->resolve();
+
+        if (config('app.brand') === 'taqa360') {
+            foreach ($serviceOptions as $index => $serviceOption) {
+                $serviceOptions[$index]['request_config'] = TaqaServiceRequestConfiguration::forService($services[$index]);
+            }
+        }
+
         return $this->responseData([
-            'services' => ServiceResource::collection(
-                Service::where('status', StatusEnum::ACTIVE->value)->get()
-            ),
+            'services' => $serviceOptions,
         ], 200, 'Services retrieved successfully');
     }
 

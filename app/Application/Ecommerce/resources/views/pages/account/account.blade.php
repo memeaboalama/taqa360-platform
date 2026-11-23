@@ -234,7 +234,7 @@
 
         .account-layout {
             display: grid;
-            grid-template-columns: 230px minmax(0, 1fr);
+            grid-template-columns: minmax(0, 1fr);
             gap: 22px;
             margin-top: 22px
         }
@@ -248,17 +248,25 @@
         }
 
         .account-tabs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            max-width: 100%;
             padding: 10px
         }
 
         .account-tab {
             display: flex;
+            flex-shrink: 0;
+            white-space: nowrap;
             align-items: center;
             gap: 10px;
             padding: 13px 14px;
             border-radius: 5px;
             color: #68717b;
-            font-size: 12px;
+            font-size: 14px;
             text-decoration: none !important
         }
 
@@ -424,13 +432,13 @@
             }
 
             .account-tabs {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr)
+                display: flex;
+                overflow-x: auto;
             }
 
             .account-tab {
-                padding: 11px 8px;
-                font-size: 10px
+                padding: 11px 12px;
+                font-size: 14px;
             }
 
             .account-content {
@@ -577,7 +585,7 @@
                 --}}
             </section>
             <div class="account-layout">
-                <aside class="account-tabs"><a class="account-tab active" href="{{ route('account.index') }}"><i
+                <nav class="account-tabs" aria-label="@lang('ecommerce::ecommerce.my_account')"><a class="account-tab active" href="{{ route('account.index') }}"><i
                             class="ti-user"></i><span>@lang('ecommerce::ecommerce.personal_info')</span></a><a
                         class="account-tab" href="{{ route('account.index', ['section' => 'orders']) }}"><i
                             class="ti-package"></i><span>@lang('ecommerce::ecommerce.orders')</span></a><a
@@ -586,7 +594,7 @@
                         class="account-tab" href="{{ route('account.index', ['section' => 'addresses']) }}"><i
                             class="ti-location-pin"></i><span>@lang('ecommerce::ecommerce.addresses')</span></a>{{-- <a
                         class="account-tab" href="{{ route('account.wallet.index') }}"><i
-                            class="ti-wallet"></i><span>@lang('ecommerce::ecommerce.my_wallet')</span></a> --}}</aside>
+                            class="ti-wallet"></i><span>@lang('ecommerce::ecommerce.my_wallet')</span></a> --}}</nav>
                 <section class="account-content">
                     <div class="content-heading">
                         <h2>@lang('ecommerce::ecommerce.personal_info')</h2><a class="edit-link"

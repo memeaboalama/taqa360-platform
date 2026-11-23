@@ -19,8 +19,14 @@ class ServiceResource extends JsonResource
             'description_translations' => $this->getTranslations('description'),
             'scope_of_work' => $this?->scope_of_work,
             'scope_of_work_translations' => $this->getTranslations('scope_of_work'),
-            'request_config' => $this->request_config,
-            'details' => Arr::except($this->details ?? [], ['_seed_key']),
+            'deliverables' => $this->deliverables,
+            'exclusions' => $this->exclusions,
+            'requirements' => $this->requirements,
+            'duration' => $this->duration,
+            'duration_translations' => $this->getTranslations('duration'),
+            'pricing_mode' => $this->pricing_mode ?? 'quote',
+            'price' => $this->price,
+            'request_config' => Arr::except($this->request_config ?? [], ['_seed_key']),
         ];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Application\Educational\Controllers;
 use App\Domain\EducationalRequest\Actions\CreateEducationalRequestAction;
 use App\Http\Controllers\Controller;
 use App\Support\Enum\StatusEnum;
+use App\Support\Services\TaqaServiceRequestConfiguration;
 use Domain\AppBase\Models\Edu\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -19,7 +20,9 @@ class ServiceRequestWebController extends Controller
             ->where('uuid', $request->input('service_id'))
             ->where('status', StatusEnum::ACTIVE->value)
             ->first();
-        $requestConfig = $requestedService?->request_config ?? [];
+        $requestConfig = $requestedService
+            ? TaqaServiceRequestConfiguration::forService($requestedService)
+            : [];
         $availableModes = match ($requestConfig['mode'] ?? 'both') {
             'onsite', 'remote' => [$requestConfig['mode']],
             default => ['onsite', 'remote'],

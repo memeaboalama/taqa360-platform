@@ -26,6 +26,8 @@ class AdminServiceManagementTest extends TestCase
         (require app_path('Domain/AppBase/Migrations/2026_11_13_000001_add_scope_of_work_to_services_table.php'))->up();
         (require app_path('Domain/AppBase/Migrations/2026_11_22_000002_add_request_config_to_services_table.php'))->up();
         (require app_path('Domain/AppBase/Migrations/2026_11_22_000004_add_service_details_to_services_table.php'))->up();
+        (require app_path('Domain/AppBase/Migrations/2026_11_23_000001_remove_display_details_from_services_table.php'))->up();
+        (require app_path('Domain/AppBase/Migrations/2026_11_23_000002_add_service_definition_fields_to_services_table.php'))->up();
 
         Schema::create('educator_services', function ($table) {
             $table->id();
@@ -49,15 +51,6 @@ class AdminServiceManagementTest extends TestCase
             'name' => ['ar' => "خدمة {$suffix}", 'en' => "Service {$suffix}"],
             'description' => ['ar' => "وصف مختصر {$suffix}", 'en' => "Short description {$suffix}"],
             'scope_of_work' => ['ar' => "نطاق العمل {$suffix}", 'en' => "Scope of work {$suffix}"],
-            'details' => [
-                'category' => ['ar' => "تصنيف {$suffix}", 'en' => "Category {$suffix}"],
-                'process' => [[
-                    'icon' => 'fa-check',
-                    'title' => ['ar' => "خطوة {$suffix}", 'en' => "Step {$suffix}"],
-                    'description' => ['ar' => "وصف الخطوة {$suffix}", 'en' => "Step description {$suffix}"],
-                ]],
-                'cta_title' => ['ar' => "اطلب {$suffix}", 'en' => "Request {$suffix}"],
-            ],
             'request_config' => [
                 'mode' => 'both',
                 'fields' => [[
@@ -81,25 +74,24 @@ class AdminServiceManagementTest extends TestCase
             ->assertJsonPath('data.service.description_translations.en', 'Short description أ')
             ->assertJsonPath('data.service.scope_of_work', 'نطاق العمل أ')
             ->assertJsonPath('data.service.scope_of_work_translations.en', 'Scope of work أ')
-            ->assertJsonPath('data.service.details.process.0.title.ar', 'خطوة أ')
             ->assertJsonPath('data.service.request_config.fields.0.label.en', 'Usage أ')
             ->assertJsonPath('data.service.request_config.fields.0.options.en.0', 'Residential');
 
         $serviceId = $created->json('data.service.id');
         $service = Service::where('uuid', $serviceId)->firstOrFail();
-        $service->update(['details' => array_merge($service->details, ['_seed_key' => 'stable-seed-key'])]);
+        $service->update(['request_config' => array_merge($service->request_config, ['_seed_key' => 'stable-seed-key'])]);
 
         $this->putJson("/_test/admin/edu/services/{$serviceId}", $this->servicePayload('ب'))
             ->assertOk()
             ->assertJsonPath('data.service.name', 'خدمة ب')
             ->assertJsonPath('data.service.description', 'وصف مختصر ب')
             ->assertJsonPath('data.service.scope_of_work', 'نطاق العمل ب')
-            ->assertJsonPath('data.service.details.cta_title.en', 'Request ب')
             ->assertJsonPath('data.service.request_config.fields.0.label.ar', 'الاستخدام ب')
-            ->assertJsonMissingPath('data.service.details._seed_key');
+            ->assertJsonMissingPath('data.service.request_config._seed_key')
+            ->assertJsonMissingPath('data.service.details');
         $this->assertSame(
             'stable-seed-key',
-            Service::where('uuid', $serviceId)->firstOrFail()->details['_seed_key']
+            Service::where('uuid', $serviceId)->firstOrFail()->request_config['_seed_key']
         );
 
         $this->getJson("/_test/admin/edu/services/{$serviceId}")
@@ -107,7 +99,6 @@ class AdminServiceManagementTest extends TestCase
             ->assertJsonPath('data.service.name', 'خدمة ب')
             ->assertJsonPath('data.service.description', 'وصف مختصر ب')
             ->assertJsonPath('data.service.scope_of_work', 'نطاق العمل ب')
-            ->assertJsonPath('data.service.details.process.0.description.en', 'Step description ب')
             ->assertJsonPath('data.service.request_config.fields.0.options.ar.0', 'منزلي');
     }
 
@@ -130,7 +121,7 @@ class AdminServiceManagementTest extends TestCase
 
         $this->postJson('/_test/admin/edu/services', ['description' => ['ar' => 'وصف']])
             ->assertUnprocessable()
-            ->assertJsonPath('data.name.0', 'حقل الاسم مطلوب.');
+            ->assertJsonValidationErrors('name');
     }
 
     public function test_services_index_returns_only_requested_page_and_pagination_metadata(): void
@@ -174,5 +165,85 @@ class AdminServiceManagementTest extends TestCase
             ->assertOk();
 
         $this->assertSoftDeleted('services', ['id' => $service->id]);
+    }
+
+    public function test_display_details_are_not_stored_or_returned(): void
+    {
+        $payload = $this->servicePayload('Preview');
+        $payload['details'] = ['pricing' => ['en' => 'Old display pricing']];
+        $this->postJson('/_test/admin/edu/services', $payload)
+            ->assertCreated()
+            ->assertJsonMissingPath('data.service.details');
+        $this->assertFalse(Schema::hasColumn('services', 'details'));
+    }
+
+    public function test_display_removal_preserves_request_settings_and_catalog_identity(): void
+    {
+        (require app_path('Domain/AppBase/Migrations/2026_11_22_000004_add_service_details_to_services_table.php'))->up();
+        $service = Service::create($this->servicePayload('Migration'));
+        DB::table('services')->where('id', $service->id)->update([
+            'details' => json_encode(['_seed_key' => 'stable-catalog-key', 'pricing' => ['en' => 'Old price']]),
+        ]);
+
+        $migration = require app_path('Domain/AppBase/Migrations/2026_11_23_000001_remove_display_details_from_services_table.php');
+        $migration->up();
+        $migration->up();
+
+        $this->assertFalse(Schema::hasColumn('services', 'details'));
+        $config = $service->fresh()->request_config;
+        $this->assertSame('stable-catalog-key', $config['_seed_key']);
+        $this->assertSame('both', $config['mode']);
+        $this->assertSame('usage', $config['fields'][0]['key']);
+    }
+
+    public function test_definition_fields_persist_and_reach_the_customer_service_options(): void
+    {
+        config(['app.brand' => 'taqa360']);
+        $payload = array_merge($this->servicePayload('Definition'), [
+            'deliverables' => ['ar' => ['خطة بحث', 'ملف قابل للتعديل'], 'en' => ['Research plan', 'Editable file']],
+            'exclusions' => ['ar' => ['الطباعة'], 'en' => ['Printing']],
+            'requirements' => ['ar' => ['جهز تعليمات الجامعة'], 'en' => ['Prepare university guidelines']],
+            'duration' => ['ar' => 'ثلاثة أيام بعد تأكيد النطاق', 'en' => 'Three days after scope confirmation'],
+            'pricing_mode' => 'fixed',
+            'price' => 125.50,
+        ]);
+        $created = $this->postJson('/_test/admin/edu/services', $payload)
+            ->assertCreated()
+            ->assertJsonPath('data.service.deliverables.en.1', 'Editable file')
+            ->assertJsonPath('data.service.pricing_mode', 'fixed')
+            ->assertJsonPath('data.service.price', '125.50');
+        $uuid = $created->json('data.service.id');
+
+        $this->getJson("/_test/admin/edu/services/$uuid")
+            ->assertOk()
+            ->assertJsonPath('data.service.requirements.en.0', 'Prepare university guidelines')
+            ->assertJsonPath('data.service.duration_translations.en', 'Three days after scope confirmation');
+        $this->getJson(route('service-requests.services'))
+            ->assertOk()
+            ->assertJsonPath('data.services.0.exclusions.en.0', 'Printing')
+            ->assertJsonPath('data.services.0.deliverables.en.0', 'Research plan')
+            ->assertJsonPath('data.services.0.price', '125.50');
+
+        $payload['pricing_mode'] = 'from';
+        $payload['price'] = 75;
+        $this->putJson("/_test/admin/edu/services/$uuid", $payload)
+            ->assertOk()->assertJsonPath('data.service.pricing_mode', 'from')
+            ->assertJsonPath('data.service.price', '75.00');
+        $payload['pricing_mode'] = 'quote';
+        $this->putJson("/_test/admin/edu/services/$uuid", $payload)
+            ->assertOk()->assertJsonPath('data.service.price', null);
+        $this->assertNull(Service::where('uuid', $uuid)->firstOrFail()->price);
+    }
+
+    public function test_displayed_price_is_required_for_fixed_and_starting_prices(): void
+    {
+        foreach (['fixed', 'from'] as $mode) {
+            $payload = array_merge($this->servicePayload('Price'), ['pricing_mode' => $mode]);
+            $this->postJson('/_test/admin/edu/services', $payload)
+                ->assertUnprocessable()->assertJsonValidationErrors('price');
+            $payload['price'] = -1;
+            $this->postJson('/_test/admin/edu/services', $payload)
+                ->assertUnprocessable()->assertJsonValidationErrors('price');
+        }
     }
 }

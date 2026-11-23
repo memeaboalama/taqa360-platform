@@ -137,24 +137,32 @@
 
         .account-layout {
             display: grid;
-            grid-template-columns: 220px minmax(0, 1fr);
+            grid-template-columns: minmax(0, 1fr);
             gap: 22px;
             margin-top: 22px
         }
 
         .account-tabs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            max-width: 100%;
             padding: 10px;
             height: max-content
         }
 
         .account-tab {
             display: flex;
+            flex-shrink: 0;
+            white-space: nowrap;
             align-items: center;
             gap: 9px;
             padding: 12px;
             border-radius: 5px;
             color: var(--muted);
-            font-size: 12px;
+            font-size: 14px;
             text-decoration: none !important
         }
 
@@ -1034,13 +1042,13 @@
                 --}}
             </section>
             <div class="account-layout">
-                <aside class="account-tabs">
+                <nav class="account-tabs" aria-label="@lang('ecommerce::ecommerce.my_account')">
                     <a class="account-tab {{ in_array($section, ['profile', 'edit_profile'], true) ? 'active' : '' }}" href="{{ route('account.index') }}"><i class="ti-user"></i><span>@lang('ecommerce::ecommerce.personal_info')</span></a>
                     <a class="account-tab {{ in_array($section, ['orders', 'order_details'], true) ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'orders']) }}"><i class="ti-package"></i><span>@lang('ecommerce::ecommerce.orders')</span></a>
                     <a class="account-tab {{ in_array($section, ['service_requests', 'service_request_details'], true) ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'service_requests']) }}"><i class="ti-settings"></i><span>{{ config('app.brand') === 'taqa360' ? __('ecommerce::ecommerce.sr_workspace_my_requests') : __('ecommerce::ecommerce.service_requests') }}</span></a>
                     <a class="account-tab {{ in_array($section, ['addresses', 'create_address', 'edit_address'], true) ? 'active' : '' }}" href="{{ route('account.index', ['section' => 'addresses']) }}"><i class="ti-location-pin"></i><span>@lang('ecommerce::ecommerce.addresses')</span></a>
                     {{-- <a class="account-tab {{ in_array($section, ['wallet', 'wallet_deposit', 'wallet_withdraw'], true) ? 'active' : '' }}" href="{{ route('account.wallet.index') }}"><i class="ti-wallet"></i><span>@lang('ecommerce::ecommerce.my_wallet')</span></a> --}}
-                </aside>
+                </nav>
                 <section class="account-content">
                     @if(!in_array($section, ['service_requests', 'service_request_details'], true))
                         <div class="content-heading {{ in_array($section, ['orders', 'addresses'], true) ? 'orders-heading' : '' }} {{ $section === 'addresses' ? 'address-heading' : '' }}">

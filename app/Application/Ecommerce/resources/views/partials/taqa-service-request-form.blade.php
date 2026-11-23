@@ -3,78 +3,83 @@
 <style>
     .taqa-request-page {
         min-height: 70vh;
-        padding: 34px 0 56px;
-        background: #f3f6fa;
+        padding: 24px 0 42px;
+        background: #f4f7fa;
     }
 
     .taqa-request-page > .container {
         max-width: 1120px;
     }
 
-    .taqa-request-back {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 12px;
-        color: #347bb2;
-        font-weight: 700;
-        text-decoration: none;
-    }
-
     .taqa-request-heading {
-        margin-bottom: 24px;
+        margin-bottom: 18px;
     }
 
     .taqa-request-heading h1 {
         margin: 0;
-        color: #172f43;
-        font-size: clamp(26px, 3vw, 34px);
+        color: #1a3045;
+        font-size: 22px;
         font-weight: 800;
+        line-height: 1.5;
     }
 
     .taqa-request-heading p {
-        margin: 6px 0 0;
-        color: #718294;
-        font-size: 14px;
-        line-height: 1.8;
+        margin: 4px 0 0;
+        color: #64788b;
+        font-size: 13px;
+        line-height: 1.7;
     }
 
     .taqa-request-layout {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 300px;
         align-items: start;
-        gap: 22px;
+        gap: 18px;
     }
 
-    .taqa-request-card,
-    .taqa-request-aside {
+    .taqa-request-card {
         overflow: hidden;
-        border: 1px solid #e1e8ef;
-        border-radius: 16px;
+        border: 1px solid #dde6ee;
+        border-radius: 12px;
         background: #fff;
-        box-shadow: 0 8px 26px rgba(29, 55, 75, .06);
+        box-shadow: 0 6px 25px rgba(33, 61, 89, .06);
     }
 
     .taqa-request-steps {
+        position: relative;
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        padding: 18px 22px 0;
-        border-bottom: 1px solid #edf1f4;
+        padding: 12px 18px 8px;
+        border-bottom: 1px solid #dde6ee;
+        background: #fcfdff;
+    }
+
+    .taqa-request-steps::before {
+        position: absolute;
+        inset-inline: 12%;
+        top: 23px;
+        height: 1px;
+        background: #d4dfe9;
+        content: "";
     }
 
     .taqa-request-step {
+        position: relative;
+        z-index: 1;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
-        gap: 9px;
+        justify-content: flex-start;
+        gap: 4px;
         min-width: 0;
-        padding: 0 7px 15px;
+        padding: 0 6px 4px;
         border: 0;
-        border-bottom: 3px solid transparent;
         background: transparent;
-        color: #7b8794;
-        font-size: 13px;
+        color: #8395a6;
+        font-size: 12px;
+        line-height: 1.5;
         font-weight: 700;
+        text-align: center;
     }
 
     .taqa-request-step:disabled {
@@ -82,31 +87,39 @@
     }
 
     .taqa-request-step-number {
+        position: relative;
+        z-index: 1;
         display: grid;
-        flex: 0 0 30px;
+        flex: 0 0 23px;
         place-items: center;
-        width: 30px;
-        height: 30px;
-        border: 1px solid #dfe5ec;
+        width: 23px;
+        height: 23px;
+        border: 1px solid #d4dfe9;
         border-radius: 50%;
-        background: #f7f9fb;
-        color: #738092;
+        background: #fcfdff;
+        color: #64788b;
+        font-size: 12px;
     }
 
     .taqa-request-step.is-active {
-        border-color: #347bb2;
-        color: #243746;
+        color: #306faa;
+        font-weight: 800;
     }
 
-    .taqa-request-step.is-active .taqa-request-step-number,
-    .taqa-request-step.is-complete .taqa-request-step-number {
-        border-color: #347bb2;
-        background: #347bb2;
+    .taqa-request-step.is-active .taqa-request-step-number {
+        border-color: #306faa;
+        background: #306faa;
         color: #fff;
     }
 
+    .taqa-request-step.is-complete .taqa-request-step-number {
+        border-color: #c9e2d3;
+        background: #eaf5ef;
+        color: #28765e;
+    }
+
     .taqa-request-form-body {
-        padding: 26px;
+        padding: 20px;
     }
 
     .taqa-request-panel[hidden] {
@@ -114,114 +127,347 @@
     }
 
     .taqa-request-panel-heading {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        margin-bottom: 23px;
-    }
-
-    .taqa-request-panel-number {
-        display: grid;
-        flex: 0 0 38px;
-        place-items: center;
-        width: 38px;
-        height: 38px;
-        border-radius: 11px;
-        background: #eaf3fa;
-        color: #28618e;
-        font-weight: 800;
+        margin-bottom: 18px;
+        text-align: start;
     }
 
     .taqa-request-panel-heading h2 {
         margin: 0;
-        color: #26394a;
-        font-size: 18px;
+        color: #1a3045;
+        font-size: 20px;
         font-weight: 800;
+        line-height: 1.55;
     }
 
     .taqa-request-panel-heading p {
-        margin: 3px 0 0;
-        color: #8793a1;
+        margin: 4px 0 0;
+        color: #64788b;
         font-size: 12px;
+        line-height: 1.7;
     }
 
     .taqa-request-field {
-        margin-bottom: 18px;
+        margin-bottom: 14px;
     }
 
     .taqa-request-field label {
         display: block;
-        margin-bottom: 7px;
-        color: #34495b;
+        margin-bottom: 5px;
+        color: #35526e;
         font-size: 13px;
         font-weight: 700;
     }
 
     .taqa-request-field .form-control,
     .taqa-request-field .form-select {
-        min-height: 48px;
-        border-color: #dfe5ec;
-        border-radius: 10px;
-        color: #253746;
-        font-size: 14px;
+        min-height: 40px;
+        border-color: #d4dfe9;
+        border-radius: 7px;
+        color: #1a3045;
+        font-size: 13px;
         box-shadow: none;
     }
 
     .taqa-request-field textarea.form-control {
-        min-height: 116px;
-        padding-top: 12px;
+        min-height: 76px;
+        padding-top: 9px;
         resize: vertical;
     }
 
     .taqa-request-field .form-control:focus,
     .taqa-request-field .form-select:focus {
-        border-color: #347bb2;
-        box-shadow: 0 0 0 3px rgba(52, 123, 178, .13);
+        border-color: #306faa;
+        box-shadow: 0 0 0 3px rgba(48, 111, 170, .13);
     }
 
     .taqa-request-help {
         display: block;
-        margin-top: 6px;
-        color: #8391a0;
-        font-size: 12px;
+        margin-top: 5px;
+        color: #64788b;
+        font-size: 11px;
         line-height: 1.7;
     }
 
     .taqa-request-service-summary {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: 12px;
-        margin: 16px 0 22px;
-        padding: 15px;
-        border: 1px solid #dce8f1;
-        border-radius: 12px;
-        background: #f5f9fc;
+        margin: 12px 0 18px;
+        padding: 13px;
+        border: 0;
+        border-radius: 9px;
+        background: #edf4fa;
     }
 
     .taqa-request-service-icon {
         display: grid;
-        flex: 0 0 40px;
+        flex: 0 0 34px;
         place-items: center;
-        width: 40px;
-        height: 40px;
-        border-radius: 11px;
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
         background: #e5f0f8;
-        color: #347bb2;
-        font-size: 17px;
+        color: #306faa;
+        font-size: 15px;
     }
 
     .taqa-request-service-summary strong {
         display: block;
         color: #193449;
-        font-size: 14px;
+        font-size: 13px;
     }
 
     .taqa-request-service-summary p {
-        margin: 4px 0 0;
-        color: #718294;
-        font-size: 12px;
-        line-height: 1.8;
+        margin: 3px 0 0;
+        color: #64788b;
+        font-size: 11px;
+        line-height: 1.7;
         white-space: pre-line;
+    }
+
+    .taqa-request-service-summary {
+        align-items: flex-start;
+    }
+
+    .taqa-request-service-summary > div {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .taqa-request-service-summary .taqa-request-summary-section {
+        margin-top: 10px;
+    }
+
+    .taqa-request-summary-section h3 {
+        margin: 0;
+        color: #35526e;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .taqa-request-service-summary .taqa-request-summary-section p {
+        font-size: 13px;
+        overflow-wrap: anywhere;
+    }
+
+    .taqa-request-summary-section ul {
+        margin: 5px 0 0;
+        padding-inline-start: 20px;
+        color: #64788b;
+        font-size: 13px;
+        line-height: 1.8;
+        overflow-wrap: anywhere;
+    }
+
+    .taqa-request-aside-row[hidden],
+    .taqa-request-service-summary[hidden],
+    [data-taqa-service-pricing-note][hidden] { display: none !important; }
+
+    .taqa-request-fields-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 21px 18px;
+    }
+
+    .taqa-request-fields-grid > .taqa-request-field {
+        min-width: 0;
+        margin-bottom: 0;
+    }
+
+    .taqa-request-field-wide {
+        grid-column: 1 / -1;
+    }
+
+    .taqa-request-section {
+        margin-top: 25px;
+        padding-top: 24px;
+        border-top: 1px solid #dde6ee;
+    }
+
+    .taqa-request-section h3 {
+        margin: 0 0 17px;
+        color: #1a3045;
+        font-size: 17px;
+        font-weight: 700;
+    }
+
+    .taqa-request-section > .taqa-request-fields-grid + .taqa-request-fields-grid,
+    .taqa-request-section > .taqa-request-fields-grid + .taqa-request-field {
+        margin-top: 21px;
+    }
+
+    .taqa-request-field label.taqa-request-flexible-choice {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        width: fit-content;
+        margin-bottom: 21px;
+        padding: 9px 13px;
+        border: 1px solid #d4dfe9;
+        border-radius: 8px;
+        background: #fff;
+        cursor: pointer;
+    }
+
+    .taqa-request-flexible-choice:has(input:checked) {
+        border-color: #9fc1dc;
+        background: #edf4fa;
+        color: #306faa;
+    }
+
+    .taqa-request-flexible-choice input {
+        flex-shrink: 0;
+        margin-top: 5px;
+        accent-color: #306faa;
+    }
+
+    [data-taqa-panel="2"] .taqa-request-field > label {
+        font-size: 14px;
+    }
+
+    [data-taqa-panel="2"] .taqa-request-help {
+        font-size: 12px;
+    }
+
+    .taqa-request-map-toolbar,
+    .taqa-request-map-instructions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px 12px;
+    }
+
+    .taqa-request-map-toolbar > label {
+        margin-bottom: 0;
+    }
+
+    .taqa-request-map-instructions {
+        margin: 8px 0 13px;
+    }
+
+    .taqa-request-map-instructions p,
+    .taqa-request-map-instructions .taqa-request-map-status {
+        margin: 0;
+    }
+
+    .taqa-request-map-details summary {
+        width: fit-content;
+        color: #306faa;
+        cursor: pointer;
+    }
+
+    .taqa-request-section[data-taqa-field="attachments"] > label {
+        margin-bottom: 17px;
+        font-size: 17px;
+    }
+
+    button.taqa-request-upload {
+        display: block;
+        width: 100%;
+        color: #35526e;
+        font: inherit;
+        cursor: pointer;
+    }
+
+    button.taqa-request-upload:hover,
+    button.taqa-request-upload:focus-visible {
+        border-color: #306faa;
+        background: #edf4fa;
+        outline: 2px solid #306faa;
+        outline-offset: 3px;
+    }
+
+    [data-taqa-selected-files],
+    [data-taqa-review-files] {
+        padding: 0;
+        list-style: none;
+        text-align: start;
+        overflow-wrap: anywhere;
+    }
+
+    [data-taqa-selected-files] li,
+    [data-taqa-review-files] li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 8px;
+        padding: 10px 12px;
+        border: 1px solid #dfe5ec;
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .taqa-request-file-name {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .taqa-request-file-preview {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border: 1px solid #c9ddeb;
+        border-radius: 8px;
+        background: #edf4fa;
+        color: #306faa;
+    }
+
+    .taqa-request-preview-dialog {
+        width: min(900px, calc(100% - 32px));
+        max-height: 90vh;
+        padding: 20px;
+        border: 1px solid #d4dfe9;
+        border-radius: 12px;
+        color: #1a3045;
+    }
+
+    .taqa-request-preview-dialog::backdrop {
+        background: rgba(15, 30, 45, .6);
+    }
+
+    .taqa-request-preview-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .taqa-request-preview-heading h2 {
+        margin: 0;
+        font-size: 16px;
+        overflow-wrap: anywhere;
+    }
+
+    .taqa-request-preview-body img {
+        display: block;
+        max-width: 100%;
+        max-height: 65vh;
+        margin: auto;
+        object-fit: contain;
+    }
+
+    .taqa-request-preview-body iframe {
+        width: 100%;
+        height: 65vh;
+        border: 0;
+    }
+
+    @media (max-width: 700px) {
+        .taqa-request-fields-grid {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 18px;
+        }
+
+        .taqa-request-section {
+            margin-top: 22px;
+            padding-top: 21px;
+        }
     }
 
     .taqa-request-urgency {
@@ -345,6 +591,19 @@
         display: none !important;
     }
 
+    .taqa-request-service-fields {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid #e1e8ef;
+    }
+
+    .taqa-request-service-fields h3 {
+        margin: 0 0 10px;
+        color: #1a3045;
+        font-size: 16px;
+        font-weight: 800;
+    }
+
     .taqa-request-review-answers {
         margin-top: 18px;
     }
@@ -366,72 +625,93 @@
     .taqa-request-form-footer {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-end;
         gap: 12px;
-        padding: 18px 26px;
-        border-top: 1px solid #edf0f3;
+        padding: 14px 20px;
+        border-top: 1px solid #dde6ee;
+        background: #fcfdff;
     }
 
     .taqa-request-form-footer .actions {
         display: flex;
-        gap: 9px;
+        gap: 8px;
     }
 
     .taqa-request-form-footer .btn {
-        min-height: 44px;
-        border-radius: 9px;
+        min-height: 38px;
+        padding: 7px 14px;
+        border-radius: 7px;
+        font-size: 13px;
         font-weight: 700;
+    }
+
+    .taqa-request-form-footer .taqa-btn-primary {
+        border-color: #306faa;
+        background: #306faa;
+        color: #fff;
+    }
+
+    .taqa-request-form-footer .taqa-btn-primary:hover,
+    .taqa-request-form-footer .taqa-btn-primary:focus {
+        border-color: #235b8e;
+        background: #235b8e;
+        color: #fff;
+    }
+
+    .taqa-request-form-footer .taqa-btn-soft {
+        border-color: transparent;
+        background: #edf4fa;
+        color: #306faa;
+    }
+
+    .taqa-request-form-footer .taqa-btn-soft:hover,
+    .taqa-request-form-footer .taqa-btn-soft:focus {
+        border-color: transparent;
+        background: #e1edf6;
+        color: #235b8e;
     }
 
     .taqa-request-aside {
         position: sticky;
         top: 96px;
-        padding: 22px;
-    }
-
-    .taqa-request-aside-icon {
-        display: grid;
-        place-items: center;
-        width: 48px;
-        height: 48px;
-        margin-bottom: 15px;
-        border-radius: 14px;
-        background: #eaf3fa;
-        color: #347bb2;
-        font-size: 20px;
+        padding: 20px;
+        border: 1px solid #dde6ee;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 6px 25px rgba(33, 61, 89, .06);
     }
 
     .taqa-request-aside h2 {
         margin: 0;
-        color: #26394a;
-        font-size: 18px;
+        color: #1a3045;
+        font-size: 17px;
         font-weight: 800;
     }
 
     .taqa-request-aside > p {
-        margin: 8px 0 18px;
-        color: #778596;
+        margin: 6px 0 14px;
+        color: #64788b;
         font-size: 12px;
-        line-height: 1.8;
+        line-height: 1.7;
     }
 
     .taqa-request-aside-row {
         display: flex;
         justify-content: space-between;
         gap: 12px;
-        padding: 12px 0;
-        border-top: 1px solid #edf0f4;
+        padding: 11px 0;
+        border-top: 1px solid #dde6ee;
         font-size: 12px;
     }
 
     .taqa-request-aside-row span {
-        color: #7b8794;
+        color: #64788b;
     }
 
     .taqa-request-aside-row strong {
         max-width: 60%;
         overflow-wrap: anywhere;
-        color: #34495b;
+        color: #1a3045;
         text-align: end;
     }
 
@@ -463,32 +743,42 @@
 
     @media (max-width: 575px) {
         .taqa-request-page {
-            padding: 20px 0 36px;
+            padding: 18px 0 28px;
+        }
+
+        .taqa-request-heading h1 {
+            font-size: 20px;
+        }
+
+        .taqa-request-heading p {
+            font-size: 12px;
         }
 
         .taqa-request-steps {
-            padding: 14px 8px 0;
+            padding: 10px 5px 6px;
+        }
+
+        .taqa-request-steps::before {
+            top: 21px;
         }
 
         .taqa-request-step {
-            flex-direction: column;
-            gap: 5px;
-            padding: 0 2px 11px;
+            gap: 3px;
+            padding: 0 2px 4px;
             font-size: 10px;
             text-align: center;
         }
 
         .taqa-request-form-body {
-            padding: 18px;
+            padding: 15px;
         }
 
         .taqa-request-form-footer {
-            flex-wrap: wrap;
-            padding: 14px;
+            padding: 12px;
         }
 
         .taqa-request-form-footer .btn {
-            padding-inline: 12px;
+            padding-inline: 11px;
             font-size: 12px;
         }
 
@@ -501,14 +791,9 @@
 
 <main class="taqa-request-page" dir="{{ in_array(app()->getLocale(), ['ar', 'he', 'fa', 'ur'], true) ? 'rtl' : 'ltr' }}">
     <div class="container">
-        <a class="taqa-request-back" href="{{ route('service-requests.catalog') }}" up-follow="false">
-            <i class="fa fa-arrow-{{ in_array(app()->getLocale(), ['ar', 'he', 'fa', 'ur'], true) ? 'right' : 'left' }}"
-                aria-hidden="true"></i>
-            @lang('ecommerce::ecommerce.sr_workspace_services')
-        </a>
         <header class="taqa-request-heading">
-            <h1>@lang('ecommerce::ecommerce.request_service')</h1>
-            <p>@lang('ecommerce::ecommerce.sr_page_intro')</p>
+            <h1>@lang('ecommerce::ecommerce.sr_page_new_request')</h1>
+            <p>@lang('ecommerce::ecommerce.sr_page_new_request_help')</p>
         </header>
 
         <div class="taqa-request-layout">
@@ -536,20 +821,19 @@
 
                         <section class="taqa-request-panel" data-taqa-panel="1">
                             <div class="taqa-request-panel-heading">
-                                <span class="taqa-request-panel-number">1</span>
                                 <div>
-                                    <h2>@lang('ecommerce::ecommerce.sr_page_step_basics')</h2>
-                                    <p>@lang('ecommerce::ecommerce.sr_page_summary_help')</p>
+                                    <h2>@lang('ecommerce::ecommerce.sr_form_service_question')</h2>
+                                    <p>@lang('ecommerce::ecommerce.sr_form_need_details')</p>
                                 </div>
                             </div>
 
                             <div class="taqa-request-field" data-taqa-field="service_id">
-                                <label for="taqa_service_id">@lang('ecommerce::ecommerce.service_type') <span class="text-danger">*</span></label>
+                                <label for="taqa_service_id">@lang('ecommerce::ecommerce.sr_form_service_label') <span class="text-danger">*</span></label>
                                 <select class="form-select" id="taqa_service_id" name="service_id"
                                     data-selected-service="{{ request('service') }}" required disabled>
                                     <option value="">@lang('ecommerce::ecommerce.loading')</option>
                                 </select>
-                                <span class="taqa-request-help">@lang('ecommerce::ecommerce.sr_page_summary_help')</span>
+                                <span class="taqa-request-help">@lang('ecommerce::ecommerce.sr_form_service_help')</span>
                                 <small class="taqa-request-error" data-taqa-error hidden></small>
                             </div>
 
@@ -557,13 +841,24 @@
                                 <span class="taqa-request-service-icon" aria-hidden="true"><i class="fa fa-sun-o"></i></span>
                                 <div>
                                     <strong data-taqa-service-name></strong>
-                                    <p data-taqa-service-description></p>
-                                    <p data-taqa-service-scope hidden></p>
+                                    <div class="taqa-request-summary-section" data-taqa-service-description-wrap hidden>
+                                        <p data-taqa-service-description></p>
+                                    </div>
+                                    <div class="taqa-request-summary-section" data-taqa-service-scope-wrap hidden>
+                                        <h3>@lang('ecommerce::ecommerce.sr_form_service_scope')</h3>
+                                        <p data-taqa-service-scope></p>
+                                    </div>
+                                    @foreach(['deliverables' => 'sr_service_deliverables', 'exclusions' => 'sr_service_exclusions', 'requirements' => 'sr_service_requirements'] as $field => $label)
+                                        <div class="taqa-request-summary-section" data-taqa-service-list-wrap="{{ $field }}" hidden>
+                                            <h3>@lang('ecommerce::ecommerce.' . $label)</h3>
+                                            <ul data-taqa-service-list="{{ $field }}"></ul>
+                                        </div>
+                                    @endforeach
                                 </div>
                             </div>
 
                             <div class="taqa-request-field" data-taqa-field="description">
-                                <label for="taqa_description">@lang('ecommerce::ecommerce.sr_description') <span class="text-danger">*</span></label>
+                                <label for="taqa_description">@lang('ecommerce::ecommerce.sr_form_description_label') <span class="text-danger">*</span></label>
                                 <textarea class="form-control" id="taqa_description" name="description" rows="5"
                                     required placeholder="@lang('ecommerce::ecommerce.sr_description_placeholder')"></textarea>
                                 <span class="taqa-request-help">@lang('ecommerce::ecommerce.sr_form_description_help')</span>
@@ -610,10 +905,9 @@
 
                         <section class="taqa-request-panel" data-taqa-panel="2" hidden>
                             <div class="taqa-request-panel-heading">
-                                <span class="taqa-request-panel-number">2</span>
                                 <div>
-                                    <h2>@lang('ecommerce::ecommerce.sr_page_step_details')</h2>
-                                    <p>@lang('ecommerce::ecommerce.sr_page_intro')</p>
+                                    <h2>@lang('ecommerce::ecommerce.sr_form_location_heading')</h2>
+                                    <p>@lang('ecommerce::ecommerce.sr_form_location_help')</p>
                                 </div>
                             </div>
 
@@ -626,7 +920,7 @@
                                 <small class="taqa-request-error" data-taqa-error hidden></small>
                             </div>
 
-                            <div data-taqa-onsite-fields>
+                            <div class="taqa-request-fields-grid" data-taqa-onsite-fields>
                                 <div class="taqa-request-field" data-taqa-field="property_type">
                                     <label for="taqa_property_type">@lang('ecommerce::ecommerce.sr_form_property') <span class="text-danger">*</span></label>
                                     <select class="form-select" id="taqa_property_type" name="property_type">
@@ -653,34 +947,36 @@
                                     <small class="taqa-request-error" data-taqa-error hidden></small>
                                 </div>
 
-                                <div class="taqa-request-field" data-taqa-field="site_city_other" data-taqa-city-other hidden>
+                                <div class="taqa-request-field taqa-request-field-wide" data-taqa-field="site_city_other" data-taqa-city-other hidden>
                                     <label for="taqa_site_city_other">@lang('ecommerce::ecommerce.sr_form_city_other_name') <span class="text-danger">*</span></label>
                                     <input class="form-control" type="text" id="taqa_site_city_other" name="site_city_other" maxlength="100">
                                     <small class="taqa-request-error" data-taqa-error hidden></small>
                                 </div>
 
-                                <div class="taqa-request-field" data-taqa-field="service_address">
+                                <div class="taqa-request-field taqa-request-field-wide" data-taqa-field="service_address">
                                     <label for="taqa_service_address">@lang('ecommerce::ecommerce.sr_form_address') <span class="text-danger">*</span></label>
                                     <textarea class="form-control" id="taqa_service_address" name="service_address" rows="3"
                                         placeholder="@lang('ecommerce::ecommerce.address_placeholder')"></textarea>
                                     <small class="taqa-request-error" data-taqa-error hidden></small>
                                 </div>
 
-                                <div class="taqa-request-field" data-taqa-field="location">
+                                <div class="taqa-request-field taqa-request-field-wide" data-taqa-field="location">
+                                    <div class="taqa-request-map-toolbar">
                                     <label>@lang('ecommerce::ecommerce.location_on_map') <span class="text-muted fw-normal">@lang('ecommerce::ecommerce.sr_form_optional')</span></label>
-                                    <p class="taqa-request-help">@lang('ecommerce::ecommerce.address_map_help')</p>
-                                    <div class="taqa-request-map" data-taqa-map role="application"
-                                        aria-label="@lang('ecommerce::ecommerce.location_on_map')"></div>
-                                    <div class="d-flex align-items-center gap-2 mt-2">
                                         <button class="btn btn-light border btn-sm" type="button" data-taqa-use-location>
                                             @lang('ecommerce::ecommerce.use_current_location')
                                         </button>
+                                    </div>
+                                    <div class="taqa-request-map" data-taqa-map role="application"
+                                        aria-label="@lang('ecommerce::ecommerce.location_on_map')"></div>
+                                    <div class="taqa-request-map-instructions">
+                                        <p class="taqa-request-help">@lang('ecommerce::ecommerce.address_map_help')</p>
                                         <span class="taqa-request-map-status" data-taqa-map-status role="status" aria-live="polite">
                                             @lang('ecommerce::ecommerce.no_location_selected')
                                         </span>
                                     </div>
                                     <details class="taqa-request-map-details">
-                                        <summary class="taqa-request-help" style="cursor:pointer">@lang('ecommerce::ecommerce.sr_form_coordinates')</summary>
+                                        <summary class="taqa-request-help">@lang('ecommerce::ecommerce.sr_form_coordinates')</summary>
                                         <div class="row mt-2">
                                             <div class="col-md-6 taqa-request-field" data-taqa-field="latitude">
                                                 <label for="taqa_latitude">@lang('ecommerce::ecommerce.sr_form_latitude')</label>
@@ -696,7 +992,7 @@
                                     </details>
                                 </div>
 
-                                <div class="taqa-request-field" data-taqa-field="access_notes">
+                                <div class="taqa-request-field taqa-request-field-wide" data-taqa-field="access_notes">
                                     <label for="taqa_access_notes">@lang('ecommerce::ecommerce.sr_form_access')</label>
                                     <input class="form-control" type="text" id="taqa_access_notes" name="access_notes"
                                         placeholder="@lang('ecommerce::ecommerce.sr_form_access_help')">
@@ -704,18 +1000,20 @@
                             </div>
 
                             <p class="alert alert-info" data-taqa-remote-note hidden>
-                                @lang('ecommerce::ecommerce.sr_form_remote')
+                                @lang('ecommerce::ecommerce.sr_form_remote_location_help')
                             </p>
 
+                            <div class="taqa-request-section">
                             <div class="taqa-request-field">
                                 <h3>@lang('ecommerce::ecommerce.sr_form_schedule')</h3>
-                                <label class="d-flex align-items-center gap-2">
+                                <label class="taqa-request-flexible-choice">
                                     <input type="hidden" name="is_flexible" value="1">
                                     <input type="checkbox" data-taqa-flexible checked>
                                     <span class="mb-0">@lang('ecommerce::ecommerce.sr_form_flexible')</span>
                                 </label>
                             </div>
 
+                            <div class="taqa-request-fields-grid">
                             <div class="taqa-request-field" data-taqa-field="preferred_date" data-taqa-date-wrap hidden>
                                 <label for="taqa_preferred_date">@lang('ecommerce::ecommerce.sr_form_preferred_date') <span class="text-danger">*</span></label>
                                 <input class="form-control" type="date" id="taqa_preferred_date" name="preferred_date">
@@ -740,6 +1038,9 @@
                                 </div>
                             </div>
 
+                            </div>
+
+                            <div class="taqa-request-fields-grid">
                             <div class="taqa-request-field" data-taqa-field="contact_name">
                                 <label for="taqa_contact_name">@lang('ecommerce::ecommerce.sr_form_contact_name') <span class="text-danger">*</span></label>
                                 <input class="form-control" type="text" id="taqa_contact_name" name="contact_name"
@@ -755,19 +1056,35 @@
                                 <small class="taqa-request-error" data-taqa-error hidden></small>
                             </div>
 
+                            </div>
+
                             <div class="taqa-request-field" data-taqa-field="additional_notes">
                                 <label for="taqa_additional_notes">@lang('ecommerce::ecommerce.additional_notes')</label>
                                 <textarea class="form-control" id="taqa_additional_notes" name="additional_notes" rows="3"
                                     placeholder="@lang('ecommerce::ecommerce.sr_notes_placeholder')"></textarea>
                             </div>
+                            </div>
+
+                            <div class="taqa-request-field taqa-request-section" data-taqa-field="attachments">
+                                <label for="taqa_attachments">@lang('ecommerce::ecommerce.sr_attachments_label') <span class="text-muted fw-normal">@lang('ecommerce::ecommerce.sr_form_optional')</span></label>
+                                <input type="file" id="taqa_attachments" name="attachments[]" hidden
+                                    multiple accept="image/jpeg,image/png,image/webp,application/pdf,.docx">
+                                <button type="button" class="taqa-request-upload" data-taqa-pick-files
+                                    aria-describedby="taqa_upload_help">
+                                    <i class="fa fa-cloud-upload" aria-hidden="true"></i>
+                                    <span>@lang('ecommerce::ecommerce.sr_form_pick_files')</span>
+                                    <small class="taqa-request-help" id="taqa_upload_help">@lang('ecommerce::ecommerce.sr_form_files_limit')</small>
+                                </button>
+                                <ul class="taqa-request-review-files" data-taqa-selected-files></ul>
+                                <small class="taqa-request-error" data-taqa-error hidden></small>
+                            </div>
                         </section>
 
                         <section class="taqa-request-panel" data-taqa-panel="3" hidden>
                             <div class="taqa-request-panel-heading">
-                                <span class="taqa-request-panel-number">3</span>
                                 <div>
                                     <h2>@lang('ecommerce::ecommerce.sr_page_step_files')</h2>
-                                    <p>@lang('ecommerce::ecommerce.sr_form_files_limit')</p>
+                                    <p>@lang('ecommerce::ecommerce.sr_form_review_help')</p>
                                 </div>
                             </div>
 
@@ -795,35 +1112,28 @@
                                 <dl class="taqa-request-review" data-taqa-review-answer-list></dl>
                             </div>
 
-                            <div class="taqa-request-field" data-taqa-field="attachments">
-                                <label for="taqa_attachments">@lang('ecommerce::ecommerce.sr_attachments_label')</label>
-                                <div class="taqa-request-upload">
-                                    <i class="fa fa-cloud-upload" aria-hidden="true"></i>
-                                    <input class="form-control" type="file" id="taqa_attachments"
-                                        name="attachments[]" multiple accept="image/jpeg,image/png,image/webp,application/pdf,.docx">
-                                    <small class="taqa-request-help">@lang('ecommerce::ecommerce.sr_form_files_limit')</small>
-                                    <ul class="taqa-request-review-files" data-taqa-review-files></ul>
-                                </div>
-                                <small class="taqa-request-error" data-taqa-error hidden></small>
-                            </div>
+                            <section class="taqa-request-review-answers">
+                                <h3>@lang('ecommerce::ecommerce.sr_attachments_label')</h3>
+                                <ul class="taqa-request-review-files" data-taqa-review-files></ul>
+                                <p class="taqa-request-help" data-taqa-no-files>@lang('ecommerce::ecommerce.sr_form_no_files')</p>
+                            </section>
+                            <p class="alert alert-info mt-3">@lang('ecommerce::ecommerce.sr_form_review_notice')</p>
                         </section>
                     </div>
 
                     <footer class="taqa-request-form-footer">
-                        <a href="{{ route('ecommerce.static') }}" class="btn btn-light border">
-                            @lang('ecommerce::ecommerce.sr_cancel')
-                        </a>
                         <div class="actions">
-                            <button type="button" class="btn btn-light border" data-taqa-save-draft>
+                            <button type="button" class="btn taqa-btn-soft" data-taqa-save-draft>
+                                <i class="fa fa-floppy-o" aria-hidden="true"></i>
                                 @lang('ecommerce::ecommerce.sr_form_save_draft')
                             </button>
                             <button type="button" class="btn btn-light border" data-taqa-previous hidden>
                                 @lang('ecommerce::ecommerce.sr_page_previous')
                             </button>
-                            <button type="button" class="btn btn-primary" data-taqa-next>
+                            <button type="button" class="btn taqa-btn-primary" data-taqa-next>
                                 @lang('ecommerce::ecommerce.sr_page_next')
                             </button>
-                            <button type="submit" class="btn btn-primary" data-taqa-submit hidden>
+                            <button type="submit" class="btn taqa-btn-primary" data-taqa-submit hidden>
                                 <span class="spinner-border spinner-border-sm me-2 d-none" data-taqa-spinner
                                     role="status" aria-hidden="true"></span>
                                 <i class="fa fa-paper-plane me-1" aria-hidden="true"></i>
@@ -835,13 +1145,21 @@
             </section>
 
             <aside class="taqa-request-aside">
-                <span class="taqa-request-aside-icon" aria-hidden="true"><i class="fa fa-file-text-o"></i></span>
                 <h2>@lang('ecommerce::ecommerce.sr_page_summary_title')</h2>
                 <p>@lang('ecommerce::ecommerce.sr_page_summary_help')</p>
                 <div class="taqa-request-aside-row">
                     <span>@lang('ecommerce::ecommerce.sr_page_summary_service')</span>
                     <strong data-taqa-summary="service">@lang('ecommerce::ecommerce.sr_select_service')</strong>
                 </div>
+                <div class="taqa-request-aside-row" data-taqa-service-pricing hidden>
+                    <span>@lang('ecommerce::ecommerce.sr_service_pricing')</span>
+                    <strong data-taqa-summary="pricing"></strong>
+                </div>
+                <div class="taqa-request-aside-row" data-taqa-service-duration hidden>
+                    <span>@lang('ecommerce::ecommerce.sr_service_duration')</span>
+                    <strong data-taqa-summary="duration"></strong>
+                </div>
+                <p class="taqa-request-help" data-taqa-service-pricing-note hidden>@lang('ecommerce::ecommerce.sr_service_pricing_help')</p>
                 <div class="taqa-request-aside-row">
                     <span>@lang('ecommerce::ecommerce.sr_page_summary_budget')</span>
                     <strong data-taqa-summary="budget">—</strong>
@@ -853,6 +1171,18 @@
             </aside>
         </div>
     </div>
+    <dialog class="taqa-request-preview-dialog" data-taqa-preview-dialog aria-labelledby="taqa_preview_title">
+        <div class="taqa-request-preview-heading">
+            <h2 id="taqa_preview_title" data-taqa-preview-title></h2>
+            <button type="button" class="btn btn-light border" data-taqa-close-preview
+                aria-label="@lang('ecommerce::ecommerce.sr_form_close_preview')">&times;</button>
+        </div>
+        <div class="taqa-request-preview-body" data-taqa-preview-body></div>
+        <a class="btn btn-light border mt-3" data-taqa-preview-download download>
+            <i class="fa fa-download" aria-hidden="true"></i>
+            @lang('ecommerce::ecommerce.sr_form_download_file')
+        </a>
+    </dialog>
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -870,6 +1200,11 @@
         const flexibleInput = form.querySelector('[name="is_flexible"]');
         const preferredDate = form.querySelector('[name="preferred_date"]');
         const fileInput = form.querySelector('[name="attachments[]"]');
+        const pickFilesButton = form.querySelector('[data-taqa-pick-files]');
+        const previewDialog = document.querySelector('[data-taqa-preview-dialog]');
+        const previewBody = previewDialog.querySelector('[data-taqa-preview-body]');
+        const previewDownload = previewDialog.querySelector('[data-taqa-preview-download]');
+        let previewUrl = null;
         const panels = Array.from(form.querySelectorAll('[data-taqa-panel]'));
         const steps = Array.from(document.querySelectorAll('[data-taqa-step]'));
         const alertBox = form.querySelector('[data-taqa-alert]');
@@ -924,6 +1259,11 @@
             noLocation: @json(__('ecommerce::ecommerce.no_location_selected')),
             storageUnavailable: @json(__('ecommerce::ecommerce.sr_form_storage_error')),
             draftSaved: @json(__('ecommerce::ecommerce.sr_form_draft_saved')),
+            priceQuote: @json(__('ecommerce::ecommerce.sr_service_price_quote')),
+            priceFixed: @json(__('ecommerce::ecommerce.sr_service_price_fixed')),
+            priceFrom: @json(__('ecommerce::ecommerce.sr_service_price_from')),
+            previewFile: @json(__('ecommerce::ecommerce.sr_form_preview_file')),
+            previewDownloadHelp: @json(__('ecommerce::ecommerce.sr_form_preview_download_help')),
             notSpecified: '—',
             currency: @json(__('ecommerce::ecommerce.currency_symbol')),
             modes: {
@@ -1014,13 +1354,45 @@
             const summary = form.querySelector('[data-taqa-service-summary]');
             summary.hidden = !service;
             form.querySelector('[data-taqa-service-name]').textContent = service ? localized(service.name) : '';
-            form.querySelector('[data-taqa-service-description]').textContent =
-                service ? localized(service.description) : '';
+            const description = service ? localized(service.description) : '';
+            form.querySelector('[data-taqa-service-description]').textContent = description;
+            form.querySelector('[data-taqa-service-description-wrap]').hidden = !description;
             const scope = form.querySelector('[data-taqa-service-scope]');
             const scopeText = service ? localized(service.scope_of_work) : '';
             scope.textContent = scopeText;
-            scope.hidden = !scopeText;
+            form.querySelector('[data-taqa-service-scope-wrap]').hidden = !scopeText;
+            ['deliverables', 'exclusions', 'requirements'].forEach(function (key) {
+                const value = service && service[key];
+                const locale = @json(app()->getLocale());
+                const lists = value && typeof value === 'object' ? value : {};
+                const items = Array.isArray(value) ? value :
+                    [lists[locale], lists.ar, lists.en].find((items) => Array.isArray(items) && items.length) || [];
+                const list = form.querySelector('[data-taqa-service-list="' + key + '"]');
+                list.replaceChildren();
+                items.filter((item) => typeof item === 'string' && item.trim()).forEach(function (item) {
+                    const row = document.createElement('li');
+                    row.textContent = item;
+                    list.appendChild(row);
+                });
+                form.querySelector('[data-taqa-service-list-wrap="' + key + '"]').hidden = list.children.length === 0;
+            });
+            const pricing = servicePricing(service);
+            const duration = service ? localized(service.duration_translations) || localized(service.duration) : '';
+            setText('[data-taqa-summary="pricing"]', pricing);
+            setText('[data-taqa-summary="duration"]', duration);
+            document.querySelector('[data-taqa-service-pricing]').hidden = !pricing;
+            document.querySelector('[data-taqa-service-duration]').hidden = !duration;
+            document.querySelector('[data-taqa-service-pricing-note]').hidden = !pricing;
             setText('[data-taqa-summary="service"]', service ? localized(service.name) : messages.selectService);
+        }
+
+        function servicePricing(service) {
+            if (!service) return '';
+            if (!service.pricing_mode || service.pricing_mode === 'quote') return messages.priceQuote;
+            if (service.price === null || service.price === '' || service.price === undefined ||
+                !Number.isFinite(Number(service.price)) || Number(service.price) < 0) return '';
+            const amount = new Intl.NumberFormat(@json(app()->getLocale()), { maximumFractionDigits: 2 }).format(Number(service.price));
+            return (service.pricing_mode === 'from' ? messages.priceFrom : messages.priceFixed) + ' ' + amount + ' ' + messages.currency;
         }
 
         function addServiceField(field, value) {
@@ -1140,8 +1512,8 @@
 
             const solarField = form.querySelector('[data-taqa-solar-field]');
             const solarSelect = form.querySelector('[name="solar_system_type"]');
-            solarField.hidden = !config.solar;
-            if (!config.solar) solarSelect.value = '';
+            solarField.hidden = Boolean(service && config.solar !== true);
+            if (service && config.solar !== true) solarSelect.value = '';
 
             const urgencyField = form.querySelector('[data-taqa-urgency-field]');
             urgencyField.hidden = !config.show_urgency;
@@ -1203,26 +1575,74 @@
             (Array.isArray(config.fields) ? config.fields : []).forEach(function (field) {
                 const control = form.querySelector('[name="service_answers[' + field.key + ']"]');
                 const value = control ? control.value.trim() : '';
-                if (!value) return;
-
                 const row = document.createElement('div');
                 const label = document.createElement('dt');
                 label.textContent = localized(field.label);
                 const answer = document.createElement('dd');
-                answer.textContent = value;
+                answer.textContent = value || messages.notSpecified;
                 row.append(label, answer);
                 answerList.appendChild(row);
                 answerCount += 1;
             });
             answerSection.hidden = answerCount === 0;
 
-            const reviewFiles = form.querySelector('[data-taqa-review-files]');
-            reviewFiles.replaceChildren();
-            Array.from(fileInput.files).forEach(function (file) {
-                const item = document.createElement('li');
-                item.textContent = file.name;
-                reviewFiles.appendChild(item);
+            const files = Array.from(fileInput.files);
+            form.querySelector('[data-taqa-no-files]').hidden = files.length > 0;
+            form.querySelectorAll('[data-taqa-review-files], [data-taqa-selected-files]').forEach(function (list) {
+                list.replaceChildren();
+                files.forEach(function (file) {
+                    const item = document.createElement('li');
+                    const name = document.createElement('span');
+                    name.className = 'taqa-request-file-name';
+                    name.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+                    const preview = document.createElement('button');
+                    preview.type = 'button';
+                    preview.className = 'taqa-request-file-preview';
+                    preview.title = messages.previewFile;
+                    preview.setAttribute('aria-label', messages.previewFile + ': ' + file.name);
+                    const icon = document.createElement('i');
+                    icon.className = 'fa fa-eye';
+                    icon.setAttribute('aria-hidden', 'true');
+                    preview.appendChild(icon);
+                    preview.addEventListener('click', function () { previewFile(file); });
+                    item.append(name, preview);
+                    list.appendChild(item);
+                });
             });
+        }
+
+        function clearFilePreview() {
+            previewBody.replaceChildren();
+            previewDownload.removeAttribute('href');
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            previewUrl = null;
+        }
+
+        function previewFile(file) {
+            clearFilePreview();
+            const extension = file.name.split('.').pop().toLowerCase();
+            const types = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', pdf: 'application/pdf' };
+            const type = types[extension];
+            previewUrl = URL.createObjectURL(type ? file.slice(0, file.size, type) : file);
+            previewDialog.querySelector('[data-taqa-preview-title]').textContent = file.name;
+            previewDownload.href = previewUrl;
+            previewDownload.download = file.name;
+            if (type && type.startsWith('image/')) {
+                const image = document.createElement('img');
+                image.src = previewUrl;
+                image.alt = file.name;
+                previewBody.appendChild(image);
+            } else if (type === 'application/pdf') {
+                const frame = document.createElement('iframe');
+                frame.src = previewUrl;
+                frame.title = file.name;
+                previewBody.appendChild(frame);
+            } else {
+                const help = document.createElement('p');
+                help.textContent = messages.previewDownloadHelp;
+                previewBody.appendChild(help);
+            }
+            if (!previewDialog.open) previewDialog.showModal();
         }
 
         function setStep(step) {
@@ -1269,8 +1689,9 @@
             if (!error) return null;
             error.textContent = message;
             error.hidden = false;
-            field.classList.add('is-invalid');
-            return field;
+            const focusField = field === fileInput ? pickFilesButton : field;
+            focusField.classList.add('is-invalid');
+            return focusField;
         }
 
         function validateStep(step) {
@@ -1338,7 +1759,7 @@
                     firstInvalid = firstInvalid || showFieldError('preferred_date', messages.dateInvalid);
                 }
             }
-            if (step === 3) {
+            if (step === 2 || step === 3) {
                 const files = Array.from(fileInput.files);
                 if (files.length > 5) {
                     firstInvalid = showFieldError('attachments[]', messages.fileCountError);
@@ -1460,6 +1881,7 @@
             draft.__step = currentStep;
             try {
                 localStorage.setItem(draftKey, JSON.stringify(draft));
+                savedDraft = draft;
                 alertBox.className = 'alert alert-success taqa-request-alert';
                 alertBox.textContent = messages.draftSaved;
             } catch (error) {
@@ -1492,6 +1914,15 @@
                 });
                 if (services.some(function (service) { return String(service.id) === String(selectedId); })) {
                     serviceSelect.value = selectedId;
+                } else if (!selectedId) {
+                    const surveyService = services.find(function (service) {
+                        const config = serviceConfig(service);
+                        const keys = new Set((Array.isArray(config.fields) ? config.fields : [])
+                            .map(function (field) { return field.key; }));
+                        return config.solar === true &&
+                            ['goal', 'existing', 'loads'].every(function (key) { return keys.has(key); });
+                    });
+                    if (surveyService) serviceSelect.value = String(surveyService.id);
                 }
                 serviceSelect.disabled = services.length === 0;
                 serviceSelect.removeAttribute('data-selected-service');
@@ -1532,6 +1963,15 @@
         });
 
         saveDraftButton.addEventListener('click', saveDraft);
+        pickFilesButton.addEventListener('click', function () { fileInput.click(); });
+        previewDialog.querySelector('[data-taqa-close-preview]').addEventListener('click', function () {
+            previewDialog.close();
+        });
+        previewDialog.addEventListener('close', clearFilePreview);
+        window.addEventListener('pagehide', function () {
+            previewDialog.close();
+            clearFilePreview();
+        });
 
         serviceSelect.addEventListener('change', function () {
             applyServiceConfiguration(selectedService());

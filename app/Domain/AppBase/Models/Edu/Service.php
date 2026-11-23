@@ -14,21 +14,29 @@ class Service extends Model
 {
     use SoftDeletes, HasTranslations, HasUuid;
 
-    public $translatable = ['name', 'description', 'scope_of_work'];
+    public $translatable = ['name', 'description', 'scope_of_work', 'duration'];
 
     protected $fillable = [
         'name',
         'description',
         'scope_of_work',
+        'deliverables',
+        'exclusions',
+        'requirements',
+        'duration',
+        'pricing_mode',
+        'price',
         'request_config',
-        'details',
         'status',
     ];
 
     protected $casts = [
         'status' => StatusEnum::class,
         'request_config' => 'array',
-        'details' => 'array',
+        'deliverables' => 'array',
+        'exclusions' => 'array',
+        'requirements' => 'array',
+        'price' => 'decimal:2',
     ];
 
     public function educators()

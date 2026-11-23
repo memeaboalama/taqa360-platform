@@ -14,10 +14,10 @@
             <button type="button" aria-label="@lang('ecommerce::ecommerce.close')" data-mobile-menu-close>&times;</button>
         </li>
         <li><a class="{{ $storeActiveNav === 'home' ? 'active' : '' }}" href="{{ route('ecommerce.static') }}">@lang('ecommerce::ecommerce.home')</a></li>
-        @if (config('app.brand') === 'taqa360')
+        {{-- @if (config('app.brand') === 'taqa360')
             <li><a class="{{ $storeActiveNav === 'services' ? 'active' : '' }}"
                 href="{{ route('service-requests.catalog') }}">@lang('ecommerce::ecommerce.sr_workspace_services')</a></li>
-        @endif
+        @endif --}}
         <li><a class="{{ $storeActiveNav === 'categories' ? 'active' : '' }}" href="{{ route('categories.index') }}">@lang('ecommerce::ecommerce.categories.categories')</a></li>
         <li><a class="{{ $storeActiveNav === 'merchants' ? 'active' : '' }}" href="{{ route('merchants.index') }}">@lang('ecommerce::ecommerce.merchants_list')</a></li>
         {{-- [TEMP DISABLED] تبويب العروض الخاصة معلق مؤقتاً

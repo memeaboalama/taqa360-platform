@@ -8,9 +8,14 @@ class UpdateServiceAction
 {
     public function execute(Service $service, array $data): Service
     {
-        if (isset($service->details['_seed_key'])) {
-            $data['details'] = is_array($data['details'] ?? null) ? $data['details'] : [];
-            $data['details']['_seed_key'] = $service->details['_seed_key'];
+        if (($data['pricing_mode'] ?? $service->pricing_mode ?? 'quote') === 'quote') {
+            $data['price'] = null;
+        }
+        if (isset($service->request_config['_seed_key'])) {
+            $data['request_config'] = is_array($data['request_config'] ?? null)
+                ? $data['request_config']
+                : $service->request_config;
+            $data['request_config']['_seed_key'] = $service->request_config['_seed_key'];
         }
 
         $service->update($data);

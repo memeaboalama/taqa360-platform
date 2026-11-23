@@ -1,3 +1,6 @@
+@if(config('app.brand') === 'taqa360')
+    @include('ecommerce::pages.account._taqa_service_requests')
+@else
 
 @if(request()->hasHeader('X-Up-Target'))
 <div class="dashboard-content">
@@ -371,4 +374,6 @@
 
 @if(request()->hasHeader('X-Up-Target'))
 </div>
+@endif
+
 @endif
