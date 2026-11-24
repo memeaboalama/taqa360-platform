@@ -418,7 +418,7 @@ class FetchHomeDataAction
         if ($logoPath && filter_var($logoPath, FILTER_VALIDATE_URL)) {
             $content['logo'] = $logoPath;
         } elseif ($logoPath && Storage::disk('fileDisk')->exists($logoPath)) {
-            $content['logo'] = '/storage/' . ltrim($logoPath, '/')
+            $content['logo'] = Storage::disk('fileDisk')->url($logoPath)
                 . '?v=' . Storage::disk('fileDisk')->lastModified($logoPath);
         } elseif ($logoPath && file_exists(public_path($logoPath))) {
             $content['logo'] = asset($logoPath);
