@@ -43,7 +43,9 @@ class Show extends Component
             'orderItems.orderChoices.choice',
             'branch',
             'merchant',
-            'address',
+            'address.country',
+            'address.city',
+            'address.distract',
         ])->where('driver_id', auth()->guard('driver')->id())->find($orderId);
 
         if (!$order) {
@@ -61,11 +63,21 @@ class Show extends Component
         }
         $addressText = $order->address?->address
             ?? (is_object($addressInOrder) ? ($addressInOrder->address ?? null) : $addressInOrder);
+        $fullAddress = collect([
+            $addressText,
+            $order->address?->distract?->title,
+            $order->address?->city?->title,
+            $order->address?->country?->title,
+        ])
+            ->filter(fn ($part) => is_string($part) && trim($part) !== '')
+            ->map(fn (string $part) => trim($part))
+            ->unique()
+            ->implode('، ');
         $clientLat = $order->client_lat ?? $order->address?->latitude;
         $clientLong = $order->client_long ?? $order->address?->longitude;
         $mapUrl = is_numeric($clientLat) && is_numeric($clientLong)
             ? 'https://www.google.com/maps/dir/?api=1&destination=' . urlencode($clientLat . ',' . $clientLong)
-            : ($addressText ? 'https://maps.google.com/?q=' . urlencode((string) $addressText) : null);
+            : ($fullAddress ? 'https://maps.google.com/?q=' . urlencode($fullAddress) : null);
 
         $this->order = [
             'id' => $order->id,
@@ -82,7 +94,7 @@ class Show extends Component
             'client_phone' => $order->client_phone,
             'merchant_name' => $order->merchant?->company_name ?? $order->merchant?->name ?? $order->merchant_name,
             'branch_name' => $order->branch?->title,
-            'address' => $addressText,
+            'address' => $fullAddress ?: null,
             'map_url' => $mapUrl,
             'subtotal' => $order->subtotal,
             'delivery_fee' => $order->delivery_fee,

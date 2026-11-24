@@ -14,6 +14,7 @@ use App\Domain\MarketPlace\Models\MerchantOrder;
 use App\Domain\MarketPlace\Models\OrderSettlement;
 use App\Domain\MarketPlace\Models\OrderSettlementHistory;
 use App\Domain\MarketPlace\Models\PaymentCorrectionRequest;
+use App\Domain\User\Models\UserAddress;
 use App\Domain\MarketPlace\Services\CollectionFailureWorkflow;
 use App\Domain\MarketPlace\Services\DriverCustodyLedger;
 use App\Domain\MarketPlace\Services\FinancialMovementCorrectionWorkflow;
@@ -839,6 +840,58 @@ class CollectionSettlementAcceptanceTest extends TestCase
         $this->assertSame(MerchantOrderStatuses::ON_WAY->value, $order->fresh()->status->value);
         $this->assertSame(0, $this->paymentCount($order));
         $this->assertSame(0.0, app(DriverCustodyLedger::class)->balanceForOrder($order->id, $this->driver->id));
+    }
+
+    public function test_driver_order_details_include_street_district_city_and_country_in_address(): void
+    {
+        app()->setLocale('en');
+        Auth::guard('driver')->setUser($this->driver);
+        $user = User::factory()->create();
+        $currency = Currency::query()->create([
+            'title' => 'Acceptance Currency',
+            'iso' => 'ACT',
+            'status' => 'active',
+        ]);
+        $country = Country::query()->create([
+            'title' => 'Saudi Arabia',
+            'iso' => 'SAU',
+            'vat' => 0,
+            'currency_id' => $currency->id,
+            'status' => 'active',
+        ]);
+        $city = City::query()->create([
+            'title' => 'Riyadh',
+            'country_id' => $country->id,
+            'status' => 'active',
+        ]);
+        $district = Distract::query()->create([
+            'title' => 'Al Nada',
+            'country_id' => $country->id,
+            'city_id' => $city->id,
+            'status' => 'active',
+        ]);
+        $address = UserAddress::query()->create([
+            'user_id' => $user->id,
+            'country_id' => $country->id,
+            'city_id' => $city->id,
+            'distract_id' => $district->id,
+            'title' => 'Home',
+            'address' => 'Riyadh local test street',
+            'latitude' => '24.7',
+            'longitude' => '46.6',
+        ]);
+        $order = $this->createOrder($this->driver, [
+            'address_id' => $address->id,
+            'user_id' => $user->id,
+        ]);
+        $component = new DriverOrderShow();
+
+        $component->showOrderDetails($order->id);
+
+        $this->assertSame(
+            'Riyadh local test street، Al Nada، Riyadh، Saudi Arabia',
+            $component->order['address']
+        );
     }
 
     public function test_driver_cannot_complete_delivery_before_starting_it(): void

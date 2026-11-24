@@ -69,8 +69,7 @@
                 grid-template-columns: minmax(0, 1fr);
             }
 
-            .order-note-row .btn,
-            .order-mark-select {
+            .order-note-row .btn {
                 width: 100%;
             }
         }
@@ -103,19 +102,6 @@
                             @endphp
                                 <span class="badge {{ $statusEnum?->color() }}">{{ $statusEnum?->trans() }}</span>
                                 <span class="badge bg-info">{{ __('admin::home.' . $order?->type_service_name()) }}</span>
-                            </div>
-                            <div class="order-header-mark">
-                            @php
-                                $currentMarkEnum = is_string($mark) ? (\App\Application\Marketplace\Enums\MerchantOrderMarks::tryFrom($mark) ?? \App\Application\Marketplace\Enums\MerchantOrderMarks::WHITE) : $mark;
-                            @endphp
-                                <select class="form-select order-mark-select {{ $currentMarkEnum?->color() }}" wire:change="$emit('updateMark')" wire:model.defer="mark">
-                                    @foreach($marks as $value)
-                                    @php
-                                        $itemEnum = is_string($value) ? (\App\Application\Marketplace\Enums\MerchantOrderMarks::tryFrom($value) ?? \App\Application\Marketplace\Enums\MerchantOrderMarks::WHITE) : $value;
-                                    @endphp
-                                    <option value="{{ $itemEnum?->value ?? $value }}">{{ $itemEnum?->trans() }}</option>
-                                    @endforeach
-                                </select>
                             </div>
                         </div>
                         <div class="order-note-row">
