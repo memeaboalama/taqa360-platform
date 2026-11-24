@@ -11,10 +11,21 @@
         'pending', 'started-work', 'will-be-late', 'draft' => 'od-badge-amber',
         default => 'od-badge-gray',
     };
+    $paymentStatus = $paymentLedger['payment_status'] ?? 'unpaid';
+    $paymentBadge = match ($paymentStatus) {
+        'paid' => 'od-badge-green',
+        'pending', 'initiated', 'partially_paid' => 'od-badge-amber',
+        'failed', 'refunded', 'partially_refunded' => 'od-badge-red',
+        default => 'od-badge-gray',
+    };
+    $paymentLabel = $paymentLedger['payment_label'] ?? $paymentStatus;
     $serviceName = $order->type_service?->name;
     $requiresDriver = $serviceName !== 'without_delivery' && (string) $order->service_type_id !== '2';
+    $operationalStatusLabel = $order->operational_status_label;
     if ($order->driver) {
-        $driverAssignmentLabel = 'تم تعيين السائق';
+        $driverAssignmentLabel = $statusVal === 'confirmed'
+            ? $operationalStatusLabel
+            : 'تم تعيين السائق';
         $driverUnassignedMessage = 'تم ربط الطلب بالسائق ' . $order->driver->name . '.';
         $driverAssignmentBadge = 'od-badge-green';
     } elseif (!$requiresDriver) {
@@ -29,7 +40,7 @@
                 'od-badge-amber',
             ],
             'confirmed' => [
-                'بانتظار قبول سائق',
+                $operationalStatusLabel,
                 'تم قبول الطلب، ويجري إرساله للسائقين بانتظار قبول أحدهم.',
                 'od-badge-amber',
             ],
@@ -61,14 +72,6 @@
         };
     }
 
-    $paymentStatus = $paymentLedger['payment_status'] ?? 'unpaid';
-    $paymentBadge = match ($paymentStatus) {
-        'paid' => 'od-badge-green',
-        'pending', 'initiated', 'partially_paid' => 'od-badge-amber',
-        'failed', 'refunded', 'partially_refunded' => 'od-badge-red',
-        default => 'od-badge-gray',
-    };
-    $paymentLabel = $paymentLedger['payment_label'] ?? $paymentStatus;
     $dueAmount = (float) ($order->total_after_discount > 0
         ? $order->total_after_discount
         : $order->total_after_vat);
@@ -86,21 +89,33 @@
     }
     $snapshotAddressText = is_array($orderAddressSnapshot)
         ? (data_get($orderAddressSnapshot, 'address') ?: data_get($orderAddressSnapshot, 'full_address'))
-        : $orderAddressSnapshot;
+        : (is_object($orderAddressSnapshot)
+            ? (data_get($orderAddressSnapshot, 'address') ?: data_get($orderAddressSnapshot, 'full_address'))
+            : $orderAddressSnapshot);
     $addressParts = collect([
         $address?->address,
+        $address?->district_name,
         $address?->distract?->title,
         $address?->city?->title,
         $address?->country?->title,
+        data_get($orderAddressSnapshot, 'district_name'),
+        data_get($orderAddressSnapshot, 'city'),
+        data_get($orderAddressSnapshot, 'country'),
         $snapshotAddressText,
     ])->filter(fn ($part) => is_string($part) && trim($part) !== '')
         ->unique()
         ->values();
     $addressText = $addressParts->isNotEmpty() ? $addressParts->implode('، ') : null;
-    $latitude = $address?->latitude ?: $order->client_lat;
-    $longitude = $address?->longitude ?: $order->client_long;
-    $mapUrl = $latitude !== null && $latitude !== '' && $longitude !== null && $longitude !== ''
-        ? 'https://www.google.com/maps?q=' . rawurlencode($latitude . ',' . $longitude)
+    $latitude = $address?->latitude ?? data_get($orderAddressSnapshot, 'latitude') ?? $order->client_lat;
+    $longitude = $address?->longitude ?? data_get($orderAddressSnapshot, 'longitude') ?? $order->client_long;
+    $mapQuery = is_numeric($latitude) && is_numeric($longitude)
+        ? $latitude . ',' . $longitude
+        : $addressText;
+    $mapUrl = $mapQuery
+        ? 'https://www.google.com/maps?q=' . rawurlencode($mapQuery)
+        : null;
+    $mapEmbedUrl = $mapQuery
+        ? 'https://maps.google.com/maps?q=' . rawurlencode($mapQuery) . '&output=embed'
         : null;
 
     $historyLabels = [
@@ -134,8 +149,14 @@
     $timelineSteps = [
         ['label' => 'استلام الطلب', 'actions' => ['create-order', 'pending']],
         ['label' => 'تجهيز الطلب', 'actions' => ['employee-accept', 'start-cooking', 'marked-ready']],
-        ['label' => 'جاري التوصيل', 'actions' => ['driver-accept', 'driver-on-way']],
-        ['label' => 'تم التسليم', 'actions' => ['completed-order', 'employee-completed-order']],
+        [
+            'label' => $requiresDriver ? 'جاري التوصيل' : 'جاهز للاستلام',
+            'actions' => ['driver-accept', 'driver-on-way'],
+        ],
+        [
+            'label' => $requiresDriver ? 'تم التسليم' : 'تم الاستلام',
+            'actions' => ['completed-order', 'employee-completed-order'],
+        ],
     ];
     foreach ($timelineSteps as $index => $step) {
         $event = $findHistoryEvent($step['actions']);
@@ -151,7 +172,63 @@
         in_array((string) $order->service_type_id, ['2', 'without_delivery'], true) => 'استلام من المتجر',
         default => $serviceName ?: 'غير محدد',
     };
-    $paymentMethod = ($paymentLedger['payment_method'] ?? $order->payment_method) ?: '—';
+    $customerNote = trim((string) ($order->note ?? ''));
+    $settlement = $paymentLedger['settlement'] ?? null;
+    $isCashOnDelivery = \App\Domain\MarketPlace\Models\MerchantOrder::isCashOnDeliveryMethod($order->payment_method);
+    $settlementStatus = $settlement?->status;
+    $pendingSettlementAmount = $isCashOnDelivery && in_array($settlementStatus, ['pending_review', 'reviewed'], true)
+        ? min((float) $settlement->amount, (float) ($paymentLedger['collected'] ?? 0))
+        : 0.0;
+    $approvedSettlementAmount = $isCashOnDelivery && $settlementStatus === 'approved'
+        ? min((float) ($settlement->received_amount ?? $settlement->amount), (float) ($paymentLedger['collected'] ?? 0))
+        : 0.0;
+    $unremittedAmount = $isCashOnDelivery
+        ? max((float) ($paymentLedger['collected'] ?? 0) - $pendingSettlementAmount - $approvedSettlementAmount, 0)
+        : 0.0;
+    $settlementStatusLabel = match ($settlementStatus) {
+        'pending_review' => 'مقدم للمراجعة',
+        'reviewed' => 'قيد المراجعة',
+        'approved' => 'توريد معتمد',
+        'returned' => 'معاد للتصحيح',
+        'rejected' => 'مرفوض',
+        default => 'لم يقدم السائق توريدًا بعد',
+    };
+    $settlementStatusBadge = match ($settlementStatus) {
+        'pending_review', 'reviewed' => 'od-badge-amber',
+        'approved' => 'od-badge-green',
+        'returned', 'rejected' => 'od-badge-red',
+        default => 'od-badge-gray',
+    };
+    $collectionStatusLabel = $isCashOnDelivery
+        ? ((float) ($paymentLedger['collected'] ?? 0) > 0
+            ? ((float) ($paymentLedger['remaining'] ?? 0) > 0 ? 'تم تحصيل جزء من المبلغ' : 'تم التحصيل')
+            : 'بانتظار التحصيل')
+        : $paymentLabel;
+    $collectionStatusBadge = $isCashOnDelivery
+        ? ((float) ($paymentLedger['collected'] ?? 0) > 0 && (float) ($paymentLedger['remaining'] ?? 0) <= 0
+            ? 'od-badge-green'
+            : 'od-badge-amber')
+        : $paymentBadge;
+    $remittanceLabel = !$isCashOnDelivery
+        ? 'لا ينطبق على الدفع الإلكتروني'
+        : match ($settlementStatus) {
+            'approved' => 'تم اعتماد التوريد',
+            'pending_review' => 'مقدم للمراجعة',
+            'reviewed' => 'تمت مراجعة التوريد',
+            'returned' => 'أعيد التوريد للسائق للتصحيح',
+            'rejected' => 'تم رفض التوريد',
+            default => (float) ($paymentLedger['collected'] ?? 0) > 0
+                ? 'لم يقدم السائق التوريد بعد'
+                : 'لم يسجل تحصيل نقدي بعد',
+        };
+    $remittanceBadge = match ($settlementStatus) {
+        'approved' => 'od-badge-green',
+        'pending_review', 'reviewed' => 'od-badge-amber',
+        'returned', 'rejected' => 'od-badge-red',
+        default => 'od-badge-gray',
+    };
+    $paymentMovements = $paymentLedger['movements'] ?? [];
+    $paymentMovementCount = count($paymentMovements);
 @endphp
 
 <div id="order-details-page" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
@@ -174,7 +251,7 @@
             </p>
         </div>
         <div class="od-page-actions no-print">
-            <a href="{{ route('marketplace:orders') }}" class="od-btn">
+            <a href="{{ $ordersUrl ?? route('marketplace:orders') }}" class="od-btn">
                 <i class="ri-arrow-go-back-line"></i>
                 <span>العودة للطلبات</span>
             </a>
@@ -238,7 +315,7 @@
             @elseif($statusVal === 'confirmed' && $requiresDriver)
                 <span class="od-badge od-badge-amber">
                     <i class="ri-time-line me-1"></i>
-                    {{ $order->driver ? 'تم إسناد السائق، بانتظار قبوله' : 'بانتظار سائق' }}
+                    {{ $operationalStatusLabel }}
                 </span>
             @elseif($statusVal === 'confirmed' && !$requiresDriver)
                 <button wire:click="startOrder" class="od-btn od-btn-primary"
@@ -272,7 +349,10 @@
         <main class="od-main-col">
             <section class="od-card">
                 <header class="od-card-head">
-                    <h2><i class="ri-shopping-bag-3-line"></i> المنتجات</h2>
+                    <h2>
+                        <i class="ri-shopping-bag-3-line"></i> منتجات الطلب
+                        <span class="od-head-count">{{ $order->orderItems->count() }}</span>
+                    </h2>
                     <span class="od-store-label">
                         <i class="ri-store-2-line"></i>
                         {{ $order->merchant_name ?: 'المتجر' }}
@@ -339,10 +419,10 @@
                     <span>·</span>
                     <span>القيم المعروضة محفوظة ضمن تفاصيل الطلب.</span>
                 </div>
-                @if($order->note)
+                @if($customerNote !== '')
                     <div class="od-client-note">
                         <strong><i class="ri-sticky-note-line"></i> ملاحظة العميل</strong>
-                        <span>{{ $order->note }}</span>
+                        <span>{{ $customerNote }}</span>
                     </div>
                 @endif
             </section>
@@ -377,16 +457,30 @@
                         </div>
                     @endif
 
-                    <div class="od-detail-label">عنوان التوصيل</div>
-                    <div class="od-map-link">
-                        <span>
-                            <i class="ri-map-pin-2-line"></i>
-                            {{ $addressText ?: 'لم يتم حفظ عنوان توصيل لهذا الطلب.' }}
-                        </span>
-                        @if($mapUrl)
-                            <a href="{{ $mapUrl }}" target="_blank" rel="noopener noreferrer">عرض الخريطة</a>
+                    @if($requiresDriver)
+                        <div class="od-detail-label">عنوان التوصيل</div>
+                        @if($mapEmbedUrl)
+                            <div class="od-map-frame">
+                                <iframe src="{{ $mapEmbedUrl }}" title="خريطة موقع التسليم"
+                                        loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                            </div>
+                        @else
+                            <div class="od-map-placeholder">لم يتم حفظ إحداثيات أو عنوان يمكن عرضه على الخريطة.</div>
                         @endif
-                    </div>
+                        <div class="od-map-link">
+                            <span>
+                                <i class="ri-map-pin-2-line"></i>
+                                {{ $addressText ?: 'لم يتم حفظ عنوان توصيل لهذا الطلب.' }}
+                            </span>
+                            @if($mapUrl)
+                                <a href="{{ $mapUrl }}" target="_blank" rel="noopener noreferrer">فتح الخريطة</a>
+                            @endif
+                        </div>
+                    @else
+                        <div class="od-map-link">
+                            <span><i class="ri-store-2-line"></i> {{ $serviceLabel }}</span>
+                        </div>
+                    @endif
                     <div class="od-row mt-3">
                         <span class="od-muted">نوع الخدمة</span>
                         <strong>{{ $serviceLabel }}</strong>
@@ -400,24 +494,205 @@
                 </div>
             </section>
 
-            @include('ecommerce::components.order-payment-ledger', [
-                'paymentLedger' => $paymentLedger,
-                'allowCorrection' => false,
-                'financialReportUrl' => route('marketplace:finance.reports.orders.index', ['code' => $order->code]),
-            ])
+            <section class="od-card od-payment-card">
+                <header class="od-card-head">
+                    <h2><i class="ri-wallet-3-line"></i> الدفع والتحصيل</h2>
+                    <span class="od-badge {{ $collectionStatusBadge }}">{{ $collectionStatusLabel }}</span>
+                </header>
+                <div class="od-card-body">
+                    <div class="od-payment-top">
+                        <div class="od-payment-method">
+                            <span class="od-payment-method-icon">
+                                <i class="{{ $isCashOnDelivery ? 'ri-wallet-3-line' : 'ri-bank-card-line' }}"></i>
+                            </span>
+                            <span>
+                                <span class="od-detail-label">طريقة الدفع</span>
+                                <strong>{{ $paymentLedger['payment_method'] ?: '—' }}</strong>
+                            </span>
+                        </div>
+                        <div class="od-payment-links">
+                            <a class="od-link" href="#payment-movements">تفاصيل الدفع</a>
+                            @if(!empty($financialReportUrl))
+                                <a class="od-link" href="{{ $financialReportUrl }}">التقرير المالي</a>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="od-payment-numbers">
+                        <div>
+                            <span>إجمالي الطلب</span>
+                            <strong>{{ number_format((float) ($paymentLedger['due'] ?? $dueAmount), 2) }} ر.س</strong>
+                        </div>
+                        <div class="is-collected">
+                            <span>المحصّل</span>
+                            <strong>{{ number_format((float) ($paymentLedger['collected'] ?? 0), 2) }} ر.س</strong>
+                        </div>
+                        <div class="is-balance">
+                            <span>المتبقي للتحصيل</span>
+                            <strong>{{ number_format((float) ($paymentLedger['remaining'] ?? $dueAmount), 2) }} ر.س</strong>
+                        </div>
+                        <div>
+                            <span>المسترد</span>
+                            <strong>{{ number_format((float) ($paymentLedger['refunded'] ?? 0), 2) }} ر.س</strong>
+                        </div>
+                    </div>
+
+                    <div class="od-payment-meta">
+                        <span><i class="ri-time-line"></i> آخر تحصيل</span>
+                        <strong>{{ $paymentLedger['collection_date'] ?: 'لم يسجل تحصيل بعد' }}</strong>
+                    </div>
+                    <div class="od-payment-meta">
+                        <span><i class="ri-shield-check-line"></i> التوريد للإدارة</span>
+                        <span class="od-badge {{ $remittanceBadge }}">{{ $remittanceLabel }}</span>
+                    </div>
+
+                    <div class="od-payment-actions">
+                        @if((float) ($paymentLedger['collected'] ?? 0) > 0)
+                            <a class="od-btn" href="#payment-movements">
+                                <i class="ri-file-list-3-line"></i> إثبات الدفع
+                            </a>
+                        @else
+                            <button type="button" class="od-btn" disabled>
+                                <i class="ri-file-list-3-line"></i> إثبات الدفع
+                            </button>
+                        @endif
+                    </div>
+                    <p class="od-helper">
+                        {{ $isCashOnDelivery
+                            ? 'يسجل السائق استلام النقد من لوحته؛ وتظهر هنا حركة التحصيل والمبلغ ووقت التسجيل.'
+                            : 'تُعرض هنا حركات الدفع الإلكتروني والتحصيل المسجلة لهذا الطلب.' }}
+                    </p>
+                </div>
+
+                <div class="od-payment-movements-head" id="payment-movements">
+                    <strong>حركات الدفع والتحصيل</strong>
+                    <span class="od-head-count">{{ $paymentMovementCount }}</span>
+                </div>
+                @if($paymentMovementCount > 0)
+                    <div class="od-payment-table-wrap">
+                        <table class="od-payment-table">
+                            <thead>
+                                <tr>
+                                    <th>رقم الحركة</th>
+                                    <th>المبلغ</th>
+                                    <th>طريقة الدفع</th>
+                                    <th>المحصّل</th>
+                                    <th>التاريخ</th>
+                                    <th>التوريد</th>
+                                    <th>التفاصيل</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($paymentMovements as $movement)
+                                    @php
+                                        $movementSettlementLabel = match($movement['settlement_status'] ?? null) {
+                                            'pending_review' => 'مقدم للمراجعة',
+                                            'reviewed' => 'تمت المراجعة',
+                                            'approved' => 'معتمد',
+                                            'returned' => 'معاد للتصحيح',
+                                            'rejected' => 'مرفوض',
+                                            default => null,
+                                        };
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $movement['number'] ?: '—' }}</td>
+                                        <td class="{{ $movement['type'] === 'refund' || (float) $movement['amount'] < 0 ? 'is-refund' : 'is-collection' }}">
+                                            @if($movement['type'] === 'refund' && ($movement['refund_status'] ?? null) === 'pending')
+                                                {{ number_format((float) ($movement['requested_amount'] ?? 0), 2) }} ر.س
+                                                <small>استرداد قيد التنفيذ</small>
+                                            @else
+                                                {{ number_format((float) $movement['amount'], 2) }} ر.س
+                                            @endif
+                                        </td>
+                                        <td>{{ $movement['method'] ?: '—' }}</td>
+                                        <td>{{ $movement['collector'] ?: '—' }}</td>
+                                        <td>{{ $movement['occurred_at'] ?: '—' }}</td>
+                                        <td>
+                                            {{ $movement['settlement_number'] ?: '—' }}
+                                            @if($movementSettlementLabel)
+                                                <small>{{ $movementSettlementLabel }}</small>
+                                            @endif
+                                        </td>
+                                        <td>{{ $movement['details'] ?: '—' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="od-payment-empty">
+                        <i class="ri-wallet-3-line"></i>
+                        <span>لا توجد حركات دفع أو تحصيل مسجلة.</span>
+                        @if($isCashOnDelivery)
+                            <span>تظهر الحركات بعد تسجيل التحصيل من السائق.</span>
+                        @endif
+                    </div>
+                @endif
+            </section>
+
+            @if($adminContext ?? false)
+                @if($requiresDriver)
+                    <section class="od-card">
+                        <header class="od-card-head">
+                            <h2><i class="ri-shield-check-line"></i> توريد متحصلات الطلب</h2>
+                            <span class="od-badge {{ $settlementStatusBadge }}">{{ $settlementStatusLabel }}</span>
+                        </header>
+                        <div class="od-card-body">
+                            <p class="od-helper od-section-intro">
+                                تعرض هذه البطاقة حالة توريد متحصلات الطلب المسجلة من السائق واعتماد الإدارة.
+                            </p>
+                            <div class="od-settlement-summary">
+                                <div>
+                                    <span>غير مورد من هذا الطلب</span>
+                                    <strong>{{ number_format($unremittedAmount, 2) }} ر.س</strong>
+                                </div>
+                                <div>
+                                    <span>مقدم للمراجعة</span>
+                                    <strong>{{ number_format($pendingSettlementAmount, 2) }} ر.س</strong>
+                                </div>
+                                <div>
+                                    <span>توريد معتمد</span>
+                                    <strong>{{ number_format($approvedSettlementAmount, 2) }} ر.س</strong>
+                                </div>
+                            </div>
+                            @if(!$isCashOnDelivery)
+                                <div class="od-notice">لا تنطبق تسوية عهدة السائق على طريقة الدفع لهذا الطلب.</div>
+                            @elseif($settlement)
+                                <div class="od-settlement-details">
+                                    <div><span>رقم التسوية</span><strong>{{ $paymentLedger['settlement_number'] ?: '—' }}</strong></div>
+                                    <div><span>السائق</span><strong>{{ $settlement->driver?->name ?: '—' }}</strong></div>
+                                    <div><span>طريقة التوريد</span><strong>{{ ['cash' => 'نقدًا', 'transfer' => 'تحويل', 'deposit' => 'إيداع'][$settlement->method] ?? $settlement->method }}</strong></div>
+                                    @if($settlement->reference)
+                                        <div><span>المرجع</span><strong>{{ $settlement->reference }}</strong></div>
+                                    @endif
+                                    @if($settlement->approved_at)
+                                        <div><span>تاريخ الاعتماد</span><strong>{{ \Carbon\Carbon::parse($settlement->approved_at)->format('Y-m-d H:i') }}</strong></div>
+                                    @endif
+                                </div>
+                                @if(\App\Domain\MarketPlace\Models\CollectionSetting::adminCan('view'))
+                                    <a class="od-link od-settlement-link"
+                                       href="{{ route('admin:driver-settlements.show', $settlement->id) }}">
+                                        عرض تفاصيل التسوية
+                                    </a>
+                                @endif
+                            @else
+                                <div class="od-empty">
+                                    {{ $paymentLedger['collected'] > 0
+                                        ? 'لم يقدم السائق توريدًا لهذا الطلب بعد.'
+                                        : 'لا توجد متحصلات مسجلة لهذا الطلب حتى الآن.' }}
+                                </div>
+                            @endif
+                        </div>
+                    </section>
+                @endif
+            @endif
 
             <section class="od-card">
                 <header class="od-card-head">
-                    <h2><i class="ri-time-line"></i> سجل إجراءات الطلب</h2>
+                    <h2><i class="ri-time-line"></i> سجل الإجراءات</h2>
                     <span class="od-head-count">{{ $orderHistory->count() }}</span>
                 </header>
                 <div class="od-card-body">
-                    @if($order->admin_note)
-                        <div class="od-client-note mb-3">
-                            <strong><i class="ri-shield-user-line"></i> ملاحظة الإدارة</strong>
-                            <span>{{ $order->admin_note }}</span>
-                        </div>
-                    @endif
                     @forelse($orderHistory->sortByDesc('created_at')->take(8) as $event)
                         <div class="od-history-item {{ !$loop->last ? 'mb-3' : '' }}">
                             <span class="od-history-dot"><i class="ri-check-line"></i></span>
@@ -434,6 +709,43 @@
                     @endforelse
                 </div>
             </section>
+
+            @if($adminContext ?? false)
+                <section class="od-card">
+                    <header class="od-card-head">
+                        <h2><i class="ri-lock-line"></i> ملاحظات الإدارة</h2>
+                        <span class="od-badge od-badge-gray">داخلية</span>
+                    </header>
+                    <div class="od-card-body">
+                        @if($order->admin_note)
+                            <div class="od-internal-note">{{ $order->admin_note }}</div>
+                        @else
+                            <div class="od-empty">لا توجد ملاحظات إدارية محفوظة لهذا الطلب.</div>
+                        @endif
+                        <form class="od-note-editor" wire:submit.prevent="saveAdminNote">
+                            <textarea class="form-control" wire:model.defer="adminNoteDraft"
+                                      maxlength="1500" rows="3"
+                                      placeholder="أضف ملاحظة لفريق الإدارة…"
+                                      aria-label="ملاحظة إدارية"></textarea>
+                            @error('adminNoteDraft')
+                                <span class="text-danger small">{{ $message }}</span>
+                            @enderror
+                            <button type="submit" class="od-btn od-btn-primary"
+                                    wire:loading.attr="disabled" wire:target="saveAdminNote">
+                                <span wire:loading.class="d-none" wire:target="saveAdminNote">
+                                    <i class="ri-save-line"></i> حفظ الملاحظة
+                                </span>
+                                <span class="d-none" wire:loading.class.remove="d-none" wire:target="saveAdminNote">
+                                    جاري الحفظ
+                                    <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                                </span>
+                            </button>
+                        </form>
+                        <p class="od-helper">تظهر هذه الملاحظة لفريق الإدارة فقط.</p>
+                    </div>
+                </section>
+            @endif
+
         </main>
 
         <aside class="od-side-col">
@@ -491,7 +803,7 @@
 
             <section class="od-card">
                 <header class="od-card-head">
-                    <h2><i class="ri-user-3-line"></i> بيانات العميل</h2>
+                    <h2><i class="ri-user-3-line"></i> العميل وعنوان التسليم</h2>
                 </header>
                 <div class="od-card-body">
                     <div class="od-client-box">
@@ -514,6 +826,13 @@
                         </div>
                     @endif
                     <div class="od-divider"></div>
+                    <div class="od-detail-label">عنوان الشحن المحفوظ في الطلب</div>
+                    <p class="od-address">{{ $addressText ?: 'لم يتم حفظ عنوان للطلب.' }}</p>
+                    @if($mapUrl)
+                        <a class="od-link od-address-link" href="{{ $mapUrl }}" target="_blank"
+                           rel="noopener noreferrer">عرض العنوان على الخريطة</a>
+                    @endif
+                    <div class="od-divider"></div>
                     <div class="od-detail-label">موعد الطلب</div>
                     <div class="od-detail-row">
                         <i class="ri-calendar-line"></i>
@@ -534,7 +853,8 @@
 
             <section class="od-card">
                 <header class="od-card-head">
-                    <h2><i class="ri-e-bike-2-line"></i> السائق</h2>
+                    <h2><i class="ri-e-bike-2-line"></i> السائق والإسناد</h2>
+                    <span class="od-badge {{ $driverAssignmentBadge }}">{{ $driverAssignmentLabel }}</span>
                 </header>
                 <div class="od-card-body">
                     @if($order->driver)
@@ -597,22 +917,22 @@
 
             <section class="od-card">
                 <header class="od-card-head">
-                    <h2><i class="ri-bank-card-line"></i> طريقة الدفع</h2>
-                    <span class="od-badge {{ $paymentBadge }}">{{ $paymentLabel }}</span>
+                    <h2><i class="ri-truck-line"></i> طريقة الاستلام</h2>
                 </header>
                 <div class="od-card-body">
                     <div class="od-detail-row">
-                        <i class="ri-wallet-3-line"></i>
-                        <strong>{{ $paymentMethod }}</strong>
+                        <i class="{{ $requiresDriver ? 'ri-truck-line' : 'ri-store-2-line' }}"></i>
+                        <strong>{{ $serviceLabel }}</strong>
                     </div>
-                    <div class="od-detail-row">
-                        <i class="ri-checkbox-circle-line"></i>
-                        <span>المبلغ المتبقي: {{ number_format((float) ($paymentLedger['remaining'] ?? $dueAmount), 2) }} ر.س</span>
-                    </div>
+                    <p class="od-helper">طريقة الاستلام المحفوظة مع الطلب.</p>
                 </div>
             </section>
         </aside>
     </div>
 
-    <livewire:marketplace::order.modal.cancel />
+    @if($adminContext ?? false)
+        <livewire:admin::order.modal.cancel-details />
+    @else
+        <livewire:marketplace::order.modal.cancel />
+    @endif
 </div>

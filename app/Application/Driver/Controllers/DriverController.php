@@ -36,28 +36,7 @@ class DriverController extends Controller
             'expiredOrdersCount' => (clone $orders)->where('status', 'expired')->count(),
         ];
 
-        $perPage = (int) request('perPage', 10);
-        if (!in_array($perPage, [10, 25, 50, 100], true)) {
-            $perPage = 10;
-        }
-
-        $recentOrders = (clone $orders)->with([
-            'user',
-            'payment',
-            'orders_history' => function ($query) {
-                $query->whereIn('action', [
-                    MerchantOrderHistoryStatuses::DRIVER_ACCEPT->value,
-                    MerchantOrderHistoryStatuses::MARKED_READY->value,
-                    MerchantOrderHistoryStatuses::DRIVER_ASSIGNED_MANUALLY->value,
-                ])->orderByDesc('id');
-            },
-        ])
-            ->orderByDesc('updated_at')
-            ->orderByDesc('id')
-            ->paginate($perPage, ['*'], 'page')
-            ->withQueryString();
-
-        return view('driver::pages.home.index', compact('driver', 'stats', 'recentOrders'));
+        return view('driver::pages.home.index', compact('driver', 'stats'));
     }
 
     public function myCustody()

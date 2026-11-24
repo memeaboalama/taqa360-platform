@@ -23,6 +23,7 @@ class Read extends Component
     public $orderServices;
     public $address;
     public $selected_driver_id;
+    public string $adminNoteDraft = '';
 
     protected $listeners = ['refreshDatatable' => '$refresh', 'refreshOrder' => '$refresh'];
 
@@ -32,11 +33,12 @@ class Read extends Component
         $this->orderServices = $orderServices;
         $this->orderUser = $orderUser;
         $this->address = $address;
+        $this->adminNoteDraft = (string) ($order->admin_note ?? '');
     }
 
     public function acceptOrder(): void
     {
-        $user = auth()->user() ?? auth('merchant')->user() ?? auth('merchant_employee')->user();
+        $user = $this->actionUser();
         if (!$user) {
             $this->alert('error', __('marketplace::home.order_action_not_authorized'));
             return;
@@ -62,7 +64,7 @@ class Read extends Component
                 ->handle(
                     $order->id,
                     MerchantOrderHistoryStatuses::EMPLOYEE_ACCEPT->value,
-                    'Merchant accepted order via web',
+                    'Order accepted via web',
                     $user
                 );
 
@@ -96,7 +98,7 @@ class Read extends Component
 
     public function startOrder(): void
     {
-        $user = auth()->user() ?? auth('merchant')->user() ?? auth('merchant_employee')->user();
+        $user = $this->actionUser();
         if (!$user) {
             $this->alert('error', __('marketplace::home.order_action_not_authorized'));
             return;
@@ -125,7 +127,7 @@ class Read extends Component
                 ->handle(
                     $order->id,
                     MerchantOrderHistoryStatuses::START_COOKING->value,
-                    'Merchant started preparing pickup order',
+                    'Pickup order preparation started via web',
                     $user
                 );
 
@@ -145,7 +147,7 @@ class Read extends Component
 
     public function markAsReady(): void
     {
-        $user = auth()->user() ?? auth('merchant')->user() ?? auth('merchant_employee')->user();
+        $user = $this->actionUser();
         if (!$user) {
             $this->alert('error', __('marketplace::home.order_action_not_authorized'));
             return;
@@ -174,7 +176,7 @@ class Read extends Component
                 ->handle(
                     $order->id,
                     MerchantOrderHistoryStatuses::MARKED_READY->value,
-                    'Merchant marked order as ready',
+                    'Order marked as ready via web',
                     $user
                 );
 
@@ -194,7 +196,7 @@ class Read extends Component
 
     public function assignDriver(): void
     {
-        $user = auth()->user() ?? auth('merchant')->user() ?? auth('merchant_employee')->user();
+        $user = $this->actionUser();
         if (!$user) {
             $this->alert('error', __('marketplace::home.order_action_not_authorized'));
             return;
@@ -238,7 +240,7 @@ class Read extends Component
                         'commission_from_driver' => $driver->taken_commission ?? 0,
                     ],
                     $user,
-                    'Merchant manually assigned driver'
+                    'Driver manually assigned via web'
                 );
 
                 return $assigned ? 'assigned' : 'assignment_failed';
@@ -265,7 +267,12 @@ class Read extends Component
         $this->alert('success', __('marketplace::home.driver_assigned_successfully'));
     }
 
-    private function merchantOrderQuery(): \Illuminate\Database\Eloquent\Builder
+    protected function actionUser()
+    {
+        return auth()->user() ?? auth('merchant')->user() ?? auth('merchant_employee')->user();
+    }
+
+    protected function merchantOrderQuery(): \Illuminate\Database\Eloquent\Builder
     {
         $merchantId = app()->bound('_InitialMerchant')
             ? app('_InitialMerchant')
@@ -290,7 +297,7 @@ class Read extends Component
         $cancelAction->handle($this->order->id);
 
         $logHistory = app(\App\Domain\MarketPlace\Actions\Api\Order\LogOrderHistoryAction::class);
-        $user = auth()->user() ?? auth('merchant')->user() ?? auth('merchant_employee')->user();
+        $user = $this->actionUser();
         $logHistory->handle(
             $this->order->id,
             \App\Application\Marketplace\Enums\MerchantOrderHistoryStatuses::USER_CANCELLED->value,

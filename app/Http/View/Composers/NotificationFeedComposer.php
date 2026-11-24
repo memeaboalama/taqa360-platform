@@ -4,7 +4,6 @@ namespace App\Http\View\Composers;
 
 use App\Domain\Notification\Actions\FetchNotificationFeedAction;
 use App\Domain\User\Models\User;
-use Domain\Driver\Models\Driver;
 use Domain\MarketPlace\Models\MerchantEmployee;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -19,10 +18,6 @@ class NotificationFeedComposer
         'ecommerce::partials.store-header' => [
             'audience' => User::class,
             'guards' => ['web'],
-        ],
-        'driver::layout.header' => [
-            'audience' => Driver::class,
-            'guards' => ['driver'],
         ],
         'marketplace::layout.header' => [
             'audience' => MerchantEmployee::class,

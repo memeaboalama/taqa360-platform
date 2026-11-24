@@ -5,6 +5,8 @@ return [
         'pending' => 'Pending',
         'current' => 'Current',
         'confirmed' => 'Confirmed',
+        'awaiting_driver' => 'Awaiting driver',
+        'assigned_driver_awaiting_acceptance' => 'Driver assigned, awaiting acceptance',
         'completed' => 'Completed',
         'expired' => 'Expired',
         'cancelled' => 'Cancelled',

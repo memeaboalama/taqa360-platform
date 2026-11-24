@@ -108,7 +108,7 @@ Route::group(
             Route::get('/pending/{id}', [MerchantController::class, 'showPending'])->whereNumber('id')->name('pending.show');
 
             Route::prefix('orders')->as('orders.')->group(function () {
-                Route::get('/', [OrderController::class, 'index']);
+                Route::get('/', [OrderController::class, 'index'])->name('index');
                 Route::get('/get/{status?}', [OrderController::class, 'index']);
                 Route::get('/show/{id}', [OrderController::class, 'showOrder'])->name('showOrder');
                 Route::get('/loadPDF/{id}', [OrderController::class, 'showInvoice'])->name('pdf');

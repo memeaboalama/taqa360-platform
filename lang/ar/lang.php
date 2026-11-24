@@ -7,6 +7,8 @@ return [
         'pending' => 'قيد الانتظار',
         'current' => 'جاري التجهيز',
         'confirmed' => 'مؤكد',
+        'awaiting_driver' => 'بانتظار سائق',
+        'assigned_driver_awaiting_acceptance' => 'تم إسناد السائق، بانتظار قبوله',
         'completed' => 'تم التوصيل',
         'expired' => 'منتهي صلاحية',
         'cancelled' => 'تم الغاء الطلب',

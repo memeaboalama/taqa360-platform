@@ -5,6 +5,7 @@ namespace App\Domain\ElmApp\Actions\Order;
 use App\Application\Marketplace\Enums\MerchantOrderHistoryStatuses;
 use App\Domain\MarketPlace\Actions\Api\Order\LogOrderHistoryAction;
 use App\Domain\MarketPlace\Repositories\Order\MerchantOrderRepository;
+use App\Domain\Notification\Notifications\Driver\OrderAssigned;
 use Illuminate\Database\Eloquent\Model;
 
 class ManuallyAssignDriverAction
@@ -35,7 +36,13 @@ class ManuallyAssignDriverAction
             $reason,
             $user,
         );
-        
+
+        $updatedOrder->loadMissing('driver');
+        $driver = $updatedOrder->driver;
+        if ($driver) {
+            $driver->notify(new OrderAssigned($updatedOrder));
+        }
+
         return $updatedOrder;
     }
 

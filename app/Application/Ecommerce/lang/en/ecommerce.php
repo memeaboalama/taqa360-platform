@@ -611,7 +611,7 @@ return [
 
     // User Account
     'dashboard' => 'Dashboard',
-    'orders' => 'Orders',
+    'orders' => 'Products Orders',
     'order_history' => 'Order History',
     'addresses' => 'Addresses',
     'payment_methods' => 'Payment Methods',
@@ -832,7 +832,7 @@ return [
     'no_addresses_yet' => 'No addresses saved yet',
     'add_address_message' => 'Add your delivery addresses to checkout faster',
     'saudi_arabia' => 'Saudi Arabia',
-    'my_orders' => 'My Orders',
+    'my_orders' => 'Services Orders',
     'my_addresses' => 'My Addresses',
     'order_number' => 'Order Number',
     'view_details' => 'View Details',

@@ -410,6 +410,8 @@ return [
     "order_status_will-be-late" => "متأخر",
     "order_status_completed" => "مكتمل",
     "order_status_expired" => "منتهي",
+    "order_assigned_notification_title" => "طلب جديد",
+    "order_assigned_notification_body" => "تم إسناد الطلب رقم :code إليك.",
     "View" => "عرض",
     "Order Details" => "تفاصيل الطلب",
     "Product Details" => "بيانات المنتج",

@@ -2,7 +2,11 @@
     $notificationVariant = $notificationVariant ?? 'dashboard';
     $notificationCount = $notifications->count();
     $notificationIsRtl = in_array(app()->getLocale(), ['ar', 'he'], true);
+    $includeNotificationDropdown = $includeNotificationDropdown ?? true;
+    $includeNotificationModal = $includeNotificationModal ?? true;
+    $includeNotificationStyles = $includeNotificationStyles ?? true;
 @endphp
+@if($includeNotificationDropdown)
 <div class="dropdown notification-center notification-center--{{ $notificationVariant }}"
      dir="{{ $notificationIsRtl ? 'rtl' : 'ltr' }}">
     <button type="button"
@@ -74,7 +78,9 @@
         @endif
     </div>
 </div>
+@endif
 
+@if($includeNotificationModal)
 <div class="modal fade notification-details-modal" id="notificationDetailsModal" tabindex="-1"
      dir="{{ $notificationIsRtl ? 'rtl' : 'ltr' }}"
      aria-labelledby="notificationDetailsTitle" aria-hidden="true">
@@ -106,6 +112,9 @@
     </div>
 </div>
 
+@endif
+
+@if($includeNotificationStyles)
 <style>
     .notification-center {
         position: relative;
@@ -432,7 +441,9 @@
         }
     }
 </style>
+@endif
 
+@if($includeNotificationModal)
 <script>
     (function () {
         var modal = document.getElementById('notificationDetailsModal');
@@ -454,3 +465,4 @@
         });
     })();
 </script>
+@endif

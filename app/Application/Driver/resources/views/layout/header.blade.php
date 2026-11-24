@@ -67,9 +67,12 @@
             <!-- End::header-element -->
 
             <div class="header-element notification-header-element">
+                <livewire:driver::home.notifications />
                 @include('shared.notification-dropdown', [
-                    'notifications' => $notificationFeed,
+                    'notifications' => collect(),
                     'notificationVariant' => 'dashboard',
+                    'includeNotificationDropdown' => false,
+                    'includeNotificationStyles' => false,
                 ])
             </div>
 

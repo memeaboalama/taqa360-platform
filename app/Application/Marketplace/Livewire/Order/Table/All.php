@@ -94,7 +94,7 @@ class All extends DataTableComponent
             Column::make(__('marketplace::home.status'), 'status')
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
-                    echo '<span class="badge ' . $row->status?->color() . '">' . $row->status?->trans() . '</span>';
+                    echo '<span class="badge ' . $row->status?->color() . '">' . $row->operational_status_label . '</span>';
                 })
                 ->searchable(),
 

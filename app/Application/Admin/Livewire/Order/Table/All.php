@@ -170,7 +170,7 @@ class All extends DataTableComponent
 
             Column::make(__('admin::home.status'), 'status')
                 ->format(function ($value, $row, Column $column) {
-                    echo '<div style="cursor: pointer;" wire:click="statusClicked(' . $row->id . ')"> <span class="badge ' . $row->status?->color() . '">' . $row->status?->trans() . '</span> </div>';
+                    echo '<div style="cursor: pointer;" wire:click="statusClicked(' . $row->id . ')"> <span class="badge ' . $row->status?->color() . '">' . $row->operational_status_label . '</span> </div>';
                 })
                 ->sortable()
                 ->searchable(),

@@ -175,6 +175,19 @@ class MerchantOrder extends Model
         return $this->status instanceof MerchantOrderStatuses ? $this->status->trans() : $this->status;
     }
 
+    public function getOperationalStatusLabelAttribute(): string
+    {
+        if ($this->status === MerchantOrderStatuses::UPCOMING && (string) $this->service_type_id !== '2') {
+            return $this->driver_id
+                ? __('lang.order_status.assigned_driver_awaiting_acceptance')
+                : __('lang.order_status.awaiting_driver');
+        }
+
+        return $this->status instanceof MerchantOrderStatuses
+            ? $this->status->trans()
+            : (string) $this->status;
+    }
+
     public function getStatusColorAttribute()
     {
         return $this->status instanceof MerchantOrderStatuses ? $this->status->color() : 'secondary';

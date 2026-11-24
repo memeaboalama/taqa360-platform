@@ -72,7 +72,7 @@ class SearchForDriverJob implements ShouldQueue
 
         // Log::channel("daily")->info("driver : SearchForDriverJob " . json_encode($order));
         if ($nearest_driver->count() <= 0) {
-            dispatch(new SearchForDriverJob($this->order))->delay(Carbon::now()->addSeconds(15));
+            $this->release(15);
             return;
         }
 

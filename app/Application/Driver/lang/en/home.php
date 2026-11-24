@@ -410,6 +410,8 @@ return [
     "order_status_will-be-late" => "Will Be Late",
     "order_status_completed" => "Completed",
     "order_status_expired" => "Expired",
+    "order_assigned_notification_title" => "New order assigned",
+    "order_assigned_notification_body" => "Order :code has been assigned to you.",
     "View" => "View",
     "Order Details" => "Order Details",
     "Product Details" => "Product Details",

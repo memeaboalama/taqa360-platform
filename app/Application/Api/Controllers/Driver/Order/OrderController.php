@@ -18,6 +18,7 @@ use App\Domain\MarketPlace\Services\CollectionFailureWorkflow;
 use App\Domain\MarketPlace\Services\OrderPaymentLedger;
 use App\Domain\MarketPlace\Models\MerchantOrderHistory;
 
+use App\Domain\Notification\Notifications\Driver\OrderAssigned;
 use App\Domain\Notification\Jobs\User\SendNotifyOrderToUser;
 use App\Http\Controllers\Controller;
 use App\Support\Enum\Elm\ElmOrderStatuses;
@@ -131,6 +132,7 @@ class OrderController extends Controller
                 'status' => MerchantOrderStatuses::CURRENT->value,
                 'commission_from_driver' => auth()->user()->taken_commission
             ]);
+            $driver_auth_user->notify(new OrderAssigned($order));
             TempOrder::query()
                 ->where('driver_id', $driver_auth_id)
                 ->where('order_id', $data["order_id"])
