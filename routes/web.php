@@ -48,7 +48,7 @@ Route::get('/debug-login', function () {
 //     return redirect('/admin/login');
 // });
 
-Route::get('/', [EcommerceController::class, 'index'])->name('home');
+Route::get('/', \App\Application\Ecommerce\Controllers\StoreLocaleRedirectController::class)->name('home');
 
 Route::get('/storage/{path}', [StorageFileController::class, 'show'])
     ->where('path', '.*')
@@ -57,9 +57,8 @@ Route::get('/storage/{path}', [StorageFileController::class, 'show'])
 // Every store route lives inside a locale-prefixed group (see
 // app/Application/Ecommerce/routes/web.php), so a bare "/merchants" used to 404.
 // Send it to the same page in the visitor's current locale instead of erroring.
-Route::get('/merchants', function () {
-    return redirect()->route('merchants.index');
-})->name('merchants.locale-less');
+Route::get('/merchants', \App\Application\Ecommerce\Controllers\StoreLocaleRedirectController::class)
+    ->name('merchants.locale-less');
 
 Route::get('regions', [RegoionsController::class, 'createRegionsAndCities'])->name('regions');
 Route::get('carstypes', [RegoionsController::class, 'createCarsTyeps'])->name('carstypes');

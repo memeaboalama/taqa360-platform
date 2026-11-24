@@ -17,6 +17,7 @@ use Application\Ecommerce\Controllers\EcommerceController;
 use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 use App\Providers\RouteServiceProvider;
+use App\Application\Ecommerce\Controllers\StoreLocaleRedirectController;
 
 
 
@@ -34,9 +35,12 @@ use App\Providers\RouteServiceProvider;
 |
 */
 
+$storeRouteOffset = count(Route::getRoutes()->getRoutes());
+$storeLocalePrefix = LaravelLocalization::setLocale() ?: LaravelLocalization::getCurrentLocale();
+
 Route::group(
     [
-        'prefix' => LaravelLocalization::setLocale() ?: LaravelLocalization::getCurrentLocale(),
+        'prefix' => $storeLocalePrefix,
         'middleware' => ['localeSessionRedirect', 'localizationRedirect', 'localeViewPath', 'localeCookieRedirect']
     ],
     function () {
@@ -197,13 +201,6 @@ Route::group(
     }
 );
 
-Route::get('/terms', [\App\Application\Ecommerce\Controllers\StaticPageController::class, 'termsPage'])
-    ->name('ecommerce.terms.unlocalized');
-Route::get('/privacy', [\App\Application\Ecommerce\Controllers\StaticPageController::class, 'privacyPage'])
-    ->name('ecommerce.privacy.unlocalized');
-Route::get('/contact', [\App\Application\Ecommerce\Controllers\StaticPageController::class, 'contactPage'])
-    ->name('ecommerce.contact.unlocalized');
-
         Route::get('login', [\App\Application\Ecommerce\Controllers\StaticPageController::class, 'loginPage'])->name('auth.login');
         Route::get('register', [AuthController::class, 'getRegisterPage'])->name('auth.register');
     Route::get('verify', [AuthController::class, 'getVerifyPage'])->name('verify');
@@ -218,4 +215,22 @@ Route::get('/contact', [\App\Application\Ecommerce\Controllers\StaticPageControl
     Route::post('reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 
 });
+
+// Register locale-less entry points for every store page, including nested paths.
+// Redirect before running page controllers, authentication, or model bindings.
+$storeRoutes = array_slice(Route::getRoutes()->getRoutes(), $storeRouteOffset);
+foreach ($storeRoutes as $storeRoute) {
+    if (!in_array('GET', $storeRoute->methods(), true)) {
+        continue;
+    }
+
+    $storePath = substr($storeRoute->uri(), strlen($storeLocalePrefix));
+    $redirectRoute = Route::get($storePath ?: '/', StoreLocaleRedirectController::class)
+        ->where($storeRoute->wheres);
+
+    if ($storeRoute->getName()) {
+        $redirectRoute->name($storeRoute->getName() . '.unlocalized');
+    }
+}
+
 
