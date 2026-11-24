@@ -18,66 +18,6 @@
             color: rgb(var(--primary-rgb)) !important;
         }
 
-        #merchant-detail-page #creatAdditionGroup .addition-group-add-option {
-            transition: none;
-        }
-
-        #merchant-detail-page #creatAdditionGroup .addition-group-add-option:hover,
-        #merchant-detail-page #creatAdditionGroup .addition-group-add-option:focus,
-        #merchant-detail-page #creatAdditionGroup .addition-group-add-option:active,
-        #merchant-detail-page #creatAdditionGroup .addition-group-add-option:hover i,
-        #merchant-detail-page #creatAdditionGroup .addition-group-add-option:focus i,
-        #merchant-detail-page #creatAdditionGroup .addition-group-add-option:active i {
-            background-color: rgb(var(--primary-rgb)) !important;
-            border-color: rgb(var(--primary-rgb)) !important;
-            color: #fff !important;
-        }
-
-        #merchant-detail-page #additionGroups-tab-pane .card-header .btn-primary-light {
-            transition: none;
-        }
-
-        #merchant-detail-page #additionGroups-tab-pane .card-header .btn-primary-light:hover,
-        #merchant-detail-page #additionGroups-tab-pane .card-header .btn-primary-light:focus,
-        #merchant-detail-page #additionGroups-tab-pane .card-header .btn-primary-light:active,
-        #merchant-detail-page #additionGroups-tab-pane .card-header .btn-primary-light:hover i,
-        #merchant-detail-page #additionGroups-tab-pane .card-header .btn-primary-light:focus i,
-        #merchant-detail-page #additionGroups-tab-pane .card-header .btn-primary-light:active i {
-            background-color: rgb(var(--primary-rgb)) !important;
-            border-color: rgb(var(--primary-rgb)) !important;
-            color: #fff !important;
-        }
-
-        #merchant-detail-page #choices-tab-pane .card-header .btn-primary-light {
-            transition: none;
-        }
-
-        #merchant-detail-page #choices-tab-pane .card-header .btn-primary-light:hover,
-        #merchant-detail-page #choices-tab-pane .card-header .btn-primary-light:focus,
-        #merchant-detail-page #choices-tab-pane .card-header .btn-primary-light:active,
-        #merchant-detail-page #choices-tab-pane .card-header .btn-primary-light:hover i,
-        #merchant-detail-page #choices-tab-pane .card-header .btn-primary-light:focus i,
-        #merchant-detail-page #choices-tab-pane .card-header .btn-primary-light:active i {
-            background-color: rgb(var(--primary-rgb)) !important;
-            border-color: rgb(var(--primary-rgb)) !important;
-            color: #fff !important;
-        }
-
-        #merchant-detail-page #creatAdditionGroup .modal-header,
-        #merchant-detail-page #creatAdditionGroup .modal-body,
-        #merchant-detail-page #creatAdditionGroup .modal-footer {
-            padding-right: 1.5rem;
-            padding-left: 1.5rem;
-        }
-
-        @media (max-width: 575.98px) {
-            #merchant-detail-page #creatAdditionGroup .modal-header,
-            #merchant-detail-page #creatAdditionGroup .modal-body,
-            #merchant-detail-page #creatAdditionGroup .modal-footer {
-                padding-right: 1rem;
-                padding-left: 1rem;
-            }
-        }
     </style>
 @endpush
 
@@ -130,26 +70,10 @@
                                     </li>
 
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="menu-tab" data-bs-toggle="tab"
-                                                data-bs-target="#menu-tab-pane" type="button" role="tab"
-                                                aria-controls="menu-tab-pane" aria-selected="false"><i
-                                                class="ri-file-3-fill me-1 align-middle d-inline-block"></i>{{ __('admin::home.menu') }}
-                                        </button>
-                                    </li>
-
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="additionGroups-tab" data-bs-toggle="tab"
-                                                data-bs-target="#additionGroups-tab-pane" type="button" role="tab"
-                                                aria-controls="additionGroups-tab-pane" aria-selected="true"><i
-                                                class="ri-add-line me-1 align-middle d-inline-block"></i>{{ __('admin::home.additionGroups') }}
-                                        </button>
-                                    </li>
-
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="choices-tab" data-bs-toggle="tab"
-                                                data-bs-target="#choices-tab-pane" type="button" role="tab"
-                                                aria-controls="choices-tab-pane" aria-selected="true"><i
-                                                class="ri-bookmark-fill me-1 align-middle d-inline-block"></i>{{ __('admin::home.menuChoices') }}
+                                        <button class="nav-link" id="products-tab" data-bs-toggle="tab"
+                                                data-bs-target="#products-tab-pane" type="button" role="tab"
+                                                aria-controls="products-tab-pane" aria-selected="false"><i
+                                                class="ri-shopping-bag-3-line me-1 align-middle d-inline-block"></i>{{ __('admin::home.products') }}
                                         </button>
                                     </li>
 
@@ -202,39 +126,26 @@
                                     <livewire:admin::merchant.tabs.info.files :merchant_id="$id" mode="images"/>
                                 </div>
 
-                                <div class="tab-pane fade" id="menu-tab-pane" role="tabpanel"
-                                     aria-labelledby="menu-tab" wire:ignore.self>
-                                    <div class="row">
-                                        <div class="col-xl-12">
-                                            <!-- Start:: row-3 -->
-                                            <div class="row">
-                                                <div class="col-xl-4">
-                                                    <livewire:admin::merchant.tabs.menu.component.menu.grid.menu :merchant_id="$id"/>
-                                                </div>
-
-                                                <div class="col-xl-3">
-                                                    <livewire:admin::merchant.tabs.menu.component.category.grid.category :merchant_id="$id"/>
-                                                </div>
-
-                                                <div class="col-xl-5">
-                                                    <livewire:admin::merchant.tabs.menu.component.item.grid.item :merchant_id="$id"/>
-                                                </div>
-
-                                            </div>
-                                            <!-- End:: row-3 -->
-
+                                <div class="tab-pane fade" id="products-tab-pane" role="tabpanel"
+                                     aria-labelledby="products-tab" wire:ignore.self>
+                                    <div class="card custom-card">
+                                        <div class="card-header justify-content-between">
+                                            <div class="card-title">{{ __('admin::home.products') }}</div>
+                                            <button type="button" class="btn btn-primary-light m-1"
+                                                    wire:click="$emit('createProduct', {{ (int) $id }})">
+                                                {{ __('admin::home.Add New') }}<i class="bi bi-plus-lg ms-2"></i>
+                                            </button>
                                         </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <livewire:marketplace::product.table.all :merchant_id="$id" :key="'merchant-products-'.$id"/>
+                                            </div>
+                                        </div>
+                                        <livewire:marketplace::product.modal.create :merchant_id="$id" :key="'merchant-product-create-'.$id"/>
+                                        <livewire:marketplace::product.modal.update :merchant_id="$id" :key="'merchant-product-update-'.$id"/>
+                                        <livewire:marketplace::product.modal.show :merchant_id="$id" :key="'merchant-product-show-'.$id"/>
+                                        <livewire:marketplace::product.modal.delete :merchant_id="$id" :key="'merchant-product-delete-'.$id"/>
                                     </div>
-                                </div>
-
-                                <div class="tab-pane fade" id="additionGroups-tab-pane" role="tabpanel"
-                                     aria-labelledby="additionGroups-tab" wire:ignore.self>
-                                    <livewire:admin::merchant.tabs.info.groups :merchant_id="$id"/>
-                                </div>
-
-                                <div class="tab-pane fade" id="choices-tab-pane" role="tabpanel"
-                                     aria-labelledby="choices-tab" wire:ignore.self>
-                                    <livewire:admin::merchant.tabs.info.choices :merchant_id="$id"/>
                                 </div>
 
                                 <div class="tab-pane fade p-0 border-0" id="iban-tab-pane"
@@ -248,8 +159,6 @@
                                     <livewire:admin::merchant.tabs.info.package.select :merchant_id="$id" />
                                 </div>
 
-                                @include('catalog::item.show',['path'=>'admin','userType'=>'admin',])
-
                             </div>
                         </div>
                     </div>
@@ -259,19 +168,3 @@
 @endsection
 
 
-
-@push('js')          
-<script>
-    
-    $(document).ready(function() {
-
-        $(document).on('click','a.btn.view-item-details-btn', function() {
-            const itemId = $(this).data('item_id');
-            const itemName = $(this).data('item_name');
-            initItemInfoModal({id: itemId,name:itemName,userType: 'admin',path:'admin'});
-        });
-     
-    });
-
-</script>
-@endpush

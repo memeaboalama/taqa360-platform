@@ -179,19 +179,27 @@
                                                 <td>
                                                     @php
                                                         $statusVal = is_object($order->status) ? $order->status->value : $order->status;
+                                                        $acceptedByDriver = $order->isAcceptedByDriver((int) $driver->id);
                                                     @endphp
                                                     <a href="javascript:void(0);" class="btn btn-sm btn-info-transparent rounded-pill"
                                                            style="width:1.75rem;height:1.75rem;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;"
                                                            title="{{ __('driver::home.View') }}"
                                                            onclick="Livewire.emit('showOrderDetails', {{ $order->id }})"><i class="ri-eye-line" style="margin:0"></i></a>
-                                                    @if($statusVal === 'pending' || $statusVal === 'upcoming')
+                                                    @if(in_array($statusVal, [
+                                                        \App\Application\Marketplace\Enums\MerchantOrderStatuses::PENDING->value,
+                                                        \App\Application\Marketplace\Enums\MerchantOrderStatuses::UPCOMING->value,
+                                                        \App\Application\Marketplace\Enums\MerchantOrderStatuses::READY->value,
+                                                    ], true) && !$acceptedByDriver)
                                                         <form action="{{ route('driver:orders.accept', $order->id) }}" method="POST" class="d-inline order-action-form">
                                                             @csrf
                                                             <button type="submit" class="btn btn-sm btn-success">
                                                                 <i class="ri-check-line me-1"></i> قبول الطلب
                                                             </button>
                                                         </form>
-                                                    @elseif($statusVal === 'ready')
+                                                    @elseif(in_array($statusVal, [
+                                                        \App\Application\Marketplace\Enums\MerchantOrderStatuses::CURRENT->value,
+                                                        \App\Application\Marketplace\Enums\MerchantOrderStatuses::READY->value,
+                                                    ], true) && $acceptedByDriver)
                                                         <form action="{{ route('driver:orders.updateStatus', $order->id) }}" method="POST" class="d-inline order-action-form">
                                                             @csrf
                                                             <input type="hidden" name="status" value="on-way">

@@ -13,7 +13,13 @@ class Delete extends Component
     use LivewireAlert;
 
     public int|null $element_id = null;
+    public $merchantId;
     protected $listeners = ['deleteProduct'];
+
+    public function mount(?int $merchantId = null): void
+    {
+        $this->merchantId = $merchantId;
+    }
 
     public function deleteProduct($id): void
     {
@@ -25,7 +31,9 @@ class Delete extends Component
     {
         DB::beginTransaction();
         try {
-            $destroyItemAction->handle($this->element_id);
+            if (!$destroyItemAction->handle($this->element_id, $this->merchantId)) {
+                throw new \RuntimeException('Product not found for this merchant.');
+            }
             $this->emit('closeModal', '#deleteItem');
             $this->emit('refreshProducts');
             $this->reset('element_id');

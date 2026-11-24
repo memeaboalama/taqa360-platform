@@ -4,6 +4,15 @@ namespace Application\Marketplace\Livewire\Order\Table;
 
 use Livewire\Component;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
+use App\Application\Marketplace\Enums\MerchantOrderHistoryStatuses;
+use App\Application\Marketplace\Enums\MerchantOrderStatuses;
+use App\Domain\Driver\Jobs\SearchForDriverJob;
+use App\Domain\MarketPlace\Models\MerchantOrder;
+use App\Domain\Notification\Jobs\User\Order\NotifyAcceptedOrder;
+use App\Support\Enum\Elm\ElmOrderStatuses;
+use App\Domain\ElmApp\Actions\Order\ManuallyAssignDriverAction;
+use Domain\Driver\Models\Driver;
+use Illuminate\Support\Facades\DB;
 
 class Read extends Component
 {
@@ -13,6 +22,7 @@ class Read extends Component
     public $orderUser;
     public $orderServices;
     public $address;
+    public $selected_driver_id;
 
     protected $listeners = ['refreshDatatable' => '$refresh', 'refreshOrder' => '$refresh'];
 
@@ -23,26 +33,256 @@ class Read extends Component
         $this->orderUser = $orderUser;
         $this->address = $address;
     }
+
+    public function acceptOrder(): void
+    {
+        $user = auth()->user() ?? auth('merchant')->user() ?? auth('merchant_employee')->user();
+        if (!$user) {
+            $this->alert('error', __('marketplace::home.order_action_not_authorized'));
+            return;
+        }
+
+        $acceptedOrder = DB::transaction(function () use ($user) {
+            $order = $this->merchantOrderQuery()
+                ->lockForUpdate()
+                ->whereKey($this->order->id)
+                ->firstOrFail();
+            $status = $order->status instanceof MerchantOrderStatuses
+                ? $order->status->value
+                : (string) $order->status;
+
+            if ($status !== MerchantOrderStatuses::PENDING->value) {
+                return null;
+            }
+
+            $order->status = MerchantOrderStatuses::UPCOMING;
+            $order->save();
+
+            app(\App\Domain\MarketPlace\Actions\Api\Order\LogOrderHistoryAction::class)
+                ->handle(
+                    $order->id,
+                    MerchantOrderHistoryStatuses::EMPLOYEE_ACCEPT->value,
+                    'Merchant accepted order via web',
+                    $user
+                );
+
+            $order->loadMissing(['user', 'elmOrder']);
+            if ($order->elmOrder) {
+                $order->elmOrder->update([
+                    'elm_upload_status' => ElmOrderStatuses::ACCEPTED_BY_MERCHANT->value,
+                ]);
+            }
+
+            return $order;
+        });
+
+        if (!$acceptedOrder) {
+            $this->order->refresh();
+            $this->alert('warning', __('marketplace::home.order_status_changed_try_again'));
+            return;
+        }
+
+        if ((string) $acceptedOrder->service_type_id !== '2') {
+            dispatch(new SearchForDriverJob($acceptedOrder));
+        }
+        if ($acceptedOrder->user) {
+            dispatch(new NotifyAcceptedOrder($acceptedOrder, $acceptedOrder->user));
+        }
+
+        $this->order->refresh();
+        $this->emit('refreshDatatable');
+        $this->alert('success', __('marketplace::home.order_accepted_successfully'));
+    }
+
+    public function startOrder(): void
+    {
+        $user = auth()->user() ?? auth('merchant')->user() ?? auth('merchant_employee')->user();
+        if (!$user) {
+            $this->alert('error', __('marketplace::home.order_action_not_authorized'));
+            return;
+        }
+
+        $startedOrder = DB::transaction(function () use ($user) {
+            $order = $this->merchantOrderQuery()
+                ->lockForUpdate()
+                ->whereKey($this->order->id)
+                ->firstOrFail();
+            $status = $order->status instanceof MerchantOrderStatuses
+                ? $order->status->value
+                : (string) $order->status;
+
+            if (
+                $status !== MerchantOrderStatuses::UPCOMING->value
+                || (string) $order->service_type_id !== '2'
+            ) {
+                return null;
+            }
+
+            $order->status = MerchantOrderStatuses::CURRENT;
+            $order->save();
+
+            app(\App\Domain\MarketPlace\Actions\Api\Order\LogOrderHistoryAction::class)
+                ->handle(
+                    $order->id,
+                    MerchantOrderHistoryStatuses::START_COOKING->value,
+                    'Merchant started preparing pickup order',
+                    $user
+                );
+
+            return $order;
+        });
+
+        if (!$startedOrder) {
+            $this->order->refresh();
+            $this->alert('warning', __('marketplace::home.order_status_changed_try_again'));
+            return;
+        }
+
+        $this->order->refresh();
+        $this->emit('refreshDatatable');
+        $this->alert('success', __('marketplace::home.order_started_successfully'));
+    }
+
     public function markAsReady(): void
     {
-        $orderRepo = new \App\Domain\MarketPlace\Repositories\Order\MerchantOrderRepository(new \App\Domain\MarketPlace\Models\MerchantOrder());
-        $orderRepo->update($this->order->id, [
-            'status' => \App\Application\Marketplace\Enums\MerchantOrderStatuses::READY->value
-        ]);
-
-        $logHistory = app(\App\Domain\MarketPlace\Actions\Api\Order\LogOrderHistoryAction::class);
         $user = auth()->user() ?? auth('merchant')->user() ?? auth('merchant_employee')->user();
-        $logHistory->handle(
-            $this->order->id,
-            \App\Application\Marketplace\Enums\MerchantOrderHistoryStatuses::MARKED_READY->value,
-            'Merchant marked order as ready',
-            $user
-        );
+        if (!$user) {
+            $this->alert('error', __('marketplace::home.order_action_not_authorized'));
+            return;
+        }
+
+        $readyOrder = DB::transaction(function () use ($user) {
+            $order = $this->merchantOrderQuery()
+                ->lockForUpdate()
+                ->whereKey($this->order->id)
+                ->firstOrFail();
+            $status = $order->status instanceof MerchantOrderStatuses
+                ? $order->status->value
+                : (string) $order->status;
+
+            if (
+                $status !== MerchantOrderStatuses::CURRENT->value
+                || ((string) $order->service_type_id !== '2' && !$order->driver_id)
+            ) {
+                return null;
+            }
+
+            $order->status = MerchantOrderStatuses::READY;
+            $order->save();
+
+            app(\App\Domain\MarketPlace\Actions\Api\Order\LogOrderHistoryAction::class)
+                ->handle(
+                    $order->id,
+                    MerchantOrderHistoryStatuses::MARKED_READY->value,
+                    'Merchant marked order as ready',
+                    $user
+                );
+
+            return $order;
+        });
+
+        if (!$readyOrder) {
+            $this->order->refresh();
+            $this->alert('warning', __('marketplace::home.order_status_changed_try_again'));
+            return;
+        }
 
         $this->order->refresh();
         $this->emit('refreshDatatable');
         $this->alert('success', __('marketplace::home.order_marked_ready_successfully'));
     }
+
+    public function assignDriver(): void
+    {
+        $user = auth()->user() ?? auth('merchant')->user() ?? auth('merchant_employee')->user();
+        if (!$user) {
+            $this->alert('error', __('marketplace::home.order_action_not_authorized'));
+            return;
+        }
+
+        if (!$this->selected_driver_id) {
+            $this->alert('warning', __('marketplace::home.please_select_driver'));
+            return;
+        }
+
+        $result = DB::transaction(function () use ($user) {
+            $order = $this->merchantOrderQuery()
+                ->lockForUpdate()
+                ->whereKey($this->order->id)
+                ->firstOrFail();
+            $status = $order->status instanceof MerchantOrderStatuses
+                ? $order->status->value
+                : (string) $order->status;
+
+            if (
+                !$order->driver_id
+                && (string) $order->service_type_id !== '2'
+                && in_array($status, [
+                    MerchantOrderStatuses::UPCOMING->value,
+                    MerchantOrderStatuses::READY->value,
+                ], true)
+            ) {
+                $driver = Driver::query()
+                    ->whereKey($this->selected_driver_id)
+                    ->where('status', 'active')
+                    ->first();
+
+                if (!$driver) {
+                    return 'driver_unavailable';
+                }
+
+                $assigned = app(ManuallyAssignDriverAction::class)->handle(
+                    $order->id,
+                    [
+                        'driver_id' => $driver->id,
+                        'commission_from_driver' => $driver->taken_commission ?? 0,
+                    ],
+                    $user,
+                    'Merchant manually assigned driver'
+                );
+
+                return $assigned ? 'assigned' : 'assignment_failed';
+            }
+
+            return 'order_changed';
+        });
+
+        if ($result !== 'assigned') {
+            $this->order->refresh();
+            if ($result === 'driver_unavailable') {
+                $this->alert('warning', __('marketplace::home.driver_not_available'));
+            } elseif ($result === 'assignment_failed') {
+                $this->alert('error', __('marketplace::home.driver_assignment_failed'));
+            } else {
+                $this->alert('warning', __('marketplace::home.order_status_changed_try_again'));
+            }
+            return;
+        }
+
+        $this->selected_driver_id = null;
+        $this->order->refresh();
+        $this->emit('refreshDatatable');
+        $this->alert('success', __('marketplace::home.driver_assigned_successfully'));
+    }
+
+    private function merchantOrderQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $merchantId = app()->bound('_InitialMerchant')
+            ? app('_InitialMerchant')
+            : (auth('merchant')->id() ?? auth('merchant_employee')->user()?->merchant_id);
+
+        abort_unless($merchantId, 403);
+
+        $query = MerchantOrder::query()
+            ->where('merchant_id', $merchantId);
+
+        if (auth('merchant_employee')->check()) {
+            $query->forMerchantEmployee(auth('merchant_employee')->user());
+        }
+
+        return $query;
+    }
+
 
     public function cancelOrder(): void
     {
@@ -65,6 +305,22 @@ class Read extends Component
 
     public function render()
     {
+        $this->order->loadMissing([
+            'orderItems.item',
+            'orderItems.orderChoices.choice',
+            'orderItems.orderChoices.group',
+            'driver',
+            'type_service',
+        ]);
+
+        $orderHistory = $this->order->orders_history()
+            ->orderBy('created_at')
+            ->get();
+        $availableDrivers = Driver::query()
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get(['id', 'name', 'phone']);
+
         $paymentLedger = app(\App\Domain\MarketPlace\Services\OrderPaymentLedger::class)
             ->forOrder($this->order);
 
@@ -73,6 +329,8 @@ class Read extends Component
             'orderServices' => $this->orderServices,
             'orderUser' => $this->orderUser,
             'address' => $this->address,
+            'orderHistory' => $orderHistory,
+            'availableDrivers' => $availableDrivers,
             'paymentLedger' => $paymentLedger,
         ]);
     }

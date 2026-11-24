@@ -10,6 +10,26 @@
         ?? '';
 @endphp
 
+<style>
+    #termsConditionsModal .modal-header,
+    #privacyPolicyModal .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    #termsConditionsModal .modal-title,
+    #privacyPolicyModal .modal-title {
+        margin: 0;
+    }
+
+    #termsConditionsModal .btn-close,
+    #privacyPolicyModal .btn-close {
+        flex: 0 0 auto;
+        margin: 0;
+    }
+</style>
+
 @if(filled($termsContent))
     <div class="modal fade" id="termsConditionsModal" tabindex="-1" aria-labelledby="termsConditionsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">

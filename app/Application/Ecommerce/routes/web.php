@@ -54,6 +54,12 @@ Route::group(
             ->name('service-requests.catalog.details');
 
         Route::get('/', [EcommerceController::class, 'staticIndex'])->name('ecommerce.static');
+        Route::get('/terms', [\App\Application\Ecommerce\Controllers\StaticPageController::class, 'termsPage'])
+            ->name('ecommerce.terms');
+        Route::get('/privacy', [\App\Application\Ecommerce\Controllers\StaticPageController::class, 'privacyPage'])
+            ->name('ecommerce.privacy');
+        Route::get('/contact', [\App\Application\Ecommerce\Controllers\StaticPageController::class, 'contactPage'])
+            ->name('ecommerce.contact');
         Route::post('/customer-testimonials', [CustomerTestimonialController::class, 'store'])
             ->middleware('throttle:5,10')
             ->name('customer-testimonials.store');
@@ -191,6 +197,12 @@ Route::group(
     }
 );
 
+Route::get('/terms', [\App\Application\Ecommerce\Controllers\StaticPageController::class, 'termsPage'])
+    ->name('ecommerce.terms.unlocalized');
+Route::get('/privacy', [\App\Application\Ecommerce\Controllers\StaticPageController::class, 'privacyPage'])
+    ->name('ecommerce.privacy.unlocalized');
+Route::get('/contact', [\App\Application\Ecommerce\Controllers\StaticPageController::class, 'contactPage'])
+    ->name('ecommerce.contact.unlocalized');
 
         Route::get('login', [\App\Application\Ecommerce\Controllers\StaticPageController::class, 'loginPage'])->name('auth.login');
         Route::get('register', [AuthController::class, 'getRegisterPage'])->name('auth.register');

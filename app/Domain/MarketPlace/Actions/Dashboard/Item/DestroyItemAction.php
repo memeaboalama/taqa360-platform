@@ -15,8 +15,14 @@ class DestroyItemAction
     }
 
 
-    public function handle(int $id): bool
+    public function handle(int $id, ?int $merchantId = null): bool
     {
+        if ($merchantId !== null) {
+            return $this->modelR->filter(['merchant_id' => $merchantId])
+                ->whereKey($id)
+                ->delete() > 0;
+        }
+
         return $this->modelR->destroy($id);
     }
 }

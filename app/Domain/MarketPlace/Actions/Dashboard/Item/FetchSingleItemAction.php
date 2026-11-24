@@ -16,8 +16,13 @@ class FetchSingleItemAction
 
 
 
-    public function handle(int $id, int $merchant_id = null): \Illuminate\Database\Eloquent\Model|null
+    public function handle(int $id, ?int $merchant_id = null): \Illuminate\Database\Eloquent\Model|null
     {
-        return $this->modelR->findByCols(['id' => $id]);
+        $conditions = ['id' => $id];
+        if ($merchant_id !== null) {
+            $conditions['merchant_id'] = $merchant_id;
+        }
+
+        return $this->modelR->findByCols($conditions);
     }
 }

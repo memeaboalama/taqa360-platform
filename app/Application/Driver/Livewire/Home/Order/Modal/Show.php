@@ -71,6 +71,7 @@ class Show extends Component
             'id' => $order->id,
             'code' => $order->code,
             'status_value' => $statusEnum?->value,
+            'is_accepted_by_driver' => $order->isAcceptedByDriver((int) auth()->guard('driver')->id()),
             'status_trans' => $statusEnum?->trans() ?? $status,
             'status_color' => $statusEnum?->color() ?? 'secondary',
             'created_at' => Carbon::parse($order->created_at)->format('Y-m-d H:i'),

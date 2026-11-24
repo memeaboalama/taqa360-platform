@@ -38,6 +38,7 @@ class Create extends Component
     public $calories;
     public $preparing_time;
     public $merchant_id;
+    public $merchantId;
     public $addition_group_ids = [];
     public $additional_images = [];
     public $categories;
@@ -52,14 +53,17 @@ class Create extends Component
 
     public $listeners = ['createProduct', 'setMerchantId'];
 
-    public function mount(): void
+    public function mount(?int $merchantId = null): void
     {
+        $this->merchantId = $merchantId;
         $this->categories = Category::where('is_active', true)->get();
         $this->subcategories = collect();
         $this->childCategories = collect();
         $this->brands = collect();
         $this->masterSpecifications = collect();
-        $this->addition_groups = AdditionGroup::where('status', StatusEnum::ACTIVE->value)->get();
+        $this->addition_groups = AdditionGroup::where('status', StatusEnum::ACTIVE->value)
+            ->where('merchant_id', $this->merchantId ?? auth('merchant')->id())
+            ->get();
         $this->fullItemPrices();
     }
 
@@ -89,13 +93,20 @@ class Create extends Component
 
     public function createProduct($merchant_id = null): void
     {
-        $this->merchant_id = $merchant_id;
+        if ($merchant_id !== null) {
+            $this->merchantId = (int) $merchant_id;
+            $this->merchant_id = $this->merchantId;
+        }
         $this->emit('openModal', '#createProduct');
     }
 
     public function setMerchantId($merchant_id): void
     {
-        $this->merchant_id = $merchant_id;
+        $this->merchantId = (int) $merchant_id;
+        $this->merchant_id = $this->merchantId;
+        $this->addition_groups = AdditionGroup::where('status', StatusEnum::ACTIVE->value)
+            ->where('merchant_id', $this->merchantId)
+            ->get();
     }
 
     protected function rules(): array
@@ -272,7 +283,7 @@ class Create extends Component
                 'item_prices' => $itemPrices,
             ];
 
-            if (!$action->handle($data)) {
+            if (!$action->handle($data, $this->merchantId)) {
                 throw new \RuntimeException('Product creation failed.');
             }
             $this->emit('closeModal', '#createProduct');

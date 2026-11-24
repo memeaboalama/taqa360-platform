@@ -40,13 +40,13 @@ class All extends DataTableComponent
     {
         $this->setPrimaryKey('id')->setSearchStatus(false);
     }
-    public function mount()
+    public function mount(?int $merchantId = null): void
     {
-        $this->merchantId = resolve('_InitialMerchant');
+        $this->merchantId = $merchantId ?? resolve('_InitialMerchant');
     }
     public function builder(): Builder
     {
-        if (!isset($this->filters['merchant_id']) || $this->filters['merchant_id'] === null) {
+        if ($this->merchantId !== null) {
             $this->filters['merchant_id'] = $this->merchantId;
         }
         return $this->itemRepository->filter($this->filters)

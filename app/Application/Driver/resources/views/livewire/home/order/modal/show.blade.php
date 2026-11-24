@@ -520,7 +520,11 @@
                 @endif
 
                 <div class="modal-footer">
-                    @if(in_array($order['status_value'] ?? null, ['pending', 'upcoming']))
+                    @if(in_array($order['status_value'] ?? null, [
+                        \App\Application\Marketplace\Enums\MerchantOrderStatuses::PENDING->value,
+                        \App\Application\Marketplace\Enums\MerchantOrderStatuses::UPCOMING->value,
+                        \App\Application\Marketplace\Enums\MerchantOrderStatuses::READY->value,
+                    ], true) && empty($order['is_accepted_by_driver']))
                         <form action="{{ route('driver:orders.accept', $order['id']) }}" method="POST" class="d-inline" id="acceptOrderForm">
                             @csrf
                             <button type="submit" class="btn btn-success">

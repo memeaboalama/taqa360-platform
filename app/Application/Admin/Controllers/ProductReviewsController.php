@@ -43,7 +43,7 @@ class ProductReviewsController extends Controller
     private function clearRatingCache(?Item $item): void
     {
         foreach (['ar', 'en', app()->getLocale()] as $locale) {
-            Cache::forget("home_page_data_storefront_v5_{$locale}");
+            Cache::forget("home_page_data_storefront_v7_{$locale}");
             Cache::forget("storefront_featured_products_v3_{$locale}_8");
             Cache::forget("storefront_new_products_v3_{$locale}_6");
             Cache::forget("storefront_best_sellers_v3_{$locale}_6");

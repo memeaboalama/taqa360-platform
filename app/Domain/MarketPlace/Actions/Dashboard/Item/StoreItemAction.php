@@ -23,12 +23,12 @@ class StoreItemAction
         $this->imageService = $imageService;
     }
 
-    public function handle(array $data = []): ?\Illuminate\Database\Eloquent\Model
+    public function handle(array $data = [], ?int $merchantId = null): ?\Illuminate\Database\Eloquent\Model
     {
         Log::info("STORE ITEM ACTION", [$data]);
 
         try {
-            $data['merchant_id'] = auth('merchant')->id();
+            $data['merchant_id'] = $merchantId ?? auth('merchant')->id();
 
             $file = $data['image'];
             if (isset($file->disk)) {

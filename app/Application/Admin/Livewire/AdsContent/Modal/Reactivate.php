@@ -130,8 +130,8 @@ class Reactivate extends Component
         $this->reorderActiveItems();
 
         if ($this->contentType === 'product') {
-            Cache::forget('home_page_data_storefront_v5_ar');
-            Cache::forget('home_page_data_storefront_v5_en');
+            Cache::forget('home_page_data_storefront_v7_ar');
+            Cache::forget('home_page_data_storefront_v7_en');
             Cache::forget('home_page_data_ar');
             Cache::forget('home_page_data_en');
         } else {

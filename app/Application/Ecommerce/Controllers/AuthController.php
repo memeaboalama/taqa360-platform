@@ -116,6 +116,9 @@ class AuthController extends Controller
                 'last_name'  => ['required', 'string', 'min:2', 'max:50'],
                 'email'      => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
                 'password'   => ['required', 'string', 'min:8'],
+                'agree_terms' => ['accepted'],
+            ], [
+                'agree_terms.accepted' => __('ecommerce::ecommerce.auth.agree_terms_required'),
             ]);
 
             $user = $registerAction->handle([

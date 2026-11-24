@@ -2,6 +2,8 @@
 
 namespace App\Application\Ecommerce\Controllers;
 
+use App\Domain\AppBase\Actions\GeneralSetting\FetchGeneralSettingsAction;
+use App\Domain\AppBase\Actions\Home\FetchHomeDataAction;
 use App\Domain\AppBase\Models\Location\City;
 use App\Domain\AppBase\Models\Location\Country;
 use App\Domain\MarketPlace\Models\Favorite;
@@ -16,6 +18,68 @@ use App\Application\Marketplace\Enums\MerchantOrderStatuses;
 
 class StaticPageController extends Controller
 {
+    public function termsPage(
+        FetchGeneralSettingsAction $fetchGeneralSettingsAction,
+        FetchHomeDataAction $fetchHomeDataAction
+    ) {
+        return $this->legalPage('terms', $fetchGeneralSettingsAction, $fetchHomeDataAction);
+    }
+
+    public function privacyPage(
+        FetchGeneralSettingsAction $fetchGeneralSettingsAction,
+        FetchHomeDataAction $fetchHomeDataAction
+    ) {
+        return $this->legalPage('privacy', $fetchGeneralSettingsAction, $fetchHomeDataAction);
+    }
+
+    public function contactPage(FetchHomeDataAction $fetchHomeDataAction)
+    {
+        $footerData = $fetchHomeDataAction->getStoreFooterData() ?? [];
+        $currentLocale = app()->getLocale();
+        $isRTL = in_array($currentLocale, ['ar', 'he'], true);
+        $pageTitle = __('ecommerce::ecommerce.contact_us');
+
+        return view('ecommerce::pages.contact', compact(
+            'footerData',
+            'currentLocale',
+            'isRTL',
+            'pageTitle'
+        ));
+    }
+
+    private function legalPage(
+        string $page,
+        FetchGeneralSettingsAction $fetchGeneralSettingsAction,
+        FetchHomeDataAction $fetchHomeDataAction
+    ) {
+        $legalContent = $fetchGeneralSettingsAction->handle([
+            'terms_conditions_ar',
+            'terms_conditions_en',
+            'policies_ar',
+            'policies_en',
+        ]);
+        $contentKey = $page === 'terms' ? 'terms_conditions' : 'policies';
+        $currentLocale = app()->getLocale();
+        $isRTL = in_array($currentLocale, ['ar', 'he'], true);
+        $content = data_get($legalContent, $contentKey . '_' . $currentLocale)
+            ?? data_get($legalContent, $contentKey . '_en')
+            ?? data_get($legalContent, $contentKey . '_ar')
+            ?? '';
+        $pageTitle = $page === 'terms'
+            ? __('ecommerce::ecommerce.terms_conditions')
+            : __('ecommerce::ecommerce.privacy_policy');
+        $footerData = $fetchHomeDataAction->getStoreFooterData() ?? [];
+
+        return view('ecommerce::pages.legal-content', compact(
+            'content',
+            'legalContent',
+            'footerData',
+            'currentLocale',
+            'isRTL',
+            'pageTitle'
+        ));
+    }
+
     public function loginPage()
     {
         if (Auth::check()) {

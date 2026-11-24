@@ -206,7 +206,7 @@ class Index extends Component
     private function clearHomePageCache(): void
     {
         foreach (['ar', 'en'] as $locale) {
-            Cache::forget("home_page_data_storefront_v5_{$locale}");
+            Cache::forget("home_page_data_storefront_v7_{$locale}");
         }
     }
 

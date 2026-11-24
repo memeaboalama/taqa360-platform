@@ -50,8 +50,8 @@ class FooterPlacementSeeder extends Seeder
                     'ar' => 'نحن نقدم أفضل الحلول التعليمية للطلاب والمعلمين. انضم إلينا اليوم!',
                 ],
                 'copyright' => [
-                    'en' => '© 2024 Edu Solutions. All rights reserved.',
-                    'ar' => '©',
+                    'en' => 'Edu Solutions. All rights reserved.',
+                    'ar' => 'جميع الحقوق محفوظة',
                 ],
                 'contact' => [
                     'phone' => '+966 50 123 4567',

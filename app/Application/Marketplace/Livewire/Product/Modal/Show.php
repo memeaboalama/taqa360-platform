@@ -11,6 +11,7 @@ use Livewire\Component;
 class Show extends Component
 {
     public $productId;
+    public $merchantId;
     public $title = [];
     public $description = [];
     public $main_category;
@@ -29,9 +30,14 @@ class Show extends Component
 
     protected $listeners = ['viewProduct'];
 
+    public function mount(?int $merchantId = null): void
+    {
+        $this->merchantId = $merchantId;
+    }
+
     public function viewProduct($id, FetchSingleItemAction $action): void
     {
-        $product = $action->handle($id);
+        $product = $action->handle($id, $this->merchantId);
 
         if (!$product) {
             return;

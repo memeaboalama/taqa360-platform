@@ -238,7 +238,34 @@
 
 
 
-
+<div class="modal fade" id="merchant-unsaved-changes-modal" tabindex="-1"
+     aria-labelledby="merchant-unsaved-changes-title" aria-hidden="true" wire:ignore.self>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-warning fs-2"><i class="ri-error-warning-line"></i></span>
+                    <h5 class="modal-title mb-0" id="merchant-unsaved-changes-title">
+                        {{ __('admin::home.unsaved_changes_title') }}
+                    </h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="{{ __('admin::home.continue_editing') }}"></button>
+            </div>
+            <div class="modal-body pt-3">
+                {{ __('admin::home.unsaved_changes_confirm') }}
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                    {{ __('admin::home.continue_editing') }}
+                </button>
+                <button type="button" class="btn btn-danger" id="merchant-unsaved-changes-leave">
+                    {{ __('admin::home.leave_without_saving') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="cropModal" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true" width="500vh" height="600" >
     <div class="modal-dialog modal-lg" role="document">
@@ -273,7 +300,9 @@
             if (!form) return;
 
             var savedState = getFormState();
-            var skipBeforeUnload = false;
+            var unsavedChangesModalElement = document.getElementById('merchant-unsaved-changes-modal');
+            var unsavedChangesModal = bootstrap.Modal.getOrCreateInstance(unsavedChangesModalElement);
+            var pendingNavigation = null;
 
             function getFormState() {
                 return JSON.stringify(Array.from(form.elements)
@@ -304,19 +333,58 @@
                 return getFormState() !== savedState;
             }
 
-            window.addEventListener('beforeunload', function (event) {
-                if (!skipBeforeUnload && hasUnsavedChanges()) {
-                    event.preventDefault();
-                    event.returnValue = '';
+            document.addEventListener('click', function (event) {
+                if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+                var link = event.target instanceof Element ? event.target.closest('a[href]') : null;
+                if (!link || (link.target && link.target !== '_self') || link.hasAttribute('download')) return;
+                if (link.closest('#merchant-unsaved-changes-modal')) return;
+
+                var destination;
+                try {
+                    destination = new URL(link.href, window.location.href);
+                } catch (error) {
+                    return;
                 }
+
+                if (!['http:', 'https:'].includes(destination.protocol)) return;
+                if (destination.origin === window.location.origin
+                    && destination.pathname === window.location.pathname
+                    && destination.search === window.location.search) return;
+                if (!hasUnsavedChanges()) return;
+
+                event.preventDefault();
+                event.stopPropagation();
+                pendingNavigation = { type: 'navigate', href: destination.href };
+                unsavedChangesModal.show();
+            }, true);
+
+            document.getElementById('merchant-unsaved-changes-leave').addEventListener('click', function () {
+                var action = pendingNavigation;
+                pendingNavigation = null;
+                unsavedChangesModal.hide();
+
+                if (!action) return;
+                if (action.type === 'cancel') {
+                    window.livewire.emit('cancelMerchantInfo');
+                    return;
+                }
+
+                window.location.assign(action.href);
+            });
+
+            unsavedChangesModalElement.addEventListener('hidden.bs.modal', function () {
+                pendingNavigation = null;
             });
 
             window.requestMerchantInfoCancel = function () {
-                if (hasUnsavedChanges() && !window.confirm(@json(__('admin::home.unsaved_changes_confirm')))) {
-                    return false;
+                if (hasUnsavedChanges()) {
+                    pendingNavigation = { type: 'cancel' };
+                    unsavedChangesModal.show();
+                } else {
+                    window.livewire.emit('cancelMerchantInfo');
                 }
 
-                window.livewire.emit('cancelMerchantInfo');
                 return false;
             };
 
@@ -327,7 +395,6 @@
             });
 
             window.addEventListener('merchant-info-cancelled', function () {
-                skipBeforeUnload = true;
                 window.location.reload();
             });
         })();

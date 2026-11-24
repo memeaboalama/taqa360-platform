@@ -77,6 +77,7 @@ class AuthController extends Controller
             'name' => "{$validated['first_name']} {$validated['last_name']}",
             'email' => $validated['email'],
             'password' => $validated['password'],
+            'accepted_terms' => $validated['agree_terms'],
         ]);
 
         // Temporary switch (config/auth.php → email_verification.enabled, driven

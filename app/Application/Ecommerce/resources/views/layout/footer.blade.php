@@ -9,7 +9,7 @@
                             </div>
                             <div class="footer-contant">
                                 @if(isset($footerData['logo']) && $footerData['logo'])
-                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($footerData['logo']) }}" class="foot_logo" alt="Footer Logo">
+                                    <img src="{{ $footerData['logo'] }}" class="foot_logo" alt="Footer Logo">
                                 @else
                                     <img src="{{ asset($platformBrand['logo']) }}" class="foot_logo" alt="{{ __('ecommerce::ecommerce.site_name') }}">
                                 @endif

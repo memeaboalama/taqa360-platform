@@ -132,7 +132,7 @@ class DriverController extends Controller
 
         if ($status === 'on-way') {
             if (!in_array($currentStatus, [MerchantOrderStatuses::CURRENT, MerchantOrderStatuses::READY], true)
-                || ($currentStatus !== MerchantOrderStatuses::READY && !$order->isAcceptedByDriver($driver->id))) {
+                || !$order->isAcceptedByDriver($driver->id)) {
                 return redirect()->back()->with('error', 'يجب قبول الطلب قبل بدء التوصيل.');
             }
 

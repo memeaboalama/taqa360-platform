@@ -61,6 +61,8 @@ class FooterSettings extends Component
 
     public function loadContent()
     {
+        $this->delete_logo = false;
+
         $banner = AdBanner::where('placement_id', $this->placementId)
             ->where('status', 'active')
             ->first();
@@ -101,13 +103,12 @@ class FooterSettings extends Component
     public function save(StoreBannerAction $storeAction, UpdateBannerAction $updateAction)
     {
         $this->validate([
-            'logo' => 'nullable|image|max:2048',
+            'logo' => 'nullable|image|max:10240',
             'email' => 'nullable|email',
             'phone' => 'nullable|string',
         ]);
 
-        $logoPath = $this->delete_logo ? null : ($this->existing_logo ?? null);
-
+        $logoWasUploaded = $this->logo !== null;
 
         $data = [
             'placement_id' => $this->placementId,
@@ -153,15 +154,28 @@ class FooterSettings extends Component
             $data['image_desktop'] = $this->logo;
         }
 
-
+        if ($this->delete_logo && !$this->logo) {
+            $data['content']['images']['desktop'] = null;
+            $data['content']['image'] = null;
+            $data['content']['image_desktop'] = null;
+            $data['content']['logo'] = null;
+        }
 
         if ($this->bannerId) {
-            $updatedBanner = $updateAction->handle($this->bannerId, $data);
-            if ($this->delete_logo) {
-                $updatedBanner->update(['image_desktop' => null]);
-            }
+            $updateAction->handle($this->bannerId, $data);
         } else {
-            $storeAction->handle($data);
+            $banner = $storeAction->handle($data);
+            $this->bannerId = $banner->id;
+        }
+
+        if ($logoWasUploaded) {
+            $savedBanner = AdBanner::find($this->bannerId);
+            $savedLogoPath = data_get($savedBanner?->content, 'images.desktop');
+
+            if (!is_string($savedLogoPath) || !Storage::disk('fileDisk')->exists($savedLogoPath)) {
+                $this->addError('logo', __('admin::lang.Logo upload was not saved. Please try again.'));
+                return;
+            }
         }
 
         Cache::forget('footer_settings');

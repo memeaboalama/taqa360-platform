@@ -18,8 +18,15 @@
                                             <img src="{{ $logo->temporaryUrl() }}" class="mw-100 mh-100" style="object-fit: contain;">
                                         </div>
                                     @elseif(!empty($existing_logo))
+                                        @php
+                                            $footerLogoIsExternal = filter_var($existing_logo, FILTER_VALIDATE_URL);
+                                            $footerLogoUrl = $footerLogoIsExternal
+                                                ? $existing_logo
+                                                : '/storage/' . ltrim($existing_logo, '/')
+                                                    . '?v=' . \Illuminate\Support\Facades\Storage::disk('fileDisk')->lastModified($existing_logo);
+                                        @endphp
                                         <div class="position-absolute align-items-center justify-content-center w-100 h-100 p-2 d-flex bg-white rounded">
-                                            <img src="{{ Storage::url($existing_logo) }}" class="mw-100 mh-100" style="object-fit: contain;">
+                                            <img src="{{ $footerLogoUrl }}" class="mw-100 mh-100" style="object-fit: contain;">
                                         </div>
                                     @else
                                         <div class="text-muted pointer-events-none">
@@ -36,6 +43,14 @@
                                         </button>
                                     @endif
                                 </div>
+                                <div class="small text-muted mt-2">{{ __('admin::lang.Footer logo accepts any image dimensions.') }}</div>
+                                <div class="small text-primary mt-2" wire:loading wire:target="logo">
+                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                    {{ __('admin::lang.Uploading image...') }}
+                                </div>
+                                @error('logo')
+                                    <div class="small text-danger mt-2">{{ $message }}</div>
+                                @enderror
                             </div>
                             
                             <div class="col-md-9">
@@ -146,11 +161,15 @@
                     </div>
 
                     <div class="d-flex justify-content-end pt-3 border-top">
-                        <button type="submit" class="btn btn-primary px-5">
-                            <span wire:loading.remove wire:target="save">
+                        <button type="submit" class="btn btn-primary px-5" wire:loading.attr="disabled" wire:target="logo,save">
+                            <span wire:loading.remove wire:target="logo,save">
                                 <i class="fe fe-save me-1"></i> {{ __('admin::lang.Save Settings') }}
                             </span>
-                             <span wire:loading wire:target="save">
+                            <span wire:loading wire:target="logo">
+                                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                {{ __('admin::lang.Uploading image...') }}
+                            </span>
+                            <span wire:loading wire:target="save">
                                 <span class="spinner-border spinner-border-sm me-1"></span> {{ __('admin::lang.Saving...') }}
                             </span>
                         </button>

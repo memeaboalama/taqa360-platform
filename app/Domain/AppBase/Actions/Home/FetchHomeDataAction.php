@@ -36,12 +36,12 @@ class FetchHomeDataAction
             Cache::forget('home_page_data_ar');
             Cache::forget('home_page_data_en');
             Cache::forget('home_page_data_' . app()->getLocale());
-            Cache::forget('home_page_data_storefront_v5_ar');
-            Cache::forget('home_page_data_storefront_v5_en');
-            Cache::forget('home_page_data_storefront_v5_' . app()->getLocale());
+            Cache::forget('home_page_data_storefront_v7_ar');
+            Cache::forget('home_page_data_storefront_v7_en');
+            Cache::forget('home_page_data_storefront_v7_' . app()->getLocale());
         }
 
-        $data = Cache::remember('home_page_data_storefront_v5_' . app()->getLocale(), 1800, function() {
+        $data = Cache::remember('home_page_data_storefront_v7_' . app()->getLocale(), 1800, function() {
             $page = AdPage::where('key', 'home')->first();
 
             if (!$page) {
@@ -140,6 +140,13 @@ class FetchHomeDataAction
         });
 
         return $this->filterUnavailableCachedProducts($data);
+    }
+
+    public function getStoreFooterData(): ?array
+    {
+        $page = AdPage::where('key', 'home')->first();
+
+        return $page ? $this->getFooterData($page->id, 'footer_main_section') : null;
     }
 
     public function getProductCollection(string $section): \Illuminate\Support\Collection
@@ -411,7 +418,8 @@ class FetchHomeDataAction
         if ($logoPath && filter_var($logoPath, FILTER_VALIDATE_URL)) {
             $content['logo'] = $logoPath;
         } elseif ($logoPath && Storage::disk('fileDisk')->exists($logoPath)) {
-            $content['logo'] = Storage::disk('fileDisk')->url($logoPath);
+            $content['logo'] = '/storage/' . ltrim($logoPath, '/')
+                . '?v=' . Storage::disk('fileDisk')->lastModified($logoPath);
         } elseif ($logoPath && file_exists(public_path($logoPath))) {
             $content['logo'] = asset($logoPath);
         } else {

@@ -735,6 +735,9 @@ return [
     'back_to_merchants' => 'رجوع إلى المتاجر',
     'cancel_editing' => 'إلغاء التعديل',
     'unsaved_changes_confirm' => 'لديك تغييرات غير محفوظة. هل تريد إلغاءها والمتابعة؟',
+    'unsaved_changes_title' => 'تغييرات غير محفوظة',
+    'continue_editing' => 'العودة إلى التعديل',
+    'leave_without_saving' => 'الخروج دون حفظ',
     'attach_selected' => 'إرفاق المحدد',
     'add_from_library' => 'إضافة من المكتبة',
     'search_specification_template' => 'ابحث عن نموذج مواصفات',
@@ -808,6 +811,7 @@ return [
     'Google Maps could not be loaded. Check the API key, billing, and allowed domains.' => 'تعذر تحميل خرائط Google. تحقق من صحة المفتاح وتفعيل الفوترة والسماح بنطاق الموقع.',
 
     "collection_failure_reports" => "بلاغات تعذر التحصيل",
+    "products" => "المنتجات",
     "collection_failure_report_details" => "تفاصيل بلاغ تعذر التحصيل",
     "collection_failure_search" => "رقم البلاغ أو الطلب",
     "all_collection_failure_statuses" => "كل حالات البلاغ",

@@ -37,6 +37,7 @@ use Application\Driver\Livewire\Custody\Statement as DriverCustodyStatement;
 use Application\Driver\Livewire\Settlement\Create as DriverSettlementCreate;
 use Application\Driver\Livewire\Settlement\MySettlements as DriverMySettlements;
 use Application\Driver\Controllers\SettlementProofController as DriverSettlementProofController;
+use Application\Driver\Controllers\DriverController;
 use Domain\Admin\Models\Admin;
 use Domain\AppBase\Models\Payment;
 use Domain\Driver\Models\Driver;
@@ -79,6 +80,38 @@ class CollectionSettlementAcceptanceTest extends TestCase
             'type' => 'admin',
             'status' => 1,
         ]);
+    }
+
+    public function test_driver_must_accept_assigned_orders_before_starting_delivery(): void
+    {
+        Auth::guard('driver')->setUser($this->driver);
+        $controller = app(DriverController::class);
+
+        foreach ([MerchantOrderStatuses::PENDING, MerchantOrderStatuses::UPCOMING, MerchantOrderStatuses::READY] as $status) {
+            $order = $this->createOrder($this->driver, ['status' => $status->value]);
+            $component = Livewire::test(DriverOrderShow::class)
+                ->call('showOrderDetails', $order->id)
+                ->assertSet('order.is_accepted_by_driver', false)
+                ->assertSeeHtml('id="acceptOrderForm"');
+
+            $controller->updateOrderStatus(
+                Request::create('/driver/orders/' . $order->id, 'POST', ['status' => 'on-way']),
+                $order->id
+            );
+            $this->assertSame($status, $order->fresh()->status);
+
+            $controller->acceptOrder($order->id);
+            $this->assertTrue($order->fresh()->isAcceptedByDriver($this->driver->id));
+            $component->call('showOrderDetails', $order->id)
+                ->assertSet('order.is_accepted_by_driver', true)
+                ->assertDontSeeHtml('id="acceptOrderForm"');
+
+            $controller->updateOrderStatus(
+                Request::create('/driver/orders/' . $order->id, 'POST', ['status' => 'on-way']),
+                $order->id
+            );
+            $this->assertSame(MerchantOrderStatuses::ON_WAY, $order->fresh()->status);
+        }
     }
 
     public function test_customer_checkout_confirmation_reads_persisted_payment_state_and_owns_the_order(): void

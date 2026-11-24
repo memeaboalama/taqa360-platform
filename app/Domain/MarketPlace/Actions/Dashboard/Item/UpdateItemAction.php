@@ -21,10 +21,14 @@ class UpdateItemAction
         $this->imageService = $imageService;
     }
 
-    public function handle($id, array $data = []): ?\Illuminate\Database\Eloquent\Model
+    public function handle($id, array $data = [], ?int $merchantId = null): ?\Illuminate\Database\Eloquent\Model
     {
         try {
-            $model = $this->modelR->findByCols(['id' => $id]);
+            $conditions = ['id' => $id];
+            if ($merchantId !== null) {
+                $conditions['merchant_id'] = $merchantId;
+            }
+            $model = $this->modelR->findByCols($conditions);
 
             if (!$model) {
                 throw new \Exception('Product not found');

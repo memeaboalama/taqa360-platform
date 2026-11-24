@@ -149,6 +149,9 @@ return [
         'email' => 'Email',
         'password' => 'Password',
         'create_account' => 'Create Account',
+        'agree_terms_prefix' => 'I agree to the',
+        'agree_terms_connector' => 'and',
+        'agree_terms_required' => 'You must agree to the terms and conditions and privacy policy.',
         'new_customer' => 'New Customer',
         'register_description' => 'Sign up for a free account at our store. Registration is quick and easy. It allows you to be able to order from our shop. To start shopping click register.',
         'enter_otp' => 'Enter Verification Code',
@@ -541,6 +544,7 @@ return [
     // Footer Sections (if needed)
     'about_us' => 'About Us',
     'contact_us' => 'Contact Us',
+    'legal_content_unavailable' => 'This content is currently unavailable.',
     'privacy_policy' => 'Privacy Policy',
     'terms_conditions' => 'Terms & Conditions',
     'shipping_info' => 'Shipping Info',

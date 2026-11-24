@@ -108,7 +108,7 @@ class UpdateBannerAction
         $images = is_array($content['images'] ?? null) ? $content['images'] : [];
         $paths = array_merge(
             array_values($images),
-            [$content['image'] ?? null, $content['image_desktop'] ?? null]
+            [$content['image'] ?? null, $content['image_desktop'] ?? null, $content['logo'] ?? null]
         );
 
         return array_values(array_unique(array_filter(

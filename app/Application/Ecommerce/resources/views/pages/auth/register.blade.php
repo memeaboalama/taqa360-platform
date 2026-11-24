@@ -17,6 +17,18 @@
 
 @section('page-styles')
     @include('ecommerce::partials.static-auth-css')
+    <style>
+        .login-card .terms-label a {
+            color: var(--yellow);
+            font-weight: 700;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .login-card .terms-label a:hover {
+            color: #245c8e;
+        }
+    </style>
 @endsection
 
 @section('content')
@@ -71,6 +83,25 @@
                         <span class="error" id="password-error" style="display: none;"></span>
                     </div>
 
+                    <div class="field">
+                        <label class="terms-label" for="agree_terms">
+                            <input class="terms-checkbox" id="agree_terms" name="agree_terms" type="checkbox" value="1"
+                                @checked(old('agree_terms'))>
+                            <span>
+                                @lang('ecommerce::ecommerce.auth.agree_terms_prefix')
+                                <a href="#termsConditionsModal" data-bs-toggle="modal" aria-controls="termsConditionsModal">
+                                    @lang('ecommerce::ecommerce.terms_conditions')
+                                </a>
+                                @lang('ecommerce::ecommerce.auth.agree_terms_connector')
+                                <a href="#privacyPolicyModal" data-bs-toggle="modal" aria-controls="privacyPolicyModal">
+                                    @lang('ecommerce::ecommerce.privacy_policy')
+                                </a>
+                            </span>
+                        </label>
+                        @error('agree_terms')<span class="error">{{ $message }}</span>@enderror
+                        <span class="error" id="agree_terms-error" style="display: none;"></span>
+                    </div>
+
                     <button class="submit block" type="submit" id="registerBtn">
                         <span class="btn-text">@lang('ecommerce::ecommerce.auth.create_account')</span>
                         <span class="btn-loading" style="display: none;"><i class="fa fa-spinner fa-spin"></i>
@@ -100,7 +131,8 @@
                 { input: 'first_name', error: 'first_name-error', required: @json(__('ecommerce::ecommerce.auth.first_name_required')) },
                 { input: 'last_name', error: 'last_name-error', required: @json(__('ecommerce::ecommerce.auth.last_name_required')) },
                 { input: 'email', error: 'email-error', required: @json(__('ecommerce::ecommerce.auth.email_required')), invalid: @json(__('ecommerce::ecommerce.auth.email_invalid')) },
-                { input: 'password', error: 'password-error', required: @json(__('ecommerce::ecommerce.auth.password_required')), min: @json(__('ecommerce::ecommerce.auth.password_min_length')) }
+                { input: 'password', error: 'password-error', required: @json(__('ecommerce::ecommerce.auth.password_required')), min: @json(__('ecommerce::ecommerce.auth.password_min_length')) },
+                { input: 'agree_terms', error: 'agree_terms-error', required: @json(__('ecommerce::ecommerce.auth.agree_terms_required')) }
             ];
 
             function setError(name, message) {
@@ -119,7 +151,7 @@
 
             fields.forEach(function (field) {
                 const input = document.getElementById(field.input);
-                input.addEventListener('input', function () {
+                input.addEventListener(field.input === 'agree_terms' ? 'change' : 'input', function () {
                     setError(field.input, '');
                 });
             });
@@ -153,6 +185,11 @@
                     hasError = true;
                 } else if (password.length < 8) {
                     setError('password', fields[3].min);
+                    hasError = true;
+                }
+
+                if (!document.getElementById('agree_terms').checked) {
+                    setError('agree_terms', fields[4].required);
                     hasError = true;
                 }
 

@@ -76,7 +76,7 @@ class AdBanner extends Model
         $locales = array_unique(['en', 'ar', app()->getLocale()]);
 
         foreach ($locales as $locale) {
-            Cache::forget("home_page_data_storefront_v5_{$locale}");
+            Cache::forget("home_page_data_storefront_v7_{$locale}");
             Cache::forget("home_page_data_{$locale}");
 
             if ($placementKey) {

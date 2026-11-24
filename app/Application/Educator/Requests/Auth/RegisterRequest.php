@@ -19,7 +19,7 @@ class RegisterRequest extends FormRequest
             'last_name'  => ['required', 'string', 'min:2', 'max:50'],
             'email'      => ['required', 'string', 'email', 'max:255', Rule::unique('educators', 'email')],
             'password'   => ['required', 'string', 'confirmed', 'min:8'],
-            'agree_terms' => ['required', 'boolean'],
+            'agree_terms' => ['accepted'],
             'platform'   => ['nullable', 'in:web,ios,android'],
             'device_token' => ['nullable', 'string'],
         ];

@@ -145,6 +145,9 @@ return [
         'email' => 'البريد الإلكتروني',
         'password' => 'كلمة المرور',
         'create_account' => 'إنشاء حساب',
+        'agree_terms_prefix' => 'أوافق على',
+        'agree_terms_connector' => 'و',
+        'agree_terms_required' => 'يرجى الموافقة على الشروط والأحكام وسياسة الخصوصية.',
         'new_customer' => 'عميل جديد',
         'register_description' => 'سجل للحصول على حساب مجاني في متجرنا. التسجيل سريع وسهل. يسمح لك بالطلب من متجرنا. لبدء التسوق انقر فوق تسجيل.',
         'enter_otp' => 'أدخل رمز التحقق',
@@ -535,6 +538,7 @@ return [
     // Footer Sections (if needed)
     'about_us' => 'من نحن',
     'contact_us' => 'اتصل بنا',
+    'legal_content_unavailable' => 'المحتوى غير متاح حاليًا.',
     'privacy_policy' => 'سياسة الخصوصية',
     'terms_conditions' => 'الشروط والأحكام',
     'shipping_info' => 'معلومات الشحن',

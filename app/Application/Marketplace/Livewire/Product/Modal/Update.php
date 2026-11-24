@@ -39,6 +39,7 @@ class Update extends Component
     public $calories;
     public $preparing_time;
     public $merchant_id;
+    public $merchantId;
     public $addition_group_ids = [];
     public $additional_images = [];
     public $product_id;
@@ -56,18 +57,21 @@ class Update extends Component
 
     protected $listeners = ['updateProduct'];
 
-    public function mount(): void
+    public function mount(?int $merchantId = null): void
     {
+        $this->merchantId = $merchantId;
         $this->categories = Category::where('is_active', true)->get();
         $this->subcategories = collect();
         $this->childCategories = collect();
         $this->masterSpecifications = collect();
-        $this->addition_groups = AdditionGroup::where('status', StatusEnum::ACTIVE->value)->get();
+        $this->addition_groups = AdditionGroup::where('status', StatusEnum::ACTIVE->value)
+            ->where('merchant_id', $this->merchantId ?? auth('merchant')->id())
+            ->get();
     }
 
     public function updateProduct($id, FetchSingleItemAction $action): void
     {
-        $product = $action->handle($id);
+        $product = $action->handle($id, $this->merchantId);
 
         if ($product) {
             $product->load(['catalogSpecifications.properties', 'files']);
@@ -94,7 +98,10 @@ class Update extends Component
             $this->loadCategoriesBasedOnCurrentValues();
 
             $this->emit('openModal', '#updateProduct');
+            return;
         }
+
+        $this->alert('error', __('admin::main.messages.something_went_wrong'));
     }
 
     private function loadItemPrices($product): void
@@ -372,7 +379,7 @@ class Update extends Component
             $data['specification_values'] = $this->specification_values;
             $data['specification_file'] = $this->specification_file;
             $data['remove_specification_file'] = $this->remove_specification_file;
-            if (!$action->handle($this->product_id, $data)) {
+            if (!$action->handle($this->product_id, $data, $this->merchantId)) {
                 throw new \RuntimeException('Product update failed.');
             }
             $this->emit('closeModal', '#updateProduct');
