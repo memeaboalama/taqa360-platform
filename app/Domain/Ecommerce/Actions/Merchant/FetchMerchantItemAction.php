@@ -24,4 +24,10 @@ class FetchMerchantItemAction
     {
         return $this->itemRepository->getCategoryCounts($merchant_id, $categories);
     }
+
+    public function specificationFacets(array $filters, int $merchantId): Collection
+    {
+        return app(\App\Application\Ecommerce\Support\MerchantSpecificationFilters::class)
+            ->facets($this->itemRepository->filterMerchantItems($filters, $merchantId));
+    }
 }

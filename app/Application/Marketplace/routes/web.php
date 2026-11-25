@@ -164,6 +164,9 @@ Route::group(
                     Route::get('/products', [ProductController::class, 'index'])
                         // ->middleware('merchant.check_permission:show_products')
                         ->name('products');
+                    Route::get('/products/{id}/edit', [ProductController::class, 'edit'])
+                        ->whereNumber('id')
+                        ->name('products.edit');
 
                     Route::get('/coupons', [CouponController::class, 'index'])
                         ->middleware('merchant.check_permission:show_employees')

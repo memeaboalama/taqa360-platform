@@ -116,6 +116,7 @@ Route::group(
     Route::get('/merchants', [MerchantController::class, 'staticIndex'])->name('merchants.index');
 
         Route::prefix('ecommerce/merchant')->controller(MerchantController::class)->group(function () {
+            Route::get('/{merchant}/specification-options', 'specificationOptions')->name('merchant.specification-options');
             Route::get('/{merchant}', 'show')->name('merchant.show');
         });
         Route::get('/merchant/{merchant}/filter', [MerchantController::class, 'filter'])->name('merchant.filter');

@@ -248,4 +248,5 @@
 
 
 </script>
+<script src="{{ asset('assets/vendor/js/table-scroll.js') }}"></script>
 @stack('js')

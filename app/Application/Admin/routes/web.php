@@ -310,6 +310,9 @@ Route::group(
         });
         Route::prefix('vars')->as('vars.')->group(function () {
             Route::get('/specifications', [SpecificationController::class, 'index'])->name('specifications');
+            Route::get('/specifications/create', [SpecificationController::class, 'create'])->name('specifications.create');
+            Route::get('/specifications/{specification}/edit', [SpecificationController::class, 'edit'])->name('specifications.edit');
+            Route::get('/specifications/{specification}/copy', [SpecificationController::class, 'copy'])->name('specifications.copy');
             Route::view('/brands', 'admin::livewire.catalog.brand.index')->name('brands.index');
             Route::view('/car-types', 'admin::livewire.catalog.car-type.index')->name('car-types');
         });

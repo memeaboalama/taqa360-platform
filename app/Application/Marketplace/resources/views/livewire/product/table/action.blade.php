@@ -1,13 +1,17 @@
 <div>
     <div class="hstack gap-2 fs-15">
         {{-- @AdminHasRole(['edit_products']) --}}
-        <button type="button"
-            class="btn btn-icon btn-sm btn-info-transparent rounded-pill btn-data-loading"
-            data-loading-target="#updateProduct"
-            wire:click="$emit('updateProduct',{{ $row->id }})"
+        @if(auth('merchant')->check())
+        <a href="{{ route('marketplace:products.edit', $row->id) }}"
+            class="btn btn-icon btn-sm btn-info-transparent rounded-pill"
             title="@lang('marketplace::home.Edit')">
             <i class="ri-edit-line"></i>
-        </button>
+        </a>
+        @else
+        <button type="button" class="btn btn-icon btn-sm btn-info-transparent rounded-pill btn-data-loading"
+            data-loading-target="#updateProduct" wire:click="$emit('updateProduct',{{ $row->id }})"
+            title="@lang('marketplace::home.Edit')"><i class="ri-edit-line"></i></button>
+        @endif
         {{-- @endAdminHasRole --}}
 
         {{-- @AdminHasRole(['view_products']) --}}

@@ -29,7 +29,7 @@
 
     <!-- Style Css -->
     <link href="{{ asset('assets/vendor/css/styles.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('assets/vendor/css/taqa-branding.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/vendor/css/taqa-branding.css') }}?v={{ filemtime(public_path('assets/vendor/css/taqa-branding.css')) }}" rel="stylesheet">
 
 
     <!-- Icons Css -->

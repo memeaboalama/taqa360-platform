@@ -36,7 +36,6 @@
                 {{-- @endAdminHasRole --}}
 
                 {{-- @AdminHasRole('edit_products') --}}
-                <livewire:marketplace::product.modal.update/>
                 {{-- @endAdminHasRole --}}
 
                 {{-- @AdminHasRole('view_products') --}}

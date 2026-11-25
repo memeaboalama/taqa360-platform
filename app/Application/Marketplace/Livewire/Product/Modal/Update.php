@@ -97,7 +97,7 @@ class Update extends Component
             $this->loadExistingSpecificationFile($product);
             $this->loadCategoriesBasedOnCurrentValues();
 
-            $this->emit('openModal', '#updateProduct');
+            $this->productLoaded();
             return;
         }
 
@@ -120,6 +120,11 @@ class Update extends Component
                 "status" => $existingPrice?->status?->value ?? 'inactive'
             ];
         }
+    }
+
+    protected function productLoaded(): void
+    {
+        $this->emit('openModal', '#updateProduct');
     }
 
     private function loadExistingFiles($product): void
@@ -184,10 +189,15 @@ class Update extends Component
                 ->get();
         }
 
-        $this->loadMasterSpecificationsForCategory($this->main_category_id, $this->master_specification_ids);
+        $this->loadMasterSpecificationsForCategory(
+            $this->main_category_id,
+            $this->master_specification_ids,
+            $this->sub_category_id,
+            $this->child_category_id
+        );
     }
 
-    private function loadMasterSpecificationsForCategory($categoryId, array $includeIds = []): void
+    private function loadMasterSpecificationsForCategory($categoryId, array $includeIds = [], $subcategoryId = null, $childCategoryId = null): void
     {
         if (!$categoryId) {
             $this->masterSpecifications = collect();
@@ -195,11 +205,15 @@ class Update extends Component
         }
 
         $this->masterSpecifications = Specification::query()
-            ->whereNull('item_id')
-            ->where(function ($query) use ($categoryId, $includeIds) {
-                $query->where(function ($categoryQuery) use ($categoryId) {
+            ->isMaster()
+            ->where(function ($query) use ($categoryId, $subcategoryId, $childCategoryId, $includeIds) {
+                $query->where(function ($categoryQuery) use ($categoryId, $subcategoryId, $childCategoryId) {
                     $categoryQuery->where('status', StatusEnum::ACTIVE->value)
-                        ->whereHas('categories', fn ($query) => $query->where('categories.id', $categoryId));
+                        ->forCatalogCategories(
+                            (int) $categoryId,
+                            $subcategoryId ? (int) $subcategoryId : null,
+                            $childCategoryId ? (int) $childCategoryId : null
+                        );
                 });
 
                 if ($includeIds) {
@@ -233,6 +247,38 @@ class Update extends Component
             ->where('is_active', true)
             ->get();
         $this->child_category_id = null;
+        $this->refreshMasterSpecificationsForSelection($value, null);
+    }
+
+    public function updatedChildCategoryId(): void
+    {
+        $this->refreshMasterSpecificationsForSelection($this->sub_category_id, $this->child_category_id);
+    }
+
+    private function refreshMasterSpecificationsForSelection($subcategoryId, $childCategoryId): void
+    {
+        $selectedIds = array_map('intval', $this->master_specification_ids);
+        $this->loadMasterSpecificationsForCategory(
+            $this->main_category_id,
+            [],
+            $subcategoryId,
+            $childCategoryId
+        );
+        $availableIds = $this->masterSpecifications->modelKeys();
+        $this->master_specification_ids = array_values(array_intersect($selectedIds, $availableIds));
+        if ($this->selected_master_specification_id
+            && !in_array((int) $this->selected_master_specification_id, $availableIds, true)) {
+            $this->selected_master_specification_id = null;
+        }
+        $availablePropertyIds = $this->masterSpecifications
+            ->whereIn('id', $this->master_specification_ids)
+            ->flatMap(fn ($specification) => $specification->properties)
+            ->pluck('id')
+            ->all();
+        $this->specification_values = array_intersect_key(
+            $this->specification_values,
+            array_fill_keys($availablePropertyIds, true)
+        );
     }
 
     public function updateStatusRow($index): void
@@ -308,8 +354,14 @@ class Update extends Component
             'title.*' => 'required|string|min:2|max:120',
             'status' => 'required|string|in:active,inactive',
             'main_category_id' => 'required|exists:categories,id',
-            'sub_category_id' => 'nullable|exists:sub_categories,id',
-            'child_category_id' => 'nullable|exists:child_categories,id',
+            'sub_category_id' => [
+                'nullable',
+                Rule::exists('sub_categories', 'id')->where('category_id', $this->main_category_id),
+            ],
+            'child_category_id' => [
+                'nullable',
+                Rule::exists('child_categories', 'id')->where('subcategory_id', $this->sub_category_id),
+            ],
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'description' => 'required|array',
             'description.*' => 'required|string|min:10',
@@ -319,20 +371,20 @@ class Update extends Component
             'master_specification_ids.*' => [
                 'integer',
                 'distinct',
-                Rule::exists('specifications', 'id')->where(function ($query) {
-                    $query->whereNull('item_id')->where('status', StatusEnum::ACTIVE->value);
-                }),
-                Rule::exists('category_specification', 'specification_id')
-                    ->where('category_id', $this->main_category_id),
+                function ($attribute, $value, $fail): void {
+                    if (!$this->isMasterSpecificationAvailable((int) $value)) {
+                        $fail(__('admin::home.specification_not_available_for_category'));
+                    }
+                },
             ],
             'selected_master_specification_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('specifications', 'id')->where(function ($query) {
-                    $query->whereNull('item_id')->where('status', StatusEnum::ACTIVE->value);
-                }),
-                Rule::exists('category_specification', 'specification_id')
-                    ->where('category_id', $this->main_category_id),
+                function ($attribute, $value, $fail): void {
+                    if ($value && !$this->isMasterSpecificationAvailable((int) $value)) {
+                        $fail(__('admin::home.specification_not_available_for_category'));
+                    }
+                },
             ],
             'specification_values' => 'nullable|array',
             'specification_values.*' => 'nullable|string|max:5000',
@@ -348,6 +400,20 @@ class Update extends Component
             'item_prices.*.price' => 'required|numeric',
             'item_prices.*.status' => 'required',
         ];
+    }
+
+    private function isMasterSpecificationAvailable(int $id): bool
+    {
+        return Specification::query()
+            ->isMaster()
+            ->where('status', StatusEnum::ACTIVE->value)
+            ->forCatalogCategories(
+                $this->main_category_id ? (int) $this->main_category_id : null,
+                $this->sub_category_id ? (int) $this->sub_category_id : null,
+                $this->child_category_id ? (int) $this->child_category_id : null
+            )
+            ->whereKey($id)
+            ->exists();
     }
 
     public function nickNames()
@@ -379,19 +445,30 @@ class Update extends Component
             $data['specification_values'] = $this->specification_values;
             $data['specification_file'] = $this->specification_file;
             $data['remove_specification_file'] = $this->remove_specification_file;
+            $data = $this->prepareUpdateData($data);
             if (!$action->handle($this->product_id, $data, $this->merchantId)) {
                 throw new \RuntimeException('Product update failed.');
             }
-            $this->emit('closeModal', '#updateProduct');
-            $this->emit('refreshProducts');
-            $this->alert('success', __('admin::main.messages.product_updated'));
-            $this->resetForm();
             DB::commit();
+            $this->productUpdated();
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Update Product Error: ' . $e->getMessage());
             $this->alert('error', __('admin::main.messages.something_went_wrong'));
         }
+    }
+
+    protected function prepareUpdateData(array $data): array
+    {
+        return $data;
+    }
+
+    protected function productUpdated(): void
+    {
+        $this->emit('closeModal', '#updateProduct');
+        $this->emit('refreshProducts');
+        $this->alert('success', __('admin::main.messages.product_updated'));
+        $this->resetForm();
     }
 
     private function resetForm(): void

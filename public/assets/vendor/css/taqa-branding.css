@@ -4,8 +4,15 @@
     scrollbar-width: auto;
 }
 
-:is(.table-responsive, .merchant-table-scroll):has(> [wire\:id] .table-responsive) {
-    overflow: visible;
+/* Start without a scrollbar; table-scroll.js enables it only after measuring
+   the table. This also applies to newly rendered Livewire tables. */
+:is(.table-responsive, .merchant-table-scroll, .overflow-x-auto:has(table)) {
+    overflow-x: hidden !important;
+}
+
+:is(.table-responsive, .merchant-table-scroll) {
+    min-width: 0;
+    max-width: 100%;
 }
 
 .table.type-service-table {

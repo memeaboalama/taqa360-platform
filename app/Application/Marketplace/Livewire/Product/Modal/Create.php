@@ -133,17 +133,20 @@ class Create extends Component
             'selected_master_specification_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('specifications', 'id')->where(function ($query) {
-                    $query->whereNull('item_id')->where('status', StatusEnum::ACTIVE->value);
-                }),
-                Rule::exists('category_specification', 'specification_id')->where('category_id', $this->main_category_id),
+                function ($attribute, $value, $fail): void {
+                    if ($value && !$this->isMasterSpecificationAvailable((int) $value)) {
+                        $fail(__('admin::home.specification_not_available_for_category'));
+                    }
+                },
             ],
             'master_specification_ids.*' => [
                 'integer',
-                Rule::exists('specifications', 'id')->where(function ($query) {
-                    $query->whereNull('item_id')->where('status', StatusEnum::ACTIVE->value);
-                }),
-                Rule::exists('category_specification', 'specification_id')->where('category_id', $this->main_category_id),
+                'distinct',
+                function ($attribute, $value, $fail): void {
+                    if (!$this->isMasterSpecificationAvailable((int) $value)) {
+                        $fail(__('admin::home.specification_not_available_for_category'));
+                    }
+                },
             ],
             'specification_values' => 'nullable|array',
             'specification_values.*' => 'nullable|string|max:5000',
@@ -195,14 +198,6 @@ class Create extends Component
             ->whereHas('categories', fn ($query) => $query->where('categories.id', $value))
             ->orderBy('id')
             ->get();
-        $this->masterSpecifications = Specification::query()
-            ->whereNull('item_id')
-            ->where('status', StatusEnum::ACTIVE->value)
-            ->whereHas('categories', fn ($query) => $query->where('categories.id', $value))
-            ->with(['properties' => fn ($query) => $query
-                ->whereNull('item_id')
-                ->where('status', StatusEnum::ACTIVE->value)])
-            ->get();
         $this->brand_id = null;
         $this->master_specification_ids = [];
         $this->selected_master_specification_id = null;
@@ -210,6 +205,7 @@ class Create extends Component
         $this->sub_category_id = null;
         $this->child_category_id = null;
         $this->childCategories = collect();
+        $this->loadMasterSpecificationsForSelectedCategories();
     }
 
     public function updatedSubCategoryId($value): void
@@ -218,6 +214,12 @@ class Create extends Component
             ->where('is_active', true)
             ->get();
         $this->child_category_id = null;
+        $this->loadMasterSpecificationsForSelectedCategories();
+    }
+
+    public function updatedChildCategoryId(): void
+    {
+        $this->loadMasterSpecificationsForSelectedCategories();
     }
 
     public function addMasterSpecification(): void
@@ -241,6 +243,60 @@ class Create extends Component
             $this->master_specification_ids,
             fn ($selectedId) => (int) $selectedId !== $id
         ));
+    }
+
+    private function loadMasterSpecificationsForSelectedCategories(): void
+    {
+        if (!$this->main_category_id) {
+            $this->masterSpecifications = collect();
+
+            return;
+        }
+
+        $selectedIds = array_map('intval', $this->master_specification_ids);
+        $this->masterSpecifications = Specification::query()
+            ->isMaster()
+            ->where('status', StatusEnum::ACTIVE->value)
+            ->forCatalogCategories(
+                (int) $this->main_category_id,
+                $this->sub_category_id ? (int) $this->sub_category_id : null,
+                $this->child_category_id ? (int) $this->child_category_id : null
+            )
+            ->with(['properties' => fn ($query) => $query
+                ->whereNull('item_id')
+                ->where('status', StatusEnum::ACTIVE->value)])
+            ->orderBy('id')
+            ->get();
+
+        $availableIds = $this->masterSpecifications->modelKeys();
+        $this->master_specification_ids = array_values(array_intersect($selectedIds, $availableIds));
+        if ($this->selected_master_specification_id
+            && !in_array((int) $this->selected_master_specification_id, $availableIds, true)) {
+            $this->selected_master_specification_id = null;
+        }
+        $availablePropertyIds = $this->masterSpecifications
+            ->whereIn('id', $this->master_specification_ids)
+            ->flatMap(fn ($specification) => $specification->properties)
+            ->pluck('id')
+            ->all();
+        $this->specification_values = array_intersect_key(
+            $this->specification_values,
+            array_fill_keys($availablePropertyIds, true)
+        );
+    }
+
+    private function isMasterSpecificationAvailable(int $id): bool
+    {
+        return Specification::query()
+            ->isMaster()
+            ->where('status', StatusEnum::ACTIVE->value)
+            ->forCatalogCategories(
+                $this->main_category_id ? (int) $this->main_category_id : null,
+                $this->sub_category_id ? (int) $this->sub_category_id : null,
+                $this->child_category_id ? (int) $this->child_category_id : null
+            )
+            ->whereKey($id)
+            ->exists();
     }
 
     public function updateStatus($val): void

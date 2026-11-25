@@ -795,6 +795,34 @@
             border-radius: 14px;
             box-shadow: none;
         }
+        .merchant-spec-filters{margin-top:16px;padding:20px;border:1px solid var(--line);border-radius:14px;background:#fff}
+        .merchant-spec-filters h3{font-size:16px;margin:0 0 18px;color:var(--ink)}
+        .merchant-spec-filters h3 i{color:var(--yellow);margin-inline-end:8px}
+        .merchant-spec-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:20px}
+        .merchant-spec-fields fieldset{min-width:0;max-width:280px;border:0;padding:0;margin:0}
+        .merchant-spec-fields legend{font-size:13px;font-weight:700;margin-bottom:10px;float:none;width:auto}
+        .merchant-spec-dropdown{position:relative}
+        .merchant-spec-dropdown [hidden]{display:none!important}
+        .merchant-spec-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:42px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font:inherit;text-align:start;cursor:pointer}
+        .merchant-spec-trigger span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px}
+        .merchant-spec-trigger[aria-expanded=true]{border-color:var(--yellow)}
+        .merchant-spec-menu{position:absolute;inset-inline:0;top:calc(100% + 6px);z-index:100;min-width:0;border:1px solid var(--line);border-radius:10px;background:#fff;box-shadow:0 10px 30px #18344b20;overflow:hidden}
+        .merchant-spec-search{display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid var(--line);color:var(--muted)}
+        .merchant-spec-search input{width:100%;min-width:0;border:0;outline:0;background:#fff;color:var(--ink);font:inherit;font-size:12px}
+        .merchant-spec-options{max-height:240px;overflow-y:auto;overscroll-behavior:contain}
+        .merchant-spec-option{display:flex;width:100%;align-items:center;gap:8px;border:0;background:#fff;color:var(--ink);font:inherit;font-size:13px;text-align:start;padding:10px 12px;cursor:pointer}
+        .merchant-spec-option:hover,.merchant-spec-option:focus-visible{background:#f1f6fb;outline:0}
+        .merchant-spec-option[aria-selected=true]{background:#edf4fb;color:var(--yellow-deep)}
+        .merchant-spec-option .spec-check{display:flex;align-items:center;justify-content:center;width:16px;height:16px;flex-shrink:0;border:1px solid #b7c6d5;border-radius:4px;font-size:11px}
+        .merchant-spec-option[aria-selected=true] .spec-check{background:var(--yellow);border-color:var(--yellow);color:#fff}
+        .merchant-spec-option .spec-option-label{overflow-wrap:anywhere}
+        .merchant-spec-option small{margin-inline-start:auto;color:var(--muted);font-size:11px}
+        .merchant-spec-status{margin:0;padding:8px 12px;color:var(--muted);font-size:12px}
+        .merchant-spec-status:empty{display:none}
+        .merchant-spec-retry{border:0;background:#fff;color:var(--yellow-deep);padding:8px 12px;font:inherit;cursor:pointer}
+        .merchant-spec-actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:20px}
+        .merchant-spec-actions button{border:0;border-radius:8px;background:var(--yellow);color:#fff;padding:10px 20px;font-family:inherit;cursor:pointer}
+        .merchant-spec-actions a{color:var(--yellow-deep);font-size:12px}
         .merchant-detail .filter-title { display: none; }
         .merchant-detail .filter-option {
             min-height: 39px;
@@ -1136,17 +1164,22 @@
                         <div class="filter-title"><i class="fa fa-th-large"></i>
                             @lang('ecommerce::ecommerce.store_categories')</div><a
                             class="filter-option {{ request('category', 'all') === 'all' ? 'active' : '' }}"
-                            href="{{ route('merchant.show', array_merge(['merchant' => $merchant->id], request()->except(['category', 'page']))) }}"><i
+                            href="{{ route('merchant.show', array_merge(['merchant' => $merchant->id], request()->except(['category', 'page', 'specs']))) }}"><i
                                 class="fa fa-th-large"></i><span>@lang('admin::lang.all')</span><span
                                 class="count">{{ $categoryCounts['all'] ?? 0 }}</span></a>@foreach($categories as $category)<a
                                     class="filter-option {{ (string) request('category') === (string) $category->id ? 'active' : '' }}"
-                                    href="{{ route('merchant.show', array_merge(['merchant' => $merchant->id, 'category' => $category->id], request()->except(['category', 'page']))) }}"><i
+                                    href="{{ route('merchant.show', array_merge(['merchant' => $merchant->id, 'category' => $category->id], request()->except(['category', 'page', 'specs']))) }}"><i
                                         class="fa fa-angle-right arrow-end"></i><span>{{ $title($category->title) }}</span><span
                                 class="count">{{ $categoryCounts[$category->id] ?? 0 }}</span></a>@endforeach
                     </div>
+                    @include('ecommerce::pages.merchant.partials.specification-filters')
                 </aside>
                 <section class="results">
-                    <form class="controls" method="get" action="{{ route('merchant.show', $merchant->id) }}"><input
+                    <form class="controls" method="get" action="{{ route('merchant.show', $merchant->id) }}">
+                        @foreach($selectedSpecifications as $fieldId => $values)
+                            @foreach($values as $value)<input type="hidden" name="specs[{{ $fieldId }}][]" value="{{ $value }}">@endforeach
+                        @endforeach
+                        <input
                             class="search-merchant" type="search" name="q" value="{{ request('q') }}"
                             placeholder="@lang('ecommerce::ecommerce.search_in_store_products')"><input type="hidden" name="category"
                             value="{{ request('category', 'all') }}"><select class="sort" name="sort_by"
@@ -1293,6 +1326,7 @@
 @endsection
 
 @section('scripts')
+    <script src="{{ asset('assets/ecommerce/js/merchant-specification-filters.js') }}" defer></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var storeTabs = document.querySelectorAll('[data-store-tab]');

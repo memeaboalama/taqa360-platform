@@ -125,7 +125,27 @@ class MerchantController extends Controller
         return $this->handleRequest($merchant, $request, true);
     }
 
-    private function handleRequest(Merchant $merchant, Request $request, $isFilterRequest = false)
+    public function specificationOptions(Merchant $merchant, Request $request)
+    {
+        $this->ensureStorefrontAvailable($merchant);
+        $data = $request->validate([
+            'field' => ['required', 'integer', 'min:1'],
+            'search' => ['nullable', 'string', 'max:120'],
+            'page' => ['nullable', 'integer', 'min:1', 'max:100000'],
+            'category' => ['nullable', 'string', 'max:30'],
+            'q' => ['nullable', 'string', 'max:200'],
+        ]);
+        $products = app(\App\Domain\MarketPlace\Repositories\Merchant\ItemRepository::class)
+            ->filterMerchantItems(['category' => $data['category'] ?? 'all', 'q' => $data['q'] ?? ''], $merchant->id);
+        $service = app(\App\Application\Ecommerce\Support\MerchantSpecificationFilters::class);
+
+        return response()->json($service->optionPage(
+            $service->facets($products, (int) $data['field']), (int) $data['field'],
+            $data['search'] ?? '', (int) ($data['page'] ?? 1)
+        ));
+    }
+
+    private function ensureStorefrontAvailable(Merchant $merchant): void
     {
         if (
             $merchant->status !== 'active' ||
@@ -134,6 +154,11 @@ class MerchantController extends Controller
         ) {
             abort(404);
         }
+    }
+
+    private function handleRequest(Merchant $merchant, Request $request, $isFilterRequest = false)
+    {
+        $this->ensureStorefrontAvailable($merchant);
 
         $categories = $this->fetchMerchantCategoryAction->handle($merchant->id);
         $categoryCounts = $this->filterItemsAction->getCategoryCounts($merchant->id, $categories);
@@ -153,9 +178,17 @@ class MerchantController extends Controller
             'q' => trim((string) $request->get('q', '')),
         ];
 
+        $specificationFacets = $this->filterItemsAction->specificationFacets($filters, $merchant->id);
+        $specificationFilterService = app(\App\Application\Ecommerce\Support\MerchantSpecificationFilters::class);
+        $selectedSpecifications = $specificationFilterService->selection($specificationFacets, $request->query('specs', []));
+        $matchingItemIds = $specificationFilterService->matchingItemIds($specificationFacets, $selectedSpecifications);
+        if ($matchingItemIds !== null) {
+            $filters['specification_item_ids'] = $matchingItemIds;
+        }
         $products = $this->filterItemsAction->handle($filters, $merchant->id);
+        $products->withQueryString();
 
-        $data = compact('merchant', 'products', 'categories', 'categoryCounts', 'attachments');
+        $data = compact('merchant', 'products', 'categories', 'categoryCounts', 'attachments', 'specificationFacets', 'selectedSpecifications');
 
         if ($isFilterRequest && $request->expectsJson()) {
             $newUrl = route('merchant.show', array_merge(['merchant' => $merchant->id], $request->query()));

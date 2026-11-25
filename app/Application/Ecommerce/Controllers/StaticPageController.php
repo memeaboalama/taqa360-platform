@@ -188,6 +188,7 @@ class StaticPageController extends Controller
             'childCategory',
             'catalogSpecifications.properties' => fn ($query) => $query
                 ->where('specification_properties.status', 'active'),
+            'catalogSpecifications.properties.masterProperty',
             'files',
             'activeItemPrices.type_service',
             'reviews' => fn ($query) => $query->approved()->with('user')->latest(),

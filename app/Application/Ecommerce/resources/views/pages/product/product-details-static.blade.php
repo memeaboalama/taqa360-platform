@@ -8,194 +8,18 @@
 
 @section('page-styles')
 <style>
-:root{--bg:#f8f9fb;--ink:#1f2430;--muted:#6b7280;--line:#edf0f3;--yellow:#306FAA;--yellow-deep:#245C8E;--soft:#f6f7f9;--card:#ffffff;--dark:#252b31;--dark-soft:#2e3640}
+:root{--bg:#f8f9fb;--ink:#1f2430;--muted:#6b7280;--line:#edf0f3;--yellow:{{ $platformBrand['primary_color'] }};--yellow-deep:{{ $platformBrand['primary_hover_color'] }};--soft:#f6f7f9;--card:#ffffff;--dark:#252b31;--dark-soft:#2e3640}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f5f5f5;color:var(--ink);font-family:'Cairo',Tahoma,sans-serif}.a{color:inherit;text-decoration:none}button,input{font:inherit}button{border:0;cursor:pointer}.container{width:min(1280px,calc(100% - 36px));margin:0 auto}.topbar{background:#fff;border-bottom:1px solid #f0f1f3}.topbar-inner{height:82px;display:flex;align-items:center;justify-content:space-between;gap:22px}.brand{display:flex;align-items:center}.brand-logo{display:block;width:190px;height:80px;object-fit:contain}.search{flex:1;max-width:560px;height:46px;border:1px solid #eef0f2;border-radius:10px;overflow:hidden;display:flex;direction:{{ $isRTL ? 'rtl' : 'ltr' }};background:#fff}.search input{flex:1;border:0;outline:none;padding:0 16px;background:transparent;color:var(--ink)}.search button{width:54px;border:0;background:var(--yellow);color:#ffffff;font-size:20px}.top-actions{display:flex;align-items:center;gap:14px;direction:ltr}.service{display:inline-flex;align-items:center;justify-content:center;height:35px;padding:0 13px;border-radius:5px;background:var(--yellow);color:#ffffff;font-size:11px;font-weight:700;gap:6px}.action{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:#f7f9fb;color:#525b66;text-decoration:none;font-size:18px}.nav{background:#fff;border-bottom:1px solid #f1f2f4}.nav ul{list-style:none;display:flex;justify-content:center;align-items:center;gap:38px;margin:0;padding:12px 0}.nav a{font-size:12px;color:#3a4047;text-decoration:none;font-weight:600}.nav a.active{color:var(--yellow-deep)}.page-shell{padding:24px 0 40px}.product-layout{display:grid;grid-template-columns:1.15fr .95fr;gap:22px}.gallery-card,.details-card,.related-card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 20px rgba(17,24,39,.04)}.gallery-card{padding:18px}.main-image-wrap{background:#fafafa;border:1px solid #eef1f4;border-radius:14px;padding:12px;display:flex;align-items:center;justify-content:center;min-height:520px}.main-image{max-width:100%;max-height:520px;object-fit:contain}.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}.thumb{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px;cursor:pointer}.thumb.active{border-color:var(--yellow);box-shadow:0 0 0 2px rgba(48,111,170,.18)}.thumb img{display:block;width:100%;height:86px;object-fit:cover;border-radius:8px}.details-card{padding:28px 24px}.details-header{padding-bottom:12px;border-bottom:1px solid var(--line)}.product-name{margin:0;font-size:40px;line-height:1.4;font-weight:800}.badge-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}.badge{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:#eef4fa;color:#245C8E;font-size:11px;font-weight:700}.price-row{display:flex;align-items:end;gap:14px;flex-wrap:wrap;margin-top:18px}.price{font-size:30px;font-weight:800;color:var(--ink)}.old-price{font-size:18px;color:#9aa3ac;text-decoration:line-through}.saving{padding:6px 10px;border-radius:999px;background:#e8fff3;color:#1e8e5b;font-size:12px;font-weight:700}.rating-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:15px;color:#69717d}.stars{font-size:18px;letter-spacing:2px;color:#EA993E}.meta-list{margin:18px 0 0;padding:0;list-style:none;display:grid;gap:12px}.meta-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fafbfd;color:#4a5360;font-size:13px}.meta-list strong{font-size:14px;color:var(--ink)}.action-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}
 .wishlist-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 20px;border-radius:12px;border:1px solid var(--line);background:#fff;color:#5d6269;cursor:pointer;font-weight:700;font-size:13px}
 .wishlist-btn:hover{border-color:var(--yellow);color:var(--gold)}
 .wishlist-btn.is-favorite{color:#EA993E;border-color:rgba(234,153,62,.45);background:#eef4fa}
 .wishlist-btn[disabled]{opacity:.6;cursor:not-allowed}.primary-btn,.secondary-btn{display:inline-flex;align-items:center;justify-content:center;height:52px;padding:0 22px;border-radius:12px;border:0;cursor:pointer;text-decoration:none;font-weight:800}.primary-btn{background:var(--yellow);color:#ffffff}.secondary-btn{background:#fff;border:1px solid var(--line);color:var(--ink)}.qty-box{display:flex;align-items:center;gap:10px;margin-top:18px}.qty-box label{font-weight:700;color:#4b5563}.qty-controls{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}.qty-controls button{width:42px;height:42px;border:0;background:transparent;color:#45515d;font-size:18px}.qty-controls input{width:54px;height:42px;border:0;text-align:center;outline:none;font-size:16px;font-weight:700}.desc-box{margin-top:26px;padding-top:18px;border-top:1px solid var(--line)}.desc-box h3{margin:0 0 10px;font-size:18px} .desc-box p{margin:0;color:#58616c;line-height:2;font-size:14px}.info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:20px}.info-card{padding:16px;border:1px solid var(--line);border-radius:12px;background:#fafbfd}.info-card h4{margin:0 0 10px;font-size:14px}.info-card p{margin:0;color:#59636d;line-height:1.9;font-size:13px}.section-head{display:flex;justify-content:space-between;align-items:center;margin:30px 0 14px}.section-head h3{margin:0;font-size:22px}.section-head a{color:var(--yellow-deep);text-decoration:none;font-size:12px;font-weight:700}.products-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.product-box{padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}.product-box .img{display:block;height:188px;overflow:hidden;border-radius:10px;background:#f7f7f8}.product-box img{width:100%;height:100%;object-fit:cover;display:block}.product-box h4{margin:10px 0 8px;font-size:15px;line-height:1.7}.product-box .price-mini{font-weight:800}.related-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px}.cart-mini{display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 14px;border-radius:9px;background:var(--yellow);color:#ffffff;font-weight:700;text-decoration:none}.favorites-mini{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#f7f9fb;color:#4d5965;text-decoration:none}.specs{margin-top:14px} .specs table{width:100%;border-collapse:collapse;background:#fff}.specs th,.specs td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:start;font-size:13px}.specs th{color:#49515d;background:#fafbfd}.specs td{color:#2d3139}.footer{margin-top:40px;background:var(--dark);padding:24px 0 18px;color:#fff}.footer-top{display:flex;justify-content:center}.footer-brand{text-align:center}.footer-logo{display:block;width:170px;margin:0 auto 10px;object-fit:contain}.footer-text{margin:0;color:#dfe6ee;line-height:1.8}.footer-bottom{display:flex;justify-content:space-between;align-items:center;gap:20px;border-top:1px solid rgba(255,255,255,.14);margin-top:18px;padding-top:14px;flex-wrap:wrap}.footer-links,.socials{display:flex;align-items:center;gap:16px;flex-wrap:wrap}.footer-links a,.socials a{color:#dfe6ee;text-decoration:none;font-size:11px}.socials a{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.06)}.copyright{font-size:11px;color:#c9ced6}@media (max-width: 980px){.product-layout{grid-template-columns:1fr}.product-name{font-size:30px}.products-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width: 640px){.topbar-inner{height:auto;padding:12px 0;flex-wrap:wrap}.search{order:3;max-width:none;flex-basis:100%}.nav ul{justify-content:flex-start;gap:20px;overflow:auto;padding:12px 12px}.products-grid{grid-template-columns:1fr}.main-image-wrap{min-height:300px}.action-row{flex-direction:column;align-items:stretch}.primary-btn,.secondary-btn{width:100%}.info-grid{grid-template-columns:1fr}.footer-bottom{justify-content:center;text-align:center}}</style>
+<link rel="stylesheet" href="{{ asset('assets/ecommerce/css/product-page.css') }}">
 @endsection
 
 @section('content')
-<div class="page-content container page-shell">
-        <div class="product-layout">
-            <section class="gallery-card">
-                <div class="main-image-wrap">
-                    <img class="main-image" src="{{ $product->image_path ?? asset('assets/ecommerce/images/default-product.png') }}" alt="{{ $product->title }}">
-                </div>
-                <div class="thumbs">
-                    @php $images = $product->images ?? []; @endphp
-                    @if(!empty($images))
-                        @foreach(array_slice($images, 0, 4) as $img)
-                            <div class="thumb active"><img src="{{ $img['image_path'] ?? $product->image_path ?? asset('assets/ecommerce/images/default-product.png') }}" alt="{{ $product->title }}"></div>
-                        @endforeach
-                    @else
-                        @for($i=1; $i<=4; $i++)
-                            <div class="thumb {{ $i == 1 ? 'active' : '' }}"><img src="{{ asset('assets/ecommerce/images/default-product.png') }}" alt="{{ $product->title }}"></div>
-                        @endfor
-                    @endif
-                </div>
-            </section>
-
-            <section class="details-card">
-                <div class="details-header">
-                    <h1 class="product-name">{{ $product->title }}</h1>
-                </div>
-
-                <div class="price-row">
-                    @if(!empty($product->default_price))
-                        <div class="price">{{ \App\Domain\AppBase\Models\Setting\Currency::format((float)$product->default_price) }}</div>
-                    @endif
-                    @if(!empty($product->sale_price) && $product->sale_price < $product->default_price)
-                        <div class="old-price">{{ \App\Domain\AppBase\Models\Setting\Currency::format((float)$product->sale_price) }}</div>
-                    @endif
-                    @if(!empty($product->sale_price) && $product->default_price && $product->sale_price < $product->default_price)
-                        @php $discount = round((($product->default_price - $product->sale_price) / $product->default_price) * 100); @endphp
-                        <span class="saving">@lang('ecommerce::ecommerce.discount_label') {{ $discount }}%</span>
-                    @endif
-                </div>
-
-                @include('ecommerce::partials.product.rating', ['product' => $product, 'containerClass' => 'rating-row'])
-
-                <ul class="meta-list">
-                    <li><span>@lang('ecommerce::ecommerce.color')</span><strong>{{ $product->color ?? __('ecommerce::ecommerce.color_black') }}</strong></li>
-                    <li><span>@lang('ecommerce::ecommerce.category')</span><strong>{{ $product->mainCategory->title ?? __('ecommerce::ecommerce.generic') }}</strong></li>
-                    <li><span>@lang('ecommerce::ecommerce.stock')</span><strong>@if($product->stock === null) @lang('ecommerce::ecommerce.stock_not_tracked') @else {{ (int) $product->stock }} @lang('ecommerce::ecommerce.items') @endif</strong></li>
-                </ul>
-
-                <form id="product-add-cart-form" action="{{ route('cart.add') }}" method="POST" data-available="{{ $product->isInStock() ? '1' : '0' }}">
-                    @csrf
-                    <input type="hidden" name="item_id" value="{{ $product->id }}">
-                    <div class="qty-box">
-                        <label>@lang('ecommerce::ecommerce.quantity')</label>
-                        <div class="qty-controls">
-                            <button type="button" id="qty-minus" aria-label="@lang('ecommerce::ecommerce.decrease')">−</button>
-                            <input type="number" dir="ltr" name="qty" id="qty-input" value="1" min="1" @if($product->stock !== null) max="{{ (int) $product->stock }}" @endif>
-                            <button type="button" id="qty-plus" aria-label="@lang('ecommerce::ecommerce.increase')">+</button>
-                        </div>
-                    </div>
-
-                    <div class="action-row">
-<button type="submit" class="primary-btn" id="add-to-cart-btn"><i class="ti-shopping-cart" style="margin-left:8px"></i> @lang('ecommerce::ecommerce.add_to_cart')</button>
-<button type="submit" name="redirect_to_checkout" value="1" class="secondary-btn">@lang('ecommerce::ecommerce.buy_now')</button>
-<button type="button" class="wishlist-btn{{ $isFavorite ? ' is-favorite' : '' }}" id="product-wishlist-btn" data-product-id="{{ $product->id }}" aria-pressed="{{ $isFavorite ? 'true' : 'false' }}" aria-label="@lang('ecommerce::ecommerce.wishlist')">
-<i class="{{ $isFavorite ? 'fa fa-heart' : 'ti-heart' }}" aria-hidden="true"></i>
-<span class="wishlist-btn-text">@lang($isFavorite ? 'ecommerce::ecommerce.remove_from_wishlist' : 'ecommerce::ecommerce.add_to_wishlist')</span>
-</button>
-                    </div>
-                </form>
-
-                <div class="desc-box">
-                    <h3>@lang('ecommerce::ecommerce.description')</h3>
-                    <p>{{ $product->description ?? __('ecommerce::ecommerce.no_detailed_description') }}</p>
-
-                    @if($product->features)
-                        <h3 style="margin-top:20px;">@lang('ecommerce::ecommerce.key_features')</h3>
-                        <ul style="padding-right:18px; color:#58616c; line-height:2; margin:10px 0 0;">
-                            @foreach(explode(',', $product->features) as $feature)
-                                <li>{{ trim($feature) }}</li>
-                            @endforeach
-                        </ul>
-                    @endif
-
-                    @if($product->benefits)
-                        <h3 style="margin-top:20px;">@lang('ecommerce::ecommerce.benefits')</h3>
-                        <p>{{ $product->benefits }}</p>
-                    @endif
-                </div>
-            </section>
-        </div>
-
-        <section class="specs">
-            <div class="section-head">
-                <h3>@lang('ecommerce::ecommerce.product_details')</h3>
-            </div>
-            <table>
-                <tbody>
-                    <tr>
-                        <th>@lang('ecommerce::ecommerce.store_name')</th>
-                        <td>
-                            @if($product->merchant)
-                                <a href="{{ route('merchant.show', $product->merchant->id) }}">
-                                    {{ $product->merchant->getTranslation('company_name', app()->getLocale()) ?: $product->merchant->name }}
-                                </a>
-                            @else
-                                {{ __('ecommerce::ecommerce.site_name') }}
-                            @endif
-                        </td>
-                    </tr>
-                    @if($product->merchant?->brand)
-                        <tr>
-                            <th>@lang('ecommerce::ecommerce.brand')</th>
-                            <td>{{ $product->merchant->brand->getTranslation('name', app()->getLocale()) }}</td>
-                        </tr>
-                    @endif
-                    <tr><th>@lang('ecommerce::ecommerce.category')</th><td>{{ $product->mainCategory->title ?? __('ecommerce::ecommerce.generic') }}</td></tr>
-                    <tr><th>@lang('ecommerce::ecommerce.stock')</th><td>@if($product->stock === null) @lang('ecommerce::ecommerce.stock_not_tracked') @else {{ (int) $product->stock }} @lang('ecommerce::ecommerce.items') @endif</td></tr>
-                    @foreach($product->catalogSpecifications as $specification)
-                        @foreach($specification->properties as $property)
-                            @if(filled($property->value))
-                                <tr>
-                                    <th>{{ $property->name }}</th>
-                                    <td>{{ $property->value }}</td>
-                                </tr>
-                            @endif
-                        @endforeach
-                    @endforeach
-                </tbody>
-            </table>
-        </section>
-
-        @if($product->activeItemPrices->isNotEmpty())
-            <section style="margin-top:32px;">
-                <div class="section-head">
-                    <h3>@lang('ecommerce::ecommerce.product_options')</h3>
-                </div>
-                <p>@lang('ecommerce::ecommerce.product_option_price_note')</p>
-                <div class="info-grid">
-                    @foreach($product->activeItemPrices as $itemPrice)
-                        @php
-                            $typeServiceName = $itemPrice->type_service?->name;
-                            $typeServiceLabel = match ($typeServiceName) {
-                                'default', 'with_delivery' => __('admin::home.with_delivery'),
-                                'without_delivery' => __('admin::home.without_delivery'),
-                                null => '-',
-                                default => \Illuminate\Support\Facades\Lang::has('admin::home.' . $typeServiceName)
-                                    ? __('admin::home.' . $typeServiceName)
-                                    : $typeServiceName,
-                            };
-
-                            $hasServicePrice = is_numeric($itemPrice->price) && (float) $itemPrice->price > 0;
-                            $hasDefaultPrice = is_numeric($product->default_price) && (float) $product->default_price > 0;
-                            $displayPrice = $hasServicePrice
-                                ? (float) $itemPrice->price
-                                : ($hasDefaultPrice ? (float) $product->default_price : null);
-                        @endphp
-                        <div class="info-card">
-                            <h4>{{ $typeServiceLabel }}</h4>
-                            <p>
-                                @lang('ecommerce::ecommerce.provided_by_store'):
-                                @if($product->merchant)
-                                    <a href="{{ route('merchant.show', $product->merchant->id) }}">
-                                        {{ $product->merchant->getTranslation('company_name', app()->getLocale()) ?: $product->merchant->name }}
-                                    </a>
-                                @else
-                                    {{ __('ecommerce::ecommerce.site_name') }}
-                                @endif
-                            </p>
-                            <p>
-                                @lang('ecommerce::ecommerce.product_price_for_option'):
-                                @if($displayPrice !== null)
-                                    {{ \App\Domain\AppBase\Models\Setting\Currency::format($displayPrice) }}
-                                @else
-                                    @lang('ecommerce::ecommerce.price_not_specified')
-                                @endif
-                            </p>
-                        </div>
-                    @endforeach
-                </div>
-            </section>
-        @endif
+<div class="page-content container page-shell product-page-refresh">
+    @include('ecommerce::pages.product.partials.overview')
 
         <section>
             <div class="section-head">
@@ -303,6 +127,7 @@
 @endsection
 
 @section('scripts')
+<script src="{{ asset('assets/ecommerce/js/product-page.js') }}" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var minusBtn = document.getElementById('qty-minus');

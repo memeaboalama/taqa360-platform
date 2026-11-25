@@ -617,15 +617,14 @@
                                                             </tr>
                                                         @endif
                                                         @foreach($product->catalogSpecifications as $specification)
-                                                            <tr>
-                                                                <th>{{ $specification->name }}</th>
-                                                                <td>
-                                                                    {{ $specification->properties
-                                                                        ->map(fn ($property) => $property->value ?: $property->name)
-                                                                        ->filter()
-                                                                        ->implode('، ') }}
-                                                                </td>
-                                                            </tr>
+                                                            @foreach($specification->properties as $property)
+                                                                @if(filled($property->value))
+                                                                    <tr>
+                                                                        <th>{{ $property->display_name }}</th>
+                                                                        <td>{{ $property->display_value }}</td>
+                                                                    </tr>
+                                                                @endif
+                                                            @endforeach
                                                         @endforeach
                                                     </tbody>
                                                 </table>

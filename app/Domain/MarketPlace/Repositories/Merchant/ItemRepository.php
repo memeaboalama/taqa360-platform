@@ -109,6 +109,10 @@ public function countMenuItems(int $merchant_id): int
     {
         $query = $this->getActiveItemsByMerchant($merchant_id, $with);
 
+        if (isset($filters['specification_item_ids'])) {
+            $query->whereIn('items.id', $filters['specification_item_ids']);
+        }
+
         if (!empty($filters['q'])) {
             $query->where(function ($q) use ($filters) {
                 $q->where('title', 'like', '%' . $filters['q'] . '%');
