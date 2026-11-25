@@ -269,7 +269,6 @@ class MerchantOrder extends Model
     {
         $relevantActions = [
             MerchantOrderHistoryStatuses::DRIVER_ACCEPT->value,
-            MerchantOrderHistoryStatuses::MARKED_READY->value,
             MerchantOrderHistoryStatuses::DRIVER_ASSIGNED_MANUALLY->value,
         ];
 

@@ -1,4 +1,4 @@
-<div wire:poll.5s>
+<div wire:poll.5s.keep-alive>
     <div class="card custom-card">
         <div class="card-header bg-white justify-content-between">
             <div class="card-title">{{ __('driver::home.orders') }}</div>
@@ -29,7 +29,7 @@
                         </thead>
                         <tbody>
                             @foreach($recentOrders as $order)
-                                <tr>
+                                <tr wire:key="driver-order-{{ $order->id }}">
                                     <td><span class="fw-semibold text-primary">#{{ $order->code }}</span></td>
                                     <td>{{ $order->user?->name }}</td>
                                     <td>{{ number_format($order->total_after_vat, 2) }} SAR</td>
@@ -49,27 +49,26 @@
                                            title="{{ __('driver::home.View') }}"
                                            onclick="Livewire.emit('showOrderDetails', {{ $order->id }})"><i class="ri-eye-line" style="margin:0"></i></a>
                                         @if(in_array($statusVal, [
-                                            \App\Application\Marketplace\Enums\MerchantOrderStatuses::PENDING->value,
                                             \App\Application\Marketplace\Enums\MerchantOrderStatuses::UPCOMING->value,
                                             \App\Application\Marketplace\Enums\MerchantOrderStatuses::READY->value,
                                         ], true) && !$acceptedByDriver)
-                                            <form action="{{ route('driver:orders.accept', $order->id) }}" method="POST" class="d-inline order-action-form">
-                                                @csrf
-                                                <button type="submit" class="btn btn-sm btn-success">
-                                            <i class="ri-check-line me-1"></i> {{ __('driver::home.accept_order') }}
-                                                </button>
-                                            </form>
-                                        @elseif(in_array($statusVal, [
-                                            \App\Application\Marketplace\Enums\MerchantOrderStatuses::CURRENT->value,
-                                            \App\Application\Marketplace\Enums\MerchantOrderStatuses::READY->value,
-                                        ], true) && $acceptedByDriver)
-                                            <form action="{{ route('driver:orders.updateStatus', $order->id) }}" method="POST" class="d-inline order-action-form">
-                                                @csrf
-                                                <input type="hidden" name="status" value="on-way">
-                                                <button type="submit" class="btn btn-sm btn-primary">
-                                                    <i class="ri-truck-line me-1"></i> {{ __('driver::home.start_delivery') }}
-                                                </button>
-                                            </form>
+                                            <button type="button" class="btn btn-sm btn-success"
+                                                    wire:click="acceptOrder({{ $order->id }})"
+                                                    wire:loading.attr="disabled"
+                                                    wire:target="acceptOrder({{ $order->id }})">
+                                                <i class="ri-check-line me-1"></i> {{ __('driver::home.accept_order') }}
+                                            </button>
+                                        @elseif($statusVal === \App\Application\Marketplace\Enums\MerchantOrderStatuses::CURRENT->value && $acceptedByDriver)
+                                            {{-- السائق قبل الطلب والتاجر يجهّزه --}}
+                                            <span class="badge bg-warning text-dark"><i class="ri-time-line me-1"></i> {{ __('driver::home.preparing_at_merchant') }}</span>
+                                        @elseif($statusVal === \App\Application\Marketplace\Enums\MerchantOrderStatuses::READY->value && $acceptedByDriver)
+                                            {{-- الطلب جاهز والسائق قبله → ابدأ التوصيل --}}
+                                            <button type="button" class="btn btn-sm btn-primary"
+                                                    wire:click="startDelivery({{ $order->id }})"
+                                                    wire:loading.attr="disabled"
+                                                    wire:target="startDelivery({{ $order->id }})">
+                                                <i class="ri-truck-line me-1"></i> {{ __('driver::home.start_delivery') }}
+                                            </button>
                                         @elseif($statusVal === 'on-way')
                                             @if(\App\Domain\MarketPlace\Models\MerchantOrder::isCashOnDeliveryMethod($order->payment_method))
                                                 <button type="button" class="btn btn-sm btn-success"
@@ -88,20 +87,17 @@
                                                     <i class="ri-checkbox-circle-line me-1"></i> {{ __('driver::home.confirm_delivery') }}
                                                 </button>
                                             @else
-                                                <form action="{{ route('driver:orders.updateStatus', $order->id) }}" method="POST" class="d-inline order-action-form">
-                                                    @csrf
-                                                    <input type="hidden" name="status" value="completed">
-                                                    <button type="submit" class="btn btn-sm btn-success">
-                                                        <i class="ri-checkbox-circle-line me-1"></i> {{ __('driver::home.order_status_completed') }}
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="btn btn-sm btn-success"
+                                                        wire:click="completeOrder({{ $order->id }})"
+                                                        wire:loading.attr="disabled"
+                                                        wire:target="completeOrder({{ $order->id }})">
+                                                    <i class="ri-checkbox-circle-line me-1"></i> {{ __('driver::home.order_status_completed') }}
+                                                </button>
                                             @endif
                                         @elseif($statusVal === 'completed')
                                             <button type="button" class="btn btn-sm btn-success" disabled>
                                                 <i class="ri-checkbox-circle-line me-1"></i> {{ __('driver::home.order_status_completed') }}
                                             </button>
-                                        @elseif($statusVal === 'started-work')
-                                            <span class="badge bg-warning text-dark"><i class="ri-time-line me-1"></i> {{ __('driver::home.preparing_at_merchant') }}</span>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif

@@ -11,6 +11,26 @@ use Illuminate\Support\Facades\DB;
 
 class Details extends Read
 {
+    protected function canAssignDriver(): bool
+    {
+        return auth('admin')->check();
+    }
+
+    public function acceptOrder(): void
+    {
+        $this->alert('error', __('marketplace::home.order_action_not_authorized'));
+    }
+
+    public function startOrder(): void
+    {
+        $this->alert('error', __('marketplace::home.order_action_not_authorized'));
+    }
+
+    public function markAsReady(): void
+    {
+        $this->alert('error', __('marketplace::home.order_action_not_authorized'));
+    }
+
     protected function actionUser()
     {
         return auth('admin')->user();

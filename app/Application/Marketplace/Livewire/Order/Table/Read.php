@@ -196,6 +196,11 @@ class Read extends Component
 
     public function assignDriver(): void
     {
+        if (!$this->canAssignDriver()) {
+            $this->alert('error', __('marketplace::home.order_action_not_authorized'));
+            return;
+        }
+
         $user = $this->actionUser();
         if (!$user) {
             $this->alert('error', __('marketplace::home.order_action_not_authorized'));
@@ -267,6 +272,11 @@ class Read extends Component
         $this->alert('success', __('marketplace::home.driver_assigned_successfully'));
     }
 
+    protected function canAssignDriver(): bool
+    {
+        return false;
+    }
+
     protected function actionUser()
     {
         return auth()->user() ?? auth('merchant')->user() ?? auth('merchant_employee')->user();
@@ -312,6 +322,8 @@ class Read extends Component
 
     public function render()
     {
+        $this->order->refresh();
+
         $this->order->loadMissing([
             'orderItems.item',
             'orderItems.orderChoices.choice',

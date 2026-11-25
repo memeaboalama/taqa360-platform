@@ -1,6 +1,6 @@
 <div>
     <div class="modal fade" id="showOrderDetailsModal" wire:ignore.self
-         wire:poll.1s.visible="refreshPaymentStatus"
+         wire:poll.5s.visible="refreshPaymentStatus"
          data-bs-keyboard="false" data-bs-backdrop="static" tabindex="-1" aria-labelledby="showOrderDetailsModalLabel"
          aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -178,6 +178,7 @@
                                             @if(($order['status_value'] ?? null) === \App\Application\Marketplace\Enums\MerchantOrderStatuses::ON_WAY->value
                                                 && (empty($failureReport) || $failureReport['status'] === 'collection_succeeded'))
                                                 <form class="alert alert-warning mb-3"
+                                                      data-ack-form="cod"
                                                       wire:submit.prevent="confirmDeliveryAndCollection">
                                                     <h6 class="fw-semibold">تأكيد التسليم والتحصيل</h6>
                                                     <dl class="row mb-3">
@@ -189,14 +190,14 @@
                                                         <dd class="col-sm-8">{{ number_format($order['collection_remaining'] ?? 0, 2) }} SAR</dd>
                                                     </dl>
                                                     <label class="form-check mb-2">
-                                                        <input class="form-check-input" type="checkbox"
-                                                               wire:model="deliveryAcknowledged">
+                                                        <input class="form-check-input js-ack-check" type="checkbox"
+                                                               wire:model.defer="deliveryAcknowledged">
                                                         <span class="form-check-label">سلّمت الطلب</span>
                                                     </label>
                                                     @if($requiresCollectionConfirmation)
                                                         <label class="form-check mb-3">
-                                                            <input class="form-check-input" type="checkbox"
-                                                                   wire:model="collectionAcknowledged">
+                                                            <input class="form-check-input js-ack-check" type="checkbox"
+                                                                   wire:model.defer="collectionAcknowledged">
                                                             <span class="form-check-label">حصّلت المبلغ كاملًا</span>
                                                         </label>
                                                     @else
@@ -205,10 +206,9 @@
                                                     @error('deliveryAcknowledged') <div class="text-danger mb-2">{{ $message }}</div> @enderror
                                                     @error('collectionAcknowledged') <div class="text-danger mb-2">{{ $message }}</div> @enderror
                                                     <div class="d-flex gap-2">
-                                                        <button type="submit" class="btn btn-success"
+                                                        <button type="submit" class="btn btn-success js-ack-submit"
                                                                 wire:loading.attr="disabled"
-                                                                wire:target="confirmDeliveryAndCollection"
-                                                                @if(!$deliveryAcknowledged || ($requiresCollectionConfirmation && !$collectionAcknowledged)) disabled @endif>
+                                                                wire:target="confirmDeliveryAndCollection">
                                                             <span wire:loading.remove wire:target="confirmDeliveryAndCollection">تأكيد التسليم والتحصيل</span>
                                                             <span wire:loading wire:target="confirmDeliveryAndCollection">جارٍ الحفظ...</span>
                                                         </button>
@@ -452,7 +452,7 @@
                                             <div class="alert alert-info">
                                                 <div class="fw-semibold">المطلوب تحصيله من العميل: 0.00 ريال</div>
                                             </div>
-                                            <form class="alert alert-light border mb-0" wire:submit.prevent="confirmPrepaidDelivery">
+                                            <form class="alert alert-light border mb-0" data-ack-form="prepaid" wire:submit.prevent="confirmPrepaidDelivery">
                                                 <dl class="row mb-3">
                                                     <dt class="col-sm-4">رقم الطلب</dt>
                                                     <dd class="col-sm-8">#{{ $order['code'] }}</dd>
@@ -466,15 +466,14 @@
                                                     @endif
                                                 </dl>
                                                 <label class="form-check mb-3">
-                                                    <input class="form-check-input" type="checkbox" wire:model="deliveryAcknowledged">
+                                                    <input class="form-check-input js-ack-check" type="checkbox" wire:model.defer="deliveryAcknowledged">
                                                     <span class="form-check-label">سلّمت الطلب</span>
                                                 </label>
                                                 @error('deliveryAcknowledged') <div class="text-danger mb-2">{{ $message }}</div> @enderror
                                                 <div class="d-flex gap-2">
-                                                    <button type="submit" class="btn btn-success"
+                                                    <button type="submit" class="btn btn-success js-ack-submit"
                                                             wire:loading.attr="disabled"
-                                                            wire:target="confirmPrepaidDelivery"
-                                                            @if(!$deliveryAcknowledged) disabled @endif>
+                                                            wire:target="confirmPrepaidDelivery">
                                                         <span wire:loading.remove wire:target="confirmPrepaidDelivery">تأكيد التسليم</span>
                                                         <span wire:loading wire:target="confirmPrepaidDelivery">جارٍ الحفظ...</span>
                                                     </button>
@@ -521,7 +520,6 @@
 
                 <div class="modal-footer">
                     @if(in_array($order['status_value'] ?? null, [
-                        \App\Application\Marketplace\Enums\MerchantOrderStatuses::PENDING->value,
                         \App\Application\Marketplace\Enums\MerchantOrderStatuses::UPCOMING->value,
                         \App\Application\Marketplace\Enums\MerchantOrderStatuses::READY->value,
                     ], true) && empty($order['is_accepted_by_driver']))

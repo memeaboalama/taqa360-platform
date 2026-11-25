@@ -46,12 +46,16 @@ class SearchForDriverJob implements ShouldQueue
         if ($order?->driver_id || $order?->status != MerchantOrderStatuses::UPCOMING) return;
 
         /// user location as point .....
-        if (!$order?->branch?->latitude || !$order?->branch?->longitude) return;
+        if (!$order?->branch?->latitude || !$order?->branch?->longitude) {
+            Log::channel("daily")->warning("SearchForDriverJob: تعذّر إيجاد إحداثيات الفرع للطلب #{$order?->id} — يرجى الإسناد اليدوي.");
+            return;
+        }
         $location = new Point($order?->branch?->latitude, $order?->branch?->longitude, Srid::WGS84->value);
 
         $maximumDistance = (GeneralSetting::first()?->driver_search_capacity);
         $kilos = [0, (int) round($maximumDistance /2,0) , (int) $maximumDistance];
 
+        $nearest_driver = collect();
         foreach ($kilos as $index=> $kilo) {
 
             $nearest_driver = Driver::where('network_status', true)
@@ -72,6 +76,7 @@ class SearchForDriverJob implements ShouldQueue
 
         // Log::channel("daily")->info("driver : SearchForDriverJob " . json_encode($order));
         if ($nearest_driver->count() <= 0) {
+            Log::channel("daily")->warning("SearchForDriverJob: لا يوجد سائقون متاحون قريبون من الطلب #{$order->id} (network_status=true ونشطون). يرجى الإسناد اليدوي.");
             $this->release(15);
             return;
         }

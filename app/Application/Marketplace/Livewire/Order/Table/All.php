@@ -40,7 +40,7 @@ class All extends DataTableComponent
 
     public function configure(): void
     {
-        $this->setPrimaryKey('id')->setSearchStatus(false);
+        $this->setPrimaryKey('id')->setSearchStatus(false)->setRefreshTime(10000); // تحديث تلقائي كل 10 ثوانٍ
     }
 
     public function refreshOrders(array $filters = [])

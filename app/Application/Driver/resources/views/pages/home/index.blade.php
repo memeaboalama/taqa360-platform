@@ -91,8 +91,8 @@
                 <div class="card custom-card overflow-hidden">
                     <div class="card-body">
                         <span class="avatar avatar-md avatar-rounded bg-warning"><i class="ti ti-clock fs-16"></i></span>
-                        <p class="text-muted mb-0 mt-2">{{ __('driver::home.pendingOrders') }}</p>
-                        <h4 class="fw-semibold mt-1 mb-0">{{ $stats['pendingOrdersCount'] }}</h4>
+                        <p class="text-muted mb-0 mt-2">{{ __('driver::home.preparingOrders') }}</p>
+                        <h4 class="fw-semibold mt-1 mb-0">{{ $stats['preparingOrdersCount'] }}</h4>
                     </div>
                 </div>
             </div>
@@ -126,9 +126,9 @@
             <div class="col-xl-2 col-lg-4 col-md-6">
                 <div class="card custom-card overflow-hidden">
                     <div class="card-body">
-                        <span class="avatar avatar-md avatar-rounded bg-danger"><i class="ti ti-alert-triangle fs-16"></i></span>
-                        <p class="text-muted mb-0 mt-2">{{ __('driver::home.expiredOrders') }}</p>
-                        <h4 class="fw-semibold mt-1 mb-0">{{ $stats['expiredOrdersCount'] }}</h4>
+                        <span class="avatar avatar-md avatar-rounded bg-primary"><i class="ti ti-truck-delivery fs-16"></i></span>
+                        <p class="text-muted mb-0 mt-2">{{ __('driver::home.onWayOrders') }}</p>
+                        <h4 class="fw-semibold mt-1 mb-0">{{ $stats['onWayOrdersCount'] }}</h4>
                     </div>
                 </div>
             </div>
@@ -197,6 +197,35 @@
 
     window.addEventListener('driver-order-delivery-completed', function () {
         window.location.reload();
+    });
+
+    function syncAckForms() {
+        document.querySelectorAll('[data-ack-form]').forEach(function (form) {
+            var checks = form.querySelectorAll('.js-ack-check');
+            var submitBtn = form.querySelector('.js-ack-submit');
+            if (!submitBtn || !checks.length) return;
+            var allChecked = Array.prototype.every.call(checks, function (cb) {
+                return cb.checked;
+            });
+            submitBtn.disabled = !allChecked;
+        });
+    }
+
+    document.addEventListener('change', function (event) {
+        if (!event.target.classList || !event.target.classList.contains('js-ack-check')) return;
+        syncAckForms();
+    });
+
+    if (window.Livewire && Livewire.hook) {
+        Livewire.hook('message.processed', function () {
+            syncAckForms();
+        });
+    }
+    document.addEventListener('livewire:load', function () {
+        if (window.Livewire && Livewire.hook) {
+            Livewire.hook('message.processed', syncAckForms);
+        }
+        syncAckForms();
     });
 </script>
 @endpush

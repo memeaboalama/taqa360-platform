@@ -4,16 +4,21 @@ namespace Application\Driver\Livewire\Home;
 
 use App\Application\Driver\Enums\DriverOrderStatuses;
 use App\Application\Marketplace\Enums\MerchantOrderHistoryStatuses;
+use App\Application\Marketplace\Enums\MerchantOrderStatuses;
 use App\Domain\AppBase\Actions\Location\FetchCitiesAction;
 use App\Domain\AppBase\Models\Location\Distract;
 use App\Domain\MarketPlace\Models\MerchantOrder;
+use App\Domain\MarketPlace\Services\OrderPaymentLedger;
 use App\Support\Enum\StatusEnum;
+use Domain\MarketPlace\Models\TempOrder;
+use Illuminate\Support\Facades\DB;
+use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class AssignedOrders extends Component
 {
-    use WithPagination;
+    use WithPagination, LivewireAlert;
 
     public int $perPage = 10;
     public $code = '';
@@ -229,13 +234,165 @@ class AssignedOrders extends Component
         $this->resetPage();
     }
 
+    public function acceptOrder(int $orderId): void
+    {
+        $driver = auth('driver')->user();
+        abort_unless($driver, 403);
+
+        $result = DB::transaction(function () use ($orderId, $driver) {
+            $order = MerchantOrder::query()->lockForUpdate()->find($orderId);
+            if (!$order) {
+                return ['ok' => false, 'message' => 'الطلب غير موجود.'];
+            }
+
+            $isAssignedToDriver = (int) $order->driver_id === (int) $driver->id;
+            $hasTempOffer = !$order->driver_id && TempOrder::query()
+                ->where('order_id', $order->id)
+                ->where('driver_id', $driver->id)
+                ->where('has_accept', false)
+                ->exists();
+
+            if (!$isAssignedToDriver && !$hasTempOffer) {
+                return ['ok' => false, 'message' => 'لا يمكن قبول هذا الطلب أو تم إسناده لسائق آخر.'];
+            }
+
+            $status = $order->status instanceof MerchantOrderStatuses
+                ? $order->status
+                : MerchantOrderStatuses::tryFrom((string) $order->status);
+
+            if (!in_array($status, [MerchantOrderStatuses::UPCOMING, MerchantOrderStatuses::READY], true)) {
+                return ['ok' => false, 'message' => 'لا يمكن قبول الطلب في حالته الحالية. يجب انتظار قبول التاجر أولاً.'];
+            }
+
+            if ($status !== MerchantOrderStatuses::READY || !$order->isAcceptedByDriver((int) $driver->id)) {
+                $order->update([
+                    'driver_id' => $driver->id,
+                    'status' => $status === MerchantOrderStatuses::READY
+                        ? MerchantOrderStatuses::READY->value
+                        : MerchantOrderStatuses::CURRENT->value,
+                    'commission_from_driver' => $driver->taken_commission ?? 0,
+                ]);
+
+                if ($hasTempOffer) {
+                    TempOrder::query()
+                        ->where('order_id', $order->id)
+                        ->where('driver_id', $driver->id)
+                        ->update(['has_accept' => true]);
+                }
+
+                app(\App\Domain\MarketPlace\Actions\Api\Order\LogOrderHistoryAction::class)->handle(
+                    $order->id,
+                    MerchantOrderHistoryStatuses::DRIVER_ACCEPT->value,
+                    'Driver accepted order via web',
+                    $driver
+                );
+            }
+
+            return ['ok' => true, 'message' => __('admin::home.Order Accepted Successfully')];
+        });
+
+        $this->alert($result['ok'] ? 'success' : 'error', $result['message']);
+    }
+
+    public function startDelivery(int $orderId): void
+    {
+        $driver = auth('driver')->user();
+        abort_unless($driver, 403);
+
+        $order = MerchantOrder::query()
+            ->where('id', $orderId)
+            ->where('driver_id', $driver->id)
+            ->first();
+
+        if (!$order) {
+            $this->alert('error', 'الطلب غير موجود.');
+            return;
+        }
+
+        $currentStatus = $order->status instanceof MerchantOrderStatuses
+            ? $order->status
+            : MerchantOrderStatuses::tryFrom((string) $order->status);
+
+        if ($currentStatus !== MerchantOrderStatuses::READY || !$order->isAcceptedByDriver((int) $driver->id)) {
+            $this->alert('error', 'يجب أن يكون الطلب جاهزًا ومقبولًا من السائق قبل بدء التوصيل.');
+            return;
+        }
+
+        $order->update(['status' => MerchantOrderStatuses::ON_WAY->value]);
+        app(\App\Domain\MarketPlace\Actions\Api\Order\LogOrderHistoryAction::class)->handle(
+            $order->id,
+            MerchantOrderHistoryStatuses::DRIVER_ON_WAY->value,
+            'Driver updated status via web',
+            $driver
+        );
+
+        $this->alert('success', __('admin::home.Order status updated successfully'));
+    }
+
+    public function completeOrder(int $orderId): void
+    {
+        $driver = auth('driver')->user();
+        abort_unless($driver, 403);
+
+        $order = MerchantOrder::query()
+            ->where('id', $orderId)
+            ->where('driver_id', $driver->id)
+            ->first();
+
+        if (!$order) {
+            $this->alert('error', 'الطلب غير موجود.');
+            return;
+        }
+
+        $currentStatus = $order->status instanceof MerchantOrderStatuses
+            ? $order->status
+            : MerchantOrderStatuses::tryFrom((string) $order->status);
+
+        if ($currentStatus !== MerchantOrderStatuses::ON_WAY) {
+            $this->alert('error', 'لا يمكن إكمال الطلب قبل بدء التوصيل.');
+            return;
+        }
+        if (MerchantOrder::isCashOnDeliveryMethod($order->payment_method)) {
+            $this->alert('error', 'أكد التسليم والتحصيل من نافذة تأكيد الطلب.');
+            return;
+        }
+        if (app(OrderPaymentLedger::class)->forOrder($order)['payment_status'] === 'paid') {
+            $this->alert('error', 'أكد تسليم الطلب المدفوع مسبقًا من نافذة تفاصيل الطلب.');
+            return;
+        }
+
+        $order->update(['status' => MerchantOrderStatuses::PREVIOUS->value]);
+        app(\App\Domain\MarketPlace\Actions\Api\Order\LogOrderHistoryAction::class)->handle(
+            $order->id,
+            MerchantOrderHistoryStatuses::COMPLETED->value,
+            'Driver updated status via web',
+            $driver
+        );
+
+        $this->alert('success', __('admin::home.Order status updated successfully'));
+    }
+
     public function render()
     {
         $driver = auth('driver')->user();
         abort_unless($driver, 403);
 
-        $query = MerchantOrder::query()
-            ->where('driver_id', $driver->id);
+        $tempOrderIds = TempOrder::query()
+            ->where('driver_id', $driver->id)
+            ->where('has_accept', false)
+            ->pluck('order_id')
+            ->toArray();
+
+        $query = MerchantOrder::query()->where(function ($q) use ($driver, $tempOrderIds) {
+            $q->where('driver_id', $driver->id);
+            if (!empty($tempOrderIds)) {
+                $q->orWhere(function ($sub) use ($tempOrderIds) {
+                    $sub->whereNull('driver_id')
+                        ->whereIn('id', $tempOrderIds)
+                        ->where('status', MerchantOrderStatuses::UPCOMING->value);
+                });
+            }
+        });
 
         if (!empty($this->appliedFilters['code'])) {
             $query->where('code', 'like', '%' . $this->appliedFilters['code'] . '%');
@@ -277,7 +434,6 @@ class AssignedOrders extends Component
                     ])->orderByDesc('id');
                 },
             ])
-            ->orderByDesc('updated_at')
             ->orderByDesc('id')
             ->paginate($this->perPage);
 

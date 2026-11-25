@@ -228,7 +228,7 @@
     $paymentMovementCount = count($paymentMovements);
 @endphp
 
-<div id="order-details-page" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+<div id="order-details-page" wire:poll.5s.keep-alive dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
     <div class="od-page-title">
         <div class="od-title-content">
             <div class="od-eyebrow">تفاصيل الطلب</div>
@@ -297,7 +297,7 @@
                 </button>
             @endif
 
-            @if($statusVal === 'pending')
+            @if(!($adminContext ?? false) && $statusVal === 'pending')
                 <button wire:click="acceptOrder" class="od-btn od-btn-primary"
                         wire:loading.attr="disabled" wire:target="acceptOrder">
                     <span wire:loading.class="d-none" wire:target="acceptOrder">
@@ -314,7 +314,7 @@
                     <i class="ri-time-line me-1"></i>
                     {{ $operationalStatusLabel }}
                 </span>
-            @elseif($statusVal === 'confirmed' && !$requiresDriver)
+            @elseif(!($adminContext ?? false) && $statusVal === 'confirmed' && !$requiresDriver)
                 <button wire:click="startOrder" class="od-btn od-btn-primary"
                         wire:loading.attr="disabled" wire:target="startOrder">
                     <span wire:loading.class="d-none" wire:target="startOrder">
@@ -326,7 +326,7 @@
                         <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
                     </span>
                 </button>
-            @elseif($statusVal === 'started-work' && ($order->driver || !$requiresDriver))
+            @elseif(!($adminContext ?? false) && $statusVal === 'started-work' && ($order->driver || !$requiresDriver))
                 <button wire:click="markAsReady" class="od-btn od-btn-primary"
                         wire:loading.attr="disabled" wire:target="markAsReady">
                     <span wire:loading.class="d-none" wire:target="markAsReady">
@@ -869,7 +869,7 @@
                         @endif
                     @else
                         <div class="od-empty">{{ $driverUnassignedMessage }}</div>
-                        @if($requiresDriver && in_array($statusVal, ['confirmed', 'ready'], true))
+                        @if(($adminContext ?? false) && $requiresDriver && in_array($statusVal, ['confirmed', 'ready'], true))
                             <div class="od-driver-assign">
                                 <label class="od-driver-assign-label" for="order-driver-select">
                                     إسناد سائق يدويًا

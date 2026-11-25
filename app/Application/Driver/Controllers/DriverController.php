@@ -28,12 +28,12 @@ class DriverController extends Controller
         $orders = MerchantOrder::where('driver_id', $driver->id);
 
         $stats = [
-            'ordersCount' => (clone $orders)->count(),
-            'pendingOrdersCount' => (clone $orders)->where('status', 'pending')->count(),
-            'readyOrdersCount' => (clone $orders)->where('status', 'ready')->count(),
-            'completedOrdersCount' => (clone $orders)->where('status', 'completed')->count(),
-            'cancelledOrdersCount' => (clone $orders)->where('status', 'cancelled')->count(),
-            'expiredOrdersCount' => (clone $orders)->where('status', 'expired')->count(),
+            'ordersCount'          => (clone $orders)->count(),
+            'preparingOrdersCount' => (clone $orders)->where('status', MerchantOrderStatuses::CURRENT->value)->count(),   // started-work: السائق قبل والتاجر يجهّز
+            'readyOrdersCount'     => (clone $orders)->where('status', MerchantOrderStatuses::READY->value)->count(),     // ready: جاهز للاستلام
+            'onWayOrdersCount'     => (clone $orders)->where('status', MerchantOrderStatuses::ON_WAY->value)->count(),    // on-way: في الطريق للعميل
+            'completedOrdersCount' => (clone $orders)->where('status', MerchantOrderStatuses::PREVIOUS->value)->count(),  // completed: مكتمل
+            'cancelledOrdersCount' => (clone $orders)->where('status', MerchantOrderStatuses::CANCELLED->value)->count(), // cancelled: ملغي
         ];
 
         return view('driver::pages.home.index', compact('driver', 'stats'));
@@ -65,22 +65,40 @@ class DriverController extends Controller
             return redirect(RouteServiceProvider::DRIVER_LOGIN);
         }
 
-        $order = MerchantOrder::where('id', $id)->where('driver_id', $driver->id)->firstOrFail();
+        $order = MerchantOrder::where('id', $id)
+            ->where(function ($q) use ($driver) {
+                $q->where('driver_id', $driver->id)
+                    ->orWhere(function ($sub) use ($driver) {
+                        $sub->whereNull('driver_id')
+                            ->whereHas('temp_orders', function ($temp) use ($driver) {
+                                $temp->where('driver_id', $driver->id)->where('has_accept', false);
+                            });
+                    });
+            })
+            ->firstOrFail();
         $status = $order->status instanceof MerchantOrderStatuses
             ? $order->status
             : MerchantOrderStatuses::tryFrom((string) $order->status);
 
-        if (!in_array($status, [MerchantOrderStatuses::PENDING, MerchantOrderStatuses::UPCOMING, MerchantOrderStatuses::READY], true)) {
-            return redirect()->back()->with('error', 'لا يمكن قبول الطلب في حالته الحالية.');
+        // يجب أن يكون الطلب بحالة UPCOMING (confirmed) أو READY فقط
+        // PENDING يعني أن التاجر لم يقبله بعد، فلا يحق للسائق قبوله
+        if (!in_array($status, [MerchantOrderStatuses::UPCOMING, MerchantOrderStatuses::READY], true)) {
+            return redirect()->back()->with('error', 'لا يمكن قبول الطلب في حالته الحالية. يجب انتظار قبول التاجر أولاً.');
         }
 
         if ($status !== MerchantOrderStatuses::READY || !$order->isAcceptedByDriver($driver->id)) {
             $order->update([
+                'driver_id' => $driver->id,
                 'status' => $status === MerchantOrderStatuses::READY
                     ? MerchantOrderStatuses::READY->value
                     : MerchantOrderStatuses::CURRENT->value,
                 'commission_from_driver' => $driver->taken_commission ?? 0,
             ]);
+
+            \Domain\MarketPlace\Models\TempOrder::query()
+                ->where('order_id', $order->id)
+                ->where('driver_id', $driver->id)
+                ->update(['has_accept' => true]);
 
             $logOrderHistoryAction = app(\App\Domain\MarketPlace\Actions\Api\Order\LogOrderHistoryAction::class);
             $logOrderHistoryAction->handle(

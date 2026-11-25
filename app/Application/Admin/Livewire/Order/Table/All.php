@@ -16,7 +16,8 @@ class All extends DataTableComponent
     public $filters = [];
     protected $model = MerchantOrder::class;
     protected MerchantOrderRepository $orderRepository;
-    public $listeners = ['refreshOrders', 'exportExcel'];
+    public $listeners = ['refreshOrders', 'exportExcel', '$refresh'];
+
     public function __construct()
     {
         $this->orderRepository = new MerchantOrderRepository(new MerchantOrder());
@@ -27,10 +28,9 @@ class All extends DataTableComponent
     public function configure(): void
     {
         $this->setPrimaryKey('id')
-            ->setSearchStatus(false);
+            ->setSearchStatus(false)
+            ->setRefreshTime(10000); // تحديث تلقائي كل 10 ثوانٍ
     }
-
-
     public function refreshOrders(array $filters = [])
     {
         $this->filters = $filters;

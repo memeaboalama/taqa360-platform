@@ -38,6 +38,7 @@ class Show extends Component
 
     public function showOrderDetails($orderId): void
     {
+        $driverId = auth()->guard('driver')->id();
         $order = MerchantOrder::with([
             'user',
             'orderItems.orderChoices.choice',
@@ -46,7 +47,15 @@ class Show extends Component
             'address.country',
             'address.city',
             'address.distract',
-        ])->where('driver_id', auth()->guard('driver')->id())->find($orderId);
+        ])->where(function ($q) use ($driverId) {
+            $q->where('driver_id', $driverId)
+                ->orWhere(function ($sub) use ($driverId) {
+                    $sub->whereNull('driver_id')
+                        ->whereHas('temp_orders', function ($temp) use ($driverId) {
+                            $temp->where('driver_id', $driverId)->where('has_accept', false);
+                        });
+                });
+        })->find($orderId);
 
         if (!$order) {
             return;

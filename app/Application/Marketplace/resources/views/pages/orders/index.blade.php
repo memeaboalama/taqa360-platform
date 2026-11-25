@@ -23,6 +23,22 @@
         <script src="{{ asset('assets/vendor/js/date&time_pickers.js')}}"></script>
         <script>
             flatpickr("#to_date-filter", {});
+
+            // تحديث تلقائي لجدول الطلبات كل 5 ثوانٍ
+            (function () {
+                var merchantOrdersRefreshTimer = null;
+                function startMerchantOrdersRefresh() {
+                    if (merchantOrdersRefreshTimer) clearInterval(merchantOrdersRefreshTimer);
+                    merchantOrdersRefreshTimer = setInterval(function () {
+                        Livewire.emit('refreshDatatable');
+                    }, 5000);
+                }
+                if (window.Livewire) {
+                    startMerchantOrdersRefresh();
+                } else {
+                    document.addEventListener('livewire:load', startMerchantOrdersRefresh);
+                }
+            })();
         </script>
     @endpush
 @endsection
