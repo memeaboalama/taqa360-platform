@@ -4,12 +4,13 @@
     </div>
 
     @push('js')
+    @include('shared.maps')
         <script type="text/javascript">
             let map, activeInfoWindow, markers = [];
 
             /* ----------------------------- Initialize Map ----------------------------- */
             function initMap() {
-                map = new google.maps.Map(document.getElementById("map"), {
+                map = new TaqaMaps.Map(document.getElementById("map"), {
                     center: {
                         lat: 24.774265,
                         lng: 46.738586,
@@ -36,12 +37,12 @@
                     const markerData = initialMarkers[index][0];
                     const icon = {
                         url: "{{ asset('assets/vendor/images/marker.png') }}",
-                        scaledSize: new google.maps.Size(50, 50),
-                        origin: new google.maps.Point(0,0),
-                        anchor: new google.maps.Point(0, 0)
+                        scaledSize: new TaqaMaps.Size(50, 50),
+                        origin: new TaqaMaps.Point(0,0),
+                        anchor: new TaqaMaps.Point(0, 0)
                     };
                     console.log(icon, "icccc");
-                    const marker = new google.maps.Marker({
+                    const marker = new TaqaMaps.Marker({
                         position: markerData.position,
                         draggable: markerData.draggable,
                         title: "Driver Details",
@@ -50,7 +51,7 @@
                     });
                     markers.push(marker);
 
-                    const infowindow = new google.maps.InfoWindow({
+                    const infowindow = new TaqaMaps.InfoWindow({
                         content: `<b>Name : <a href="<?php echo url('/'); ?>/company/drivers/show/${markerData.id}" style="color: #0a53be">${markerData.name}</a></b><br><b>Phone : ${markerData.phone}</b><br><b>${markerData.position.lat}, ${markerData.position.lng}</b>`,
                     });
                     marker.addListener("click", (event) => {
@@ -97,9 +98,10 @@
                 console.log(event.latLng.lng());
             }
         </script>
-        <!-- <script src="https://maps.googleapis.com/maps/api/js?key={{config('services.google_maps.api_key')}}&callback=initMap"></script> -->
-        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCIJH6jbULC8MVaAX2LyxIQEBwWPjjeIF0&callback=initMap"></script>
-    @endpush
+
+
+    <script>setTimeout(function () { initMap(); }, 0);</script>
+@endpush
 </div>
 
 

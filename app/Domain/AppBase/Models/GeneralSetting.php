@@ -37,6 +37,8 @@ class GeneralSetting extends Model
         'moyasar_key',
         'moyasar_secret',
         'moyasar_url',
+        'support_email',
+        'support_phone',
     ];
 
     public function getAuthPageImagePathAttribute()

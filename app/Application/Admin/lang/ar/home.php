@@ -38,6 +38,9 @@ return [
     "Privacy Policy in English" => "سياسة الخصوصية (English)",
     "Privacy Policy in Arabic" => "سياسة الخصوصية بالعربية",
     "General Settings" => "الاعدادات العامة",
+    "Technical Support" => "الدعم الفني",
+    "Support Email" => "بريد الدعم الفني",
+    "Support Phone" => "هاتف الدعم الفني",
     "Update Profile" => "تحديث الملف الشخصي",
     "Login/Register Page Content" => "محتوى صفحة تسجيل الدخول/تسجيل جديد",
     "User Page Content" => "سياسات المستخدم",
@@ -867,4 +870,5 @@ return [
     "amount_due" => "المبلغ المستحق",
     "all_drivers" => "كل السائقين",
     "review_action" => "الإجراء",
+    'Map could not be loaded. Please try again.' => 'تعذر تحميل الخريطة. يرجى المحاولة مرة أخرى.',
 ];

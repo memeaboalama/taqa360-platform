@@ -44,9 +44,21 @@
             </div>
         </div>
 
-        <label class="form-label mt-2 text-info">{{ __('driver::home.Contact us') }} : </label><br>
-        <label class="form-label mt-2 text-info">{{ __('driver::home.Email') }} : <a href="mailto:IT@EATS.SA" style="color: #0a58ca">IT@EATS.SA</a> .</label><br>
-        <label class="form-label mt-2 text-info">{{ __('driver::home.Phone') }} : <a href="tel:+966 9200 13363" style="color: #0a58ca" dir="ltr">+966 9200 13363</a></label>
+        @if(filled($supportEmail) || filled($supportPhone))
+            <label class="form-label mt-2 text-info">{{ __('driver::home.Contact us') }} :</label><br>
+            @if(filled($supportEmail))
+                <label class="form-label mt-2 text-info">
+                    {{ __('driver::home.Email') }} :
+                    <a href="mailto:{{ $supportEmail }}" style="color: #0a58ca">{{ $supportEmail }}</a> .
+                </label><br>
+            @endif
+            @if(filled($supportPhone))
+                <label class="form-label mt-2 text-info">
+                    {{ __('driver::home.Phone') }} :
+                    <a href="tel:{{ preg_replace('/[^0-9+]/', '', $supportPhone) }}" style="color: #0a58ca" dir="ltr">{{ $supportPhone }}</a>
+                </label>
+            @endif
+        @endif
 
 
         <div class="row gy-3 mt-3">

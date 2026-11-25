@@ -68,7 +68,7 @@ class Info extends Component
         $this->fillData($branch);
         $this->resetValidation();
         $this->editing = false;
-        $this->emit('branchEditingChanged', false);
+        $this->emit('branchEditingChanged', false, ['lat' => (float) $this->latitude, 'lng' => (float) $this->longitude]);
     }
     public function setLatitudeLongitude($latitude, $longitude)
     {
@@ -343,7 +343,7 @@ class Info extends Component
         $this->alert('success', __('marketplace::home.data_updated_successfully'));
         DB::commit();
         $this->editing = false;
-        $this->emit('branchEditingChanged', false);
+        $this->emit('branchEditingChanged', false, ['lat' => (float) $this->latitude, 'lng' => (float) $this->longitude]);
     }
 
     public function render(): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\Foundation\Application

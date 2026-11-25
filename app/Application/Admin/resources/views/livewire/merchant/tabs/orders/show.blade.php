@@ -382,15 +382,16 @@
 
 
 @push('js')
-    <!-- <script src="https://maps.googleapis.com/maps/api/js?key={{config('services.google_maps.api_key')}}&callback=initMap"></script> -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCIJH6jbULC8MVaAX2LyxIQEBwWPjjeIF0&callback=initMap"></script>
+    @include('shared.maps')
+
+
     <script>
         function initialize() {
             let fromLocation;
             let toLocation;
 
             @if($order?->client_lat)
-                fromLocation = new google.maps.LatLng('{{ $order?->client_lat }}', '{{ $order?->client_long }}');
+                fromLocation = new TaqaMaps.LatLng('{{ $order?->client_lat }}', '{{ $order?->client_long }}');
             @endif
 
             let mapOptions = {
@@ -398,21 +399,22 @@
                 zoom: 8
             };
 
-            let map = new google.maps.Map(document.getElementById('map'), mapOptions);
+            let map = new TaqaMaps.Map(document.getElementById('map'), mapOptions);
 
-            let fromMarker = new google.maps.Marker({
+            let fromMarker = new TaqaMaps.Marker({
                 position: fromLocation,
                 map: map,
                 title: 'From Location'
             });
 
-            let toMarker = new google.maps.Marker({
+            let toMarker = new TaqaMaps.Marker({
                 position: toLocation,
                 map: map,
                 title: 'To Location'
             });
         }
 
-        google.maps.event.addDomListener(window, 'load', initialize);
+        TaqaMaps.event.addDomListener(window, 'load', initialize);
     </script>
+<script>setTimeout(function () { initMap(); }, 0);</script>
 @endpush

@@ -7,7 +7,7 @@
 @section('title', __('ecommerce::ecommerce.checkout'))
 
 @section('page-styles')
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
     <style>
         :root {
             --ink: #20252d;
@@ -1110,10 +1110,8 @@
 @endsection
 
 @section('scripts')
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script
-        src="https://maps.googleapis.com/maps/api/js?key={{ urlencode(config('services.google_maps.api_key')) }}&language={{ app()->getLocale() }}">
-    </script>
+    @include('shared.maps')
+
     <script>
         const citiesByCountry = @json($citiesByCountry);
         const initialCityId = @json(old('new_address_city_id'));
@@ -1145,7 +1143,7 @@
             var mapElement = document.getElementById('checkout-location-map');
             var mapStatus = document.getElementById('location-map-status');
             var coordinatesOutput = document.getElementById('location-coordinates');
-            var geocoder = window.google && window.google.maps ? new google.maps.Geocoder() : null;
+            var geocoder = window.TaqaMaps ? new TaqaMaps.Geocoder() : null;
 
             function clearMapSelection() {
                 latitudeInput.value = '';
@@ -1177,10 +1175,7 @@
             }
 
             checkoutMap = L.map(mapElement).setView([20, 0], 2);
-            L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
-            }).addTo(checkoutMap);
+            TaqaMaps.addBaseLayers(checkoutMap);
 
             var showGeocodedCenter = function(latitude, longitude, zoom) {
                 var position = L.latLng(latitude, longitude);
@@ -1244,7 +1239,7 @@
 
                 try {
                     if (!geocoder) {
-                        throw new Error('Google Maps geocoder is unavailable.');
+                        throw new Error('Location search is unavailable.');
                     }
 
                     var result = await geocoder.geocode({

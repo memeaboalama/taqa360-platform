@@ -26,9 +26,26 @@ class FetchCitiesAction
 
         if(isset($data['paginated']))
         {
-            $per_page = isset($data['per_page']) ? $data['per_page'] : null;
+            $per_page = max(1, (int) ($data['per_page'] ?? 10));
+            $page = isset($data['page']) ? max(1, (int) $data['page']) : null;
+            $pageName = $data['page_name'] ?? 'page';
+            $query = $this->cityRepository->builder(
+                cols: ['id', 'title'],
+                relations: $relations,
+                condition: ['status' => StatusEnum::ACTIVE]
+            );
 
-            return $this->cityRepository->paginate(cols: ['id','title'], relations: $relations, condition: ['status'=>StatusEnum::ACTIVE], paginate: $per_page);
+            $search = trim((string) ($data['search'] ?? ''));
+            if ($search !== '') {
+                $locales = array_unique([app()->getLocale(), 'ar', 'en']);
+                $query->where(function ($query) use ($locales, $search) {
+                    foreach ($locales as $locale) {
+                        $query->orWhere('title->' . $locale, 'like', '%' . $search . '%');
+                    }
+                });
+            }
+
+            return $query->paginate($per_page, ['*'], $pageName, $page);
         }
         return $this->cityRepository->all(cols: ['id','title'],relations:$relations, condition: ['status'=>StatusEnum::ACTIVE]);
     }

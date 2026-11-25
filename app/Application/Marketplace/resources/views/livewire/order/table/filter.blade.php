@@ -1,4 +1,87 @@
 <div class="col-xl-11">
+    <style>
+        .city-filter-dropdown {
+            position: relative;
+            display: inline-flex
+        }
+
+        .city-filter-dropdown.show {
+            z-index: 1060
+        }
+
+        .city-filter-menu {
+            top: calc(100% + 6px);
+            left: 0;
+            width: 360px;
+            max-width: calc(100vw - 32px);
+            padding: 0;
+            overflow: hidden
+        }
+
+        [dir="rtl"] .city-filter-menu {
+            right: 0;
+            left: auto
+        }
+
+        .city-filter-search,
+        .city-filter-actions {
+            padding: 12px 14px
+        }
+
+        .city-filter-search {
+            border-bottom: 1px solid var(--bs-border-color, #e5e7eb)
+        }
+
+        .city-filter-options {
+            max-height: 250px;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding: 6px
+        }
+
+        .city-filter-option {
+            display: block;
+            width: 100%;
+            padding: 8px 10px;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: inherit;
+            text-align: start;
+            cursor: pointer
+        }
+
+        .city-filter-option:hover,
+        .city-filter-option.is-selected {
+            background: rgba(var(--primary-rgb), .1);
+            color: rgb(var(--primary-rgb))
+        }
+
+        .city-filter-empty,
+        .city-filter-load-more {
+            display: block;
+            width: 100%;
+            padding: 9px 10px;
+            color: var(--bs-secondary-color, #6c757d);
+            text-align: center
+        }
+
+        .city-filter-load-more {
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            cursor: pointer
+        }
+
+        .city-filter-load-more:hover {
+            background: rgba(var(--primary-rgb), .08);
+            color: rgb(var(--primary-rgb))
+        }
+
+        .city-filter-actions {
+            border-top: 1px solid var(--bs-border-color, #e5e7eb)
+        }
+    </style>
     <div class="card-body">
         <div class="btn-list">
 
@@ -49,7 +132,8 @@
                             <select class="form-control" id="status-filter" wire:model.defer="status">
                                 <option selected value="">-- {{ __('marketplace::home.Select') }} --</option>
                                 @foreach($this->statuses as $value)
-                                    <option value="{{ $value }}">{{  $value->trans() }}</option>
+                                    @php($statusValue = $value instanceof \App\Application\Marketplace\Enums\MerchantOrderStatuses ? $value->value : (string) $value)
+                                    <option value="{{ $statusValue }}">{{ \App\Application\Marketplace\Enums\MerchantOrderStatuses::tryFrom($statusValue)?->trans() ?? $statusValue }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -142,35 +226,59 @@
             @endif
 
 
-            <button class="btn btn-outline-primary rounded-pill btn-wave waves-effect waves-light dropdown-toggle" type="button" id="city-filter-toggle"
-                    data-bs-toggle="dropdown" aria-expanded="false">
-                {{ __('marketplace::home.City') }}
-            </button>
+            <div class="city-filter-dropdown dropdown" wire:ignore.self>
+                <button class="btn btn-outline-primary rounded-pill btn-wave waves-effect waves-light dropdown-toggle" type="button"
+                        id="city-filter-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                        aria-controls="city-filter-menu" aria-expanded="false" wire:ignore.self>
+                    {{ __('marketplace::home.City') }}
+                </button>
 
-            <div class="dropdown-menu" wire:ignore.self>
-                <form class="px-4 py-3" wire:submit.prevent="filterCity">
-                    <div class="row gy-3">
-                        <div class="col-xl-12 mt-2">
-                            <label for="city-filter" class="form-label">{{ __('marketplace::home.City') }}</label>
-                            <select class="form-control" id="city-filter" wire:change="selectCity($event.target.value)">
-                                <option selected value="">-- {{ __('marketplace::home.Select') }} --</option>
-                                @foreach($cities as $city)
-                                    <option value="{{ $city->id }}">{{ $city->title }}</option>
-                                @endforeach
-                            </select>
+                <div class="dropdown-menu city-filter-menu" id="city-filter-menu" wire:ignore.self>
+                    <form wire:submit.prevent="filterCity">
+                        <div class="city-filter-search">
+                            <label for="city-filter-search" class="form-label">{{ __('marketplace::home.City') }}</label>
+                            <input type="search" class="form-control" id="city-filter-search"
+                                   wire:model.debounce.300ms="citySearch"
+                                   placeholder="{{ __('marketplace::home.search_cities') }}"
+                                   autocomplete="off" maxlength="100">
                         </div>
 
-                        <button type="submit" class="col-md-12 mt-2 btn btn-primary">
-                                    <span class="indicator-label" wire:loading.class="d-none">
-                                        {{ __('marketplace::home.filter') }}
+                        <div class="city-filter-options" data-lazy-location-options="city" wire:ignore.self>
+                            @forelse($cities as $city)
+                                <button type="button"
+                                        class="city-filter-option {{ (string) $city_id === (string) $city['id'] ? 'is-selected' : '' }}"
+                                        wire:click="selectCity({{ $city['id'] }})"
+                                        aria-pressed="{{ (string) $city_id === (string) $city['id'] ? 'true' : 'false' }}">
+                                    {{ $city['title'] }}
+                                </button>
+                            @empty
+                                <div class="city-filter-empty">{{ __('marketplace::home.no_cities_found') }}</div>
+                            @endforelse
+
+                            @if($hasMoreCities)
+                                <button type="button" class="city-filter-load-more" data-location-load-more
+                                        wire:click="loadMoreCities" wire:loading.attr="disabled"
+                                        wire:target="loadMoreCities">
+                                    <span wire:loading.remove wire:target="loadMoreCities">{{ __('marketplace::home.load_more_cities') }}</span>
+                                    <span wire:loading wire:target="loadMoreCities">
+                                        {{ __('marketplace::home.Wait') }}
+                                        <span class="spinner-border spinner-border-sm align-middle ms-2" aria-hidden="true"></span>
                                     </span>
-                            <span class="d-none" wire:loading.class.remove="d-none">
-                                        {{ __('marketplace::home.Wait') }} <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
-                                    </span>
-                        </button>
-                    </div>
-                </form>
-                <div class="dropdown-divider"></div>
+                                </button>
+                            @endif
+                        </div>
+
+                        <div class="city-filter-actions">
+                            <button type="submit" class="w-100 btn btn-primary">
+                                <span wire:loading.class="d-none" wire:target="filterCity">{{ __('marketplace::home.filter') }}</span>
+                                <span class="d-none" wire:loading.class.remove="d-none" wire:target="filterCity">
+                                    {{ __('marketplace::home.Wait') }}
+                                    <span class="spinner-border spinner-border-sm align-middle ms-2" aria-hidden="true"></span>
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             @if($city_name != null)
@@ -182,35 +290,60 @@
             @endif
 
             @if($city_id)
-                <button wire:key="district-filter-toggle" class="btn btn-outline-primary rounded-pill btn-wave waves-effect waves-light dropdown-toggle" type="button" id="district-filter-toggle"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                    {{ __('marketplace::home.District') }}
-                </button>
+                <div wire:key="district-filter-dropdown" class="city-filter-dropdown dropdown" wire:ignore.self>
+                    <button class="btn btn-outline-primary rounded-pill btn-wave waves-effect waves-light dropdown-toggle"
+                            type="button" id="district-filter-toggle" data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside" aria-controls="district-filter-menu"
+                            aria-expanded="false" wire:ignore.self>
+                        {{ __('marketplace::home.District') }}
+                    </button>
 
-                <div wire:key="district-filter-menu" class="dropdown-menu" wire:ignore.self>
-                    <form class="px-4 py-3" wire:submit.prevent="filterDistrict">
-                        <div class="row gy-3">
-                            <div class="col-xl-12 mt-2">
-                                <label for="district-filter" class="form-label">{{ __('marketplace::home.District') }}</label>
-                                <select class="form-control" id="district-filter" wire:model.defer="district_id">
-                                    <option selected value="">-- {{ __('marketplace::home.Select') }} --</option>
-                                    @foreach($districts as $district)
-                                        <option value="{{ $district->id }}">{{ $district->title }}</option>
-                                    @endforeach
-                                </select>
+                    <div class="dropdown-menu city-filter-menu" id="district-filter-menu" wire:ignore.self>
+                        <form wire:submit.prevent="filterDistrict">
+                            <div class="city-filter-search">
+                                <label for="district-filter-search" class="form-label">{{ __('marketplace::home.District') }}</label>
+                                <input type="search" class="form-control" id="district-filter-search"
+                                       wire:model.debounce.300ms="districtSearch"
+                                       placeholder="{{ __('marketplace::home.search_districts') }}"
+                                       autocomplete="off" maxlength="100">
                             </div>
 
-                            <button type="submit" class="col-md-12 mt-2 btn btn-primary">
-                                    <span class="indicator-label" wire:loading.class="d-none">
-                                        {{ __('marketplace::home.filter') }}
+                            <div class="city-filter-options" data-lazy-location-options="district" wire:ignore.self>
+                                @forelse($districts as $district)
+                                    <button type="button"
+                                            class="city-filter-option {{ (string) $district_id === (string) $district['id'] ? 'is-selected' : '' }}"
+                                            wire:click="$set('district_id', {{ $district['id'] }})"
+                                            aria-pressed="{{ (string) $district_id === (string) $district['id'] ? 'true' : 'false' }}">
+                                        {{ $district['title'] }}
+                                    </button>
+                                @empty
+                                    <div class="city-filter-empty">{{ __('marketplace::home.no_districts_found') }}</div>
+                                @endforelse
+
+                                @if($hasMoreDistricts)
+                                    <button type="button" class="city-filter-load-more" data-location-load-more
+                                            wire:click="loadMoreDistricts" wire:loading.attr="disabled"
+                                            wire:target="loadMoreDistricts">
+                                        <span wire:loading.remove wire:target="loadMoreDistricts">{{ __('marketplace::home.load_more_districts') }}</span>
+                                        <span wire:loading wire:target="loadMoreDistricts">
+                                            {{ __('marketplace::home.Wait') }}
+                                            <span class="spinner-border spinner-border-sm align-middle ms-2" aria-hidden="true"></span>
+                                        </span>
+                                    </button>
+                                @endif
+                            </div>
+
+                            <div class="city-filter-actions">
+                                <button type="submit" class="w-100 btn btn-primary">
+                                    <span wire:loading.class="d-none" wire:target="filterDistrict">{{ __('marketplace::home.filter') }}</span>
+                                    <span class="d-none" wire:loading.class.remove="d-none" wire:target="filterDistrict">
+                                        {{ __('marketplace::home.Wait') }}
+                                        <span class="spinner-border spinner-border-sm align-middle ms-2" aria-hidden="true"></span>
                                     </span>
-                                <span class="d-none" wire:loading.class.remove="d-none">
-                                        {{ __('marketplace::home.Wait') }} <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
-                                    </span>
-                            </button>
-                        </div>
-                    </form>
-                    <div class="dropdown-divider"></div>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
                 @if($district_name != null)
@@ -224,3 +357,70 @@
         </div>
     </div>
 </div>
+
+@push('js')
+    <script>
+        (function () {
+            var livewireReady = false;
+
+            function isNearListEnd(list) {
+                return list.offsetParent !== null
+                    && list.scrollTop + list.clientHeight >= list.scrollHeight - 36;
+            }
+
+            function loadMoreIfNeeded(list) {
+                if (!isNearListEnd(list) || list.dataset.locationLoading === 'true') return;
+
+                var button = list.querySelector('[data-location-load-more]');
+                if (!button || button.disabled) return;
+
+                list.dataset.locationLoading = 'true';
+                button.click();
+            }
+
+            function bindLocationLists() {
+                document.querySelectorAll('[data-lazy-location-options]').forEach(function (list) {
+                    if (list.dataset.locationScrollBound === 'true') return;
+
+                    list.dataset.locationScrollBound = 'true';
+                    list.addEventListener('scroll', function () {
+                        loadMoreIfNeeded(list);
+                    });
+                });
+            }
+
+            function startCityLazyLoading() {
+                if (livewireReady || !window.Livewire || !Livewire.hook) return;
+                livewireReady = true;
+                bindLocationLists();
+
+                ['city', 'district'].forEach(function (location) {
+                    window.addEventListener('close-' + location + '-filter', function () {
+                        var toggle = document.getElementById(location + '-filter-toggle');
+                        var dropdown = toggle && window.bootstrap
+                            ? bootstrap.Dropdown.getInstance(toggle)
+                            : null;
+                        if (dropdown) dropdown.hide();
+                    });
+                });
+
+                Livewire.hook('message.processed', function () {
+                    window.requestAnimationFrame(function () {
+                        bindLocationLists();
+                        document.querySelectorAll('[data-lazy-location-options]').forEach(function (list) {
+                            list.dataset.locationLoading = 'false';
+                            loadMoreIfNeeded(list);
+                        });
+                    });
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', startCityLazyLoading);
+            } else {
+                startCityLazyLoading();
+            }
+            document.addEventListener('livewire:load', startCityLazyLoading);
+        })();
+    </script>
+@endpush

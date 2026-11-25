@@ -501,20 +501,21 @@
 </div>
 
 @push('js')
+    @include('shared.maps')
     <script src="{{ asset('assets/vendor') }}/libs/glightbox/js/glightbox.min.js"></script>
     <script src="{{ asset('assets/vendor') }}/js/gallery.js"></script>
-    <!-- <script src="https://maps.googleapis.com/maps/api/js?key={{config('services.google_maps.api_key')}}"></script> -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCIJH6jbULC8MVaAX2LyxIQEBwWPjjeIF0"></script>
+
+
     <script>
         function initialize() {
             let fromLocation;
             let toLocation;
 
             @if($towingOrder)
-                toLocation = new google.maps.LatLng('{{ $towingOrder?->pickup_address?->latitude }}', '{{ $towingOrder?->pickup_address?->longitude }}');
-            fromLocation = new google.maps.LatLng('{{ $towingOrder?->dropoff_address?->latitude }}', '{{ $towingOrder?->dropoff_address?->longitude }}');
+                toLocation = new TaqaMaps.LatLng('{{ $towingOrder?->pickup_address?->latitude }}', '{{ $towingOrder?->pickup_address?->longitude }}');
+            fromLocation = new TaqaMaps.LatLng('{{ $towingOrder?->dropoff_address?->latitude }}', '{{ $towingOrder?->dropoff_address?->longitude }}');
             @else
-                fromLocation = new google.maps.LatLng('{{ $order->client_location?->latitude }}', '{{ $order->client_location?->longitude }}');
+                fromLocation = new TaqaMaps.LatLng('{{ $order->client_location?->latitude }}', '{{ $order->client_location?->longitude }}');
             @endif
 
             let mapOptions = {
@@ -522,22 +523,22 @@
                 zoom: 8
             };
 
-            let map = new google.maps.Map(document.getElementById('map'), mapOptions);
+            let map = new TaqaMaps.Map(document.getElementById('map'), mapOptions);
 
-            let fromMarker = new google.maps.Marker({
+            let fromMarker = new TaqaMaps.Marker({
                 position: fromLocation,
                 map: map,
                 title: 'From Location'
             });
 
-            let toMarker = new google.maps.Marker({
+            let toMarker = new TaqaMaps.Marker({
                 position: toLocation,
                 map: map,
                 title: 'To Location'
             });
         }
 
-        google.maps.event.addDomListener(window, 'load', initialize);
+        TaqaMaps.event.addDomListener(window, 'load', initialize);
     </script>
 @endpush
 @push('css')

@@ -551,19 +551,20 @@
 {{-- <livewire:admin::refundpayment.modal.create :order="$order" /> --}}
 
 @push('js')
-<!-- <script src="https://maps.googleapis.com/maps/api/js?key={{config('services.google_maps.api_key')}}&callback=initMap"></script> -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCIJH6jbULC8MVaAX2LyxIQEBwWPjjeIF0&callback=initMap"></script>
+    @include('shared.maps')
+
+
 <script>
     function initialize() {
         let fromLocation;
         let toLocation;
 
 
-        fromLocation = new google.maps.LatLng('{{ $order?->branch?->latitude }}', '{{ $order?->branch?->longitude }}');
+        fromLocation = new TaqaMaps.LatLng('{{ $order?->branch?->latitude }}', '{{ $order?->branch?->longitude }}');
 
 
-        toLocation = new google.maps.LatLng('{{ $order->client_lat?? $address?->latitude??$orderAddress?->latitude }}', '{{  $order->client_long?? $address?->longitude??$orderAddress?->longitude }}');
-        // toLocation = new google.maps.LatLng('{{ $order->client_lat?? $address?->latitude}}', '{{  $order->client_long??$address?->longitude }}');
+        toLocation = new TaqaMaps.LatLng('{{ $order->client_lat?? $address?->latitude??$orderAddress?->latitude }}', '{{  $order->client_long?? $address?->longitude??$orderAddress?->longitude }}');
+        // toLocation = new TaqaMaps.LatLng('{{ $order->client_lat?? $address?->latitude}}', '{{  $order->client_long??$address?->longitude }}');
 
 
         let mapOptions = {
@@ -571,35 +572,36 @@
             zoom: 8
         };
 
-        let map = new google.maps.Map(document.getElementById('map'), mapOptions);
+        let map = new TaqaMaps.Map(document.getElementById('map'), mapOptions);
 
-        let fromMarker = new google.maps.Marker({
+        let fromMarker = new TaqaMaps.Marker({
             position: fromLocation,
             map: map,
             title: 'From Location',
             icon: {
                 url: "{{ asset('images/map/restaurant.png') }}",
-                scaledSize: new google.maps.Size(50, 50),
-                origin: new google.maps.Point(0, 0),
-                anchor: new google.maps.Point(0, 0)
+                scaledSize: new TaqaMaps.Size(50, 50),
+                origin: new TaqaMaps.Point(0, 0),
+                anchor: new TaqaMaps.Point(0, 0)
             }
         });
 
-        let toMarker = new google.maps.Marker({
+        let toMarker = new TaqaMaps.Marker({
             position: toLocation,
             map: map,
             title: 'To Location',
             icon: {
                 url: "{{ asset('images/map/location-pin.png') }}",
-                scaledSize: new google.maps.Size(50, 50),
-                origin: new google.maps.Point(0, 0),
-                anchor: new google.maps.Point(0, 0)
+                scaledSize: new TaqaMaps.Size(50, 50),
+                origin: new TaqaMaps.Point(0, 0),
+                anchor: new TaqaMaps.Point(0, 0)
             }
         });
 
 
     }
 
-    google.maps.event.addDomListener(window, 'load', initialize);
+    TaqaMaps.event.addDomListener(window, 'load', initialize);
 </script>
+<script>setTimeout(function () { initMap(); }, 0);</script>
 @endpush

@@ -33,9 +33,16 @@ class Filter extends Component
     public $employee_id = null;
     public $merchant_id = null;
     public $city_id = null;
+    public string $citySearch = '';
+    public int $cityPage = 1;
+    public bool $hasMoreCities = false;
     public $district_id = null;
+    public string $districtSearch = '';
+    public int $districtPage = 1;
+    public bool $hasMoreDistricts = false;
     public Collection $statuses;
-    public $branches, $employees, $cities, $districts, $merchants;
+    public $branches, $employees, $districts, $merchants;
+    public array $cities = [];
     public array $filters = [];
 
     protected $listeners = [
@@ -55,8 +62,99 @@ class Filter extends Component
         $this->statuses = collect(MerchantOrderStatuses::cases());
         $this->branches = $fetchBranchAction->handle(resolve('_InitialMerchant'));
         $this->employees = collect();
-        $this->cities = $fetchCitiesAction->handle();
-        $this->districts = collect();
+        $this->cities = [];
+        $this->loadCityPage($fetchCitiesAction);
+        $this->districts = [];
+    }
+
+    private function loadCityPage(FetchCitiesAction $fetchCitiesAction, bool $append = false): void
+    {
+        $citiesPage = $fetchCitiesAction->handle([
+            'paginated' => true,
+            'per_page' => 25,
+            'page' => $this->cityPage,
+            'page_name' => 'city_filter_page',
+            'search' => $this->citySearch,
+        ]);
+
+        $cities = collect($citiesPage->items())
+            ->map(static fn ($city) => [
+                'id' => $city->id,
+                'title' => $city->title,
+            ])
+            ->all();
+        $this->hasMoreCities = $citiesPage->hasMorePages();
+        $this->cities = $append
+            ? array_merge($this->cities, $cities)
+            : $cities;
+    }
+
+    public function updatedCitySearch(): void
+    {
+        $this->cityPage = 1;
+        $this->loadCityPage(resolve(FetchCitiesAction::class));
+    }
+
+    public function loadMoreCities(): void
+    {
+        if (!$this->hasMoreCities) {
+            return;
+        }
+
+        $this->cityPage++;
+        $this->loadCityPage(resolve(FetchCitiesAction::class), true);
+    }
+
+    private function loadDistrictPage(bool $append = false): void
+    {
+        if (!$this->city_id) {
+            $this->districts = [];
+            $this->hasMoreDistricts = false;
+            return;
+        }
+
+        $query = Distract::query()
+            ->where('city_id', $this->city_id)
+            ->where('status', StatusEnum::ACTIVE);
+
+        $search = trim($this->districtSearch);
+        if ($search !== '') {
+            $locales = array_unique([app()->getLocale(), 'ar', 'en']);
+            $query->where(function ($query) use ($locales, $search) {
+                foreach ($locales as $locale) {
+                    $query->orWhere('title->' . $locale, 'like', '%' . $search . '%');
+                }
+            });
+        }
+
+        $districtsPage = $query->paginate(25, ['id', 'title'], 'district_filter_page', $this->districtPage);
+        $districts = collect($districtsPage->items())
+            ->map(static fn (Distract $district) => [
+                'id' => $district->id,
+                'title' => $district->title,
+            ])
+            ->all();
+
+        $this->hasMoreDistricts = $districtsPage->hasMorePages();
+        $this->districts = $append
+            ? array_merge($this->districts, $districts)
+            : $districts;
+    }
+
+    public function updatedDistrictSearch(): void
+    {
+        $this->districtPage = 1;
+        $this->loadDistrictPage();
+    }
+
+    public function loadMoreDistricts(): void
+    {
+        if (!$this->hasMoreDistricts) {
+            return;
+        }
+
+        $this->districtPage++;
+        $this->loadDistrictPage(true);
     }
 
     public function selectCity($cityId): void
@@ -65,13 +163,10 @@ class Filter extends Component
         $this->city_id = $cityId ?: null;
         $this->district_id = null;
         $this->district_name = null;
+        $this->districtSearch = '';
+        $this->districtPage = 1;
         $this->filters['district_id'] = null;
-        $this->districts = $this->city_id
-            ? Distract::query()
-                ->where('city_id', $this->city_id)
-                ->where('status', StatusEnum::ACTIVE)
-                ->get(['id', 'title'])
-            : collect();
+        $this->loadDistrictPage();
     }
 
     public function resetSearch(): void
@@ -148,6 +243,7 @@ class Filter extends Component
 
         $this->filters['city_id'] =  $this->city_id;
         $this->emit('refreshOrders', $this->filters);
+        $this->dispatchBrowserEvent('close-city-filter');
     }
 
     public function removeCityFilter(): void
@@ -155,9 +251,15 @@ class Filter extends Component
         $this->statuses = collect(MerchantOrderStatuses::cases());
         $this->city_id = null;
         $this->city_name = null;
+        $this->citySearch = '';
+        $this->cityPage = 1;
+        $this->loadCityPage(resolve(FetchCitiesAction::class));
         $this->district_id = null;
         $this->district_name = null;
-        $this->districts = collect();
+        $this->districtSearch = '';
+        $this->districtPage = 1;
+        $this->districts = [];
+        $this->hasMoreDistricts = false;
         $this->filters['city_id'] = null;
         $this->filters['district_id'] = null;
         $this->emit('refreshOrders', $this->filters);
@@ -175,8 +277,10 @@ class Filter extends Component
             ->handle($this->district_id)
             ?->title ?? null;
 
+        $this->filters['city_id'] = $this->city_id;
         $this->filters['district_id'] =  $this->district_id;
         $this->emit('refreshOrders', $this->filters);
+        $this->dispatchBrowserEvent('close-district-filter');
     }
 
     public function removeDistrictFilter(): void
@@ -184,6 +288,9 @@ class Filter extends Component
         $this->statuses = collect(MerchantOrderStatuses::cases());
         $this->district_id = null;
         $this->district_name = null;
+        $this->districtSearch = '';
+        $this->districtPage = 1;
+        $this->loadDistrictPage();
         $this->filters['district_id'] = null;
         $this->emit('refreshOrders', $this->filters);
     }

@@ -73,7 +73,7 @@
 
     .btn-save {
         padding: 12px 24px;
-        background: #306FAA;
+        background: var(--yellow);
         color: #fff;
         border: none;
         border-radius: 8px;
@@ -87,7 +87,7 @@
     }
 
     .btn-save:hover {
-        background: #245C8E;
+        background: var(--yellow-deep);
         transform: translateY(-1px);
         color: #fff;
     }
@@ -119,11 +119,19 @@
         margin-top: 6px;
         display: block;
     }
+
+    .content-header {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
 </style>
 
 <div class="account-content-area w-100">
     <div class="content-header mb-4 d-flex justify-content-between align-items-center">
         <h2 class="fw-bold mb-0" style="font-size: 24px; color: #1a202c;">@lang('ecommerce::ecommerce.personal_info')</h2>
+        <button type="button" class="btn-save password-change-trigger" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+            <i class="ti-key"></i> @lang('ecommerce::ecommerce.change_password')
+        </button>
     </div>
 
     <div class="precise-form-card">
@@ -164,38 +172,6 @@
                 </div>
             </div>
 
-            <div class="section-divider"></div>
-
-            <div class="form-header border-0 pb-0 mb-4">
-                <h4 class="form-title">@lang('ecommerce::ecommerce.change_password')</h4>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="precise-form-group">
-                        <label>@lang('ecommerce::ecommerce.current_password')</label>
-                        <input type="password" name="current_password" placeholder="••••••••">
-                        <span class="helper-text">
-                            <i class="ti-info-alt"></i> @lang('ecommerce::ecommerce.leave_blank_if_not_changing')
-                        </span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="precise-form-group">
-                        <label>@lang('ecommerce::ecommerce.new_password')</label>
-                        <input type="password" name="password" placeholder="••••••••">
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="precise-form-group">
-                        <label>@lang('ecommerce::ecommerce.confirm_password')</label>
-                        <input type="password" name="password_confirmation" placeholder="••••••••">
-                    </div>
-                </div>
-            </div>
-
-            <div class="section-divider"></div>
-
             <div class="form-actions">
                 <button type="submit" class="btn-save">
                     <i class="ti-check"></i> @lang('ecommerce::ecommerce.save_changes')
@@ -207,6 +183,46 @@
                 </a>
             </div>
         </form>
+    </div>
+</div>
+
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true" @if($errors->has('current_password') || $errors->has('password') || $errors->has('password_confirmation')) data-open-on-error="true" @endif>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="changePasswordForm" action="{{ route('account.update-password') }}" method="POST" novalidate>
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changePasswordModalLabel">@lang('ecommerce::ecommerce.change_password')</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@lang('ecommerce::ecommerce.close')"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none password-modal-form-error" data-password-form-error role="alert"></div>
+                    <div class="mb-3">
+                        <label for="modal-current-password" class="form-label">@lang('ecommerce::ecommerce.current_password')</label>
+                        <input id="modal-current-password" type="password" name="current_password" class="form-control @error('current_password') is-invalid @enderror" autocomplete="current-password" required>
+                        <small class="text-danger password-modal-error" data-password-error="current_password">@error('current_password'){{ $message }}@enderror</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal-new-password" class="form-label">@lang('ecommerce::ecommerce.new_password')</label>
+                        <input id="modal-new-password" type="password" name="password" class="form-control @error('password') is-invalid @enderror" autocomplete="new-password" required>
+                        <small class="text-danger password-modal-error" data-password-error="password">@error('password'){{ $message }}@enderror</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal-confirm-password" class="form-label">@lang('ecommerce::ecommerce.confirm_password')</label>
+                        <input id="modal-confirm-password" type="password" name="password_confirmation" class="form-control @error('password_confirmation') is-invalid @enderror" autocomplete="new-password" required>
+                        <small class="text-danger password-modal-error" data-password-error="password_confirmation">@error('password_confirmation'){{ $message }}@enderror</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@lang('ecommerce::ecommerce.cancel')</button>
+                    <button type="submit" class="password-modal-submit">
+                        <i class="ti-check password-modal-idle-icon" aria-hidden="true"></i>
+                        <span>@lang('ecommerce::ecommerce.save_changes')</span>
+                        <i class="fa fa-spinner fa-spin password-modal-spinner d-none" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

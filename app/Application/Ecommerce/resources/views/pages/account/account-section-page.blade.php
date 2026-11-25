@@ -5,7 +5,7 @@
 @section('active-nav', 'account')
 
 @section('page-styles')
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
     <style>
         .address-location-map {
             height: 280px;
@@ -19,6 +19,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
             gap: 12px;
             margin-bottom: 10px;
         }
@@ -196,6 +197,18 @@
             font-size: 19px
         }
 
+        .content-heading.profile-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-bottom: 14px
+        }
+
+        .content-heading.profile-heading h2 {
+            margin: 0
+        }
+
         .content-heading.orders-heading {
             display: flex;
             align-items: center;
@@ -304,8 +317,66 @@
             overflow-x: auto
         }
 
+        .orders-table-wrap {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: #fff
+        }
+
         .data-table.orders-table {
-            min-width: 620px
+            min-width: 620px;
+            border-collapse: separate;
+            border-spacing: 0
+        }
+
+        .orders-table .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 26px;
+            padding: 4px 10px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1.3;
+            white-space: nowrap
+        }
+
+        .orders-table .status-badge.bg-purple-transparent {
+            border-color: #e7d5f8;
+            background: #f5edfb !important;
+            color: #70439a !important
+        }
+
+        .orders-table .status-badge.bg-warning {
+            border-color: #f3e1b4;
+            background: #fff8e6 !important;
+            color: #80621d !important
+        }
+
+        .orders-table .status-badge.bg-secondary {
+            border-color: #e1e5e9;
+            background: #f1f3f5 !important;
+            color: #56616c !important
+        }
+
+        .orders-table .status-badge.bg-success {
+            border-color: #d3e8d9;
+            background: #edf7ef !important;
+            color: #2e6940 !important
+        }
+
+        .orders-table .status-badge.bg-primary {
+            border-color: #d8e4f2;
+            background: #eef4fb !important;
+            color: #315d8a !important
+        }
+
+        .orders-table .status-badge.bg-danger {
+            border-color: #f0d7d7;
+            background: #fcf0f0 !important;
+            color: #994747 !important
         }
 
         .data-table.addresses-table {
@@ -695,7 +766,7 @@
 @endsection
 
 @section('scripts')
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    @include('shared.maps')
     <script>
         window.initializeAddressLocationForm = window.initializeAddressLocationForm || function (form) {
             if (!form || form.dataset.locationInitialized === 'true') return;
@@ -766,10 +837,7 @@
             }
 
             var addressMap = L.map(mapElement).setView([24.7136, 46.6753], 5);
-            L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
-            }).addTo(addressMap);
+            TaqaMaps.addBaseLayers(addressMap);
 
             var marker = null;
             function setLocation(latitude, longitude) {
@@ -1051,7 +1119,7 @@
                 </nav>
                 <section class="account-content">
                     @if(!in_array($section, ['service_requests', 'service_request_details'], true))
-                        <div class="content-heading {{ in_array($section, ['orders', 'addresses'], true) ? 'orders-heading' : '' }} {{ $section === 'addresses' ? 'address-heading' : '' }}">
+                        <div class="content-heading {{ $section === 'edit_profile' ? 'profile-heading' : '' }} {{ in_array($section, ['orders', 'addresses'], true) ? 'orders-heading' : '' }} {{ $section === 'addresses' ? 'address-heading' : '' }}">
                             <h2>
                                 @if($section === 'edit_profile')
                                     @lang('ecommerce::ecommerce.personal_info')
@@ -1075,7 +1143,11 @@
                                     @lang('ecommerce::ecommerce.addresses')
                                 @endif
                             </h2>
-                            @if($section === 'orders')
+                            @if($section === 'edit_profile')
+                                <button type="button" class="password-change-trigger" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                    <i class="ti-key"></i> @lang('ecommerce::ecommerce.change_password')
+                                </button>
+                            @elseif($section === 'orders')
                                 <span class="order-count">{{ $orders->total() }} @lang('ecommerce::ecommerce.orders')</span>
                             @elseif($section === 'addresses')
                                 <button class="account-button primary" type="button"
@@ -1120,36 +1192,53 @@
                                     </div>
                                 </div>
                             </div>
-                            <hr>
-                            <h3 class="mb-3">@lang('ecommerce::ecommerce.change_password')</h3>
-                            <div class="account-form-group">
-                                <label for="account-current-password">@lang('ecommerce::ecommerce.current_password')</label>
-                                <input id="account-current-password" type="password" name="current_password" autocomplete="current-password">
-                                @error('current_password')<small class="text-danger">{{ $message }}</small>@enderror
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="account-form-group">
-                                        <label for="account-password">@lang('ecommerce::ecommerce.new_password')</label>
-                                        <input id="account-password" type="password" name="password" autocomplete="new-password">
-                                        @error('password')<small class="text-danger">{{ $message }}</small>@enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="account-form-group">
-                                        <label for="account-password-confirmation">@lang('ecommerce::ecommerce.confirm_password')</label>
-                                        <input id="account-password-confirmation" type="password" name="password_confirmation" autocomplete="new-password">
-                                    </div>
-                                </div>
-                            </div>
                             <div class="account-form-actions">
                                 <button type="submit"><i class="ti-check"></i> @lang('ecommerce::ecommerce.save_changes')</button>
                                 <a href="{{ route('account.index') }}">@lang('ecommerce::ecommerce.cancel')</a>
                             </div>
                         </form>
+                        <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true" @if($errors->has('current_password') || $errors->has('password') || $errors->has('password_confirmation')) data-open-on-error="true" @endif>
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <form id="changePasswordForm" action="{{ route('account.update-password') }}" method="POST" novalidate>
+                                        @csrf
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="changePasswordModalLabel">@lang('ecommerce::ecommerce.change_password')</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@lang('ecommerce::ecommerce.close')"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="alert alert-danger d-none password-modal-form-error" data-password-form-error role="alert"></div>
+                                            <div class="mb-3">
+                                                <label for="modal-current-password" class="form-label">@lang('ecommerce::ecommerce.current_password')</label>
+                                                <input id="modal-current-password" type="password" name="current_password" class="form-control @error('current_password') is-invalid @enderror" autocomplete="current-password" required>
+                                                <small class="text-danger password-modal-error" data-password-error="current_password">@error('current_password'){{ $message }}@enderror</small>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="modal-new-password" class="form-label">@lang('ecommerce::ecommerce.new_password')</label>
+                                                <input id="modal-new-password" type="password" name="password" class="form-control @error('password') is-invalid @enderror" autocomplete="new-password" required>
+                                                <small class="text-danger password-modal-error" data-password-error="password">@error('password'){{ $message }}@enderror</small>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="modal-confirm-password" class="form-label">@lang('ecommerce::ecommerce.confirm_password')</label>
+                                                <input id="modal-confirm-password" type="password" name="password_confirmation" class="form-control @error('password_confirmation') is-invalid @enderror" autocomplete="new-password" required>
+                                                <small class="text-danger password-modal-error" data-password-error="password_confirmation">@error('password_confirmation'){{ $message }}@enderror</small>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@lang('ecommerce::ecommerce.cancel')</button>
+                                            <button type="submit" class="password-modal-submit">
+                                                <i class="ti-check password-modal-idle-icon" aria-hidden="true"></i>
+                                                <span>@lang('ecommerce::ecommerce.save_changes')</span>
+                                                <i class="fa fa-spinner fa-spin password-modal-spinner d-none" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                     @elseif($section === 'orders')
                         @if($orders->count())
-                            <div class="account-table-wrap">
+                            <div class="account-table-wrap orders-table-wrap">
                                 <table class="data-table orders-table">
                                     <thead>
                                         <tr>

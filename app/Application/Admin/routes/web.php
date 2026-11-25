@@ -262,6 +262,8 @@ Route::group(
         Route::prefix('general-settings')->as('settings.')->group(function () {
             Route::get('/', [GeneralSettingController::class, 'index'])->name('index');
         });
+        Route::get('/technical-support', fn () => view('admin::pages.technical-support.index'))
+            ->name('technical-support.index');
         Route::get('/collection-settings', fn () => view('admin::pages.collection-settings.index'))
             ->name('collection-settings.index');
         Route::get('/driver-custody', [DriverCustodyController::class, 'index'])

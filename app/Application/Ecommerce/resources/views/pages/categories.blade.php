@@ -458,7 +458,6 @@
     <div class="container categories-page">
         <div class="page-title">
             <h1>{{ $currentCategory->title ?? __('ecommerce::ecommerce.categories.categories') }}</h1>
-            <span>{{ $currentCategory->description ?? __('ecommerce::ecommerce.categories_desc') }}</span>
         </div>
         <section class="category-strip"><a
                 class="category-card {{ !$activeMainId && !$activeSubId && !$activeChildId ? 'active' : '' }}"

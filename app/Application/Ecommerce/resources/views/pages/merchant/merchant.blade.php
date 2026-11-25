@@ -8,6 +8,7 @@
     $merchantLogo = $merchant->logo ?: asset($platformBrand['logo']);
     $merchantRating = (float) ($merchant->rate ?? $merchant->rating ?? 0);
     $totalProducts = $products instanceof \Illuminate\Pagination\LengthAwarePaginator ? $products->total() : $products->count();
+    $activeStoreTab = 'products';
     // Split the store's own uploads the way visitors expect to see them.
     $attachmentImages = ($attachments ?? collect())->filter->is_image->values();
     $attachmentDocs = ($attachments ?? collect())->reject->is_image->values();
@@ -637,14 +638,26 @@
             border: 1px solid var(--line);
             border-radius: 6px;
             outline: 0}.search-merchant:focus{border-color: var(--yellow)}
-        .merchant-detail .container { max-width: 1180px; }
-        .merchant-detail .merchant-breadcrumb { padding: 18px 0; }
+        body.merchant-detail-shell { background: #f4f7fb; }
+        .merchant-detail {
+            min-height: 100vh;
+            padding: 10px 0 16px;
+            background: #f4f7fb;
+            color: #173c60;
+        }
+        .merchant-detail .container {
+            width: min(1300px, calc(100% - 36px));
+            max-width: 1300px;
+            padding-inline: 0;
+        }
+        .merchant-detail .merchant-breadcrumb { display: none; }
         .merchant-detail .merchant-hero {
             margin: 0;
-            padding: 30px 32px;
-            min-height: 150px;
+            padding: 24px 32px;
+            min-height: 160px;
             border-radius: 14px;
             box-shadow: 0 3px 14px rgba(36,92,142,.06);
+            border-color: #dce6f0;
         }
         .merchant-detail .merchant-head { flex-wrap: nowrap; gap: 22px; }
         .merchant-detail .merchant-logo {
@@ -655,11 +668,16 @@
         }
         .merchant-detail .merchant-info h1 { font-size: 26px; }
         .merchant-detail .merchant-desc { max-width: 820px; }
+        .merchant-detail .merchant-meta a {
+            color: #536f8b;
+            text-decoration: underline;
+        }
+        .merchant-detail .merchant-meta { margin-top: 12px; }
         .merchant-actions {
             display: flex;
             flex-direction: column;
             gap: 10px;
-            min-width: 154px;
+            min-width: 169px;
             margin-inline-start: auto;
         }
         .merchant-action {
@@ -678,12 +696,12 @@
             font-weight: 700;
             cursor: pointer;
         }
-        .merchant-action.primary { background: #245C8E; border-color: #245C8E; color: #fff; }
+        .merchant-action.primary { background: #306faa; border-color: #306faa; color: #fff; }
         .merchant-action:hover { filter: brightness(.96); }
         .store-tabs {
             display: flex;
             gap: 32px;
-            margin-top: 20px;
+            margin-top: 14px;
             border-bottom: 1px solid var(--line);
             overflow-x: auto;
         }
@@ -814,16 +832,67 @@
             display: grid;
             grid-template-columns: 1.3fr 1fr;
             gap: 22px;
-            margin: 26px 0 40px;
+            margin: 29px 0 40px;
         }
         .store-about-card {
+            padding: 30px;
+            min-height: 274px;
+            background: #fff;
+            border: 1px solid #dce6f0;
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+        }
+        .store-about-card h2 { margin: 0 0 12px; font-size: 18px; }
+        .store-about-card p { color: #5f7ea0; line-height: 2; }
+        .store-about-lead { margin: 18px 0; }
+        .store-about-description { margin: 0; }
+        .store-about-card .store-browse-products {
+            align-self: flex-start;
+            margin-top: auto;
+        }
+        .store-contact-detail {
+            display: grid;
+            grid-template-columns: 22px minmax(0, 1fr);
+            align-items: center;
+            gap: 10px;
+            padding: 14px 0;
+            border-bottom: 1px solid #dfe6ed;
+        }
+        .store-contact-detail:last-child { border-bottom: 0; }
+        .store-contact-detail > i {
+            color: #397fbb;
+            font-size: 17px;
+            text-align: center;
+        }
+        .store-contact-detail-label {
+            display: block;
+            margin-bottom: 3px;
+            color: #7a8ea3;
+            font-size: 12px;
+        }
+        .store-contact-detail-value {
+            color: #23364a;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .store-reviews-card {
+            margin: 26px 0 40px;
             padding: 24px;
+            min-height: 180px;
             background: #fff;
             border: 1px solid var(--line);
             border-radius: 14px;
         }
-        .store-about-card h2 { margin: 0 0 12px; font-size: 18px; }
-        .store-about-card p { color: var(--muted); line-height: 2; }
+        .store-reviews-card h2 { margin: 0 0 16px; font-size: 18px; }
+        .store-reviews-summary {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--muted);
+        }
+        .store-reviews-score { color: #23364a; font-size: 24px; font-weight: 800; }
+        .store-reviews-stars { color: #eaa13a; letter-spacing: 2px; }
         .store-branches-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -836,6 +905,7 @@
             justify-content: space-between;
             gap: 20px;
             margin: 18px 0 40px;
+            min-height: 107px;
             padding: 22px 26px;
             border: 1px solid #dce8f2;
             border-radius: 13px;
@@ -843,6 +913,12 @@
         }
         .store-bottom h2 { margin: 0 0 6px; font-size: 19px; }
         .store-bottom p { margin: 0; color: var(--muted); line-height: 1.8; }
+        .store-bottom .merchant-action {
+            background: #eaf2f9;
+            border-color: #b9cce0;
+            color: #397fbb;
+            min-width: 154px;
+        }
         .store-contact-dialog {
             width: min(500px, calc(100% - 32px));
             max-width: none;
@@ -924,80 +1000,88 @@
 @section('content')
     <div class="merchant-detail">
         <div class="container">
-            <nav class="merchant-breadcrumb" aria-label="breadcrumb">
-                <a href="{{ route('ecommerce.static') }}">@lang('ecommerce::ecommerce.home')</a>
-                <span class="breadcrumb-separator" aria-hidden="true">/</span>
-                <a href="{{ route('merchants.index') }}">@lang('ecommerce::ecommerce.merchants_list')</a>
-                <span class="breadcrumb-separator" aria-hidden="true">/</span>
-                <span aria-current="page">{{ $localizedName }}</span>
-            </nav>
             <section class="merchant-hero" aria-labelledby="merchant-name">
                 <div class="merchant-head">
                     <img class="merchant-logo" src="{{ $merchantLogo }}" alt="{{ $localizedName }}">
                     <div class="merchant-info">
                         <h1 id="merchant-name">{{ $localizedName }}</h1>
-                        <div class="merchant-meta">
-                            @if($merchant->is_verified)
-                                <span class="verified"><i class="fa fa-check-circle" aria-hidden="true"></i> @lang('ecommerce::ecommerce.verified')</span>
-                            @endif
-                            <span class="merchant-rating" aria-label="@lang('ecommerce::ecommerce.rating') {{ number_format($merchantRating, 1) }}">
-                                <i class="fa fa-star" aria-hidden="true"></i> {{ number_format($merchantRating, 1) }} @lang('ecommerce::ecommerce.rating')
-                            </span>
-                            <span><i class="fa fa-cube" aria-hidden="true"></i> {{ $categoryCounts['all'] ?? $totalProducts }} @lang('ecommerce::ecommerce.sales')</span>
-                            @if($merchant->phone)
-                                <span class="merchant-contact"><i class="fa fa-phone" aria-hidden="true"></i> <span class="num">{{ $merchant->phone }}</span></span>
-                            @endif
-                            @if($merchant->email)
-                                <span class="merchant-contact"><i class="fa fa-envelope-o" aria-hidden="true"></i> <span class="ltr">{{ $merchant->email }}</span></span>
-                            @endif
-                        </div>
                         @if($localizedDesc)
                             <p class="merchant-desc">{{ $localizedDesc }}</p>
                         @endif
+                        <div class="merchant-meta">
+                            <span><i class="fa fa-cube" aria-hidden="true"></i> {{ $totalProducts }} @lang('ecommerce::ecommerce.products_short')</span>
+                            <span><i class="fa fa-map-marker" aria-hidden="true"></i> {{ $branches->count() }} @lang('ecommerce::ecommerce.registered_branches')</span>
+                            <a href="#panel-reviews" data-store-tab-link="reviews">
+                                <i class="fa fa-star" aria-hidden="true"></i> @lang('ecommerce::ecommerce.store_reviews')
+                            </a>
+                        </div>
                     </div>
                     <div class="merchant-actions">
                         <button class="merchant-action primary" type="button" data-open-store-contact>
-                            <i class="fa fa-commenting-o" aria-hidden="true"></i>
+                            <i class="fa fa-phone" aria-hidden="true"></i>
                             @lang('ecommerce::ecommerce.contact_store')
                         </button>
                         <button class="merchant-action" type="button" data-copy-store-link data-store-url="{{ route('merchant.show', $merchant->id) }}">
-                            <i class="fa fa-link" aria-hidden="true"></i>
+                            <i class="fa fa-clone" aria-hidden="true"></i>
                             @lang('ecommerce::ecommerce.copy_store_link')
                         </button>
                     </div>
                 </div>
             </section>
             <div class="store-tabs" role="tablist" aria-label="@lang('ecommerce::ecommerce.store_categories')">
-                <button id="tab-products" type="button" class="store-tab active" role="tab" aria-selected="true" aria-controls="panel-products" data-store-tab="products">
+                <button id="tab-products" type="button" class="store-tab{{ $activeStoreTab === 'products' ? ' active' : '' }}" role="tab" aria-selected="{{ $activeStoreTab === 'products' ? 'true' : 'false' }}" aria-controls="panel-products" data-store-tab="products">
                     <i class="fa fa-th-large"></i>
                     @lang('ecommerce::ecommerce.store_products')
                     <span class="store-tab-count">{{ $categoryCounts['all'] ?? $totalProducts }}</span>
                 </button>
-                <button id="tab-about" type="button" class="store-tab" role="tab" aria-selected="false" aria-controls="panel-about" data-store-tab="about">
+                <button id="tab-about" type="button" class="store-tab{{ $activeStoreTab === 'about' ? ' active' : '' }}" role="tab" aria-selected="{{ $activeStoreTab === 'about' ? 'true' : 'false' }}" aria-controls="panel-about" data-store-tab="about">
                     <i class="fa fa-info-circle"></i>
                     @lang('ecommerce::ecommerce.about_store')
                 </button>
                 <button id="tab-branches" type="button" class="store-tab" role="tab" aria-selected="false" aria-controls="panel-branches" data-store-tab="branches">
                     <i class="fa fa-map-marker"></i>
-                    @lang('ecommerce::ecommerce.branches')
+                    @lang('ecommerce::ecommerce.store_branches')
                     <span class="store-tab-count">{{ $branches->count() }}</span>
+                </button>
+                <button id="tab-reviews" type="button" class="store-tab" role="tab" aria-selected="false" aria-controls="panel-reviews" data-store-tab="reviews">
+                    <i class="fa fa-star-o" aria-hidden="true"></i>
+                    @lang('ecommerce::ecommerce.store_reviews')
                 </button>
             </div>
 
-            <section id="panel-about" class="store-panel" data-store-panel="about" role="tabpanel" aria-labelledby="tab-about" hidden>
+            <section id="panel-about" class="store-panel{{ $activeStoreTab === 'about' ? ' active' : '' }}" data-store-panel="about" role="tabpanel" aria-labelledby="tab-about" @if($activeStoreTab !== 'about') hidden @endif>
                 <div class="store-about-grid">
                     <article class="store-about-card">
-                        <h2>@lang('ecommerce::ecommerce.about_store')</h2>
-                        <p>{{ $localizedDesc ?: __('ecommerce::ecommerce.store_description_missing') }}</p>
+                        <h2>@lang('ecommerce::ecommerce.merchant_about_title', ['name' => $localizedName])</h2>
+                        <p class="store-about-lead">{{ $localizedDesc ?: __('ecommerce::ecommerce.store_description_missing') }}</p>
+                        <p class="store-about-description">@lang('ecommerce::ecommerce.merchant_about_prompt')</p>
+                        <button class="merchant-action primary store-browse-products" type="button" data-open-store-products>
+                            @lang('ecommerce::ecommerce.browse_products')
+                        </button>
                     </article>
                     <article id="store-contact-details" class="store-about-card">
                         <h2>@lang('ecommerce::ecommerce.store_contact_details')</h2>
-                        @if($merchant->phone)
-                            <p><i class="fa fa-phone" aria-hidden="true"></i> <a class="num" href="tel:{{ $merchant->phone }}">{{ $merchant->phone }}</a></p>
-                        @endif
                         @if($merchant->email)
-                            <p><i class="fa fa-envelope-o" aria-hidden="true"></i> <a class="ltr" href="mailto:{{ $merchant->email }}">{{ $merchant->email }}</a></p>
+                            <div class="store-contact-detail">
+                                <i class="fa fa-envelope-o" aria-hidden="true"></i>
+                                <div>
+                                    <span class="store-contact-detail-label">@lang('ecommerce::ecommerce.store_email_label')</span>
+                                    <a class="store-contact-detail-value" dir="ltr" href="mailto:{{ $merchant->email }}">{{ $merchant->email }}</a>
+                                </div>
+                            </div>
                         @endif
+                        @if($merchant->phone)
+                            <div class="store-contact-detail">
+                                <i class="fa fa-phone" aria-hidden="true"></i>
+                                <div>
+                                    <span class="store-contact-detail-label">@lang('ecommerce::ecommerce.store_phone_label')</span>
+                                    <a class="store-contact-detail-value" dir="ltr" href="tel:{{ $merchant->phone }}">{{ $merchant->phone }}</a>
+                                </div>
+                            </div>
+                        @endif
+                        @unless($merchant->phone || $merchant->email)
+                            <p class="store-contact-detail-label">@lang('ecommerce::ecommerce.store_contact_unavailable')</p>
+                        @endunless
                     </article>
                 </div>
             </section>
@@ -1030,7 +1114,22 @@
                 @endif
             </section>
 
-            <section id="panel-products" class="store-panel active" data-store-panel="products" role="tabpanel" aria-labelledby="tab-products">
+            <section id="panel-reviews" class="store-panel" data-store-panel="reviews" role="tabpanel" aria-labelledby="tab-reviews" hidden>
+                <article class="store-reviews-card">
+                    <h2>@lang('ecommerce::ecommerce.store_reviews')</h2>
+                    <div class="store-reviews-summary">
+                        <strong class="store-reviews-score">{{ number_format($merchantRating, 1) }}</strong>
+                        <span class="store-reviews-stars" aria-label="@lang('ecommerce::ecommerce.rating') {{ number_format($merchantRating, 1) }}">
+                            @for($star = 1; $star <= 5; $star++)
+                                <i class="fa {{ $merchantRating >= $star ? 'fa-star' : 'fa-star-o' }}" aria-hidden="true"></i>
+                            @endfor
+                        </span>
+                        <span>@lang('ecommerce::ecommerce.merchant_average_rating')</span>
+                    </div>
+                </article>
+            </section>
+
+            <section id="panel-products" class="store-panel{{ $activeStoreTab === 'products' ? ' active' : '' }}" data-store-panel="products" role="tabpanel" aria-labelledby="tab-products" @if($activeStoreTab !== 'products') hidden @endif>
             <div class="layout">
                 <aside class="sidebar">
                     <div class="filter-sidebar">
@@ -1093,16 +1192,17 @@
                     <div class="pagination">{!! $products->links('pagination::bootstrap-4') !!}</div>@endif
                 </section>
             </div>
+            </section>
+
             <section class="store-bottom" aria-labelledby="product-details-title">
                 <div>
                     <h2 id="product-details-title">@lang('ecommerce::ecommerce.product_details_cta')</h2>
                     <p>@lang('ecommerce::ecommerce.product_details_cta_desc')</p>
                 </div>
-                <button class="merchant-action primary" type="button" data-open-store-contact>
-                    <i class="fa fa-info-circle" aria-hidden="true"></i>
+                <button class="merchant-action" type="button" data-open-store-contact>
+                    <i class="fa fa-envelope-o" aria-hidden="true"></i>
                     @lang('ecommerce::ecommerce.store_contact_details')
                 </button>
-            </section>
             </section>
 
             <dialog class="store-contact-dialog" id="store-contact-dialog" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}" aria-labelledby="store-contact-dialog-title">
@@ -1210,6 +1310,21 @@
             document.querySelectorAll('[data-close-store-contact]').forEach(function (button) {
                 button.addEventListener('click', function () {
                     if (contactDialog) contactDialog.close();
+                });
+            });
+
+            document.querySelectorAll('[data-store-tab-link]').forEach(function (link) {
+                link.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    var targetTab = document.querySelector('[data-store-tab="' + link.dataset.storeTabLink + '"]');
+                    if (targetTab) targetTab.click();
+                });
+            });
+
+            document.querySelectorAll('[data-open-store-products]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    var productsTab = document.querySelector('[data-store-tab="products"]');
+                    if (productsTab) productsTab.click();
                 });
             });
 

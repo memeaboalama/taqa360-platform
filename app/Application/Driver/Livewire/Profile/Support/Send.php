@@ -3,6 +3,7 @@
 namespace Application\Driver\Livewire\Profile\Support;
 
 use App\Domain\AppBase\Actions\ContactUs\SendMessageAction;
+use App\Domain\AppBase\Actions\GeneralSetting\FetchGeneralSettingsAction;
 use App\Support\Rules\IsValidPhone;
 use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
@@ -16,13 +17,19 @@ class Send extends Component
     public $email;
     public $phone;
     public $message;
+    public $supportEmail;
+    public $supportPhone;
 
-    public function mount(): void
+    public function mount(FetchGeneralSettingsAction $fetchGeneralSettingsAction): void
     {
         $driver = auth('driver')->user();
         $this->name = $driver->name;
         $this->email = $driver->email;
         $this->phone = $driver->phone;
+
+        $settings = $fetchGeneralSettingsAction->handle(['support_email', 'support_phone']);
+        $this->supportEmail = $settings?->support_email;
+        $this->supportPhone = $settings?->support_phone;
     }
 
     protected function rules(): array

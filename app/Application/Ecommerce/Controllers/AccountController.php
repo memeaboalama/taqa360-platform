@@ -289,6 +289,53 @@ class AccountController extends Controller
         return redirect()->route('account.index')->with('success', __('ecommerce::ecommerce.profile_updated'));
     }
 
+    public function updatePassword(Request $request)
+    {
+        $validator = \Validator::make($request->all(), [
+            'current_password' => 'required|string',
+            'password' => 'required|string|min:8',
+            'password_confirmation' => 'required|string|same:password',
+        ]);
+
+        if ($validator->fails()) {
+            if ($request->expectsJson()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            return redirect()->route('account.edit-profile')->withErrors($validator);
+        }
+
+        $user = Auth::user();
+        if (!\Hash::check($request->current_password, $user->password)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'errors' => [
+                        'current_password' => [__('ecommerce::ecommerce.current_password_incorrect')],
+                    ],
+                ], 422);
+            }
+
+            return redirect()->route('account.edit-profile')->withErrors([
+                'current_password' => __('ecommerce::ecommerce.current_password_incorrect'),
+            ]);
+        }
+
+        $user->update(['password' => \Hash::make($request->password)]);
+
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => __('ecommerce::ecommerce.password_updated'),
+                'redirect_url' => route('auth.login'),
+            ]);
+        }
+
+        return redirect()->route('auth.login')->with('success', __('ecommerce::ecommerce.password_updated'));
+    }
+
     public function createAddress()
     {
         $user = Auth::user();

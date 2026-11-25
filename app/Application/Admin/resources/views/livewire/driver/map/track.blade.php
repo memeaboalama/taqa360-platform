@@ -22,7 +22,6 @@
         </div>
     @endif
 
-    @if (config('services.google_maps_tracking.api_key'))
         <div class="rounded overflow-hidden position-relative">
             <div id="driver-map" wire:ignore style="height: min(70vh, 700px); min-height: 420px; width: 100%;"></div>
             <div id="driver-map-error" class="alert alert-danger position-absolute top-0 start-0 end-0 m-3 d-none"
@@ -30,13 +29,14 @@
         </div>
 
         @push('js')
+    @include('shared.maps')
             <script>
                 (function () {
                     let map;
                     let activeInfoWindow;
                     let driverMapInitialized = false;
                     const markers = new Map();
-                    const mapError = @json(__('admin::home.Google Maps could not be loaded. Check the API key, billing, and allowed domains.'));
+                    const mapError = @json(__('admin::home.Map could not be loaded. Please try again.'));
                     const driverDetailsUrl = @json(url('/admin/drivers/show'));
 
                     function showMapError(message) {
@@ -45,15 +45,6 @@
                         error.textContent = message;
                         error.classList.remove('d-none');
                     }
-
-                    const previousAuthFailure = window.gm_authFailure;
-                    window.gm_authFailure = function () {
-                        if (typeof previousAuthFailure === 'function') previousAuthFailure();
-                        showMapError(mapError);
-                    };
-                    window.showDriverMapError = function () {
-                        showMapError(mapError);
-                    };
 
                     function createInfoWindowContent(driver) {
                         const container = document.createElement('div');
@@ -74,10 +65,10 @@
                     }
 
                     function updateMarkers(drivers) {
-                        if (!map || !window.google || !google.maps) return;
+                        if (!map || !window.TaqaMaps) return;
 
                         const activeIds = new Set();
-                        const bounds = new google.maps.LatLngBounds();
+                        const bounds = new TaqaMaps.LatLngBounds();
 
                         drivers.forEach(function (driver) {
                             if (!driver || !driver.position || !Number.isFinite(Number(driver.position.lat))
@@ -99,20 +90,20 @@
                                 return;
                             }
 
-                            marker = new google.maps.Marker({
+                            marker = new TaqaMaps.Marker({
                                 map: map,
                                 position: position,
                                 title: driver.name || '',
                                 icon: {
                                     url: @json(asset('assets/vendor/images/marker.png')),
-                                    scaledSize: new google.maps.Size(44, 44),
-                                    anchor: new google.maps.Point(22, 22)
+                                    scaledSize: new TaqaMaps.Size(44, 44),
+                                    anchor: new TaqaMaps.Point(22, 22)
                                 }
                             });
                             marker.driver = driver;
                             marker.addListener('click', function () {
                                 if (activeInfoWindow) activeInfoWindow.close();
-                                activeInfoWindow = new google.maps.InfoWindow({
+                                activeInfoWindow = new TaqaMaps.InfoWindow({
                                     content: createInfoWindowContent(marker.driver)
                                 });
                                 activeInfoWindow.open({ anchor: marker, map: map, shouldFocus: false });
@@ -132,23 +123,23 @@
                                 map.setZoom(12);
                             } else {
                                 map.fitBounds(bounds);
-                                google.maps.event.addListenerOnce(map, 'bounds_changed', function () {
+                                TaqaMaps.event.addListenerOnce(map, 'bounds_changed', function () {
                                     if (map.getZoom() > 14) map.setZoom(14);
                                 });
                             }
                         }
 
-                        driverMapInitialized = true;
+                        if (activeIds.size) driverMapInitialized = true;
                     }
 
                     window.initAdminDriverTrackingMap = function () {
                         const element = document.getElementById('driver-map');
-                        if (!element || !window.google || !google.maps) {
+                        if (!element || !window.TaqaMaps) {
                             showMapError(mapError);
                             return;
                         }
 
-                        map = new google.maps.Map(element, {
+                        map = new TaqaMaps.Map(element, {
                             center: { lat: 24.774265, lng: 46.738586 },
                             zoom: 8,
                             mapTypeControl: false,
@@ -163,13 +154,7 @@
                     });
                 })();
             </script>
-            <script async defer
-                    src="https://maps.googleapis.com/maps/api/js?key={{ urlencode(config('services.google_maps_tracking.api_key')) }}&callback=initAdminDriverTrackingMap&language={{ app()->getLocale() }}"
-                    onerror="showDriverMapError()"></script>
-        @endpush
-    @else
-        <div class="alert alert-warning mb-0" role="alert">
-            {{ __('admin::home.Google Maps API key is not configured.') }}
-        </div>
-    @endif
+
+        <script>setTimeout(function () { initAdminDriverTrackingMap(); }, 0);</script>
+@endpush
 </div>

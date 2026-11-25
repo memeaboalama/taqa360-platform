@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
 
 <style>
     .taqa-request-page {
@@ -1185,7 +1185,7 @@
     </dialog>
 </main>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+@include('shared.maps')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const form = document.getElementById('taqaServiceRequestForm');
@@ -1822,10 +1822,7 @@
             if (!requestMap) {
                 const center = cityCenters[citySelect.value] || [24.7136, 46.6753];
                 requestMap = L.map(mapElement, { scrollWheelZoom: false }).setView(center, citySelect.value ? 12 : 5);
-                L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
-                }).addTo(requestMap);
+                TaqaMaps.addBaseLayers(requestMap);
                 requestMap.on('click', function (event) {
                     createMapMarker(event.latlng.lat, event.latlng.lng, false);
                     updateReview();

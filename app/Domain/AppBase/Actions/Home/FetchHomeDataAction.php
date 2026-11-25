@@ -12,6 +12,8 @@ use App\Domain\AppBase\Repositories\AdMerchantContentRepository;
 use App\Domain\MarketPlace\Actions\Dashboard\Catalog\Category\FetchCategoryAction;
 use App\Domain\MarketPlace\Repositories\Merchant\ItemRepository;
 use App\Support\Enum\ActiveEnum;
+use App\Support\Enum\PlacementTypeEnum;
+use App\Support\Enum\StatusEnum;
 use Domain\MarketPlace\Models\Item;
 use Domain\AppBase\Models\AdCategoryContent;
 use Domain\AppBase\Repositories\AdCategoryContentRepository;
@@ -45,7 +47,10 @@ class FetchHomeDataAction
             $page = AdPage::where('key', 'home')->first();
 
             if (!$page) {
-                return $this->fillWithFallbacks($this->getEmptyData());
+                $data = $this->getEmptyData();
+                $data['footerData'] = $this->getFooterData(null, 'footer_main_section');
+
+                return $this->fillWithFallbacks($data);
             }
 
             $placements = $this->adPlacementRepository->builder(order: 'asc', orderCol: 'sort_order')
@@ -146,7 +151,7 @@ class FetchHomeDataAction
     {
         $page = AdPage::where('key', 'home')->first();
 
-        return $page ? $this->getFooterData($page->id, 'footer_main_section') : null;
+        return $this->getFooterData($page?->id, 'footer_main_section');
     }
 
     public function getProductCollection(string $section): \Illuminate\Support\Collection
@@ -389,12 +394,33 @@ class FetchHomeDataAction
             ->filter();
     }
 
-    private function getFooterData($pageId, $key)
+    private function getFooterData(?int $pageId, string $key): ?array
     {
-        $placement = $this->adPlacementRepository->builder()
-            ->where('page_id', $pageId)
-            ->where('key', $key)
-            ->first();
+        $placement = $pageId === null
+            ? null
+            : $this->adPlacementRepository->builder()
+                ->where('page_id', $pageId)
+                ->where('key', $key)
+                ->first();
+
+        if (!$placement) {
+            $placementQuery = $this->adPlacementRepository->builder()
+                ->where('type', PlacementTypeEnum::FOOTER->value)
+                ->where('status', StatusEnum::ACTIVE->value);
+
+            if ($pageId !== null) {
+                $placementQuery->where('page_id', $pageId);
+            }
+
+            $placement = $placementQuery->first();
+        }
+
+        if (!$placement && $pageId !== null) {
+            $placement = $this->adPlacementRepository->builder()
+                ->where('type', PlacementTypeEnum::FOOTER->value)
+                ->where('status', StatusEnum::ACTIVE->value)
+                ->first();
+        }
 
         if (!$placement) {
             return null;

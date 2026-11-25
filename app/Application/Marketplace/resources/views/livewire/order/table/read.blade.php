@@ -114,9 +114,6 @@
     $mapUrl = $mapQuery
         ? 'https://www.google.com/maps?q=' . rawurlencode($mapQuery)
         : null;
-    $mapEmbedUrl = $mapQuery
-        ? 'https://maps.google.com/maps?q=' . rawurlencode($mapQuery) . '&output=embed'
-        : null;
 
     $historyLabels = [
         'draft' => 'تم إنشاء المسودة',
@@ -459,10 +456,9 @@
 
                     @if($requiresDriver)
                         <div class="od-detail-label">عنوان التوصيل</div>
-                        @if($mapEmbedUrl)
+                        @if($mapQuery)
                             <div class="od-map-frame">
-                                <iframe src="{{ $mapEmbedUrl }}" title="خريطة موقع التسليم"
-                                        loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                                <div data-taqa-delivery-map data-query="{{ $mapQuery }}" style="width:100%;height:300px" wire:ignore></div>
                             </div>
                         @else
                             <div class="od-map-placeholder">لم يتم حفظ إحداثيات أو عنوان يمكن عرضه على الخريطة.</div>
@@ -936,3 +932,8 @@
         <livewire:marketplace::order.modal.cancel />
     @endif
 </div>
+
+@push('js')
+    @include('shared.maps')
+    <script>TaqaMaps.mountDeliveryMaps();</script>
+@endpush

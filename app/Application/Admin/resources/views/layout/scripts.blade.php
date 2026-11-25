@@ -336,4 +336,164 @@
         document.addEventListener('livewire:load', initBtnSpinMouseDown);
     }
 </script>
+<style>
+    .admin-row-details-clickable {
+        cursor: pointer;
+    }
+</style>
+<script>
+    (function () {
+        function isViewAction(link) {
+            var title = (link.getAttribute('title') || '') + ' ' +
+                (link.getAttribute('aria-label') || '') + ' ' +
+                (link.textContent || '');
+            var hasViewIcon = Array.prototype.some.call(link.querySelectorAll('i, span'), function (icon) {
+                var classes = typeof icon.className === 'string' ? icon.className : '';
+                return classes.indexOf('eye') !== -1 && classes.indexOf('eye-off') === -1;
+            });
+
+            return hasViewIcon || /\b(?:show|view|details?)\b|عرض|التفاصيل/i.test(title);
+        }
+
+        function getViewAction(row) {
+            var links = row.querySelectorAll('a');
+
+            for (var i = 0; i < links.length; i++) {
+                var link = links[i];
+                var href = link.getAttribute('href') || '';
+                var hasLivewireAction = link.hasAttribute('wire:click');
+                var hasNavigableHref = href && href !== '#' && !/^javascript:/i.test(href);
+
+                if (isViewAction(link) && (hasNavigableHref || hasLivewireAction)) {
+                    return link;
+                }
+            }
+
+            return null;
+        }
+
+        function updateRow(row) {
+            if (!row || row.tagName !== 'TR') return;
+
+            if (getViewAction(row)) {
+                row.classList.add('admin-row-details-clickable');
+            } else {
+                row.classList.remove('admin-row-details-clickable');
+            }
+        }
+
+        function scanRows(node) {
+            if (!node || node.nodeType !== 1) return;
+
+            if (node.tagName === 'TR') updateRow(node);
+
+            var parentRow = node.closest ? node.closest('tbody tr') : null;
+            if (parentRow) updateRow(parentRow);
+
+            var rows = node.querySelectorAll ? node.querySelectorAll('tbody tr') : [];
+            Array.prototype.forEach.call(rows, updateRow);
+        }
+
+        document.querySelectorAll('tbody tr').forEach(updateRow);
+
+        document.addEventListener('click', function (event) {
+            if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+
+            var target = event.target;
+            if (!target || !target.closest) return;
+            if (target.closest('a, button, input, select, textarea, label, [role="button"], [contenteditable="true"], [wire\\:click]')) return;
+
+            var row = target.closest('tbody tr');
+            if (!row || row.hasAttribute('wire:click')) return;
+
+            var viewAction = getViewAction(row);
+            if (!viewAction) return;
+
+            var href = viewAction.getAttribute('href') || '';
+            if (href && href !== '#' && !/^javascript:/i.test(href)) {
+                window.location.assign(viewAction.href);
+                return;
+            }
+
+            if (viewAction.hasAttribute('wire:click')) {
+                viewAction.click();
+            }
+        });
+
+        if (window.MutationObserver && document.body) {
+            new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    Array.prototype.forEach.call(mutation.addedNodes, scanRows);
+                    if (mutation.target && mutation.target.closest) {
+                        updateRow(mutation.target.closest('tbody tr'));
+                    }
+                });
+            }).observe(document.body, { childList: true, subtree: true });
+        }
+    })();
+</script>
+<script>
+    (function () {
+        var resizeObserver = window.ResizeObserver ? new ResizeObserver(scheduleUpdate) : null;
+        var updateScheduled = false;
+        var overflowTolerance = 48;
+
+        function getTablesForWrapper(wrapper) {
+            var tables = [];
+
+            Array.prototype.forEach.call(wrapper.querySelectorAll('table'), function (table) {
+                if (table.closest('.table-responsive, .merchant-table-scroll, .overflow-x-auto') === wrapper) {
+                    tables.push(table);
+                }
+            });
+
+            return tables;
+        }
+
+        function hasDataRows(table) {
+            var rows = table.querySelectorAll('tbody tr');
+
+            return Array.prototype.some.call(rows, function (row) {
+                return !row.querySelector('td[colspan]');
+            });
+        }
+
+        function updateTableScroll() {
+            document.querySelectorAll('.table-responsive, .merchant-table-scroll, .overflow-x-auto').forEach(function (wrapper) {
+                var tables = getTablesForWrapper(wrapper);
+                if (!tables.length) return;
+
+                if (resizeObserver && !wrapper.__tableOverflowResizeObserved) {
+                    resizeObserver.observe(wrapper);
+                    wrapper.__tableOverflowResizeObserved = true;
+                }
+
+                var hasData = tables.some(hasDataRows);
+                var hasOverflow = wrapper.scrollWidth - wrapper.clientWidth > overflowTolerance;
+                wrapper.style.overflowX = hasData && hasOverflow ? 'auto' : 'hidden';
+            });
+        }
+
+        function scheduleUpdate() {
+            if (updateScheduled) return;
+            updateScheduled = true;
+
+            window.requestAnimationFrame(function () {
+                updateScheduled = false;
+                updateTableScroll();
+            });
+        }
+
+        updateTableScroll();
+        window.addEventListener('resize', scheduleUpdate);
+
+        if (window.MutationObserver && document.body) {
+            new MutationObserver(scheduleUpdate).observe(document.body, {
+                childList: true,
+                characterData: true,
+                subtree: true
+            });
+        }
+    })();
+</script>
 @stack('js')

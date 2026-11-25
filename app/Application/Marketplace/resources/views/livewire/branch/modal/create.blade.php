@@ -240,10 +240,10 @@
                                 <div class="row gy-3 mt-3">
                                     <div class="col-xl-12" wire:ignore>
                                         <small class="d-block mb-1 text-muted">@lang('marketplace::home.map_hint')</small>
-                                        <input type="text" id="pac-input-create"
+                                        <input type="text" id="branch-create-search"
                                             class="form-control"
                                             placeholder="@lang('marketplace::home.search_for_location')">
-                                        <div id="map" style="height:300px;" class="my-3 "></div>
+                                        <div id="branch-create-map" style="height:300px;" class="my-3 "></div>
                                     </div>
                                 </div>
                             </div>
@@ -272,6 +272,7 @@
 </div>
 
 @push('js')
+    @include('shared.maps')
 <script>
     function translateLocalizedField(sourceId, targetId, from, to, force) {
         if (typeof window.__translationInProgress === 'undefined') {
@@ -384,284 +385,24 @@
         });
     }
 </script>
-<script type="text/javascript">
-    $("#pac-input-create").focusin(function() {
-        $(this).val('');
-    })
-
-    function initAutocomplete() {
-        if (window.__createBranchMapDone) {
-            return;
-        }
-        window.__createBranchMapDone = true;
-        var mapEl = document.getElementById('map');
-        if (!mapEl) {
-            return;
-        }
-        map = new google.maps.Map(mapEl, {
-            center: {
-                lat: 24.774265,
-                lng: 46.738586
-            },
-            zoom: 13,
-            mapTypeId: 'roadmap',
-            scrollwheel: true,
-        });
-        // move pin and current location
-        infoWindow = new google.maps.InfoWindow;
-        geocoder = new google.maps.Geocoder();
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-                var pos = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                };
-                map.setCenter(pos);
-                addFallbackMarker();
-                if (typeof window.__branchMarker !== 'undefined') {
-                    window.__branchMarker.setPosition(new google.maps.LatLng(pos));
-                    window.__branchMarker.setTitle('موقعك الحالي');
-                    google.maps.event.trigger(window.__branchMarker, 'click');
-                }
-            }, function() {
-                addFallbackMarker();
-            });
-        } else {
-            // Browser doesn't support Geolocation
-            addFallbackMarker();
-        }
-        var geocoder = new google.maps.Geocoder();
-        console.log(geocoder);
-
-        google.maps.event.addListener(map, 'click', function(event) {
-            SelectedLatLng = event.latLng;
-            geocoder.geocode({
-                'latLng': event.latLng
-            }, function(results, status) {
-                if (status == google.maps.GeocoderStatus.OK) {
-                    if (results[0]) {
-                        deleteMarkers();
-                        addMarkerRunTime(event.latLng);
-                        SelectedLocation = results[0].formatted_address;
-                        // console.log(results[0].formatted_address);
-                        splitLatLng(String(event.latLng));
-                        $("#branch-address").val(results[0].formatted_address);
-                        @this.set('address', results[0].formatted_address);
-                    }
-                }
-            });
-        });
-
-        function geocodeLatLng(geocoder, map, infowindow, markerCurrent) {
-            var latlng = {
-                lat: markerCurrent.position.lat(),
-                lng: markerCurrent.position.lng()
-            };
-            /* $('#branch-latLng').val("("+markerCurrent.position.lat() +","+markerCurrent.position.lng()+")");*/
-            $('#latitude').val(markerCurrent.position.lat());
-            $('#longitude').val(markerCurrent.position.lng());
-            window.livewire.emit('set:latitude-longitude', markerCurrent.position.lat(), markerCurrent.position.lng());
-            geocoder.geocode({
-                'location': latlng
-            }, function(results, status) {
-                if (status === 'OK') {
-                    if (results[0]) {
-                        map.setZoom(8);
-                        var marker = new google.maps.Marker({
-                            position: latlng,
-                            map: map
-                        });
-                        markers.push(marker);
-                        infowindow.setContent(results[0].formatted_address);
-                        SelectedLocation = results[0].formatted_address;
-                        $("#pac-input-create").val(results[0].formatted_address);
-                        @this.set('address', results[0].formatted_address);
-                        infowindow.open(map, marker);
-                    } else {
-                        window.alert('No results found');
-                    }
-                } else {
-                    window.alert('Geocoder failed due to: ' + status);
-                }
-            });
-            SelectedLatLng = (markerCurrent.position.lat(), markerCurrent.position.lng());
-        }
-
-        function addMarkerRunTime(location) {
-            var marker = new google.maps.Marker({
-                position: location,
-                map: map,
-                draggable: true
-            });
-            markers.push(marker);
-            marker.addListener('click', function() {
-                geocodeLatLng(geocoder, map, infoWindow, marker);
-            });
-            marker.addListener('dragend', function(event) {
-                var latlng = event.latLng;
-                splitLatLng(String(latlng));
-                geocoder.geocode({
-                    'location': latlng
-                }, function(results, status) {
-                    if (status == google.maps.GeocoderStatus.OK && results[0]) {
-                        SelectedLocation = results[0].formatted_address;
-                        $("#branch-address").val(results[0].formatted_address);
-                        @this.set('address', results[0].formatted_address);
-                    }
-                });
-            });
-        }
-
-        function addFallbackMarker() {
-            if (markers.length > 0 && typeof window.__branchMarker !== 'undefined') {
-                return;
+<script>
+    (function () {
+        const component = @this;
+        const latitude = @json($latitude), longitude = @json($longitude);
+        const point = latitude !== '' && longitude !== '' && latitude !== null && longitude !== null
+            && Number.isFinite(Number(latitude)) && Number.isFinite(Number(longitude))
+            ? { lat: Number(latitude), lng: Number(longitude) } : null;
+        const picker = TaqaMaps.mountPicker(document.getElementById('branch-create-map'), {
+            point,
+            editable: true,
+            searchInput: document.getElementById('branch-create-search'),
+            onChange: function (latitude, longitude, address) {
+                component.set('latitude', latitude, true);
+                component.set('longitude', longitude, true);
+                component.set('address', address);
             }
-            var centerMarker = new google.maps.Marker({
-                position: map.getCenter(),
-                map: map,
-                title: 'حدد موقع الفرع',
-                draggable: true
-            });
-            window.__branchMarker = centerMarker;
-            markers.push(centerMarker);
-            centerMarker.addListener('click', function() {
-                geocodeLatLng(geocoder, map, infoWindow, centerMarker);
-            });
-            centerMarker.addListener('dragend', function(event) {
-                var latlng = event.latLng;
-                splitLatLng(String(latlng));
-                geocoder.geocode({
-                    'location': latlng
-                }, function(results, status) {
-                    if (status == google.maps.GeocoderStatus.OK && results[0]) {
-                        SelectedLocation = results[0].formatted_address;
-                        $("#branch-address").val(results[0].formatted_address);
-                        @this.set('address', results[0].formatted_address);
-                    }
-                });
-            });
-        }
-
-        $('#createBranch').on('shown.bs.modal', function() {
-            var tries = 0;
-            (function showMapReady() {
-                if (typeof map !== 'undefined' && map) {
-                    google.maps.event.trigger(map, 'resize');
-                    window.setTimeout(function() {
-                        map.setCenter(map.getCenter());
-                        addFallbackMarker();
-                    }, 100);
-                    return;
-                }
-                if (tries++ < 20) {
-                    window.setTimeout(showMapReady, 250);
-                }
-            })();
         });
 
-        function setMapOnAll(map) {
-            for (var i = 0; i < markers.length; i++) {
-                markers[i].setMap(map);
-            }
-        }
-
-        function clearMarkers() {
-            setMapOnAll(null);
-        }
-
-        function deleteMarkers() {
-            clearMarkers();
-            markers = [];
-            window.__branchMarker = undefined;
-        }
-
-        // Create the search box and link it to the UI element.
-        var input = document.getElementById('pac-input-create');
-        $("#pac-input-create").attr("placeholder", "{{ __('marketplace::home.search_for_location') }}");
-        var searchBox = new google.maps.places.SearchBox(input);
-
-
-
-        map.controls[google.maps.ControlPosition.TOP_RIGHT].push(input);
-        // Bias the SearchBox results towards current map's viewport.
-        map.addListener('bounds_changed', function() {
-            searchBox.setBounds(map.getBounds());
-        });
-        markers = [];
-        // Listen for the event fired when the user selects a prediction and retrieve
-        // more details for that place.
-        searchBox.addListener('places_changed', function() {
-            var places = searchBox.getPlaces();
-            if (places.length == 0) {
-                return;
-            }
-            // Clear out the old markers.
-            markers.forEach(function(marker) {
-                marker.setMap(null);
-            });
-            markers = [];
-            // For each place, get the icon, name and location.
-            var bounds = new google.maps.LatLngBounds();
-            places.forEach(function(place) {
-                if (!place.geometry) {
-                    console.log("Returned place contains no geometry");
-                    return;
-                }
-                var icon = {
-                    url: place.icon,
-                    size: new google.maps.Size(100, 100),
-                    origin: new google.maps.Point(0, 0),
-                    anchor: new google.maps.Point(17, 34),
-                    scaledSize: new google.maps.Size(25, 25)
-                };
-                // Create a marker for each place.
-                markers.push(new google.maps.Marker({
-                    map: map,
-                    icon: icon,
-                    title: place.name,
-                    position: place.geometry.location
-                }));
-                $('#latitude').val(place.geometry.location.lat());
-                $('#longitude').val(place.geometry.location.lng());
-                if (place.geometry.viewport) {
-                    // Only geocodes have viewport.
-                    bounds.union(place.geometry.viewport);
-                } else {
-                    bounds.extend(place.geometry.location);
-                }
-                window.livewire.emit('set:latitude-longitude', place.geometry.location.lat(), place.geometry.location.lng())
-            });
-            map.fitBounds(bounds);
-        });
-    }
-
-    function handleLocationError(browserHasGeolocation, infoWindow, pos) {
-        infoWindow.setPosition(pos);
-        infoWindow.setContent(browserHasGeolocation ?
-            'Error: The Geolocation service failed.' :
-            'Error: Your browser doesn\'t support geolocation.');
-        infoWindow.open(map);
-    }
-
-    function splitLatLng(latLng) {
-        var newString = latLng.substring(0, latLng.length - 1);
-        var newString2 = newString.substring(1);
-        var trainindIdArray = newString2.split(',');
-        var lat = trainindIdArray[0];
-        var Lng = trainindIdArray[1];
-        $("#latitude").val(lat);
-        $("#longitude").val(Lng);
-
-        window.livewire.emit('set:latitude-longitude', lat, Lng)
-    }
+    })();
 </script>
-
-<!-- <script
-        src="https://maps.googleapis.com/maps/api/js?key={{config('services.google_maps.api_key')}}&callback=initAutocomplete&libraries=places&v=weekly"
-        defer
-    ></script> -->
-<script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCIJH6jbULC8MVaAX2LyxIQEBwWPjjeIF0&callback=initAutocomplete&libraries=places&v=weekly"
-    defer></script>
-
 @endpush

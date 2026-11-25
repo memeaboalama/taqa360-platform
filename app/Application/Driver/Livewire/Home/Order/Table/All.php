@@ -29,7 +29,9 @@ class All extends DataTableComponent
 
     public function builder(): Builder
     {
-        return DriverOrder::with(['services','user'])->where('driver_id', resolve('_InitialDriver'))->take(10);
+        return DriverOrder::with(['services', 'user'])
+            ->where('driver_id', resolve('_InitialDriver'))
+            ->take(10);
     }
 
     public function columns(): array
@@ -53,14 +55,12 @@ class All extends DataTableComponent
                 })
                 ->searchable(),
 
-
             Column::make(__('driver::home.status'), 'status')
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
                     echo '<span class="badge ' . $row->status?->color() . '">' . $row->status?->trans() . '</span>';
                 })
                 ->searchable(),
-
 
             Column::make(__('driver::home.date'), 'created_at')
                 ->format(function ($value, $row, Column $column) {

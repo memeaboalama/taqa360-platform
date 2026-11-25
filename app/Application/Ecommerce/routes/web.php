@@ -176,6 +176,7 @@ Route::group(
                 Route::get('/profile', 'profile')->name('profile');
                 Route::get('/profile/edit', 'editProfile')->name('edit-profile');
                 Route::post('/profile/update', 'updateProfile')->name('update-profile');
+                Route::post('/profile/password/update', 'updatePassword')->name('update-password');
                 Route::get('/orders', 'orders')->name('orders');
                 Route::get('/orders/{id}', 'order')->name('order');
                 Route::post('/orders/{id}/cancel', 'cancelOrder')->name('order.cancel');

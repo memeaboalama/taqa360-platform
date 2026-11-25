@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ar"><meta charset="utf-8"><title>Shared map regression checks</title>
+<link rel="stylesheet" href="../../public/assets/vendor/libs/leaflet/leaflet.css">
+<div id="map" style="height:300px;width:600px"></div>
+<div id="picker" style="height:300px;width:600px"></div><input id="search">
+<div data-taqa-delivery-map data-query="24.7,46.6" style="height:200px"></div>
+<pre id="result">RUNNING</pre>
+<script src="../../public/assets/vendor/libs/leaflet/leaflet.js"></script>
+<script src="../../public/assets/js/taqa-maps.js"></script>
+<script>
+(async function () {
+    const checks = [];
+    function check(value, name) { if (!value) throw new Error(name); checks.push(name); }
+    function pause(time = 0) { return new Promise(resolve => setTimeout(resolve, time)); }
+    try {
+        const M = TaqaMaps;
+        const map = new M.Map(document.getElementById('map'), { center: { lat: 24.7, lng: 46.6 }, zoom: 12 });
+        check(map.getCenter().lat() === 24.7, 'Map centers on saved coordinates');
+        check(new M.Map(document.getElementById('map')) === map, 'Repeated initialization reuses the map');
+        const marker = new M.Marker({ map, position: { lat: 24.7, lng: 46.6 }, draggable: true });
+        let clicked;
+        map.addListener('click', event => clicked = event.latLng);
+        map.layer.fire('click', { latlng: L.latLng(25, 47) });
+        check(clicked.lat() === 25 && clicked.lng() === 47, 'Map clicks preserve coordinates for Livewire');
+        marker.setPosition({ lat: 25.2, lng: 47.2 });
+        check(marker.getPosition().lat() === 25.2, 'Tracking updates move existing markers');
+        let dragged;
+        marker.addListener('dragend', event => dragged = event.latLng);
+        marker.layer.fire('dragend');
+        check(dragged.lng() === 47.2, 'Pin drag supplies its final coordinates');
+        const popup = new M.InfoWindow({ content: 'Driver details' });
+        popup.open({ map, anchor: marker });
+        check(map.layer.hasLayer(popup.layer), 'Driver detail popups open');
+        popup.close(); marker.setMap(null);
+        check(!map.layer.hasLayer(marker.layer), 'Tracking removes inactive drivers');
+        const bounds = new M.LatLngBounds(); bounds.extend({ lat: 24, lng: 46 }); bounds.extend({ lat: 26, lng: 48 });
+        map.fitBounds(bounds);
+        check(bounds.getCenter().lat() === 25, 'Multiple locations fit the map');
+        window.fetch = async () => { throw new Error('offline'); };
+        const reverse = await new M.Geocoder().geocode({ location: { lat: 24.5, lng: 46.5 } });
+        check(reverse.results[0].geometry.location.lat() === 24.5, 'Address service failure preserves the selected coordinates');
+        let changed;
+        const picker = M.mountPicker(document.getElementById('picker'), { editable: false,
+            point: { lat: 24, lng: 46 }, searchInput: document.getElementById('search'),
+            onChange: (...values) => changed = values });
+        const pickerMap = document.getElementById('picker')._taqaMap;
+        pickerMap.layer.fire('click', { latlng: L.latLng(25, 47) });
+        check(!changed, 'View mode cannot change a branch location');
+        picker.setEditable(true);
+        pickerMap.layer.fire('click', { latlng: L.latLng(25, 47) });
+        await pause();
+        check(changed[0] === 25 && changed[1] === 47, 'Edit mode saves latitude, longitude and fallback address');
+        window.fetch = async () => ({ ok: true, json: async () => ({ features: [
+            { properties: { name: 'Riyadh', city: 'Riyadh' }, geometry: { coordinates: [46.6753, 24.7136] } }
+        ] }) });
+        const input = document.getElementById('search');
+        input.value = 'Riyadh'; input.dispatchEvent(new Event('input'));
+        await pause(450);
+        const button = input._taqaResults.querySelector('button');
+        check(!!button, 'Search lists matching locations'); button.click();
+        check(changed[0] === 24.7136 && changed[2] === 'Riyadh', 'Search selection saves coordinates and address together');
+        picker.setEditable(false); picker.reset({ lat: 24, lng: 46 });
+        check(pickerMap.getCenter().lat() === 24, 'Cancelling editing restores the server location');
+        M.mountDeliveryMaps(); await pause();
+        check(!!document.querySelector('[data-taqa-delivery-map]')._taqaMap, 'Order delivery locations use the shared map');
+        document.getElementById('result').textContent = 'PASS ' + checks.length + '\n' + checks.join('\n');
+    } catch (error) { document.getElementById('result').textContent = 'FAIL ' + error.stack; }
+})();
+</script></html>

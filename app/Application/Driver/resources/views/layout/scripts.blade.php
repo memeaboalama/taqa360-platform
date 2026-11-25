@@ -101,4 +101,149 @@
 
 
 </script>
+<script>
+    (function () {
+        var resizeObserver = window.ResizeObserver ? new ResizeObserver(scheduleUpdate) : null;
+        var updateScheduled = false;
+        var overflowTolerance = 2;
+        var wrapperSelector = '.table-responsive, .merchant-table-scroll, .overflow-x-auto';
+
+        function getTablesForWrapper(wrapper) {
+            return Array.prototype.filter.call(wrapper.querySelectorAll('table'), function (table) {
+                return table.closest(wrapperSelector) === wrapper;
+            });
+        }
+
+        function hasDataRows(table) {
+            return Array.prototype.some.call(table.querySelectorAll('tbody tr'), function (row) {
+                return !row.querySelector('td[colspan]');
+            });
+        }
+
+        function updateTableScroll() {
+            document.querySelectorAll(wrapperSelector).forEach(function (wrapper) {
+                var tables = getTablesForWrapper(wrapper);
+                if (!tables.length) return;
+
+                if (resizeObserver && !wrapper.__tableOverflowResizeObserved) {
+                    resizeObserver.observe(wrapper);
+                    wrapper.__tableOverflowResizeObserved = true;
+                }
+
+                var hasData = tables.some(hasDataRows);
+                var hasOverflow = wrapper.scrollWidth - wrapper.clientWidth > overflowTolerance;
+                wrapper.style.overflowX = hasData && hasOverflow ? 'auto' : 'hidden';
+            });
+        }
+
+        function scheduleUpdate() {
+            if (updateScheduled) return;
+            updateScheduled = true;
+
+            window.requestAnimationFrame(function () {
+                updateScheduled = false;
+                updateTableScroll();
+            });
+        }
+
+        updateTableScroll();
+        window.addEventListener('resize', scheduleUpdate);
+
+        if (window.MutationObserver && document.body) {
+            new MutationObserver(scheduleUpdate).observe(document.body, {
+                childList: true,
+                characterData: true,
+                subtree: true
+            });
+        }
+    })();
+</script>
+<style>
+    .driver-row-details-clickable {
+        cursor: pointer;
+    }
+</style>
+<script>
+    (function () {
+        var viewActionPattern = /\b(?:show|view|details?)\b|عرض|تفاصيل|التفاصيل|مشاهدة/i;
+        var interactiveSelector = 'a, button, input, select, textarea, label, [role="button"], [contenteditable="true"], [wire\\:click]';
+
+        function getDetailAction(row) {
+            var actions = row.querySelectorAll('a, button');
+
+            for (var i = 0; i < actions.length; i++) {
+                var action = actions[i];
+                var label = (action.getAttribute('title') || '') + ' ' +
+                    (action.getAttribute('aria-label') || '') + ' ' +
+                    (action.textContent || '');
+                var hasEyeIcon = Array.prototype.some.call(action.querySelectorAll('i, span'), function (icon) {
+                    var classes = typeof icon.className === 'string' ? icon.className : '';
+                    return classes.indexOf('eye') !== -1 && classes.indexOf('eye-off') === -1;
+                });
+                var href = action.getAttribute('href') || '';
+                var hasAction = (href && href !== '#' && !/^javascript:/i.test(href)) ||
+                    action.hasAttribute('wire:click') ||
+                    action.hasAttribute('onclick');
+
+                if (hasAction && (hasEyeIcon || viewActionPattern.test(label))) {
+                    return action;
+                }
+            }
+
+            return null;
+        }
+
+        function updateRow(row) {
+            if (!row || row.tagName !== 'TR') return;
+            row.classList.toggle('driver-row-details-clickable', !!getDetailAction(row));
+        }
+
+        function scanRows(node) {
+            if (!node || node.nodeType !== 1) return;
+
+            if (node.tagName === 'TR') updateRow(node);
+
+            var parentRow = node.closest ? node.closest('tbody tr') : null;
+            if (parentRow) updateRow(parentRow);
+
+            if (node.querySelectorAll) {
+                Array.prototype.forEach.call(node.querySelectorAll('tbody tr'), updateRow);
+            }
+        }
+
+        document.querySelectorAll('tbody tr').forEach(updateRow);
+
+        document.addEventListener('click', function (event) {
+            if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+
+            var target = event.target;
+            if (!target || !target.closest || target.closest(interactiveSelector)) return;
+
+            var row = target.closest('tbody tr');
+            if (!row || row.hasAttribute('wire:click')) return;
+
+            var action = getDetailAction(row);
+            if (!action) return;
+
+            var href = action.getAttribute('href') || '';
+            if (href && href !== '#' && !/^javascript:/i.test(href)) {
+                window.location.assign(action.href);
+                return;
+            }
+
+            action.click();
+        });
+
+        if (window.MutationObserver && document.body) {
+            new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    Array.prototype.forEach.call(mutation.addedNodes, scanRows);
+                    if (mutation.target && mutation.target.closest) {
+                        updateRow(mutation.target.closest('tbody tr'));
+                    }
+                });
+            }).observe(document.body, { childList: true, subtree: true });
+        }
+    })();
+</script>
 @stack('js')

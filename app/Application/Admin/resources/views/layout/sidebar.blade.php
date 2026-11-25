@@ -553,6 +553,15 @@
                     </li>
                 @endAdminHasRole
 
+                @AdminHasRole(['show profile_settings', 'show login/ register page content_settings', 'show search capacity_settings', 'show delivery fees_settings', 'edit profile_settings', 'edit login/ register page content_settings', 'edit search capacity_settings', 'edit delivery fees_settings'])
+                    <li class="slide">
+                        <a href="{{ route('admin:technical-support.index') }}" class="side-menu__item {{ isActive(route('admin:technical-support.index')) }}">
+                            <i class="bx bx-support side-menu__icon"></i>
+                            <span class="side-menu__label">{{ __('admin::home.Technical Support') }}</span>
+                        </a>
+                    </li>
+                @endAdminHasRole
+
                 @AdminHasRole(['show profile_settings', 'show login/ register page content_settings', 'show search capacity_settings', 'show delivery fees_settings'])
                     <li class="slide">
                         <a href="{{ url('admin/general-settings') }}" class="side-menu__item {{ isActive(url('admin/general-settings')) }}">

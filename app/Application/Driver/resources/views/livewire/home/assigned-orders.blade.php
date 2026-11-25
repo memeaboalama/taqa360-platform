@@ -12,6 +12,8 @@
             </div>
         </div>
         <div class="card-body">
+            @include('driver::livewire.home.order.table.filter')
+
             @if($recentOrders->count())
                 <div class="table-responsive">
                     <table class="table text-nowrap align-middle">
@@ -54,7 +56,7 @@
                                             <form action="{{ route('driver:orders.accept', $order->id) }}" method="POST" class="d-inline order-action-form">
                                                 @csrf
                                                 <button type="submit" class="btn btn-sm btn-success">
-                                                    <i class="ri-check-line me-1"></i> قبول الطلب
+                                            <i class="ri-check-line me-1"></i> {{ __('driver::home.accept_order') }}
                                                 </button>
                                             </form>
                                         @elseif(in_array($statusVal, [
@@ -65,32 +67,32 @@
                                                 @csrf
                                                 <input type="hidden" name="status" value="on-way">
                                                 <button type="submit" class="btn btn-sm btn-primary">
-                                                    <i class="ri-truck-line me-1"></i> جاري التوصيل
+                                                    <i class="ri-truck-line me-1"></i> {{ __('driver::home.start_delivery') }}
                                                 </button>
                                             </form>
                                         @elseif($statusVal === 'on-way')
                                             @if(\App\Domain\MarketPlace\Models\MerchantOrder::isCashOnDeliveryMethod($order->payment_method))
                                                 <button type="button" class="btn btn-sm btn-success"
                                                         onclick="Livewire.emit('showOrderDetails', {{ $order->id }})">
-                                                    <i class="ri-checkbox-circle-line me-1"></i> تأكيد التسليم والتحصيل
+                                                    <i class="ri-checkbox-circle-line me-1"></i> {{ __('driver::home.confirm_delivery_and_collection') }}
                                                 </button>
                                                 @if(\App\Domain\MarketPlace\Models\MerchantOrder::resolvePaymentStatus($order->payment, 'unpaid', $order->payment_method) !== 'paid')
                                                     <button type="button" class="btn btn-sm btn-outline-warning"
                                                             onclick="Livewire.emit('showCollectionFailure', {{ $order->id }})">
-                                                        تعذر التحصيل
+                                                        {{ __('driver::home.collection_failed') }}
                                                     </button>
                                                 @endif
                                             @elseif(\App\Domain\MarketPlace\Models\MerchantOrder::resolvePaymentStatus($order->payment, 'unpaid', $order->payment_method) === 'paid')
                                                 <button type="button" class="btn btn-sm btn-success"
                                                         onclick="Livewire.emit('showOrderDetails', {{ $order->id }})">
-                                                    <i class="ri-checkbox-circle-line me-1"></i> تأكيد التسليم
+                                                    <i class="ri-checkbox-circle-line me-1"></i> {{ __('driver::home.confirm_delivery') }}
                                                 </button>
                                             @else
                                                 <form action="{{ route('driver:orders.updateStatus', $order->id) }}" method="POST" class="d-inline order-action-form">
                                                     @csrf
                                                     <input type="hidden" name="status" value="completed">
                                                     <button type="submit" class="btn btn-sm btn-success">
-                                                        <i class="ri-checkbox-circle-line me-1"></i> تم التسليم
+                                                        <i class="ri-checkbox-circle-line me-1"></i> {{ __('driver::home.order_status_completed') }}
                                                     </button>
                                                 </form>
                                             @endif
@@ -99,7 +101,7 @@
                                                 <i class="ri-checkbox-circle-line me-1"></i> {{ __('driver::home.order_status_completed') }}
                                             </button>
                                         @elseif($statusVal === 'started-work')
-                                            <span class="badge bg-warning text-dark"><i class="ri-time-line me-1"></i> جاري التجهيز بالمحل</span>
+                                            <span class="badge bg-warning text-dark"><i class="ri-time-line me-1"></i> {{ __('driver::home.preparing_at_merchant') }}</span>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif

@@ -118,20 +118,16 @@
                     </div>
                 </div>
                 <div class="card-body p-0" wire:ignore>
-                    @if(config('services.google_maps.api_key'))
                         <div class="p-3 text-muted small">@lang('admin::home.Set branch location on map')</div>
                         <div id="map" style="height: 600px; width: 100%;"></div>
-                    @else
-                        <div class="alert alert-warning m-3" role="alert">
-                            @lang('admin::home.Google Maps API key is missing')
-                        </div>
-                    @endif
+
                 </div>
             </div>
         </div>
     </div>
 </div>
     @push('js')
+    @include('shared.maps')
     <script>
         $(document).on('change', '.selectCountryBrn', function () {
             $('.selectCityBrn').empty();
@@ -167,224 +163,21 @@
             Livewire.emit('renderSelect');
         });
     </script>
-    <script type="text/javascript">
-
-        $("#pac-input-create").focusin(function () {
-            $(this).val('');
-        })
-
-        function initAutocomplete() {
-            var map = new google.maps.Map(document.getElementById('map'), {
-                center: {lat: 24.774265, lng: 46.738586},
-                zoom: 13,
-                mapTypeId: 'roadmap',
-                scrollwheel: true,
-            });
-            // move pin and current location
-            infoWindow = new google.maps.InfoWindow;
-            geocoder = new google.maps.Geocoder();
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function (position) {
-                    var pos = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    map.setCenter(pos);
-                    var marker = new google.maps.Marker({
-                        position: new google.maps.LatLng(pos),
-                        map: map,
-                        title: 'ظ…ظˆظ‚ط¹ظƒ ط§ظ„ط­ط§ظ„ظٹ',
-                        draggable: true
-                    });
-                    markers.push(marker);
-                    marker.addListener('click', function () {
-                        geocodeLatLng(geocoder, map, infoWindow, marker);
-                    });
-                    // to get current position address on load
-                    google.maps.event.trigger(marker, 'click');
-                }, function () {
-                    handleLocationError(true, infoWindow, map.getCenter());
-                });
-            } else {
-                // Browser doesn't support Geolocation
-                handleLocationError(false, infoWindow, map.getCenter());
-            }
-            var geocoder = new google.maps.Geocoder();
-            console.log(geocoder);
-
-            google.maps.event.addListener(map, 'click', function (event) {
-                SelectedLatLng = event.latLng;
-                geocoder.geocode({
-                    'latLng': event.latLng
-                }, function (results, status) {
-                    if (status == google.maps.GeocoderStatus.OK) {
-                        if (results[0]) {
-                            deleteMarkers();
-                            addMarkerRunTime(event.latLng);
-                            SelectedLocation = results[0].formatted_address;
-                            // console.log(results[0].formatted_address);
-                            splitLatLng(String(event.latLng));
-                            $("#pac-input-create").val(results[0].formatted_address);
-                        @this.set('address', results[0].formatted_address)
-                            ;
-                        }
-                    }
-                });
-            });
-
-            function geocodeLatLng(geocoder, map, infowindow, markerCurrent) {
-                var latlng = {lat: markerCurrent.position.lat(), lng: markerCurrent.position.lng()};
-                /* $('#branch-latLng').val("("+markerCurrent.position.lat() +","+markerCurrent.position.lng()+")");*/
-                $('#latitude').val(markerCurrent.position.lat());
-                $('#longitude').val(markerCurrent.position.lng());
-                geocoder.geocode({'location': latlng}, function (results, status) {
-                    if (status === 'OK') {
-                        if (results[0]) {
-                            map.setZoom(8);
-                            var marker = new google.maps.Marker({
-                                position: latlng,
-                                map: map
-                            });
-                            markers.push(marker);
-                            infowindow.setContent(results[0].formatted_address);
-                            SelectedLocation = results[0].formatted_address;
-                            $("#pac-input-create").val(results[0].formatted_address);
-                        @this.set('address', results[0].formatted_address)
-                            ;
-                            infowindow.open(map, marker);
-                        } else {
-                            window.alert('No results found');
-                        }
-                    } else {
-                        window.alert('Geocoder failed due to: ' + status);
-                    }
-                });
-                SelectedLatLng = (markerCurrent.position.lat(), markerCurrent.position.lng());
-            }
-
-            function addMarkerRunTime(location) {
-                var marker = new google.maps.Marker({
-                    position: location,
-                    map: map
-                });
-                markers.push(marker);
-            }
-
-            function setMapOnAll(map) {
-                for (var i = 0; i < markers.length; i++) {
-                    markers[i].setMap(map);
-                }
-            }
-
-            function clearMarkers() {
-                setMapOnAll(null);
-            }
-
-            function deleteMarkers() {
-                clearMarkers();
-                markers = [];
-            }
-
-            // Create the search box and link it to the UI element.
-            var input = document.getElementById('pac-input-create');
-            $("#pac-input-create").val("ط£ط¨ط­ط« ظ‡ظ†ط§ ");
-            var searchBox = new google.maps.places.SearchBox(input);
-
-
-
-            map.controls[google.maps.ControlPosition.TOP_RIGHT].push(input);
-            // Bias the SearchBox results towards current map's viewport.
-            map.addListener('bounds_changed', function () {
-                searchBox.setBounds(map.getBounds());
-            });
-            var markers = [];
-            // Listen for the event fired when the user selects a prediction and retrieve
-            // more details for that place.
-            searchBox.addListener('places_changed', function () {
-                var places = searchBox.getPlaces();
-                if (places.length == 0) {
-                    return;
-                }
-                // Clear out the old markers.
-                markers.forEach(function (marker) {
-                    marker.setMap(null);
-                });
-                markers = [];
-                // For each place, get the icon, name and location.
-                var bounds = new google.maps.LatLngBounds();
-                places.forEach(function (place) {
-                    if (!place.geometry) {
-                        console.log("Returned place contains no geometry");
-                        return;
-                    }
-                    var icon = {
-                        url: place.icon,
-                        size: new google.maps.Size(100, 100),
-                        origin: new google.maps.Point(0, 0),
-                        anchor: new google.maps.Point(17, 34),
-                        scaledSize: new google.maps.Size(25, 25)
-                    };
-                    // Create a marker for each place.
-                    markers.push(new google.maps.Marker({
-                        map: map,
-                        icon: icon,
-                        title: place.name,
-                        position: place.geometry.location
-                    }));
-                    $('#latitude').val(place.geometry.location.lat());
-                    $('#longitude').val(place.geometry.location.lng());
-                    if (place.geometry.viewport) {
-                        // Only geocodes have viewport.
-                        bounds.union(place.geometry.viewport);
-                    } else {
-                        bounds.extend(place.geometry.location);
-                    }
-                    window.livewire.emit('set:latitude-longitude', place.geometry.location.lat(), place.geometry.location.lng())
-                });
-                map.fitBounds(bounds);
-            });
-        }
-
-        function handleLocationError(browserHasGeolocation, infoWindow, pos) {
-            infoWindow.setPosition(pos);
-            infoWindow.setContent(browserHasGeolocation ?
-                'Error: The Geolocation service failed.' :
-                'Error: Your browser doesn\'t support geolocation.');
-            infoWindow.open(map);
-        }
-
-        function splitLatLng(latLng) {
-            var newString = latLng.substring(0, latLng.length - 1);
-            var newString2 = newString.substring(1);
-            var trainindIdArray = newString2.split(',');
-            var lat = trainindIdArray[0];
-            var Lng = trainindIdArray[1];
-            $("#latitude").val(lat);
-            $("#longitude").val(Lng);
-
-            window.livewire.emit('set:latitude-longitude', lat, Lng)
-        }
-
-    </script>
-
-
-
-        @if(config('services.google_maps.api_key'))
             <script type="text/javascript">
                 let map, activeInfoWindow;
                 let branchMarkers = new Map();
                 let selectedBranchId = @json($branch_id);
 
                 function initMap() {
-                    if (!window.google || !window.google.maps || !document.getElementById("map")) {
+                    if (!window.TaqaMaps || !document.getElementById("map")) {
                         return;
                     }
                     if (map) {
-                        google.maps.event.trigger(map, "resize");
+                        TaqaMaps.event.trigger(map, "resize");
                         return;
                     }
 
-                    map = new google.maps.Map(document.getElementById("map"), {
+                    map = new TaqaMaps.Map(document.getElementById("map"), {
                         center: { lat: 24.774265, lng: 46.738586 },
                         zoom: 8,
                         scrollwheel: true,
@@ -396,9 +189,9 @@
                 function branchMarkerIcon() {
                     return {
                         url: "{{ asset('images/map/restaurant.png') }}",
-                        scaledSize: new google.maps.Size(50, 50),
-                        origin: new google.maps.Point(0, 0),
-                        anchor: new google.maps.Point(25, 25)
+                        scaledSize: new TaqaMaps.Size(50, 50),
+                        origin: new TaqaMaps.Point(0, 0),
+                        anchor: new TaqaMaps.Point(25, 25)
                     };
                 }
 
@@ -406,7 +199,7 @@
                     const initialMarkers = @json(array_values($branches));
                     for (const markerData of initialMarkers) {
                         const branchId = String(markerData.id);
-                        const marker = new google.maps.Marker({
+                        const marker = new TaqaMaps.Marker({
                             position: markerData.position,
                             draggable: branchId === String(selectedBranchId),
                             title: "Branch Details",
@@ -415,7 +208,7 @@
                         });
                         branchMarkers.set(branchId, marker);
 
-                        const infowindow = new google.maps.InfoWindow({
+                        const infowindow = new TaqaMaps.InfoWindow({
                             content: `<b>Name : <a href="<?php echo url('/'); ?>/admin/merchants/${markerData.merchant_id}" style="color: #0a53be">${markerData.name}</a></b><br><b>Restaurant Name : <a href="<?php echo url('/'); ?>/admin/merchants/${markerData.merchant_id}" style="color: #0a53be">${markerData.restaurant_name}</a></b><br><b>${markerData.position.lat}, ${markerData.position.lng}</b>`,
                         });
                         marker.addListener("click", () => {
@@ -445,7 +238,7 @@
                     const branchId = String(selectedBranchId);
                     let marker = branchMarkers.get(branchId);
                     if (!marker) {
-                        marker = new google.maps.Marker({
+                        marker = new TaqaMaps.Marker({
                             position: event.latLng,
                             draggable: true,
                             title: "Branch Details",
@@ -480,7 +273,7 @@
                 document.addEventListener('livewire:load', initMap);
                 document.addEventListener('shown.bs.tab', function (event) {
                     if (event.target && event.target.id === 'branches-tab' && map) {
-                        google.maps.event.trigger(map, "resize");
+                        TaqaMaps.event.trigger(map, "resize");
                     }
                 });
                 document.addEventListener('change', function (event) {
@@ -489,7 +282,7 @@
                     }
                 });
             </script>
-            <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ urlencode(config('services.google_maps.api_key')) }}&callback=initMap&language={{ app()->getLocale() }}"></script>
-        @endif
-    @endpush
+
+    <script>setTimeout(function () { initMap(); }, 0);</script>
+@endpush
 

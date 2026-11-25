@@ -13,6 +13,7 @@ class DriverTrackingMapTest extends TestCase
 {
     public function test_tracking_map_shows_only_drivers_with_valid_locations_and_refreshes(): void
     {
+        config(['services.google_maps_tracking.api_key' => null]);
         $drivers = new Collection([
             (object) [
                 'id' => 1,
@@ -58,6 +59,7 @@ class DriverTrackingMapTest extends TestCase
         Livewire::test(Track::class)
             ->assertSet('drivers', $expectedDrivers)
             ->assertSee('wire:poll.15s', false)
+            ->assertSee('id="driver-map"', false)
             ->call('refreshDrivers')
             ->assertSet('drivers', $expectedDrivers)
             ->assertDispatchedBrowserEvent('drivers-updated', ['drivers' => $expectedDrivers]);

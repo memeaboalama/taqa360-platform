@@ -2,6 +2,7 @@
 @php
     $currentLocale = $currentLocale ?? app()->getLocale();
     $isRTL = $isRTL ?? in_array($currentLocale, ['ar', 'he'], true);
+    $isMerchantDetailPage = request()->routeIs('merchant.show');
 @endphp
 <html lang="{{ $currentLocale }}" dir="{{ $isRTL ? 'rtl' : 'ltr' }}">
 
@@ -262,10 +263,12 @@
 
         .footer-grid {
             display: flex;
-            justify-content: center
+            justify-content: center;
+            align-items: center
         }
 
         .footer-brand {
+            width: 100%;
             text-align: center
         }
 
@@ -280,8 +283,46 @@
         }
 
         .footer-brand p {
+            margin: 0;
             font-size: 14px;
             line-height: 1.8
+        }
+
+        .footer-contact {
+            margin-top: 10px
+        }
+
+        .footer-contact h2 {
+            margin: 0 0 12px;
+            font-size: 15px;
+            font-weight: 700
+        }
+
+        .footer-contact p {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 9px;
+            margin: 0 0 5px;
+            color: #d2d4d6;
+            font-size: 12px;
+            line-height: 1.7
+        }
+
+        .footer-contact p i {
+            flex: 0 0 14px;
+            margin-top: 4px
+        }
+
+        .footer-contact a {
+            color: inherit;
+            text-decoration: none;
+            overflow-wrap: anywhere
+        }
+
+        .footer-contact a:hover {
+            color: #fff;
+            text-decoration: underline
         }
 
         .copyright {
@@ -387,6 +428,12 @@
                 flex-wrap: wrap;
                 justify-content: center;
                 text-align: center
+            }
+        }
+
+        @media(max-width:800px) {
+            .footer-grid {
+                gap: 20px
             }
         }
 
@@ -648,12 +695,131 @@
         .site-main {
             flex: 1 0 auto
         }
+
+        .password-change-trigger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 42px;
+            padding: 9px 18px;
+            border: 1px solid var(--yellow);
+            border-radius: 5px;
+            background: var(--yellow);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background-color .2s, border-color .2s, transform .2s
+        }
+
+        .password-change-trigger:hover {
+            background: var(--yellow-deep);
+            border-color: var(--yellow-deep);
+            color: #fff;
+            transform: translateY(-1px)
+        }
+
+        .password-modal-error {
+            display: block;
+            margin-top: 5px
+        }
+
+        .password-modal-error:empty {
+            display: none
+        }
+
+        #changePasswordModal .modal-content {
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            box-shadow: 0 16px 42px rgba(29, 37, 48, .18)
+        }
+
+        #changePasswordModal .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 16px 20px;
+            border-bottom-color: var(--line);
+            background: var(--soft)
+        }
+
+        #changePasswordModal .modal-title {
+            margin: 0;
+            color: var(--ink);
+            font-weight: 700
+        }
+
+        #changePasswordModal .modal-header .btn-close {
+            flex: 0 0 auto;
+            margin: 0
+        }
+
+        #changePasswordModal .form-label {
+            color: var(--ink);
+            font-weight: 600
+        }
+
+        #changePasswordModal .form-control:focus {
+            border-color: var(--yellow);
+            box-shadow: 0 0 0 .2rem rgba(0, 0, 0, .08)
+        }
+
+        #changePasswordModal .modal-footer {
+            border-top-color: var(--line)
+        }
+
+        #changePasswordModal .modal-footer .btn-secondary {
+            border-color: var(--line);
+            background: var(--soft);
+            color: var(--ink)
+        }
+
+        #changePasswordModal .modal-footer .btn-secondary:hover {
+            border-color: var(--line);
+            background: #edf0f3;
+            color: var(--ink)
+        }
+
+        #changePasswordModal .password-modal-submit {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 42px;
+            padding: 9px 18px;
+            border: 1px solid var(--yellow);
+            border-radius: 5px;
+            background: var(--yellow);
+            color: #fff;
+            font-weight: 700
+        }
+
+        #changePasswordModal .password-modal-submit:hover {
+            border-color: var(--yellow-deep);
+            background: var(--yellow-deep)
+        }
+
+        #changePasswordModal .password-modal-submit:disabled {
+            cursor: wait;
+            opacity: .8
+        }
+
+        #changePasswordForm.is-submitting .password-modal-idle-icon {
+            display: none
+        }
+
+        #changePasswordModal .password-modal-form-error {
+            margin-bottom: 16px
+        }
     </style>
     @yield('page-styles')
     @include('ecommerce::partials.direction-utils')
 </head>
 
-<body>
+<body class="{{ $isMerchantDetailPage ? 'merchant-detail-shell' : '' }}">
     @include('ecommerce::partials.store-header')
     @php $storeActiveNav = trim($__env->yieldContent('active-nav', '')) ?: ($activeNav ?? ''); @endphp
     @include('ecommerce::partials.store-nav', ['activeNav' => $storeActiveNav])
@@ -664,57 +830,205 @@
     @include('ecommerce::partials.static-auth-modals')
     <script>
         (function () {
-            var searchToggle = document.querySelector('[data-mobile-search-toggle]');
-            var searchForm = document.getElementById('store-search');
-            var menuToggle = document.querySelector('[data-mobile-menu-toggle]');
-            var menuClose = document.querySelector('[data-mobile-menu-close]');
-            var navigation = document.getElementById('store-navigation');
+            var fallbackErrorMessage = @json(__('ecommerce::ecommerce.server_error'));
+            var passwordSuccessMessage = @json(__('ecommerce::ecommerce.password_updated'));
 
-            function setSearchOpen(isOpen) {
-                searchForm.classList.toggle('is-open', isOpen);
-                searchToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-                if (isOpen) searchForm.querySelector('input').focus();
+            function getModal(root) {
+                if (!root) return null;
+                return root.matches && root.matches('#changePasswordModal')
+                    ? root
+                    : root.querySelector('#changePasswordModal');
             }
 
-            function setMenuOpen(isOpen) {
-                navigation.classList.toggle('is-open', isOpen);
-                menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            function getModalInstance(modal) {
+                var instance = window.bootstrap.Modal.getInstance(modal);
+                return instance || new window.bootstrap.Modal(modal);
             }
 
-            searchToggle.addEventListener('click', function () {
-                setSearchOpen(!searchForm.classList.contains('is-open'));
-            });
+            function clearPasswordErrors(form) {
+                form.querySelectorAll('[data-password-error]').forEach(function (element) {
+                    element.textContent = '';
+                });
+                form.querySelectorAll('.is-invalid').forEach(function (element) {
+                    element.classList.remove('is-invalid');
+                });
+                var formError = form.querySelector('[data-password-form-error]');
+                formError.textContent = '';
+                formError.classList.add('d-none');
+            }
 
-            menuToggle.addEventListener('click', function () {
-                setMenuOpen(true);
-            });
+            function setPasswordSubmitting(form, isSubmitting) {
+                form.dataset.submitting = isSubmitting ? 'true' : 'false';
+                form.classList.toggle('is-submitting', isSubmitting);
+                form.setAttribute('aria-busy', isSubmitting ? 'true' : 'false');
+                form.querySelector('[type="submit"]').disabled = isSubmitting;
+                form.querySelectorAll('[data-bs-dismiss="modal"]').forEach(function (button) {
+                    button.disabled = isSubmitting;
+                });
+                form.querySelector('.password-modal-spinner').classList.toggle('d-none', !isSubmitting);
+            }
 
-            menuClose.addEventListener('click', function () {
-                setMenuOpen(false);
-                menuToggle.focus();
-            });
+            function showPasswordErrors(form, errors) {
+                var firstInvalidInput = null;
+                Object.keys(errors).forEach(function (fieldName) {
+                    var errorElement = Array.from(form.querySelectorAll('[data-password-error]')).find(function (element) {
+                        return element.dataset.passwordError === fieldName;
+                    });
+                    var input = Array.from(form.elements).find(function (element) {
+                        return element.name === fieldName;
+                    });
+                    if (errorElement) errorElement.textContent = errors[fieldName].join(' ');
+                    if (input) {
+                        input.classList.add('is-invalid');
+                        if (!firstInvalidInput) firstInvalidInput = input;
+                    }
+                });
+                if (firstInvalidInput) firstInvalidInput.focus();
+            }
 
-            navigation.addEventListener('click', function (event) {
-                if (event.target === navigation) setMenuOpen(false);
-            });
+            async function submitPasswordChange(form, modal) {
+                if (form.dataset.submitting === 'true') return;
 
-            document.addEventListener('click', function (event) {
-                if (searchForm.classList.contains('is-open') &&
-                    !searchForm.contains(event.target) &&
-                    !searchToggle.contains(event.target)) {
-                    setSearchOpen(false);
+                clearPasswordErrors(form);
+                setPasswordSubmitting(form, true);
+
+                try {
+                    var response = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new FormData(form),
+                        credentials: 'same-origin'
+                    });
+                    var payload;
+
+                    try {
+                        payload = await response.json();
+                    } catch (error) {
+                        throw new Error(fallbackErrorMessage);
+                    }
+
+                    if (response.status === 422 && payload.errors) {
+                        showPasswordErrors(form, payload.errors);
+                        return;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(payload.message || fallbackErrorMessage);
+                    }
+
+                    setPasswordSubmitting(form, false);
+                    form.reset();
+                    getModalInstance(modal).hide();
+                    if (typeof window.showNotification === 'function') {
+                        window.showNotification(payload.message || passwordSuccessMessage, 'success');
+                    }
+                    if (payload.redirect_url) {
+                        window.setTimeout(function () {
+                            window.location.replace(payload.redirect_url);
+                        }, 2500);
+                    }
+                } catch (error) {
+                    var formError = form.querySelector('[data-password-form-error]');
+                    formError.textContent = error.message || fallbackErrorMessage;
+                    formError.classList.remove('d-none');
+                } finally {
+                    setPasswordSubmitting(form, false);
                 }
-            });
+            }
 
-            document.addEventListener('keydown', function (event) {
-                if (event.key !== 'Escape') return;
-                setSearchOpen(false);
-                if (navigation.classList.contains('is-open')) {
-                    setMenuOpen(false);
-                    menuToggle.focus();
+            function initializePasswordModal(root) {
+                var modal = getModal(root);
+                if (!modal) return;
+
+                var form = modal.querySelector('#changePasswordForm');
+                if (form && form.dataset.initialized !== 'true') {
+                    form.dataset.initialized = 'true';
+                    form.dataset.submitting = 'false';
+                    modal.addEventListener('hide.bs.modal', function (event) {
+                        if (form.dataset.submitting === 'true') event.preventDefault();
+                    });
+                    form.addEventListener('submit', function (event) {
+                        event.preventDefault();
+                        submitPasswordChange(form, modal);
+                    });
                 }
+
+                if (modal.dataset.openOnError === 'true' && window.bootstrap && window.bootstrap.Modal) {
+                    getModalInstance(modal).show();
+                }
+            }
+
+            function initializeOnPage() {
+                initializePasswordModal(document);
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeOnPage);
+            } else {
+                initializeOnPage();
+            }
+
+            document.addEventListener('up:fragment:inserted', function (event) {
+                initializePasswordModal(event.target);
             });
         })();
+    </script>
+    <script>
+            (function () {
+                var searchToggle = document.querySelector('[data-mobile-search-toggle]');
+                var searchForm = document.getElementById('store-search');
+                var menuToggle = document.querySelector('[data-mobile-menu-toggle]');
+                var menuClose = document.querySelector('[data-mobile-menu-close]');
+                var navigation = document.getElementById('store-navigation');
+
+                function setSearchOpen(isOpen) {
+                    searchForm.classList.toggle('is-open', isOpen);
+                    searchToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                    if (isOpen) searchForm.querySelector('input').focus();
+                }
+
+                function setMenuOpen(isOpen) {
+                    navigation.classList.toggle('is-open', isOpen);
+                    menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                }
+
+                searchToggle.addEventListener('click', function () {
+                    setSearchOpen(!searchForm.classList.contains('is-open'));
+                });
+
+                menuToggle.addEventListener('click', function () {
+                    setMenuOpen(true);
+                });
+
+                menuClose.addEventListener('click', function () {
+                    setMenuOpen(false);
+                    menuToggle.focus();
+                });
+
+                navigation.addEventListener('click', function (event) {
+                    if (event.target === navigation) setMenuOpen(false);
+                });
+
+                document.addEventListener('click', function (event) {
+                    if (searchForm.classList.contains('is-open') &&
+                        !searchForm.contains(event.target) &&
+                        !searchToggle.contains(event.target)) {
+                        setSearchOpen(false);
+                    }
+                });
+
+                document.addEventListener('keydown', function (event) {
+                    if (event.key !== 'Escape') return;
+                    setSearchOpen(false);
+                    if (navigation.classList.contains('is-open')) {
+                        setMenuOpen(false);
+                        menuToggle.focus();
+                    }
+                });
+            })();
     </script>
     @yield('scripts')
 </body>

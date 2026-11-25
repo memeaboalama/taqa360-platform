@@ -159,6 +159,9 @@ return [
     "Privacy Policy in English" => "Privacy Policy in English",
     "Privacy Policy in Arabic" => "Privacy Policy in Arabic",
     "General Settings" => "General Settings",
+    "Technical Support" => "Technical Support",
+    "Support Email" => "Support Email",
+    "Support Phone" => "Support Phone",
     "Update Profile" => "Update Profile",
     "Login/Register Page Content" => "Login/Register Page Content",
     "User Page Content" => "User Policies",
@@ -953,4 +956,5 @@ return [
     "order" => "Order",
     "created_at" => "Reported At",
     "amount_due" => "Amount Due",
+    'Map could not be loaded. Please try again.' => 'Map could not be loaded. Please try again.',
 ];

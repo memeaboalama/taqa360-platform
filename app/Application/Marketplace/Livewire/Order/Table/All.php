@@ -46,7 +46,8 @@ class All extends DataTableComponent
     public function refreshOrders(array $filters = [])
     {
         $this->filters = $filters;
-        $this->builder();
+        $this->setBuilder($this->builder());
+        $this->resetComputedPage();
         $this->emit('prepareMerchantOrderExport', $this->filters);
         $this->emit('refreshDatatable');
     }

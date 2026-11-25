@@ -808,6 +808,42 @@
             scroll-snap-align: start
         }
 
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px
+        }
+
+        .testimonial-avatar {
+            position: relative;
+            display: grid;
+            flex: 0 0 48px;
+            width: 48px;
+            height: 48px;
+            place-items: center;
+            overflow: hidden;
+            border-radius: 50%;
+            background: #f0f3f6;
+            color: #929ba5
+        }
+
+        .testimonial-avatar i {
+            font-size: 26px
+        }
+
+        .testimonial-avatar img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover
+        }
+
+        .testimonial-author-info {
+            min-width: 0
+        }
+
         .testimonial-card h3 {
             margin: 0;
             font-size: 14px;
@@ -1899,8 +1935,21 @@
                     <div class="testimonials-track" data-testimonials-track>
                         @foreach ($testimonials as $testimonial)
                             <article class="testimonial-card">
-                                <h3>{{ $testimonial['name'] ?? '' }}</h3>
-                                <div class="testimonial-position">{{ $testimonial['position'] ?? '' }}</div>
+                                <div class="testimonial-author">
+                                    <div class="testimonial-avatar">
+                                        <i class="fa fa-user" aria-hidden="true"></i>
+                                        @if (filled($testimonial['image'] ?? null))
+                                            <img src="{{ $testimonial['image'] }}" alt="{{ $testimonial['name'] ?? '' }}"
+                                                loading="lazy" onerror="this.remove()">
+                                        @endif
+                                    </div>
+                                    <div class="testimonial-author-info">
+                                        <h3>{{ $testimonial['name'] ?? '' }}</h3>
+                                        @if (filled($testimonial['position'] ?? null))
+                                            <div class="testimonial-position">{{ $testimonial['position'] }}</div>
+                                        @endif
+                                    </div>
+                                </div>
                                 <p>{{ $testimonial['content'] ?? '' }}</p>
                             </article>
                         @endforeach
