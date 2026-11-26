@@ -50,7 +50,7 @@ class Filter extends Component
     public function filterOrderStatus(): void
     {
         $this->orderStatusOptionsOpen = false;
-        $this->filters['status'] =  $this->order_status;
+        $this->filters['status'] = $this->order_status ?: null;
         $this->emit('refreshDriverOrderReport', $this->filters);
     }
 

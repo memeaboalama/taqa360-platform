@@ -151,6 +151,8 @@
                         @endif
                         @error('settings') <div class="alert alert-danger">{{ $message }}</div> @enderror
                         @error('selectedCollectionIds') <div class="alert alert-danger">{{ $message }}</div> @enderror
+                        @error('settlement') <div class="alert alert-danger">{{ $message }}</div> @enderror
+                        @error('payment_ids') <div class="alert alert-danger">{{ $message }}</div> @enderror
 
                         <div class="table-responsive mb-3">
                             <table class="table table-bordered align-middle">
@@ -206,7 +208,7 @@
                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">@lang('driver::home.cancel')</button>
                             </div>
                         @elseif($availableMethods)
-                            <form wire:submit.prevent="submit">
+                            <form wire:submit.prevent="submit" wire:key="settlement-submission-form">
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label class="form-label">@lang('driver::home.supply_method')</label>

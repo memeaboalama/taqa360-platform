@@ -138,8 +138,6 @@
             </div>
         </div>
     </div>
-
-    <livewire:driver::home.order.modal.show />
 @endsection
 
 @push('js')

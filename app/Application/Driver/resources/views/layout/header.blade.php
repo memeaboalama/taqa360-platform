@@ -73,6 +73,7 @@
                     'notificationVariant' => 'dashboard',
                     'includeNotificationDropdown' => false,
                     'includeNotificationStyles' => false,
+                    'notificationOrderActionLabel' => __('driver::home.Order Details'),
                 ])
             </div>
 

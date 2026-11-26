@@ -175,11 +175,18 @@ class Create extends Component
                 $driver,
                 $this->returnedBatchId
             );
-        } catch (\Throwable $exception) {
+        } catch (\Illuminate\Validation\ValidationException $exception) {
             if ($proofPath) {
                 Storage::disk('settlement_proofs')->delete($proofPath);
             }
             throw $exception;
+        } catch (\Throwable $exception) {
+            if ($proofPath) {
+                Storage::disk('settlement_proofs')->delete($proofPath);
+            }
+            report($exception);
+            $this->addError('settlement', 'تعذر إرسال طلب التسوية: ' . $exception->getMessage());
+            return;
         }
 
         $batchId = $result['batch_id'];

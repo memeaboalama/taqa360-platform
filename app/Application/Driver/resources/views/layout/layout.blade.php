@@ -111,6 +111,9 @@
     <div id="responsive-overlay"></div>
 
     <livewire:driver::profile.modal.password />
+    @if(auth('driver')->check())
+        <livewire:driver::home.order.modal.show />
+    @endif
 
     @include('driver::layout.scripts')
 

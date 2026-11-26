@@ -34,6 +34,7 @@ class All extends DataTableComponent
     public function refreshDriverOrderReport(array $filters = [])
     {
         $this->filters = $filters;
+        $this->resetPage();
         $this->setBuilder($this->builder());
         $this->emit('prepareDriverOrderExport', $this->filters);
         $this->emit('prepareDriverOrderPdf', $this->filters);

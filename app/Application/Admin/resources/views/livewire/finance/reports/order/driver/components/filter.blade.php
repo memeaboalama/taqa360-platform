@@ -36,26 +36,12 @@
                         <div class="row gy-3">
                             <div class="col-xl-12 mt-2">
                                 <label for="order-status-filter" class="form-label">{{ __('admin::home.Order Status') }}</label>
-                                <div class="dropdown w-100" style="min-width: 150px;">
-                                    <button class="form-select text-start w-100" type="button" id="order-status-filter"
-                                            wire:click="toggleOrderStatusOptions"
-                                            aria-expanded="{{ $orderStatusOptionsOpen ? 'true' : 'false' }}">
-                                        {{ $this->order_statuses->firstWhere('value', $order_status)?->trans() ?? '-- ' . __('admin::home.Select') . ' --' }}
-                                    </button>
-                                    @if($orderStatusOptionsOpen)
-                                        <div class="dropdown-menu show w-100" style="max-height: 180px; overflow-y: auto;">
-                                            <button class="dropdown-item text-end" type="button" wire:click="selectOrderStatus(null)">
-                                                -- {{ __('admin::home.Select') }} --
-                                            </button>
-                                            @foreach($this->order_statuses as $value)
-                                                <button class="dropdown-item text-end" type="button"
-                                                        wire:click="selectOrderStatus('{{ $value->value }}')">
-                                                    {{ $value->trans() }}
-                                                </button>
-                                            @endforeach
-                                        </div>
-                                    @endif
-                                </div>
+                                <select class="form-control" id="order-status-filter" wire:model.defer="order_status" style="min-width: 150px;">
+                                    <option value="">-- {{ __('admin::home.Select') }} --</option>
+                                    @foreach($this->order_statuses as $value)
+                                        <option value="{{ $value->value }}">{{ $value->trans() }}</option>
+                                    @endforeach
+                                </select>
                             </div>
 
                             <button type="submit" class="col-md-12 mt-2 btn btn-primary">

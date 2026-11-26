@@ -49,6 +49,7 @@
                             data-notification-body="{{ $notification->body }}"
                             data-notification-date="{{ $notification->created_at->format('j M Y H:i') }}"
                             data-notification-time="{{ $notification->created_at->format('c') }}"
+                            data-notification-order-id="{{ $notification->order_id ?? '' }}"
                             aria-label="{{ __('admin::home.view_notification') }}: {{ $notification->title }}">
                         <span class="notification-center__item-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" focusable="false">
@@ -104,6 +105,14 @@
                 <time id="notificationDetailsDate" class="notification-details-modal__date"></time>
             </div>
             <div class="modal-footer">
+                @if(!empty($notificationOrderActionLabel))
+                    <button type="button"
+                            id="notificationDetailsOrderBtn"
+                            class="btn btn-outline-primary d-none"
+                            data-order-id="">
+                        {{ $notificationOrderActionLabel }}
+                    </button>
+                @endif
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
                     {{ __('admin::home.close') }}
                 </button>
@@ -462,7 +471,33 @@
             var date = modal.querySelector('#notificationDetailsDate');
             date.textContent = trigger.getAttribute('data-notification-date') || '';
             date.setAttribute('datetime', trigger.getAttribute('data-notification-time') || '');
+
+            var orderBtn = modal.querySelector('#notificationDetailsOrderBtn');
+            if (orderBtn) {
+                var orderId = trigger.getAttribute('data-notification-order-id') || '';
+                orderBtn.setAttribute('data-order-id', orderId);
+                orderBtn.classList.toggle('d-none', !orderId);
+            }
         });
+
+        var orderBtn = modal.querySelector('#notificationDetailsOrderBtn');
+        if (orderBtn) {
+            orderBtn.addEventListener('click', function () {
+                var orderId = orderBtn.getAttribute('data-order-id');
+                if (!orderId) return;
+
+                var instance = window.bootstrap && window.bootstrap.Modal
+                    ? window.bootstrap.Modal.getInstance(modal)
+                    : null;
+                if (instance) {
+                    instance.hide();
+                }
+
+                if (window.Livewire && typeof window.Livewire.emit === 'function') {
+                    window.Livewire.emit('showOrderDetails', parseInt(orderId, 10));
+                }
+            });
+        }
     })();
 </script>
 @endif

@@ -21,6 +21,7 @@ class Notifications extends Component
             ->map(static function ($notification) {
                 return (object) [
                     'id' => $notification->id,
+                    'order_id' => data_get($notification->data, 'order_id'),
                     'title' => data_get($notification->data, 'title', ''),
                     'body' => data_get($notification->data, 'body', ''),
                     'created_at' => $notification->created_at,
