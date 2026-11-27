@@ -38,3 +38,14 @@
 :is(.table-responsive, .merchant-table-scroll, .overflow-x-auto)::-webkit-scrollbar-thumb:horizontal:hover {
     background-color: #424b55;
 }
+
+/* ── Sidebar logo: cap height and align to the right (RTL: flex-start) ── */
+.app-sidebar .main-sidebar-header {
+    justify-content: flex-start !important;
+}
+.app-sidebar .main-sidebar-header .header-logo .desktop-logo,
+.app-sidebar .main-sidebar-header .header-logo .desktop-dark {
+    max-height: 56px;
+    width: auto;
+    object-fit: contain;
+}

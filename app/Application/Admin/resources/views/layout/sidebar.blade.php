@@ -4,9 +4,9 @@
     <div class="main-sidebar-header" style="border: none">
         <a href="#" class="header-logo">
             <img src="{{ asset($platformBrand['logo']) }}" alt="{{ $platformBrand['name'][app()->getLocale()] ?? $platformBrand['name']['en'] }}" class="desktop-logo" width="112">
-            <img src="{{ asset($platformBrand['logo']) }}" alt="{{ $platformBrand['name'][app()->getLocale()] ?? $platformBrand['name']['en'] }}" class="toggle-logo" width="64">
+            <img src="{{ asset($platformBrand['logo']) }}" alt="{{ $platformBrand['name'][app()->getLocale()] ?? $platformBrand['name']['en'] }}" class="toggle-logo" width="40">
             <img src="{{ asset($platformBrand['logo_white']) }}" alt="{{ $platformBrand['name'][app()->getLocale()] ?? $platformBrand['name']['en'] }}" class="desktop-dark" width="112">
-            <img src="{{ asset($platformBrand['logo_white']) }}" alt="{{ $platformBrand['name'][app()->getLocale()] ?? $platformBrand['name']['en'] }}" class="toggle-dark" width="64">
+            <img src="{{ asset($platformBrand['logo_white']) }}" alt="{{ $platformBrand['name'][app()->getLocale()] ?? $platformBrand['name']['en'] }}" class="toggle-dark" width="40">
         </a>
     </div>
     <!-- End::main-sidebar-header -->
@@ -86,6 +86,12 @@
                             <li class="slide">
                                 <a href="{{ url('admin/merchants/pending') }}"
                                     class="side-menu__item {{ isActive(url('admin/merchants/pending')) }}">{{ __('admin::home.pending') }} </a>
+                            </li>
+                            <li class="slide">
+                                <a href="{{ route('admin:merchant.bank-accounts.index') }}"
+                                   class="side-menu__item {{ request()->routeIs('admin:merchant.bank-accounts.*') ? 'active' : '' }}">
+                                    {{ __('admin::home.bank_account_requests') }}
+                                </a>
                             </li>
                             @AdminHasRole(['show_merchant packages'])
                                 <li class="slide">

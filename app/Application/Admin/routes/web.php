@@ -1,6 +1,7 @@
 <?php
 
 use App\Application\Admin\Controllers\Merchant\MerchantController;
+use App\Application\Admin\Controllers\Merchant\BankAccountRequestController;
 use App\Application\Admin\Controllers\Merchant\PackageController;
 use App\Application\Admin\Controllers\Merchant\MerchantOrdersController;
 use App\Application\Admin\Controllers\ProviderController;
@@ -100,6 +101,12 @@ Route::group(
         Route::get('/home', [AdminController::class, 'index'])->name('home');
 
         Route::prefix('merchants')->as('merchant.')->group(function () {
+            Route::prefix('bank-accounts')->as('bank-accounts.')->group(function () {
+                Route::get('/', [BankAccountRequestController::class, 'index'])->name('index');
+                Route::get('/{id}', [BankAccountRequestController::class, 'show'])->whereNumber('id')->name('show');
+                Route::get('/{id}/certificate', [BankAccountRequestController::class, 'certificate'])->whereNumber('id')->name('certificate');
+            });
+
             Route::get('/', [MerchantController::class, 'index']);
             Route::get('/pending', [MerchantController::class, 'getPending']);
             Route::get('/tracking', [MerchantController::class, 'trackMerchantBranches']);

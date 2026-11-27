@@ -19,14 +19,41 @@ class MerchantIban extends Model
         'beneficiary_full_name',
         'iban',
         'is_temp',
+        'is_active',
+        'approved_at',
+        'approved_by',
+        'superseded_at',
+        'request_id',
         'iban_file',
+        'iban_file_disk',
     ];
+
+    protected $casts = [
+        'is_temp' => 'boolean',
+        'is_active' => 'boolean',
+        'approved_at' => 'datetime',
+        'superseded_at' => 'datetime',
+    ];
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_temp', 0)->where('is_active', true);
+    }
+
+    public function getMaskedIbanAttribute(): string
+    {
+        return MerchantBankAccountRequest::maskIban($this->iban);
+    }
 
     public function getIbanFilePathAttribute()
     {
-        return $this->iban_file ? Storage::disk($this->diskName)->url($this->iban_file) : null;
-//        return ($this->iban_file) ? Storage::disk('s3')->temporaryUrl(
-//            $this?->iban_file,
-//            now()->addMinutes(5)) : "";
+        if (!$this->iban_file) {
+            return null;
+        }
+        $disk = $this->iban_file_disk ?: $this->diskName;
+        if ($disk === 'local') {
+            return null;
+        }
+        return Storage::disk($disk)->url($this->iban_file);
     }
 }

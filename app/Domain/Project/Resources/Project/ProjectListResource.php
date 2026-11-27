@@ -40,6 +40,7 @@ class ProjectListResource extends JsonResource
             'deadline' => $this->deadline?->isValid() && $this->deadline->year > 0 ? $this->deadline->toDateString() : null,
             'tasksCount' => $totalTasks,
             'completedTasksCount' => $completedTasks,
+            'bidsCount' => $this->relationLoaded('bids') ? $this->bids->count() : (int) ($this->bids_count ?? 0),
             'progress' => $progress,
             'assignedEducatorsCount' => $assignedEducatorIds->isNotEmpty() ? $assignedEducatorIds->count() : 0,
 

@@ -51,6 +51,13 @@
                             {{ __('admin::home.files') }}
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pending-iban-tab" data-bs-toggle="tab"
+                                data-bs-target="#pending-iban-pane" type="button" role="tab"
+                                aria-controls="pending-iban-pane" aria-selected="false">
+                            {{ __('admin::home.iban info') }}
+                        </button>
+                    </li>
                 </ul>
 
                 <div class="tab-content" id="pendingMerchantTabContent">
@@ -61,6 +68,10 @@
                     <div class="tab-pane fade" id="pending-files-pane" role="tabpanel"
                          aria-labelledby="pending-files-tab">
                         <livewire:admin::merchant.tabs.info.files :merchant_id="$merchant->id"/>
+                    </div>
+                    <div class="tab-pane fade" id="pending-iban-pane" role="tabpanel"
+                         aria-labelledby="pending-iban-tab">
+                        <livewire:admin::merchant.tabs.info.iban :merchant_id="$merchant->id"/>
                     </div>
                 </div>
             </div>

@@ -2,6 +2,7 @@
 
 use Application\Merchant\Controllers\MerchantController;
 use App\Application\Admin\Controllers\Api\Auth\AuthController;
+use App\Application\Admin\Controllers\Api\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -36,4 +37,6 @@ Route::group(['prefix' => 'v1/admin/','middleware' => 'auth:admin-api'],function
     require __DIR__ . '/Modules/Admin/educator.php';
     require __DIR__ . '/Modules/Admin/user.php';
     require __DIR__ . '/Modules/Admin/notification.php';
+
+    Route::get('dashboard/pending-product-orders-count', [DashboardController::class, 'pendingProductOrdersCount']);
 });

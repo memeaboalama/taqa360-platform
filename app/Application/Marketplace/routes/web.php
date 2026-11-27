@@ -19,6 +19,7 @@ use Application\Marketplace\Controllers\PasswordController;
 use Application\Marketplace\Controllers\RegisterController;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 use Application\Marketplace\Controllers\ActivationController;
+use Application\Marketplace\Controllers\BankAccountCertificateController;
 use Application\Marketplace\Controllers\OrderPaymentController;
 use Application\Marketplace\Controllers\AdditionGroupController;
 use Application\Marketplace\Controllers\TermsController;
@@ -122,6 +123,9 @@ Route::group(
                 Route::group(['middleware' => ['merchant.active']], function () {
                     Route::get('/profile', [ActivationController::class, 'getProfile'])
                         ->name('profile');
+                    Route::get('/bank-account/certificate/{id}', [BankAccountCertificateController::class, 'show'])
+                        ->whereNumber('id')
+                        ->name('bank-account.certificate');
 
                     Route::get('/support', [MessagesController::class, 'sendMessage'])
                         ->middleware('merchant.check_permission:contact support_general')

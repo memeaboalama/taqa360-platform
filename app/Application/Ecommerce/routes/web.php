@@ -78,6 +78,9 @@ Route::group(
              Route::get('/service-requests/create', function () {
                  return view('ecommerce::pages.service-request');
              })->name('service-requests.create');
+             Route::get('/service-requests/success/{requestId?}', [\App\Application\Educational\Controllers\ServiceRequestWebController::class, 'success'])
+                 ->whereNumber('requestId')
+                 ->name('service-requests.success');
              Route::get('/checkout/success/{orderId?}', [CheckoutController::class, 'success'])
                  ->whereNumber('orderId')
                  ->name('checkout.success');

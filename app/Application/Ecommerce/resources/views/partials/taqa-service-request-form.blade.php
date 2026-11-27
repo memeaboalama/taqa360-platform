@@ -2038,15 +2038,18 @@
                 });
                 const result = await response.json().catch(function () { return {}; });
                 if (response.ok && result.success) {
-                    alertBox.className = 'alert alert-success taqa-request-alert';
-                    alertBox.textContent = result.message || messages.success;
-                    form.reset();
                     try {
                         localStorage.removeItem(draftKey);
                         savedDraft = null;
                     } catch (error) {
-                        alertBox.textContent += ' ' + messages.storageUnavailable;
                     }
+                    if (result.redirect_url) {
+                        window.location.assign(result.redirect_url);
+                        return;
+                    }
+                    alertBox.className = 'alert alert-success taqa-request-alert';
+                    alertBox.textContent = result.message || messages.success;
+                    form.reset();
                     serviceSelect.value = '';
                     clearMapMarker();
                     applyServiceConfiguration(null);

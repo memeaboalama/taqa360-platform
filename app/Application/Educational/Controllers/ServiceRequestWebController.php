@@ -3,6 +3,7 @@
 namespace App\Application\Educational\Controllers;
 
 use App\Domain\EducationalRequest\Actions\CreateEducationalRequestAction;
+use Domain\EducationalRequest\Models\EducationalRequest;
 use App\Http\Controllers\Controller;
 use App\Support\Enum\StatusEnum;
 use App\Support\Services\TaqaServiceRequestConfiguration;
@@ -199,16 +200,18 @@ class ServiceRequestWebController extends Controller
             }
 
             $educationalRequest = $createAction->handle($data);
+            $redirectUrl = route('service-requests.success', ['requestId' => $educationalRequest->id]);
 
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'تم تقديم طلب الخدمة بنجاح، وسيتم مراجعته من قبل الإدارة.',
                     'request' => $educationalRequest,
+                    'redirect_url' => $redirectUrl,
                 ]);
             }
 
-            return redirect()->back()->with('success', 'تم تقديم طلب الخدمة بنجاح، وسيتم مراجعته من قبل الإدارة.');
+            return redirect($redirectUrl)->with('success', 'تم تقديم طلب الخدمة بنجاح، وسيتم مراجعته من قبل الإدارة.');
         } catch (\Exception $e) {
             Log::error('ServiceRequestWebController Store Error: ' . $e->getMessage());
 
@@ -221,5 +224,24 @@ class ServiceRequestWebController extends Controller
 
             return redirect()->back()->with('error', 'حدث خطأ أثناء تقديم الطلب. الرجاء المحاولة مرة أخرى.');
         }
+    }
+
+    public function success(?int $requestId = null)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return redirect()->route('auth.login');
+        }
+
+        if (!$requestId) {
+            return redirect()->route('account.service_requests');
+        }
+
+        $serviceRequest = EducationalRequest::query()
+            ->where('requester_id', $user->id)
+            ->with('service')
+            ->findOrFail($requestId);
+
+        return view('ecommerce::pages.service-request-success', compact('serviceRequest'));
     }
 }

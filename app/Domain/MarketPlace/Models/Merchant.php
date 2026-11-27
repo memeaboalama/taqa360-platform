@@ -10,6 +10,7 @@ use App\Domain\AppBase\Models\PromocodeMerchantsChoice;
 use App\Domain\AppBase\Repositories\DaysRepository;
 use App\Domain\MarketPlace\Models\Favorite;
 use App\Domain\MarketPlace\Models\Brand;
+use App\Domain\MarketPlace\Models\MerchantBankAccountRequest;
 use App\Domain\MarketPlace\Models\MerchantIban;
 use App\Domain\MarketPlace\Models\MerchantOrder;
 use App\Domain\MarketPlace\Models\MerchantOrderHistory;
@@ -251,6 +252,28 @@ protected $fillable = [
     public function iban(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(MerchantIban::class, 'merchant_id', 'id');
+    }
+
+    public function approvedIban(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(MerchantIban::class, 'merchant_id', 'id')
+            ->where('is_temp', 0)
+            ->where('is_active', true)
+            ->latestOfMany();
+    }
+
+    public function bankAccountRequests(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(MerchantBankAccountRequest::class, 'merchant_id', 'id')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
+    }
+
+    public function pendingBankAccountRequest(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(MerchantBankAccountRequest::class, 'merchant_id', 'id')
+            ->where('status', MerchantBankAccountRequest::STATUS_PENDING_REVIEW)
+            ->latestOfMany();
     }
 
     public function favs(): HasMany

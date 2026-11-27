@@ -1076,6 +1076,10 @@
                     });
 
                     if (response.ok && data.success) {
+                        if (data.redirect_url) {
+                            window.location.assign(data.redirect_url);
+                            return;
+                        }
                         const successMsg = data.message || messages.successMsg;
                         alertBox.className = 'alert alert-success d-block mb-3';
                         alertBox.textContent = successMsg;

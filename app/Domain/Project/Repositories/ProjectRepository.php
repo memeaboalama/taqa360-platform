@@ -35,7 +35,7 @@ class ProjectRepository extends EloquentMainRepository
     public function filterAndPaginate(array $filters, array $relations = [], int $perPage = 15): LengthAwarePaginator
     {
         $query = $this->modal->with($relations)
-            ->withCount(['tasks', 'tasks as completed_tasks_count' => function ($q) {
+            ->withCount(['tasks', 'bids', 'tasks as completed_tasks_count' => function ($q) {
                 $q->where('status', TaskStatus::COMPLETED);
             }]);
 
